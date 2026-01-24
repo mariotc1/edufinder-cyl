@@ -1,0 +1,82 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: edufinder-backend
+    container_name: edufinder-backend
+    restart: unless-stopped
+    working_dir: /var/www/html
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/var/www/html
+      - ./data:/var/www/data
+    environment:
+      APP_ENV: local
+      APP_DEBUG: true
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: edufinder
+      DB_USERNAME: edufinder
+      DB_PASSWORD: edufinder
+    depends_on:
+      - postgres
+    networks:
+      - edufinder-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: edufinder-frontend
+    container_name: edufinder-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000/api
+    depends_on:
+      - backend
+    networks:
+      - edufinder-network
+
+  postgres:
+    image: postgres:15
+    container_name: edufinder-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: edufinder
+      POSTGRES_USER: edufinder
+      POSTGRES_PASSWORD: edufinder
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - edufinder-network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: edufinder-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@edufinder.com
+      PGADMIN_DEFAULT_PASSWORD: edufinder
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - edufinder-network
+
+networks:
+  edufinder-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
