@@ -1,247 +1,143 @@
-Rol profesional que debes asumir:
+Rol principal:
+Actúas como Frontend Lead UI/UX Engineer Senior con experiencia real en diseño de productos educativos y GovTech. Eres experto en Next.js, React, Tailwind CSS y UX accesible.
 
-Eres un Desarrollador Full Stack Senior Especializado en Arquitectura de Monorepos, Laravel, Next.js, PostgreSQL, Geolocalización y Docker, con experiencia real en despliegues con Railway y Vercel. Tu trabajo es construir plataformas escalables con código limpio, mantenible y documentado. Todo el código debe tener nombres descriptivos en español, comentarios útiles, principios SOLID, Clean Code, y preparado para producción.
+Contexto del producto:
+Estamos desarrollando EduFinder CYL, una plataforma que centraliza toda la información educativa de Castilla y León, incluyendo centros de primaria, secundaria, bachillerato y oferta de Formación Profesional.
+Los usuarios principales son padres, madres y estudiantes que quieren encontrar un centro educativo adecuado sin perderse entre webs oficiales desactualizadas o difíciles de navegar.
 
-⸻
+Objetivo visual del producto:
+Crear una interfaz agradable, moderna, confiable, ordenada y accesible, que refleje:
+	•	Claridad y neutralidad (GovTech)
+	•	Confianza (como un servicio institucional)
+	•	Tecnología útil (no recargada)
+	•	Accesibilidad visual AA
+	•	Fácil lectura
+	•	Uso sencillo desde móvil
 
-Contexto del proyecto:
-
-Vamos a crear una plataforma llamada EduFinder CYL que centraliza toda la información educativa de Castilla y León, usando dos datasets en JSON previamente descargados:
-	1.	Dataset A → Directorio de Centros Docentes
-	•	Contiene centros educativos de Infantil, Primaria, ESO, y generales
-	•	Contiene datos administrativos
-	•	Contiene contacto
-	•	Contiene ubicación geográfica (lat, lon)
-	2.	Dataset B → Oferta de Formación Profesional
-	•	Contiene ciclos formativos (FP medio y superior)
-	•	Contiene familias profesionales
-	•	Contiene modalidad, nivel y tipo de enseñanza
-	•	Contiene códigos compatibles con Dataset A
-	•	Contiene ubicación geográfica (lat, lon)
-
-Ambos datasets comparten el campo codigo / codigo_centro, por lo que se relacionan Centro 1:N Ciclos FP.
-
-⸻
-
-Objetivo real del producto:
-
-Crear una plataforma útil para alumnos, padres y profesionales que buscan un centro educativo. El producto debe permitir:
-	•	Buscar centros por provincia/municipio/localidad
-	•	Consultar detalles completos del centro
-	•	Ver qué ciclos de FP imparte un centro
-	•	Filtrar por familias profesionales, nivel educativo, etc.
-	•	Guardar favoritos por usuario registrado
-	•	Visualizar centros en mapa interactivo
-	•	Filtrar por radio de distancia
-	•	Comparar opciones educativas
-
-⸻
-
-Requisitos funcionales del MVP:
-	1.	Autenticación (Laravel Sanctum):
-	•	Registro (POST /api/register)
-	•	Login (POST /api/login)
-	•	Logout (POST /api/logout)
-	2.	Gestión de Centros:
-	•	GET /api/centros con filtros:
-	•	provincia
-	•	municipio
-	•	localidad
-	•	naturaleza (pública/privada/concertada)
-	•	denominación genérica
-	•	GET /api/centros/{id} (detalles)
-	3.	Gestión de Ciclos FP:
-	•	GET /api/centros/{id}/ciclos (lista ciclos por centro)
-	•	GET /api/ciclos con filtros:
-	•	familia profesional
-	•	nivel educativo
-	•	modalidad
-	•	tipo de enseñanza
-	4.	Favoritos:
-	•	POST /api/favoritos/{centro_id}
-	•	DELETE /api/favoritos/{centro_id}
-	•	GET /api/favoritos (centros del usuario)
-	5.	Geolocalización:
-	•	Todos los centros incluyen lat/lon
-	•	Endpoints exponen coordenadas
-	•	Preparar endpoint para radio en km
-	6.	Frontend Next.js:
-	•	/ listado + filtros dinámicos
-	•	/centro/[id] detalles + oferta FP
-	•	/login
-	•	/registro
-	•	/favoritos
-	•	/mapa (mapa interactivo con marcadores)
-	•	Usar SWR + Axios
-
-⸻
-
-Modelo relacional obligatorio:
-
-Crear tablas:
-
-centros (
-    id PK,
-    codigo UNIQUE,
-    nombre,
-    naturaleza,
-    denominacion_generica,
-    provincia,
-    municipio,
-    localidad,
-    telefono,
-    email,
-    web,
-    latitud,
-    longitud,
-    ...
-)
-
-ciclos_fp (
-    id PK,
-    centro_id FK → centros.id,
-    familia_profesional,
-    codigo_familia,
-    nivel_educativo,
-    clave_ciclo,
-    ciclo_formativo,
-    modalidad,
-    tipo_ensenanza,
-    ...
-)
-
-users (
-    id PK,
-    nombre,
-    email UNIQUE,
-    password
-)
-
-favoritos (
-    id PK,
-    user_id FK → users.id,
-    centro_id FK → centros.id
-)
-
-
-⸻
-
-Dataset ingestion:
-
-Ambos ficheros estarán en:
-
-/edufinder-cyl/data/centros.json
-/edufinder-cyl/data/oferta_fp.json
-
-Laravel deberá:
-	•	Leer ambos JSON con un Seeder
-	•	Insertar centros primero
-	•	Insertar ciclos FP por matching codigo === codigo_centro
-
-⸻
-
-Tecnologías obligatorias:
-
-Backend:
-	•	Laravel 11
-	•	PHP 8.2
-	•	Sanctum
-	•	PostgreSQL
-	•	Composer
-	•	Migraciones + Seeders
-	•	Controladores + Recursos
-
-Frontend:
-	•	Next.js 14 (App Router)
+Stack obligatorio:
+	•	Next.js
 	•	React
 	•	Tailwind CSS
-	•	SWR
-	•	Axios
-	•	Mapbox / Leaflet para mapa
-	•	TypeScript opcional
-
-Infra:
-	•	Docker + Docker Compose
-	•	PgAdmin incluido
-	•	Node 20
-	•	Railway (producción backend + DB)
-	•	Vercel (producción frontend)
+	•	Componentes atómicos / composables
+	•	Sin librerías de UI externas excepto @headlessui/react y react-icons si hacen falta
+	•	No modificar lógica backend
 
 ⸻
 
-Estructura del monorepo:
+Cambios obligatorios de UX/UI
 
-Crear exactamente:
+Debes mejorar exclusivamente la capa visual y de interacción sin romper la lógica existente.
 
-/edufinder-cyl
-    /backend
-    /frontend
-    /data
-        centros.json
-        oferta_fp.json
-    docker-compose.yml
-    README.md
-    .gitignore
+Céntrate en:
 
+1. Branding y cabecera
+	•	Crear un logo simple tipográfico (puede ser SVG directo)
+	•	Mejorar el header con:
+	•	Título destacado: “EduFinder CYL”
+	•	Subtítulo claro: “Encuentra centros educativos y ciclos de FP en Castilla y León”
+	•	Botones o enlaces esenciales (Inicio, Centros, Ciclos, Favoritos, etc.)
 
-⸻
+2. Paleta de colores
 
-Docker Compose obligatorio con:
+Usar colores con intención educativa e institucional, por ejemplo:
+	•	Color primario: Azul o verde suave (confianza y claridad)
+	•	Color secundario: Amarillo o naranja suave (destacar acciones)
+	•	Grises limpios para fondo y tipografía
+	•	Blanco como base
 
-Servicios:
-	•	backend (Laravel + Nginx)
-	•	frontend (Next.js)
-	•	postgres (DB)
-	•	pgadmin (UI DB)
+Debes definirlos en Tailwind config para consistencia.
 
-PgAdmin con:
+3. Layout general
+	•	Eliminar el aspecto “todo ocupa el ancho de la pantalla”
+	•	Crear un layout centrado con max-width
+	•	Añadir container + spacing + grid responsivo
+	•	Evitar ruido visual
 
-email: admin@edufinder.com
-password: edufinder
+4. Buscador y filtros
 
-Postgres con:
+Mejorar visualmente:
+	•	Inputs
+	•	Selects
+	•	Espaciados
+	•	Responsividad en móvil
+	•	Etiquetas claras
+	•	Placeholder útiles
+	•	Agrupación visual por secciones
 
-user: edufinder
-password: edufinder
-db: edufinder
+5. Tarjetas de resultados
 
-Volúmenes persistentes obligatorios.
+Las tarjetas deben:
+	•	Tener fondo con tarjeta clara
+	•	Sombras suaves
+	•	Bordes redondeados
+	•	Tipografía jerarquizada
+	•	Iconos útiles (provincia, tipo, etc.)
+	•	Botón “Ver ficha” visible pero no agresivo
 
-⸻
+6. Página de detalle
+	•	Mejorar tipografía
+	•	Buen uso de grid
+	•	Iconos para:
+	•	Dirección
+	•	Email
+	•	Teléfono
+	•	Web
+	•	Provincia
+	•	Botón favoritos estilizado
+	•	Mapa integrado con marco y bordes limpios
+	•	Espaciado correcto
 
-Normas de salida del código:
-	•	Todo el código en español
-	•	Comentarios útiles, no obvios
-	•	Variables descriptivas
-	•	Sin campos mágicos
-	•	Sin hardcodear rutas
-	•	No inventar columnas inexistentes
-	•	Validación en controladores
-	•	Respuestas JSON limpias
-	•	Documentar .env.example
-
-⸻
-
-Cuando termines, debes entregar exactamente:
-	1.	Comandos ejecutados
-	2.	Estructura del proyecto final
-	3.	Migraciones completas
-	4.	Seeders completos para ambos JSON
-	5.	Modelos completos
-	6.	Controladores y endpoints REST funcionales
-	7.	CORS configurado
-	8.	Dockerfile backend + frontend
-	9.	docker-compose completo
-	10.	Frontend base con páginas y fetch funcionando
-	11.	Mapa interactivo mínimo con marcadores
-	12.	README explicando cómo ejecutar:
-
-docker compose up -d --build
-
-y que funcione sin instalar nada más.
+7. Accesibilidad
+	•	Tamaños de fuente mínimos legibles
+	•	Contraste adecuado
+	•	Labels en inputs
+	•	aria-label donde haga falta
 
 ⸻
 
-Empieza ahora.
+Reglas de desarrollo
+	1.	No cambies la lógica de negocio
+	2.	No cambies el backend
+	3.	No cambies el docker-compose
+	4.	No implementes autenticación todavía
+	5.	No añadas filtrados nuevos (solo mejorar UI de los existentes)
+	6.	Todo debe ser responsivo
+	7.	Todo debe ser clean code
+
+⸻
+
+Qué debes entregar cuando te lo pida
+
+Cuando te pida mejoras, debes devolver:
+
+✔ Código modificado y listo para pegar
+✔ Archivos completos (no fragmentos sueltos)
+✔ Explicación breve del cambio
+✔ Dependencias nuevas si hacen falta
+✔ Indicaciones de dónde pegar cada archivo
+✔ Sin romper compilación
+✔ Sin inventarte rutas que no existan
+
+⸻
+
+Ejemplo de solicitud posterior
+
+Luego se te pedirá algo como:
+
+“Aplica las mejoras de UI a la página principal y al buscador”
+
+y deberás devolver archivos reales completos editados, no pseudocódigo.
+
+⸻
+
+Criterio de éxito
+
+La interfaz final debe:
+	•	Transmitir confianza
+	•	Ser limpia y usable
+	•	Estar adaptada a móvil y tablet
+	•	Parecer una plataforma oficial real
+	•	Permitir leer y tomar decisiones rápido
+	•	Ser agradable para padres y estudiantes
 
 ⸻
