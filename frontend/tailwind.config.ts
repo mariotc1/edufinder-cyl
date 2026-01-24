@@ -9,20 +9,77 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+        // GovTech institutional colors
         primary: {
-          DEFAULT: "#06b6d4", // cyan-500
-          foreground: "#ffffff",
+          50: '#eff6ff',
+          100: '#dbeafe',
+          200: '#bfdbfe',
+          300: '#93c5fd',
+          400: '#60a5fa',
+          500: '#3b82f6',  // Main primary - institutional blue
+          600: '#2563eb',
+          700: '#1d4ed8',
+          800: '#1e40af',
+          900: '#1e3a8a',
+          950: '#172554',
         },
         secondary: {
-          DEFAULT: "#8b5cf6", // violet-500
-          foreground: "#ffffff",
+          50: '#fffbeb',
+          100: '#fef3c7',
+          200: '#fde68a',
+          300: '#fcd34d',
+          400: '#fbbf24',
+          500: '#f59e0b',  // Main secondary - warm amber for CTAs
+          600: '#d97706',
+          700: '#b45309',
+          800: '#92400e',
+          900: '#78350f',
+        },
+        success: {
+          50: '#f0fdf4',
+          100: '#dcfce7',
+          500: '#10b981',  // Success green
+          600: '#059669',
+          700: '#047857',
+        },
+        neutral: {
+          50: '#f9fafb',
+          100: '#f3f4f6',
+          200: '#e5e7eb',
+          300: '#d1d5db',
+          400: '#9ca3af',
+          500: '#6b7280',
+          600: '#4b5563',
+          700: '#374151',
+          800: '#1f2937',
+          900: '#111827',
         },
       },
       fontFamily: {
-        sans: ['var(--font-inter)'],
-      }
+        sans: ['var(--font-inter)', 'system-ui', '-apple-system', 'sans-serif'],
+      },
+      boxShadow: {
+        'sm': '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+        'DEFAULT': '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+        'md': '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+        'lg': '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+        'xl': '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
+        'card': '0 2px 8px rgba(0, 0, 0, 0.08)',
+        'card-hover': '0 4px 16px rgba(0, 0, 0, 0.12)',
+      },
+      borderRadius: {
+        'sm': '0.25rem',
+        'DEFAULT': '0.375rem',
+        'md': '0.5rem',
+        'lg': '0.75rem',
+        'xl': '1rem',
+        '2xl': '1.5rem',
+      },
+      spacing: {
+        '18': '4.5rem',
+        '88': '22rem',
+        '128': '32rem',
+      },
     },
   },
   plugins: [],
