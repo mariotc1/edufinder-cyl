@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { GraduationCap } from 'lucide-react';
+import Image from 'next/image';
 
 interface LogoProps {
   className?: string;
@@ -11,8 +11,15 @@ interface LogoProps {
 export default function Logo({ className = '', showSubtitle = false }: LogoProps) {
   return (
     <Link href="/" className={`flex items-center gap-3 group ${className}`}>
-      <div className="flex items-center justify-center w-10 h-10 bg-primary-600 rounded-lg group-hover:bg-primary-700 transition-colors">
-        <GraduationCap className="w-6 h-6 text-white" strokeWidth={2.5} />
+      <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
+        <Image
+          src="/img/logo.png"
+          alt="EduFinder CYL Logo"
+          width={48}
+          height={48}
+          className="object-contain"
+          priority
+        />
       </div>
       <div className="flex flex-col">
         <span className="text-xl font-bold text-neutral-900 group-hover:text-primary-700 transition-colors">

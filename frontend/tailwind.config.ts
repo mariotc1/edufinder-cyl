@@ -11,17 +11,17 @@ const config: Config = {
       colors: {
         // GovTech institutional colors
         primary: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',  // Main primary - institutional blue
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
-          950: '#172554',
+          50: '#f1f4f6',
+          100: '#dcedf4',
+          200: '#bedaec',
+          300: '#92bddc',
+          400: '#669fcb',
+          500: '#3b82b9',
+          600: '#2d6591',
+          700: '#233847', // Base logo color
+          800: '#1c2d3a',
+          900: '#15222d',
+          950: '#0d161d',
         },
         secondary: {
           50: '#fffbeb',
