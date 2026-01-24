@@ -17,7 +17,7 @@ export default function MapaPage() {
 
     return (
         <div className="h-[calc(100vh-80px)] w-full relative bg-neutral-50">
-            <div className="absolute top-6 left-6 z-10 card p-5 max-w-xs shadow-lg">
+            <div className="absolute bottom-6 left-6 z-10 card p-5 max-w-xs shadow-lg animate-fade-in">
                 <div className="flex items-center gap-2 mb-2">
                     <MapPin className="w-5 h-5 text-primary-600" />
                     <h1 className="text-lg font-bold text-neutral-900">Mapa Interactivo</h1>

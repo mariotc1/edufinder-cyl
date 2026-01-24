@@ -52,60 +52,54 @@ export default function Home() {
               <div className="space-y-5">
                 {/* Search Input */}
                 <div>
-                  <label htmlFor="search" className="block text-sm font-semibold text-neutral-700 mb-2">
+                  <label htmlFor="search" className="flex items-center gap-2 text-sm font-semibold text-neutral-700 mb-2">
+                    <Search className="w-4 h-4 text-primary-600" />
                     Buscar centro educativo
                   </label>
-                  <div className="relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400 w-5 h-5" />
-                    <input 
-                      id="search"
-                      type="text"
-                      placeholder="Nombre del centro, localidad..." 
-                      className="input pl-12"
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                    />
-                  </div>
+                  <input 
+                    id="search"
+                    type="text"
+                    placeholder="Nombre del centro, localidad..." 
+                    className="input"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
                 </div>
                 
                 {/* Filters Row */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="provincia" className="block text-sm font-semibold text-neutral-700 mb-2">
+                    <label htmlFor="provincia" className="flex items-center gap-2 text-sm font-semibold text-neutral-700 mb-2">
+                      <MapPin className="w-4 h-4 text-primary-600" />
                       Provincia
                     </label>
-                    <div className="relative">
-                      <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400 w-5 h-5 pointer-events-none" />
-                      <select 
-                        id="provincia"
-                        className="select pl-12"
-                        value={provincia}
-                        onChange={(e) => setProvincia(e.target.value)}
-                      >
-                        <option value="">Todas las provincias</option>
-                        {provincias.map(p => <option key={p} value={p}>{p}</option>)}
-                      </select>
-                    </div>
+                    <select 
+                      id="provincia"
+                      className="select"
+                      value={provincia}
+                      onChange={(e) => setProvincia(e.target.value)}
+                    >
+                      <option value="">Todas las provincias</option>
+                      {provincias.map(p => <option key={p} value={p}>{p}</option>)}
+                    </select>
                   </div>
 
                   <div>
-                    <label htmlFor="naturaleza" className="block text-sm font-semibold text-neutral-700 mb-2">
+                    <label htmlFor="naturaleza" className="flex items-center gap-2 text-sm font-semibold text-neutral-700 mb-2">
+                      <Building2 className="w-4 h-4 text-primary-600" />
                       Tipo de centro
                     </label>
-                    <div className="relative">
-                      <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400 w-5 h-5 pointer-events-none" />
-                      <select 
-                        id="naturaleza"
-                        className="select pl-12"
-                        value={naturaleza}
-                        onChange={(e) => setNaturaleza(e.target.value)}
-                      >
-                        <option value="">Todos los tipos</option>
-                        <option value="PÚBLICO">Público</option>
-                        <option value="PRIVADO">Privado</option>
-                        <option value="CONCERTADO">Concertado</option>
-                      </select>
-                    </div>
+                    <select 
+                      id="naturaleza"
+                      className="select"
+                      value={naturaleza}
+                      onChange={(e) => setNaturaleza(e.target.value)}
+                    >
+                      <option value="">Todos los tipos</option>
+                      <option value="PÚBLICO">Público</option>
+                      <option value="PRIVADO">Privado</option>
+                      <option value="CONCERTADO">Concertado</option>
+                    </select>
                   </div>
                 </div>
               </div>

@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import api from '@/lib/axios';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import Link from 'next/link';
+import { UserPlus, Mail, Lock, User } from 'lucide-react';
 
 export default function Register() {
     const [name, setName] = useState('');
@@ -21,65 +22,99 @@ export default function Register() {
             localStorage.setItem('user', JSON.stringify(res.data.user));
             window.location.href = '/';
         } catch (err: any) {
-             // Basic error handling
              setError(err.response?.data?.message || 'Error al registrarse');
         }
     };
 
     return (
-        <div className="min-h-[calc(100vh-64px)] flex items-center justify-center p-4">
-            <motion.div 
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="w-full max-w-md bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-2xl"
-            >
-                <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-violet-500 mb-6 text-center">
-                    Únete a EduFinder
-                </h2>
-                {error && (
-                    <div className="bg-red-500/10 border border-red-500/50 text-red-400 p-3 rounded mb-4 text-sm">
-                        {error}
+        <div className="min-h-[calc(100vh-80px)] flex items-center justify-center p-4 bg-gradient-to-br from-primary-50 via-white to-secondary-50">
+            <div className="w-full max-w-md">
+                <div className="card p-8 shadow-xl">
+                    <div className="text-center mb-8">
+                        <div className="inline-flex items-center justify-center w-16 h-16 bg-secondary-100 rounded-full mb-4">
+                            <UserPlus className="w-8 h-8 text-secondary-600" />
+                        </div>
+                        <h2 className="text-3xl font-bold text-neutral-900 mb-2">
+                            Únete a EduFinder CYL
+                        </h2>
+                        <p className="text-neutral-600">
+                            Crea tu cuenta para guardar favoritos
+                        </p>
                     </div>
-                )}
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1">Nombre</label>
-                        <input 
-                            type="text" 
-                            required
-                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-cyan-500 outline-none text-white"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                        />
+
+                    {error && (
+                        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg mb-6 text-sm">
+                            {error}
+                        </div>
+                    )}
+
+                    <form onSubmit={handleSubmit} className="space-y-5">
+                        <div>
+                            <label htmlFor="name" className="flex items-center gap-2 text-sm font-semibold text-neutral-700 mb-2">
+                                <User className="w-4 h-4 text-primary-600" />
+                                Nombre completo
+                            </label>
+                            <input 
+                                id="name"
+                                type="text" 
+                                required
+                                placeholder="Tu nombre"
+                                className="input"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                            />
+                        </div>
+
+                        <div>
+                            <label htmlFor="email" className="flex items-center gap-2 text-sm font-semibold text-neutral-700 mb-2">
+                                <Mail className="w-4 h-4 text-primary-600" />
+                                Correo electrónico
+                            </label>
+                            <input 
+                                id="email"
+                                type="email" 
+                                required
+                                placeholder="tu@email.com"
+                                className="input"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                            />
+                        </div>
+
+                        <div>
+                            <label htmlFor="password" className="flex items-center gap-2 text-sm font-semibold text-neutral-700 mb-2">
+                                <Lock className="w-4 h-4 text-primary-600" />
+                                Contraseña
+                            </label>
+                            <input 
+                                id="password"
+                                type="password" 
+                                required
+                                placeholder="Mínimo 8 caracteres"
+                                className="input"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                            />
+                        </div>
+
+                        <button 
+                            type="submit" 
+                            className="btn-primary w-full"
+                        >
+                            Crear Cuenta
+                        </button>
+                    </form>
+
+                    <div className="mt-6 text-center">
+                        <p className="text-sm text-neutral-600">
+                            ¿Ya tienes cuenta?{' '}
+                            <Link href="/login" className="text-primary-600 hover:text-primary-700 font-semibold">
+                                Inicia sesión
+                            </Link>
+                        </p>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1">Email</label>
-                        <input 
-                            type="email" 
-                            required
-                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-cyan-500 outline-none text-white"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1">Contraseña</label>
-                        <input 
-                            type="password" 
-                            required
-                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-cyan-500 outline-none text-white"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                        />
-                    </div>
-                    <button 
-                        type="submit" 
-                        className="w-full bg-gradient-to-r from-cyan-600 to-violet-600 hover:from-cyan-500 hover:to-violet-500 text-white font-bold py-2 rounded-lg transition-all shadow-lg hover:shadow-cyan-500/25"
-                    >
-                        Crear Cuenta
-                    </button>
-                </form>
-            </motion.div>
+                </div>
+            </div>
         </div>
     );
 }
