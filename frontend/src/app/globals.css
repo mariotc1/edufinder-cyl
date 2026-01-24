@@ -78,7 +78,7 @@ a, button {
 
 /* Reusable Button Styles */
 .btn-primary {
-  background-color: #2563eb;
+  background-color: #233847;
   color: white;
   font-weight: 500;
   padding: 0.625rem 1.5rem;
@@ -88,7 +88,7 @@ a, button {
 }
 
 .btn-primary:hover {
-  background-color: #1d4ed8;
+  background-color: #1c2d3a;
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
 }
 
@@ -108,8 +108,8 @@ a, button {
 }
 
 .btn-outline {
-  border: 2px solid #2563eb;
-  color: #2563eb;
+  border: 2px solid #233847;
+  color: #233847;
   background-color: transparent;
   font-weight: 500;
   padding: 0.625rem 1.5rem;
@@ -118,7 +118,7 @@ a, button {
 }
 
 .btn-outline:hover {
-  background-color: #eff6ff;
+  background-color: #f1f4f6;
 }
 
 /* Card Styles */
