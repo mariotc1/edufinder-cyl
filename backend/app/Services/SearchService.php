@@ -69,7 +69,7 @@ class SearchService
                         $q->where('familia_profesional', 'ILIKE', '%' . $filters['familia'] . '%')
                             ->orWhere('codigo_familia', $filters['familia']);
                     }
-                    if (!empty($filters['nivel'])) { // GM (Grado Medio), GS (Grado Superior), BASICA
+                    if (!empty($filters['nivel'])) {
                         $this->applyFPNivelFilter($q, $filters['nivel']);
                     }
                     if (!empty($filters['modalidad'])) { // Presencial, Distancia
@@ -101,10 +101,25 @@ class SearchService
                 ]);
                 break;
 
+            case 'ESO':
+            case 'SECUNDARIA':
+            case 'BACHILLERATO':
+                // Generalmente IES o Centros Privados de Secundaria
+                $query->where('denominacion_generica', 'ILIKE', '%SECUNDARIA%');
+                break;
+
+            case 'PRIMARIA':
+            case 'INFANTIL':
+                $query->where('denominacion_generica', 'ILIKE', '%PRIMARIA%')
+                    ->orWhere('denominacion_generica', 'ILIKE', '%INFANTIL%');
+                break;
+
+            case 'ESPECIAL':
+                $query->where('denominacion_generica', 'ILIKE', '%ESPECIAL%');
+                break;
+
             default:
-                // Para otros tipos (ESO, BACHILLERATO, PRIMARIA), nos basamos en denominacion_generica
-                // OJO: Esto depende de la calidad de los datos en 'denominacion_generica' o 'tipo_ensenanza' si existiera en centros.
-                // Asumimos búsqueda por string en denominacion_generica
+                // Búsqueda genérica por el tipo enviado
                 $query->where('denominacion_generica', 'ILIKE', '%' . $tipo . '%');
                 break;
         }
@@ -113,12 +128,16 @@ class SearchService
     private function applyFPNivelFilter(Builder $q, string $nivel)
     {
         $nivel = strtoupper($nivel);
+        // Mapeo basado en oferta_fp.json
         if ($nivel === 'GM' || $nivel === 'MEDIO') {
-            $q->where('nivel_educativo', 'ILIKE', '%GRADO MEDIO%');
+            $q->where('nivel_educativo', 'ILIKE', '%Grado Medio%');
         } elseif ($nivel === 'GS' || $nivel === 'SUPERIOR') {
-            $q->where('nivel_educativo', 'ILIKE', '%GRADO SUPERIOR%');
-        } elseif ($nivel === 'BASICA') {
-            $q->where('nivel_educativo', 'ILIKE', '%BASICA%');
+            $q->where('nivel_educativo', 'ILIKE', '%Grado Superior%');
+        } elseif ($nivel === 'BASICA' || $nivel === 'BASICO') {
+            // Usamos %sico% para evitar problemas de tildes
+            $q->where('nivel_educativo', 'ILIKE', '%Grado B%sico%');
+        } elseif ($nivel === 'CE' || str_contains($nivel, 'ESPECIALIZA')) {
+            $q->where('nivel_educativo', 'ILIKE', '%Curso Especializa%');
         } else {
             $q->where('nivel_educativo', 'ILIKE', '%' . $nivel . '%');
         }
