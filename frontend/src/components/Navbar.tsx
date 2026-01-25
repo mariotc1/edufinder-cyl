@@ -8,8 +8,9 @@ import api from '@/lib/axios';
 import Logo from './Logo';
 
 export default function Navbar() {
-  const [user, setUser] = useState<{name: string} | null>(null);
+  const [user, setUser] = useState<{name: string; foto_perfil?: string; email?: string} | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -58,15 +59,59 @@ export default function Navbar() {
                   <Heart className="w-4 h-4" />
                   Favoritos
                 </Link>
-                <span className="text-sm text-neutral-600 px-3 py-2 bg-neutral-100 rounded-lg">
-                  {user.name}
-                </span>
-                <button 
-                  onClick={handleLogout} 
-                  className="text-sm font-medium text-neutral-700 hover:text-red-600 px-4 py-2 rounded-lg hover:bg-red-50 transition-all"
-                >
-                  Salir
-                </button>
+                
+                    {/* Dropdown with State for robustness */}
+                    <div className="relative">
+                        <button 
+                            onClick={() => setUserMenuOpen(!userMenuOpen)}
+                            className="flex items-center gap-2 text-neutral-700 hover:text-primary-600 font-medium px-3 py-2 rounded-lg hover:bg-neutral-50 transition-all focus:outline-none"
+                        >
+                            {user.foto_perfil ? (
+                                 <img src={user.foto_perfil} alt={user.name} className="w-8 h-8 rounded-full object-cover" />
+                            ) : (
+                                <div className="w-8 h-8 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center font-bold">
+                                    {user.name.charAt(0)}
+                                </div>
+                            )}
+                            <span className="hidden lg:inline text-sm">{user.name}</span>
+                        </button>
+                        
+                        {userMenuOpen && (
+                            <>
+                                <div className="fixed inset-0 z-10" onClick={() => setUserMenuOpen(false)}></div>
+                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl py-1 border border-neutral-100 z-20 animate-in fade-in zoom-in-95 duration-200">
+                                    <div className="px-4 py-3 border-b border-neutral-100 mb-1">
+                                        <p className="text-sm font-medium text-neutral-900 truncate">{user.name}</p>
+                                        <p className="text-xs text-neutral-500 truncate">{user.email}</p>
+                                    </div>
+                                    <Link 
+                                        href="/perfil" 
+                                        className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 hover:text-primary-600"
+                                        onClick={() => setUserMenuOpen(false)}
+                                    >
+                                        Mi Perfil
+                                    </Link>
+                                    <Link 
+                                        href="/favoritos" 
+                                        className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 hover:text-primary-600"
+                                        onClick={() => setUserMenuOpen(false)}
+                                    >
+                                        Mis Favoritos
+                                    </Link>
+                                    <div className="border-t border-neutral-100 my-1"></div>
+                                    <button 
+                                        onClick={() => {
+                                            handleLogout();
+                                            setUserMenuOpen(false);
+                                        }}
+                                        className="w-full text-left block px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                                    >
+                                        Cerrar Sesión
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </div>
               </>
             ) : (
               <>

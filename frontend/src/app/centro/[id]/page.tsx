@@ -47,7 +47,9 @@ export default function CentroDetail() {
     
     useEffect(() => {
         if (favoritos && centro) {
-            setIsFavorite(favoritos.data.some((fav: any) => fav.id === centro.data.id));
+            // Favoritos API returns array directly now
+            const favArray = Array.isArray(favoritos) ? favoritos : favoritos.data || [];
+            setIsFavorite(favArray.some((fav: any) => fav.centro_id === centro.data.id || fav.centro.id === centro.data.id));
         }
     }, [favoritos, centro]);
 

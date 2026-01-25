@@ -9,6 +9,12 @@ use Illuminate\Support\Facades\Route;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
+Route::get('/auth/google/redirect', [AuthController::class, 'redirectToGoogle']);
+Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback']);
+
+Route::post('/forgot-password', [AuthController::class, 'sendResetLinkEmail']);
+Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+
 Route::get('/centros', [CentroController::class, 'index']);
 Route::get('/centros/{id}', [CentroController::class, 'show']);
 Route::get('/centros/{id}/ciclos', [CentroController::class, 'ciclos']);
@@ -19,7 +25,10 @@ Route::get('/ciclos', [CicloFpController::class, 'index']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/user', [AuthController::class, 'user']);
+
+    Route::get('/me', [AuthController::class, 'user']);
+    Route::put('/me', [AuthController::class, 'updateProfile']);
+    Route::put('/me/password', [AuthController::class, 'updatePassword']);
 
     Route::get('/favoritos', [FavoritoController::class, 'index']);
     Route::post('/favoritos/{id}', [FavoritoController::class, 'store']);
