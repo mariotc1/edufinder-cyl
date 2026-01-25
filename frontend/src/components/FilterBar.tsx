@@ -1,0 +1,328 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { Search, MapPin, Building2, SlidersHorizontal, Trash2, X } from 'lucide-react';
+import { FilterOptions } from '@/types';
+
+interface FilterBarProps {
+  onFilterChange: (filters: FilterOptions) => void;
+  isLoading: boolean;
+}
+
+export default function FilterBar({ onFilterChange, isLoading }: FilterBarProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // Inicializar estado desde URL
+  const [filters, setFilters] = useState<FilterOptions>({
+    q: searchParams.get('q') || '',
+    provincia: searchParams.get('provincia') || '',
+    tipo: searchParams.get('tipo') || '',
+    familia: searchParams.get('familia') || '',
+    nivel: searchParams.get('nivel') || '',
+    modalidad: searchParams.get('modalidad') || '',
+    radio: Number(searchParams.get('radio')) || 10,
+    lat: searchParams.get('lat') ? Number(searchParams.get('lat')) : undefined,
+    lng: searchParams.get('lng') ? Number(searchParams.get('lng')) : undefined,
+  });
+
+  const [geolocationStatus, setGeolocationStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+
+  // Recuperar estado geo si hay coordenadas en URL
+  useEffect(() => {
+    if (searchParams.get('lat') && searchParams.get('lng')) {
+      setGeolocationStatus('success');
+    }
+  }, [searchParams]);
+
+  // Sincronizar URL cuando cambian los filtros (con debounce)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams();
+      if (filters.q) params.set('q', filters.q);
+      if (filters.provincia) params.set('provincia', filters.provincia);
+      if (filters.tipo) params.set('tipo', filters.tipo);
+      if (filters.familia) params.set('familia', filters.familia);
+      if (filters.nivel) params.set('nivel', filters.nivel);
+      if (filters.modalidad) params.set('modalidad', filters.modalidad);
+      
+      if (filters.lat && filters.lng) {
+        params.set('lat', filters.lat.toString());
+        params.set('lng', filters.lng.toString());
+        params.set('radio', (filters.radio || 10).toString());
+      }
+
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+      onFilterChange(filters);
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [filters, pathname, router, onFilterChange]);
+
+  const handleChange = (key: keyof FilterOptions, value: any) => {
+    if (key === 'tipo' && value !== 'FP') {
+       setFilters(prev => ({ 
+         ...prev, 
+         [key]: value,
+         familia: '',
+         nivel: '',
+         modalidad: ''
+       }));
+    } else {
+       setFilters(prev => ({ ...prev, [key]: value }));
+    }
+  };
+
+  const handleGeolocation = () => {
+    if (!navigator.geolocation) {
+      alert('Tu navegador no soporta geolocalización');
+      return;
+    }
+
+    setGeolocationStatus('loading');
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setFilters(prev => ({ 
+          ...prev, 
+          lat: latitude, 
+          lng: longitude, 
+          radio: prev.radio || 10 
+        }));
+        setGeolocationStatus('success');
+      },
+      (error) => {
+        console.error(error);
+        setGeolocationStatus('error');
+        alert('No pudimos obtener tu ubicación.');
+      }
+    );
+  };
+
+  const clearGeolocation = () => {
+    setFilters(prev => {
+        const { lat, lng, ...rest } = prev;
+        return rest;
+    });
+    setGeolocationStatus('idle');
+  };
+
+  const clearAll = () => {
+      setFilters({
+        radio: 10
+      });
+      setGeolocationStatus('idle');
+  };
+
+  // Data Selectors
+  const provincias = ['AVILA', 'BURGOS', 'LEON', 'PALENCIA', 'SALAMANCA', 'SEGOVIA', 'SORIA', 'VALLADOLID', 'ZAMORA'];
+  const tiposEnsenanza = [
+    { value: 'FP', label: 'Formación Profesional' },
+    { value: 'ESO', label: 'ESO / Bachillerato' },
+    { value: 'PRIMARIA', label: 'Infantil y Primaria' },
+    { value: 'ESPECIAL', label: 'Educación Especial' },
+  ];
+  const familiasFP = [
+    'ADMINISTRACIÓN Y GESTIÓN', 'INFORMÁTICA Y COMUNICACIONES', 'SANIDAD', 'COMERCIO Y MARKETING', 
+    'ELECTRICIDAD Y ELECTRÓNICA', 'HOTELERÍA Y TURISMO', 'SERVICIOS SOCIOCULTURALES Y A LA COMUNIDAD',
+    'TRANSPORTE Y MANTENIMIENTO DE VEHÍCULOS', 'INSTALACIÓN Y MANTENIMIENTO', 'ACTIVIDADES FÍSICAS Y DEPORTIVAS',
+    'IMAGEN PERSONAL', 'AGRARIA', 'HOSTELERÍA Y TURISMO'
+  ];
+
+  const hasActiveFilters = Object.values(filters).some(val => val !== undefined && val !== '' && val !== 10) || geolocationStatus === 'success';
+
+  return (
+    <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/50 p-6 transition-all hover:shadow-2xl">
+      <div className="flex flex-col gap-6">
+        
+        {/* Top Row: Search & Location */}
+        <div className="flex flex-col md:flex-row gap-4 items-stretch">
+          <div className="flex-grow relative group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400 group-focus-within:text-primary-600 transition-colors" />
+            <input 
+              type="text"
+              placeholder="Buscar por nombre, localidad..." 
+              className="w-full pl-12 pr-4 py-3 rounded-2xl bg-neutral-50 border-2 border-transparent focus:bg-white focus:border-primary-100 focus:ring-4 focus:ring-primary-50 transition-all outline-none font-medium placeholder:text-neutral-400 text-neutral-800"
+              value={filters.q || ''}
+              onChange={(e) => handleChange('q', e.target.value)}
+            />
+          </div>
+          
+          <div className="flex-shrink-0 flex gap-2">
+            {geolocationStatus === 'success' ? (
+               <div className="flex items-center gap-2 bg-primary-50 text-primary-700 px-4 py-2 rounded-2xl border border-primary-100 animate-in fade-in slide-in-from-bottom-2">
+                 <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4" />
+                    <span className="text-sm font-bold">Cerca de mí</span>
+                 </div>
+                 <div className="h-4 w-px bg-primary-200 mx-1"></div>
+                 <button 
+                   onClick={clearGeolocation} 
+                   className="p-1 hover:bg-white rounded-full transition-colors text-primary-400 hover:text-red-500"
+                   title="Desactivar ubicación"
+                 >
+                   <X className="w-4 h-4" />
+                 </button>
+               </div>
+            ) : (
+              <button 
+                onClick={handleGeolocation}
+                disabled={geolocationStatus === 'loading'}
+                className="btn-primary px-6 py-3 rounded-2xl shadow-lg shadow-primary-500/20 hover:shadow-primary-500/30 flex items-center gap-2 whitespace-nowrap"
+              >
+                {geolocationStatus === 'loading' ? (
+                  <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
+                ) : (
+                  <MapPin className="w-4 h-4" />
+                )}
+                <span>Cerca de mí</span>
+              </button>
+            )}
+
+            {/* Clear All Button */}
+            {hasActiveFilters && (
+                <button 
+                    onClick={clearAll}
+                    className="p-3 text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all border border-transparent hover:border-red-100"
+                    title="Limpiar filtros"
+                >
+                    <Trash2 className="w-5 h-5" />
+                </button>
+            )}
+          </div>
+        </div>
+
+        {/* Radius Slider (Conditional) */}
+        {geolocationStatus === 'success' && (
+             <div className="bg-gradient-to-r from-primary-50 to-white p-4 rounded-2xl border border-primary-100/50 flex flex-col sm:flex-row gap-4 items-center animate-in zoom-in-95 duration-200">
+                <div className="flex items-center gap-2 text-primary-700 min-w-[140px]">
+                    <SlidersHorizontal className="w-4 h-4" />
+                    <span className="text-sm font-bold">Radio: {filters.radio} km</span>
+                </div>
+                <div className="flex-grow w-full px-2">
+                    <input 
+                        type="range" 
+                        min="1" 
+                        max="100" 
+                        step="1"
+                        value={filters.radio || 10}
+                        onChange={(e) => handleChange('radio', Number(e.target.value))}
+                        className="w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer accent-primary-600 hover:accent-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                        style={{
+                            backgroundImage: `linear-gradient(to right, var(--primary-500) 0%, var(--primary-500) ${(filters.radio!/100)*100}%, #e5e5e5 ${(filters.radio!/100)*100}%, #e5e5e5 100%)`
+                        }}
+                    />
+                     <div className="flex justify-between text-[10px] font-bold text-neutral-400 mt-1 uppercase tracking-wider">
+                        <span>1 km</span>
+                        <span>50 km</span>
+                        <span>100 km</span>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {/* Filters Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          
+          <div className="space-y-1">
+            <label className="text-xs font-bold text-neutral-500 ml-1 uppercase tracking-wider">Provincia</label>
+            <div className="relative">
+                <select 
+                className="w-full appearance-none bg-neutral-50 border border-neutral-200 text-neutral-700 py-2.5 px-4 pr-8 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-300 transition-all font-medium text-sm"
+                value={filters.provincia || ''}
+                onChange={(e) => handleChange('provincia', e.target.value)}
+                >
+                <option value="">Todas las provincias</option>
+                {provincias.map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-neutral-500">
+                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                </div>
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-bold text-neutral-500 ml-1 uppercase tracking-wider">Tipo</label>
+            <div className="relative">
+                <select 
+                className="w-full appearance-none bg-neutral-50 border border-neutral-200 text-neutral-700 py-2.5 px-4 pr-8 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-300 transition-all font-medium text-sm"
+                value={filters.tipo || ''}
+                onChange={(e) => handleChange('tipo', e.target.value)}
+                >
+                <option value="">Todos los tipos</option>
+                {tiposEnsenanza.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-neutral-500">
+                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                </div>
+            </div>
+          </div>
+
+        </div>
+
+        {/* FP Conditional Filters - Dedicated Row */}
+          {filters.tipo === 'FP' && (
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-4 border-t border-neutral-100 animate-in slide-in-from-top-2 fade-in duration-300">
+               <div className="space-y-1">
+                <label className="text-xs font-bold text-neutral-500 ml-1 uppercase tracking-wider">Familia</label>
+                 <div className="relative">
+                    <select 
+                    className="w-full appearance-none bg-neutral-50 border border-neutral-200 text-neutral-700 py-2.5 px-4 pr-8 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-300 transition-all font-medium text-sm text-ellipsis"
+                    value={filters.familia || ''}
+                    onChange={(e) => handleChange('familia', e.target.value)}
+                    >
+                    <option value="">Todas</option>
+                    {familiasFP.map(f => <option key={f} value={f}>{f}</option>)}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-neutral-500">
+                        <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                    </div>
+                </div>
+              </div>
+
+               <div className="space-y-1">
+                <label className="text-xs font-bold text-neutral-500 ml-1 uppercase tracking-wider">Nivel</label>
+                <div className="relative">
+                    <select 
+                    className="w-full appearance-none bg-neutral-50 border border-neutral-200 text-neutral-700 py-2.5 px-4 pr-8 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-300 transition-all font-medium text-sm"
+                    value={filters.nivel || ''}
+                    onChange={(e) => handleChange('nivel', e.target.value)}
+                    >
+                    <option value="">Todos</option>
+                    <option value="BASICA">FP Básica</option>
+                    <option value="GM">Grado Medio</option>
+                    <option value="GS">Grado Superior</option>
+                    <option value="CE">Curso de Especialización</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-neutral-500">
+                        <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                    </div>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                 <label className="text-xs font-bold text-neutral-500 ml-1 uppercase tracking-wider">Modalidad</label>
+                 <div className="relative">
+                    <select 
+                    className="w-full appearance-none bg-neutral-50 border border-neutral-200 text-neutral-700 py-2.5 px-4 pr-8 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-300 transition-all font-medium text-sm"
+                    value={filters.modalidad || ''}
+                    onChange={(e) => handleChange('modalidad', e.target.value)}
+                    >
+                    <option value="">Todas</option>
+                    <option value="PRESENCIAL">Presencial</option>
+                    <option value="DISTANCIA">Distancia</option>
+                    </select>
+                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-neutral-500">
+                        <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                    </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+      </div>
+    </div>
+  );
+}
