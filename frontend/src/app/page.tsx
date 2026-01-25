@@ -2,24 +2,44 @@
 
 import { useState, useCallback } from 'react';
 import useSWR from 'swr';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { MapPin, Building2, ChevronLeft, ChevronRight, School, BookOpen } from 'lucide-react';
 import { searchCentros } from '@/services/api';
 import { FilterOptions, Centro } from '@/types';
 import FilterBar from '@/components/FilterBar';
 
-export default function Home() {
-  const [filters, setFilters] = useState<FilterOptions>({});
+import { Suspense } from 'react';
+
+function SearchContent() {
+  const searchParams = useSearchParams();
+  
+  // Initialize state from URL params to avoid double-fetch on load
+  const [filters, setFilters] = useState<FilterOptions>({
+    q: searchParams.get('q') || '',
+    provincia: searchParams.get('provincia') || '',
+    tipo: searchParams.get('tipo') || '',
+    familia: searchParams.get('familia') || '',
+    nivel: searchParams.get('nivel') || '',
+    modalidad: searchParams.get('modalidad') || '',
+    radio: searchParams.get('radio') ? Number(searchParams.get('radio')) : undefined,
+    lat: searchParams.get('lat') ? Number(searchParams.get('lat')) : undefined,
+    lng: searchParams.get('lng') ? Number(searchParams.get('lng')) : undefined,
+  });
+
   const [page, setPage] = useState(1);
 
   // SWR key changes when filters or page change
   const swrKey = JSON.stringify({ ...filters, page });
 
-  const { data, error, isLoading } = useSWR(swrKey, () => searchCentros({ ...filters, page }));
+  const { data, error, isLoading } = useSWR(swrKey, () => searchCentros({ ...filters, page }), {
+    keepPreviousData: true,
+    revalidateOnFocus: false
+  });
   
   const handleFilterChange = useCallback((newFilters: FilterOptions) => {
     setFilters(newFilters);
-    setPage(1); // Reset page on filter change
+    setPage(1); 
   }, []);
 
   const getNaturalezaBadge = (naturaleza: string) => {
@@ -32,7 +52,7 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-neutral-50">
+    <>
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-primary-50 via-white to-secondary-50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
@@ -171,6 +191,20 @@ export default function Home() {
           )}
         </div>
       </section>
+    </>
+  );
+}
+
+export default function Home() {
+  return (
+    <div className="flex flex-col min-h-screen bg-neutral-50">
+      <Suspense fallback={
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-200 border-t-primary-600"></div>
+        </div>
+      }>
+        <SearchContent />
+      </Suspense>
     </div>
   );
 }
