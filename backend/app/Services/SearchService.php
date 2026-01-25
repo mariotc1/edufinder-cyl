@@ -70,12 +70,24 @@ class SearchService
                             ->orWhere('codigo_familia', $filters['familia']);
                     }
                     if (!empty($filters['nivel'])) {
-                        $this->applyFPNivelFilter($q, $filters['nivel']);
+                        // Logic inlined to avoid scope issues
+                        $nivel = mb_strtoupper($filters['nivel']);
+                        if ($nivel === 'GM' || $nivel === 'MEDIO') {
+                            $q->where('nivel_educativo', 'ILIKE', '%Grado Medio%');
+                        } elseif ($nivel === 'GS' || $nivel === 'SUPERIOR') {
+                            $q->where('nivel_educativo', 'ILIKE', '%Grado Superior%');
+                        } elseif ($nivel === 'BASICA' || $nivel === 'BASICO') {
+                            $q->where('nivel_educativo', 'ILIKE', '%Grado B%sico%');
+                        } elseif ($nivel === 'CE' || str_contains($nivel, 'ESPECIALIZA')) {
+                            $q->where('nivel_educativo', 'ILIKE', '%Curso Especializa%');
+                        } else {
+                            $q->where('nivel_educativo', 'ILIKE', '%' . $filters['nivel'] . '%');
+                        }
                     }
-                    if (!empty($filters['modalidad'])) { // Presencial, Distancia
+                    if (!empty($filters['modalidad'])) {
                         $q->where('modalidad', 'ILIKE', '%' . $filters['modalidad'] . '%');
                     }
-                    if (!empty($filters['ciclo'])) { // Nombre del ciclo
+                    if (!empty($filters['ciclo'])) {
                         $q->where('ciclo_formativo', 'ILIKE', '%' . $filters['ciclo'] . '%');
                     }
                 });
@@ -83,13 +95,24 @@ class SearchService
                 // Cargar relación para mostrar datos en frontend
                 $query->with([
                     'ciclos' => function ($q) use ($filters) {
-                        // Aplicar los mismos filtros al eager loading para que la respuesta sea limpia
+                        // Aplicar los mismos filtros al eager loading
                         if (!empty($filters['familia'])) {
                             $q->where('familia_profesional', 'ILIKE', '%' . $filters['familia'] . '%')
                                 ->orWhere('codigo_familia', $filters['familia']);
                         }
                         if (!empty($filters['nivel'])) {
-                            $this->applyFPNivelFilter($q, $filters['nivel']);
+                            $nivel = mb_strtoupper($filters['nivel']);
+                            if ($nivel === 'GM' || $nivel === 'MEDIO') {
+                                $q->where('nivel_educativo', 'ILIKE', '%Grado Medio%');
+                            } elseif ($nivel === 'GS' || $nivel === 'SUPERIOR') {
+                                $q->where('nivel_educativo', 'ILIKE', '%Grado Superior%');
+                            } elseif ($nivel === 'BASICA' || $nivel === 'BASICO') {
+                                $q->where('nivel_educativo', 'ILIKE', '%Grado B%sico%');
+                            } elseif ($nivel === 'CE' || str_contains($nivel, 'ESPECIALIZA')) {
+                                $q->where('nivel_educativo', 'ILIKE', '%Curso Especializa%');
+                            } else {
+                                $q->where('nivel_educativo', 'ILIKE', '%' . $filters['nivel'] . '%');
+                            }
                         }
                         if (!empty($filters['modalidad'])) {
                             $q->where('modalidad', 'ILIKE', '%' . $filters['modalidad'] . '%');
@@ -104,7 +127,6 @@ class SearchService
             case 'ESO':
             case 'SECUNDARIA':
             case 'BACHILLERATO':
-                // Generalmente IES o Centros Privados de Secundaria
                 $query->where('denominacion_generica', 'ILIKE', '%SECUNDARIA%');
                 break;
 
@@ -119,27 +141,8 @@ class SearchService
                 break;
 
             default:
-                // Búsqueda genérica por el tipo enviado
                 $query->where('denominacion_generica', 'ILIKE', '%' . $tipo . '%');
                 break;
-        }
-    }
-
-    private function applyFPNivelFilter(Builder $q, string $nivel)
-    {
-        $nivel = strtoupper($nivel);
-        // Mapeo basado en oferta_fp.json
-        if ($nivel === 'GM' || $nivel === 'MEDIO') {
-            $q->where('nivel_educativo', 'ILIKE', '%Grado Medio%');
-        } elseif ($nivel === 'GS' || $nivel === 'SUPERIOR') {
-            $q->where('nivel_educativo', 'ILIKE', '%Grado Superior%');
-        } elseif ($nivel === 'BASICA' || $nivel === 'BASICO') {
-            // Usamos %sico% para evitar problemas de tildes
-            $q->where('nivel_educativo', 'ILIKE', '%Grado B%sico%');
-        } elseif ($nivel === 'CE' || str_contains($nivel, 'ESPECIALIZA')) {
-            $q->where('nivel_educativo', 'ILIKE', '%Curso Especializa%');
-        } else {
-            $q->where('nivel_educativo', 'ILIKE', '%' . $nivel . '%');
         }
     }
 }
