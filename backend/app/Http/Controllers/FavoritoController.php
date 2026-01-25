@@ -3,43 +3,52 @@
 namespace App\Http\Controllers;
 
 use App\Models\Favorito;
-use App\Http\Resources\CentroResource;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class FavoritoController extends Controller
 {
     public function index(Request $request)
     {
-        $user = $request->user();
-        $favoritos = $user->favoritos()->with('centro')->get()->pluck('centro');
-
-        return CentroResource::collection($favoritos);
+        $favoritos = $request->user()->favoritos()->with('centro')->get();
+        return response()->json($favoritos);
     }
 
-    public function store(Request $request, $centro_id)
+    public function store(Request $request, $id)
     {
-        $user = $request->user();
+        // $id is the centro_id
+        $exist = Favorito::where('user_id', $request->user()->id)
+            ->where('centro_id', $id)
+            ->exists();
 
-        // Prevent duplicate
-        $exists = Favorito::where('user_id', $user->id)->where('centro_id', $centro_id)->exists();
-
-        if (!$exists) {
-            Favorito::create([
-                'user_id' => $user->id,
-                'centro_id' => $centro_id
-            ]);
+        if ($exist) {
+            return response()->json(['message' => 'Ya está en favoritos'], 409);
         }
 
-        return response()->json(['message' => 'Centro añadido a favoritos']);
+        $request->user()->favoritos()->create([
+            'centro_id' => $id
+        ]);
+
+        return response()->json(['message' => 'Añadido a favoritos']);
     }
 
-    public function destroy(Request $request, $centro_id)
+    public function destroy(Request $request, $id)
     {
-        $user = $request->user();
+        // $idInTable vs $centroId. 
+        // The route is /favoritos/{id}. Usually this ID matches the record ID.
+        // But user requirement said: "POST /api/favorites/{id}" (implied centro_id)
+        // and "DELETE /api/favorites/{id}".
+        // If I use centro_id for ADD, I should probably use centro_id for DELETE to be consistent?
+        // Or I should use the ID of the favorite record.
+        // Let's assume input ID is centro_id for consistency and ease of use from frontend.
 
-        Favorito::where('user_id', $user->id)->where('centro_id', $centro_id)->delete();
+        $deleted = Favorito::where('user_id', $request->user()->id)
+            ->where('centro_id', $id)
+            ->delete();
 
-        return response()->json(['message' => 'Centro eliminado de favoritos']);
+        if ($deleted) {
+            return response()->json(['message' => 'Eliminado de favoritos']);
+        }
+
+        return response()->json(['message' => 'No encontrado'], 404);
     }
 }
