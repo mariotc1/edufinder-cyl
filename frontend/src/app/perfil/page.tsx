@@ -60,17 +60,7 @@ export default function Profile() {
         e.preventDefault();
         setMessage(null);
         try {
-            const formData = new FormData();
-            formData.append('name', name);
-            formData.append('_method', 'PUT'); // Laravel method spoofing for file upload in POST/PUT
-            
-            // Note: For file upload to work with PUT in Laravel, sometimes allows standard POST with _method=PUT
-            // But api.put might send JSON. For file upload we need FormData.
-            // Let's use api.post with _method=PUT for FormData
-            
-            const res = await api.post('/me', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
+            const res = await api.put('/me', { name });
 
             setUser(res.data.user);
             // Update local storage if needed
@@ -78,39 +68,13 @@ export default function Profile() {
             localStorage.setItem('user', JSON.stringify({ ...stored, ...res.data.user }));
             
             setMessage({ text: 'Perfil actualizado correctamente', type: 'success' });
+            // window.location.reload(); // Optional, to refresh navbar
         } catch (error) {
             setMessage({ text: 'Error al actualizar perfil', type: 'error' });
         }
     };
 
-    const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.files || !e.target.files[0]) return;
-        const file = e.target.files[0];
-        
-        setUploading(true);
-        setMessage(null);
 
-        try {
-            const formData = new FormData();
-            formData.append('foto_perfil', file);
-            formData.append('name', name);
-            formData.append('_method', 'PUT');
-
-            const res = await api.post('/me', formData, {
-                 headers: { 'Content-Type': 'multipart/form-data' }
-            });
-
-            setUser(res.data.user);
-            const stored = JSON.parse(localStorage.getItem('user') || '{}');
-            localStorage.setItem('user', JSON.stringify({ ...stored, ...res.data.user }));
-             // Trigger Navbar update event or reload
-             window.location.reload(); 
-        } catch (error) {
-            setMessage({ text: 'Error al subir imagen', type: 'error' });
-        } finally {
-            setUploading(false);
-        }
-    };
 
     const handleUpdatePassword = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -176,10 +140,6 @@ export default function Profile() {
                                             {user?.name?.charAt(0)}
                                         </div>
                                     )}
-                                    <label className="absolute bottom-0 right-0 p-1 bg-white rounded-full shadow-md cursor-pointer hover:bg-gray-50">
-                                        <Camera className="w-4 h-4 text-gray-600" />
-                                        <input type="file" className="hidden" accept="image/*" onChange={handlePhotoUpload} disabled={uploading} />
-                                    </label>
                                 </div>
                                 <h2 className="mt-4 text-xl font-bold text-gray-900">{user?.name}</h2>
                                 <p className="text-sm text-gray-500">{user?.email}</p>

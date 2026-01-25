@@ -83,13 +83,19 @@ class AuthController extends Controller
 
     public function redirectToGoogle()
     {
-        return \Laravel\Socialite\Facades\Socialite::driver('google')->stateless()->redirect();
+        /** @var \Laravel\Socialite\Two\GoogleProvider $driver */
+        $driver = \Laravel\Socialite\Facades\Socialite::driver('google');
+
+        return $driver->stateless()->redirect();
     }
 
     public function handleGoogleCallback()
     {
         try {
-            $googleUser = \Laravel\Socialite\Facades\Socialite::driver('google')->stateless()->user();
+            /** @var \Laravel\Socialite\Two\GoogleProvider $driver */
+            $driver = \Laravel\Socialite\Facades\Socialite::driver('google');
+
+            $googleUser = $driver->stateless()->user();
 
             $user = User::where('email', $googleUser->getEmail())->first();
 
@@ -125,22 +131,11 @@ class AuthController extends Controller
 
         $request->validate([
             'name' => 'required|string|max:255',
-            'foto_perfil' => 'nullable', // string or file
             'ubicacion_lat' => 'nullable|numeric',
             'ubicacion_lon' => 'nullable|numeric',
         ]);
 
-        $data = $request->only(['name', 'ubicacion_lat', 'ubicacion_lon']);
-
-        if ($request->hasFile('foto_perfil')) {
-            $path = $request->file('foto_perfil')->store('avatars', 'public');
-            $data['foto_perfil'] = '/storage/' . $path; // standard laravel storage link
-        } elseif ($request->foto_perfil && is_string($request->foto_perfil)) {
-            // If it's a string (e.g. google url), allow it
-            $data['foto_perfil'] = $request->foto_perfil;
-        }
-
-        $user->update($data);
+        $user->update($request->only(['name', 'ubicacion_lat', 'ubicacion_lon']));
 
         return response()->json(['message' => 'Perfil actualizado', 'user' => $user]);
     }
