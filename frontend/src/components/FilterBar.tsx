@@ -253,7 +253,6 @@ export default function FilterBar({ onFilterChange, isLoading }: FilterBarProps)
                   <option value="">Todas</option>
                   <option value="PRESENCIAL">Presencial</option>
                   <option value="DISTANCIA">Distancia</option>
-                  <option value="DUAL">Dual</option>
                 </select>
               </div>
             </>
