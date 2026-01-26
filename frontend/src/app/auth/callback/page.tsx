@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import api from '@/lib/axios';
 
-export default function AuthCallback() {
+function AuthCallbackContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -33,5 +33,13 @@ export default function AuthCallback() {
                 <p className="mt-4 text-gray-600">Autenticando...</p>
             </div>
         </div>
+    );
+}
+
+export default function AuthCallback() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-50">Cargando...</div>}>
+            <AuthCallbackContent />
+        </Suspense>
     );
 }
