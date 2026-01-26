@@ -1,7 +1,6 @@
 import Link from 'next/link';
-import { MapPin, Building2, BookOpen, ArrowRight, ChevronDown, ChevronUp } from 'lucide-react';
+import { MapPin, Building2, BookOpen, ArrowRight } from 'lucide-react';
 import { Centro } from '@/types';
-import { useState } from 'react';
 
 interface CentroCardProps {
   centro: Centro;
@@ -9,8 +8,6 @@ interface CentroCardProps {
 }
 
 export default function CentroCard({ centro, index }: CentroCardProps) {
-  const [expanded, setExpanded] = useState(false);
-
   const getNaturalezaBadge = (naturaleza: string) => {
     switch (naturaleza?.toUpperCase()) {
       case 'PÚBLICO': return 'bg-blue-50 text-blue-700 border-blue-200 ring-1 ring-blue-100';
@@ -47,8 +44,6 @@ export default function CentroCard({ centro, index }: CentroCardProps) {
     }
   };
 
-  const cyclesToShow = expanded ? centro.ciclos : centro.ciclos?.slice(0, 2);
-
   return (
     <div 
       className="group relative bg-white rounded-xl overflow-hidden border border-neutral-200 shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-1 hover:border-[#223945] transition-all duration-300 flex flex-col h-full animate-fade-in-up"
@@ -72,18 +67,18 @@ export default function CentroCard({ centro, index }: CentroCardProps) {
           )}
         </div>
         
-        {/* Title - polished typography */}
-        <h3 className="text-lg font-bold text-[#111827] mb-3 group-hover:text-[#223945] transition-colors line-clamp-2 md:min-h-[3.2rem] tracking-tight leading-snug">
+        {/* Title - polished typography with fixed height for alignment */}
+        <h3 className="text-lg font-bold text-[#111827] mb-3 group-hover:text-[#223945] transition-colors line-clamp-2 min-h-[3.5rem] tracking-tight leading-snug">
           {centro.nombre}
         </h3>
         
-        {/* Info Icons - more refined spacing */}
-        <div className="space-y-2.5 mb-5 flex-grow">
+        {/* Info Icons - fixed height for alignment */}
+        <div className="space-y-2.5 mb-5 flex-grow min-h-[4.5rem]">
           <div className="flex items-start gap-2.5 text-neutral-600 group/item">
             <div className="p-1.5 bg-neutral-50 rounded-md shrink-0 mt-0.5 group-hover/item:bg-[#223945]/10 transition-colors">
               <MapPin className="w-3.5 h-3.5 text-neutral-400 group-hover/item:text-[#223945] transition-colors" />
             </div>
-            <p className="text-sm leading-relaxed">
+            <p className="text-sm leading-relaxed line-clamp-2">
               <span className="font-bold text-[#223945] block text-[10px] uppercase tracking-wider mb-0.5 opacity-80">Ubicación</span>
               {centro.localidad} <span className="text-neutral-400">({centro.provincia})</span>
             </p>
@@ -93,24 +88,27 @@ export default function CentroCard({ centro, index }: CentroCardProps) {
              <div className="p-1.5 bg-neutral-50 rounded-md shrink-0 mt-0.5 group-hover/item:bg-[#223945]/10 transition-colors">
               <Building2 className="w-3.5 h-3.5 text-neutral-400 group-hover/item:text-[#223945] transition-colors" />
             </div>
-            <p className="text-sm leading-relaxed">
+            {/* Removed line-clamp-1 to allow text to show fully, or increased clamp limit if needed */}
+            <p className="text-sm leading-relaxed line-clamp-2">
               <span className="font-bold text-[#223945] block text-[10px] uppercase tracking-wider mb-0.5 opacity-80">Tipo</span>
               {centro.denominacion_generica}
             </p>
           </div>
         </div>
 
-        {/* Highlighted Offer (Ciclos) - enhanced visual hierarchy */}
+        {/* Highlighted Offer (Ciclos) - enhanced visual hierarchy - STATIC HEIGHT SCROLLABLE */}
         {centro.ciclos && centro.ciclos.length > 0 ? (
-          <div className="mt-2 pt-3 border-t border-neutral-100">
+          <div className="mt-auto pt-3 border-t border-neutral-100">
              <div className="flex items-center gap-2 mb-2.5">
                 <div className="p-1 bg-[#223945]/10 rounded text-[#223945]">
                   <BookOpen className="w-3 h-3" />
                 </div>
                 <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Oferta destacada</span>
              </div>
-             <div className="space-y-1.5">
-                {cyclesToShow?.map((ciclo, idx) => (
+             
+             {/* Static height scrollable container */}
+             <div className="space-y-1.5 max-h-[100px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-neutral-200 scrollbar-track-transparent">
+                {centro.ciclos.map((ciclo, idx) => (
                   <div key={idx} className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded-md border shadow-sm transition-colors animate-fade-in-up ${getLevelBackground(ciclo.nivel_educativo)}`}>
                     <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${getLevelDotColor(ciclo.nivel_educativo)}`}></div>
                     <span className="truncate flex-1 font-medium text-neutral-800 text-[11px]">{ciclo.ciclo_formativo}</span>
@@ -120,25 +118,9 @@ export default function CentroCard({ centro, index }: CentroCardProps) {
                   </div>
                 ))}
              </div>
-             
-             {centro.ciclos.length > 2 && (
-               <button 
-                 onClick={(e) => {
-                   e.preventDefault();
-                   setExpanded(!expanded);
-                 }}
-                 className="text-[11px] text-[#223945] font-bold mt-2 pl-1 hover:underline cursor-pointer flex items-center gap-1 group/more bg-transparent border-0 p-0"
-               >
-                 {expanded ? 'Ver menos' : `Ver ${centro.ciclos.length - 2} más`}
-                 {expanded ? 
-                   <ChevronUp className="w-3 h-3 group-hover/more:-translate-y-0.5 transition-transform" /> : 
-                   <ChevronDown className="w-3 h-3 group-hover/more:translate-y-0.5 transition-transform" />
-                 }
-               </button>
-             )}
           </div>
         ) : (
-          <div className="mt-auto"></div>
+          <div className="mt-auto min-h-[4rem]"></div>
         )}
       </div>
 
