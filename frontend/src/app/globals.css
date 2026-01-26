@@ -219,3 +219,8 @@ a, button {
 .animate-fade-in-up {
   animation: fadeInUp 0.5s ease-out forwards;
 }
+
+/* Global Utilities */
+.bg-brand-gradient {
+  @apply bg-gradient-to-b from-blue-100 via-white to-blue-50;
+}

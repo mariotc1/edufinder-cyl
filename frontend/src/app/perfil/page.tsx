@@ -125,7 +125,7 @@ export default function Profile() {
     if (loading) return <div className="p-8 text-center">Cargando...</div>;
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-blue-100 via-white to-blue-50 pt-28 pb-12 px-4 sm:px-6"> 
+        <div className="min-h-screen bg-brand-gradient pt-28 pb-12 px-4 sm:px-6"> 
             <div className="max-w-5xl mx-auto">
                 {/* Main Profile Card */}
                 <div className="relative bg-white/90 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/50 overflow-hidden">
