@@ -254,8 +254,8 @@ export default function CentroDetail() {
                     {/* Right Column: Refined Map & Directions - Sticky */}
                     <div className="lg:col-span-5 relative">
                          <div className="sticky top-28 space-y-4">
-                            {/* Map Card - ENLARGED to 600px */}
-                            <div className="bg-white rounded-2xl shadow-xl shadow-neutral-200/40 border border-neutral-100 overflow-hidden h-[600px] relative group z-0">
+                            {/* Map Card - ENLARGED to 600px -> Reduced to 500px for alignment */}
+                            <div className="bg-white rounded-2xl shadow-xl shadow-neutral-200/40 border border-neutral-100 overflow-hidden h-[500px] relative group z-0">
                                 {c.latitud && c.longitud ? (
                                     <>
                                         <div className="absolute inset-0 z-0">
