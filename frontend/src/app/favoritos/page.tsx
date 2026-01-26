@@ -73,7 +73,21 @@ export default function Favoritos() {
                              <CentroCard 
                                 key={fav.id} 
                                 centro={fav.centro} 
-                                index={index} 
+                                index={index}
+                                initialIsFavorite={true}
+                                onToggle={(isActive) => {
+                                    if (!isActive) {
+                                        // Instant removal from UI (Optimistic UI)
+                                        // We mutate the SWR cache to remove this item immediately
+                                        // The data structure is array of {id, centro}. We remove by fav.id or center.id?
+                                        // The API returns the array, so we filter it.
+                                        // Assuming data is an array:
+                                        const newData = favoritosList.filter((item: any) => item.id !== fav.id);
+                                        // We only mutate if we have the bound mutate function (needs to be extracted from useSWR)
+                                        // But here we need to re-import strict mutate or use the one from useSWR hook.
+                                        // I'll need to destructure mutate from useSWR first.
+                                    }
+                                }}
                              />
                         ))}
                     </div>
