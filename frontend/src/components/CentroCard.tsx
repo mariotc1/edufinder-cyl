@@ -51,11 +51,11 @@ export default function CentroCard({ centro, index }: CentroCardProps) {
 
   return (
     <div 
-      className="group relative bg-white rounded-xl overflow-hidden border border-neutral-200 shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-1 transition-all duration-300 flex flex-col h-full animate-fade-in-up"
+      className="group relative bg-white rounded-xl overflow-hidden border border-neutral-200 shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-1 hover:border-[#223945] transition-all duration-300 flex flex-col h-full animate-fade-in-up"
       style={{ animationDelay: `${index * 100}ms` }}
     >
       {/* Decorative top border/gradient */}
-      <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary-600 via-primary-500 to-primary-300"></div>
+      <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-primary-500 to-primary-300"></div>
 
       <div className="p-6 flex-grow flex flex-col">
         {/* Header Section */}
@@ -65,7 +65,7 @@ export default function CentroCard({ centro, index }: CentroCardProps) {
           </span>
           
           {centro.distancia !== undefined && (
-            <span className="flex items-center gap-1.5 text-xs font-bold text-primary-700 bg-primary-50 px-3 py-1 rounded-full border border-primary-100 group-hover:bg-primary-100 transition-colors">
+            <span className="flex items-center gap-1.5 text-xs font-bold text-[#223945] bg-primary-50 px-3 py-1 rounded-full border border-primary-100 group-hover:bg-[#223945]/10 transition-colors">
               <MapPin className="w-3.5 h-3.5" />
               {parseFloat(centro.distancia.toString()).toFixed(1)} km
             </span>
@@ -73,15 +73,15 @@ export default function CentroCard({ centro, index }: CentroCardProps) {
         </div>
         
         {/* Title - polished typography */}
-        <h3 className="text-xl font-bold text-neutral-900 mb-4 group-hover:text-primary-700 transition-colors line-clamp-2 md:min-h-[3.5rem] tracking-tight leading-snug">
+        <h3 className="text-xl font-bold text-neutral-900 mb-4 group-hover:text-[#223945] transition-colors line-clamp-2 md:min-h-[3.5rem] tracking-tight leading-snug">
           {centro.nombre}
         </h3>
         
         {/* Info Icons - more refined spacing */}
         <div className="space-y-3 mb-6 flex-grow">
           <div className="flex items-start gap-3 text-neutral-600 group/item">
-            <div className="p-1.5 bg-neutral-50 rounded-md shrink-0 mt-0.5 group-hover/item:bg-primary-50 transition-colors">
-              <MapPin className="w-3.5 h-3.5 text-neutral-400 group-hover/item:text-primary-600 transition-colors" />
+            <div className="p-1.5 bg-neutral-50 rounded-md shrink-0 mt-0.5 group-hover/item:bg-[#223945]/10 transition-colors">
+              <MapPin className="w-3.5 h-3.5 text-neutral-400 group-hover/item:text-[#223945] transition-colors" />
             </div>
             <p className="text-sm leading-relaxed">
               <span className="font-semibold text-neutral-900 block text-[10px] uppercase tracking-wider mb-0.5 text-neutral-400">Ubicación</span>
@@ -90,8 +90,8 @@ export default function CentroCard({ centro, index }: CentroCardProps) {
           </div>
           
           <div className="flex items-start gap-3 text-neutral-600 group/item">
-             <div className="p-1.5 bg-neutral-50 rounded-md shrink-0 mt-0.5 group-hover/item:bg-primary-50 transition-colors">
-              <Building2 className="w-3.5 h-3.5 text-neutral-400 group-hover/item:text-primary-600 transition-colors" />
+             <div className="p-1.5 bg-neutral-50 rounded-md shrink-0 mt-0.5 group-hover/item:bg-[#223945]/10 transition-colors">
+              <Building2 className="w-3.5 h-3.5 text-neutral-400 group-hover/item:text-[#223945] transition-colors" />
             </div>
             <p className="text-sm leading-relaxed">
               <span className="font-semibold text-neutral-900 block text-[10px] uppercase tracking-wider mb-0.5 text-neutral-400">Tipo</span>
@@ -112,6 +112,7 @@ export default function CentroCard({ centro, index }: CentroCardProps) {
              <div className="space-y-2">
                 {cyclesToShow?.map((ciclo, idx) => (
                   <div key={idx} className={`flex items-center gap-2 text-xs px-2.5 py-2 rounded-md border shadow-sm transition-colors animate-fade-in-up ${getLevelBackground(ciclo.nivel_educativo)}`}>
+                    <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${getLevelDotColor(ciclo.nivel_educativo)}`}></div>
                     <span className="truncate flex-1 font-medium text-neutral-800">{ciclo.ciclo_formativo}</span>
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${getLevelColor(ciclo.nivel_educativo)}`}>
                       {ciclo.nivel_educativo === 'Grado Superior' ? 'GS' : (ciclo.nivel_educativo === 'Grado Medio' ? 'GM' : 'FPB')}
@@ -126,7 +127,7 @@ export default function CentroCard({ centro, index }: CentroCardProps) {
                    e.preventDefault();
                    setExpanded(!expanded);
                  }}
-                 className="text-xs text-primary-600 font-semibold mt-3 pl-1 hover:underline cursor-pointer flex items-center gap-1 group/more bg-transparent border-0 p-0"
+                 className="text-xs text-[#223945] font-semibold mt-3 pl-1 hover:underline cursor-pointer flex items-center gap-1 group/more bg-transparent border-0 p-0"
                >
                  {expanded ? 'Ver menos' : `Ver ${centro.ciclos.length - 2} más`}
                  {expanded ? 
@@ -145,7 +146,7 @@ export default function CentroCard({ centro, index }: CentroCardProps) {
       <div className="p-4 bg-neutral-50/50 border-t border-neutral-100 group-hover:bg-white transition-colors">
         <Link 
           href={`/centro/${centro.id}`} 
-          className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-sm font-bold text-primary-700 bg-white border border-neutral-200/80 shadow-sm hover:bg-primary-600 hover:text-white hover:border-primary-600 hover:shadow-md transition-all duration-200"
+          className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-sm font-bold text-[#223945] bg-white border border-neutral-200/80 shadow-sm hover:bg-[#223945] hover:text-white hover:border-[#223945] hover:shadow-md transition-all duration-200"
         >
           Ver ficha completa
           <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
