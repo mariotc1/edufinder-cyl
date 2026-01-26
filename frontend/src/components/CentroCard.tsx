@@ -20,6 +20,33 @@ export default function CentroCard({ centro, index }: CentroCardProps) {
     }
   };
 
+  const getLevelColor = (nivel: string) => {
+    switch (nivel?.toUpperCase()) {
+      case 'GRADO SUPERIOR': return 'bg-purple-600 text-white border-purple-600 shadow-sm';
+      case 'GRADO MEDIO': return 'bg-amber-500 text-white border-amber-500 shadow-sm';
+      case 'FP BÁSICA': return 'bg-blue-600 text-white border-blue-600 shadow-sm';
+      default: return 'bg-neutral-600 text-white border-neutral-600';
+    }
+  };
+
+  const getLevelBackground = (nivel: string) => {
+     switch (nivel?.toUpperCase()) {
+      case 'GRADO SUPERIOR': return 'bg-purple-50 border-purple-100 group-hover:border-purple-200';
+      case 'GRADO MEDIO': return 'bg-amber-50 border-amber-100 group-hover:border-amber-200';
+      case 'FP BÁSICA': return 'bg-blue-50 border-blue-100 group-hover:border-blue-200';
+      default: return 'bg-neutral-50 border-neutral-100';
+    }
+  };
+
+  const getLevelDotColor = (nivel: string) => {
+    switch (nivel?.toUpperCase()) {
+      case 'GRADO SUPERIOR': return 'bg-white/80';
+      case 'GRADO MEDIO': return 'bg-white/80';
+      case 'FP BÁSICA': return 'bg-white/80';
+      default: return 'bg-neutral-400';
+    }
+  };
+
   const cyclesToShow = expanded ? centro.ciclos : centro.ciclos?.slice(0, 2);
 
   return (
@@ -84,10 +111,11 @@ export default function CentroCard({ centro, index }: CentroCardProps) {
              </div>
              <div className="space-y-2">
                 {cyclesToShow?.map((ciclo, idx) => (
-                  <div key={idx} className="flex items-center gap-2 text-xs text-neutral-700 bg-white px-2.5 py-2 rounded-md border border-neutral-100 shadow-sm hover:border-primary-200 transition-colors animate-fade-in-up">
-                    <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${ciclo.nivel_educativo === 'Grado Superior' ? 'bg-purple-500' : 'bg-secondary-500'}`}></div>
-                    <span className="truncate flex-1 font-medium">{ciclo.ciclo_formativo}</span>
-                    <span className="text-[10px] font-bold text-neutral-400 bg-neutral-50 px-1.5 py-0.5 rounded border border-neutral-100">{ciclo.nivel_educativo === 'Grado Superior' ? 'GS' : (ciclo.nivel_educativo === 'Grado Medio' ? 'GM' : 'FPB')}</span>
+                  <div key={idx} className={`flex items-center gap-2 text-xs px-2.5 py-2 rounded-md border shadow-sm transition-colors animate-fade-in-up ${getLevelBackground(ciclo.nivel_educativo)}`}>
+                    <span className="truncate flex-1 font-medium text-neutral-800">{ciclo.ciclo_formativo}</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${getLevelColor(ciclo.nivel_educativo)}`}>
+                      {ciclo.nivel_educativo === 'Grado Superior' ? 'GS' : (ciclo.nivel_educativo === 'Grado Medio' ? 'GM' : 'FPB')}
+                    </span>
                   </div>
                 ))}
              </div>
