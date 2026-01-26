@@ -22,3 +22,13 @@ export const searchCentros = async (filters: FilterOptions) => {
   const response = await axios.get(`/busqueda?${params.toString()}`);
   return response.data;
 };
+
+export const addFavorite = async (centroId: number) => {
+  const response = await axios.post(`/favoritos/${centroId}`);
+  return response.data;
+};
+
+export const removeFavorite = async (centroId: number) => {
+  const response = await axios.delete(`/favoritos/${centroId}`);
+  return response.data;
+};

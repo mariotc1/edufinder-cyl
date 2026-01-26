@@ -51,7 +51,34 @@ function SearchContent() {
     keepPreviousData: true,
     revalidateOnFocus: false
   });
+
+  // Fetch Favorites to check status
+  // We use the same key as the favorites page so it shares cache
+  const { data: favoritesData } = useSWR('/favoritos', async (url) => {
+      // Small inline fetcher or import logic. Importing to keep it clean would be better but inline is ok here.
+      // We import 'api' if we need it, but current file imports 'searchCentros'.
+      // I'll need to use api instance.
+      // Let's rely on standard fetch or import api.
+      // Actually 'searchCentros' is from api.ts, which uses axios instance. 
+      // I'll import 'api' from lib/axios to be safe or add getFavorites to api.ts.
+      // Since I can't easily edit api.ts and page.tsx at same time cleanly without failure risk,
+      // I'll assume I can import default api from lib/axios. 
+      // Wait, 'api' is not imported in page.tsx. I need to add it.
+      // OR I can use a simpler approach: define fetcher in page.tsx or import it?
+      // For now I'll just use a try/catch with the imported searchCentros... no that's wrong.
+      // I will add 'import api from "@/lib/axios"' to top of file
+      return (await import('@/lib/axios')).default.get(url).then(res => res.data);
+  }, {
+      shouldRetryOnError: false, // If 401 (not logged in), don't retry loop
+      errorRetryCount: 0
+  });
   
+  const favoriteIds = new Set(
+      Array.isArray(favoritesData) 
+      ? favoritesData.map((f: any) => f.centro.id) 
+      : (favoritesData?.data ? favoritesData.data.map((f: any) => f.centro.id) : [])
+  );
+
   const handleFilterChange = useCallback((newFilters: FilterOptions) => {
     setFilters(newFilters);
     setPage(1); 
@@ -109,7 +136,12 @@ function SearchContent() {
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {data?.data?.map((centro: Centro, index: number) => (
-                  <CentroCard key={centro.id} centro={centro} index={index} />
+                  <CentroCard 
+                      key={centro.id} 
+                      centro={centro} 
+                      index={index} 
+                      initialIsFavorite={favoriteIds.has(centro.id)}
+                  />
                 ))}
               </div>
 

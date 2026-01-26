@@ -1,13 +1,52 @@
 import Link from 'next/link';
-import { MapPin, Building2, BookOpen, ArrowRight } from 'lucide-react';
+import { MapPin, Building2, BookOpen, ArrowRight, Heart } from 'lucide-react';
 import { Centro } from '@/types';
+import { useState, useEffect } from 'react';
+import { addFavorite, removeFavorite } from '@/services/api';
 
 interface CentroCardProps {
   centro: Centro;
   index: number;
+  initialIsFavorite?: boolean;
+  onToggle?: (newStatus: boolean) => void;
 }
 
-export default function CentroCard({ centro, index }: CentroCardProps) {
+export default function CentroCard({ centro, index, initialIsFavorite = false, onToggle }: CentroCardProps) {
+  const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
+  const [loading, setLoading] = useState(false);
+
+  // Sync state with prop if it changes (important for async data loading in parent)
+  useEffect(() => {
+    setIsFavorite(initialIsFavorite);
+  }, [initialIsFavorite]);
+
+  const handleToggleFavorite = async (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent Link navigation
+    e.stopPropagation();
+    
+    if (loading) return;
+    
+    // Optimistic update
+    const newStatus = !isFavorite;
+    setIsFavorite(newStatus);
+    if (onToggle) onToggle(newStatus);
+
+    setLoading(true);
+    try {
+      if (newStatus) {
+        await addFavorite(centro.id);
+      } else {
+        await removeFavorite(centro.id);
+      }
+    } catch (error) {
+      // Revert on error
+      setIsFavorite(!newStatus);
+      if (onToggle) onToggle(!newStatus);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getNaturalezaBadge = (naturaleza: string) => {
     switch (naturaleza?.toUpperCase()) {
       case 'PÚBLICO': return 'bg-blue-50 text-blue-700 border-blue-200 ring-1 ring-blue-100';
@@ -52,15 +91,25 @@ export default function CentroCard({ centro, index }: CentroCardProps) {
       {/* Decorative top border/gradient */}
       <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-primary-500 to-primary-300"></div>
 
+      {/* Favorite Button - Absolute Position - SMALLER PADDING (p-1.5) and ICON (w-4 h-4) */}
+      <button 
+        onClick={handleToggleFavorite}
+        className="absolute top-4 right-4 z-20 p-1.5 rounded-full bg-white/90 backdrop-blur-sm shadow-sm border border-neutral-100 hover:bg-red-50 hover:scale-110 active:scale-95 transition-all group/heart"
+      >
+        <Heart 
+          className={`w-4 h-4 transition-colors ${isFavorite ? 'fill-red-500 text-red-500' : 'text-neutral-400 group-hover/heart:text-red-500'}`} 
+        />
+      </button>
+
       <div className="p-5 flex-grow flex flex-col">
         {/* Header Section */}
-        <div className="flex justify-between items-start mb-3">
+        <div className="flex justify-start items-center gap-2 mb-3 pr-8">
           <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase border ${getNaturalezaBadge(centro.naturaleza)}`}>
             {centro.naturaleza || 'Otro'}
           </span>
           
           {centro.distancia !== undefined && (
-            <span className="flex items-center gap-1 text-[11px] font-bold text-white bg-[#223945] px-2.5 py-0.5 rounded-full shadow-sm">
+            <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase text-white bg-[#223945] shadow-sm">
               <MapPin className="w-3 h-3" />
               {parseFloat(centro.distancia.toString()).toFixed(1)} km
             </span>

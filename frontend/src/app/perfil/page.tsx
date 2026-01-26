@@ -2,8 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import api from '@/lib/axios';
-import { User, MapPin, Heart, Lock, Camera, LogOut, Eye, EyeOff } from 'lucide-react';
+import { User, MapPin, Heart, Lock, Camera, LogOut, Eye, EyeOff, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import CentroCard from '@/components/CentroCard';
+import { Centro } from '@/types';
 
 interface UserData {
     name: string;
@@ -15,12 +18,7 @@ interface UserData {
 
 interface Favorito {
     id: number;
-    centro: {
-        id: number;
-        nombre: string;
-        direccion?: string;
-        // Add other properties as needed
-    };
+    centro: Centro;
 }
 
 export default function Profile() {
@@ -447,32 +445,54 @@ export default function Profile() {
                             )}
 
                             {activeTab === 'favorites' && (
-                                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                    <div className="mb-6">
+                                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-6">
+                                    <div className="mb-6 sticky top-0 bg-white/95 backdrop-blur-sm py-2 z-10 border-b border-transparent">
                                         <h3 className="text-2xl font-bold text-[#223945]">Mis Favoritos</h3>
                                         <p className="text-neutral-500 text-sm mt-1">Centros que has guardado para consultar más tarde.</p>
                                     </div>
 
                                     {favoritos.length > 0 ? (
-                                        <div className="grid gap-4">
+                                        <div className="space-y-3">
                                             {favoritos.map(fav => (
-                                                <div key={fav.id} className="group flex items-center justify-between p-5 bg-white border border-neutral-100 rounded-2xl shadow-sm hover:shadow-md hover:border-blue-100 transition-all">
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="bg-blue-50 p-3 rounded-xl text-blue-600 group-hover:bg-[#223945] group-hover:text-white transition-colors">
-                                                            <Heart className="w-5 h-5 fill-current" />
-                                                        </div>
-                                                        <div>
-                                                            <h4 className="font-bold text-neutral-900 group-hover:text-[#223945] transition-colors">{fav.centro.nombre}</h4>
-                                                            <p className="text-sm text-neutral-500">{fav.centro.direccion}</p>
-                                                        </div>
-                                                    </div>
-                                                    <a 
-                                                        href={`/mapa?centro=${fav.centro.id}`} 
-                                                        className="flex items-center gap-2 px-4 py-2 bg-[#223945] text-white rounded-lg text-sm font-bold shadow hover:shadow-lg hover:-translate-y-0.5 transition-all"
+                                                <div key={fav.id} className="group relative flex items-center gap-4 p-4 bg-white border border-neutral-100 rounded-xl shadow-sm hover:shadow-md hover:border-[#223945]/20 hover:-translate-y-0.5 transition-all">
+                                                    
+                                                    {/* Interactive Heart Button - Left */}
+                                                    <button 
+                                                        onClick={async (e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation(); // Stop click from triggering link
+                                                            // Optimistic update
+                                                            setFavoritos(prev => prev.filter(item => item.id !== fav.id));
+                                                            try {
+                                                                await api.delete(`/favoritos/${fav.centro.id}`);
+                                                            } catch (error) {
+                                                                console.error("Failed to remove favorite");
+                                                            }
+                                                        }}
+                                                        className="relative z-20 shrink-0 p-2.5 rounded-full bg-red-50 text-red-500 hover:bg-red-100 hover:scale-110 active:scale-95 transition-all"
+                                                        title="Eliminar de favoritos"
                                                     >
-                                                        <MapPin className="w-4 h-4" />
-                                                        Localizar
-                                                    </a>
+                                                        <Heart className="w-5 h-5 fill-current" />
+                                                    </button>
+
+                                                    {/* Main Content Payload - Clickable Link */}
+                                                    <Link 
+                                                        href={`/centro/${fav.centro.id}`}
+                                                        className="flex-grow flex items-center justify-between group/link min-w-0"
+                                                    >
+                                                        <div className="min-w-0 pr-4">
+                                                            <h4 className="font-bold text-neutral-900 group-hover/link:text-[#223945] transition-colors truncate text-base">{fav.centro.nombre}</h4>
+                                                            <p className="text-xs text-neutral-500 font-medium truncate flex items-center gap-1 mt-0.5">
+                                                                <MapPin className="w-3 h-3" />
+                                                                {fav.centro.direccion || 'Dirección no disponible'}
+                                                            </p>
+                                                        </div>
+
+                                                        {/* Minimalist Arrow */}
+                                                        <div className="shrink-0 text-neutral-300 group-hover:text-[#223945] transition-colors">
+                                                            <ChevronRight className="w-5 h-5" />
+                                                        </div>
+                                                    </Link>
                                                 </div>
                                             ))}
                                         </div>
