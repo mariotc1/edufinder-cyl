@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { MapPin, Building2, BookOpen, ArrowRight, Heart } from 'lucide-react';
 import { Centro } from '@/types';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toggleFavorite } from '@/services/api';
 
 interface CentroCardProps {
@@ -14,6 +14,11 @@ interface CentroCardProps {
 export default function CentroCard({ centro, index, initialIsFavorite = false, onToggle }: CentroCardProps) {
   const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
   const [loading, setLoading] = useState(false);
+
+  // Sync state with prop if it changes (important for async data loading in parent)
+  useEffect(() => {
+    setIsFavorite(initialIsFavorite);
+  }, [initialIsFavorite]);
 
   const handleToggleFavorite = async (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent Link navigation
@@ -82,13 +87,13 @@ export default function CentroCard({ centro, index, initialIsFavorite = false, o
       {/* Decorative top border/gradient */}
       <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-primary-500 to-primary-300"></div>
 
-      {/* Favorite Button - Absolute Position */}
+      {/* Favorite Button - Absolute Position - SMALLER PADDING (p-1.5) and ICON (w-4 h-4) */}
       <button 
         onClick={handleToggleFavorite}
-        className="absolute top-4 right-4 z-20 p-2 rounded-full bg-white/90 backdrop-blur-sm shadow-sm border border-neutral-100 hover:bg-red-50 hover:scale-110 active:scale-95 transition-all group/heart"
+        className="absolute top-4 right-4 z-20 p-1.5 rounded-full bg-white/90 backdrop-blur-sm shadow-sm border border-neutral-100 hover:bg-red-50 hover:scale-110 active:scale-95 transition-all group/heart"
       >
         <Heart 
-          className={`w-5 h-5 transition-colors ${isFavorite ? 'fill-red-500 text-red-500' : 'text-neutral-400 group-hover/heart:text-red-400'}`} 
+          className={`w-4 h-4 transition-colors ${isFavorite ? 'fill-red-500 text-red-500' : 'text-neutral-400 group-hover/heart:text-red-500'}`} 
         />
       </button>
 
