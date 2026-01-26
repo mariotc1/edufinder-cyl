@@ -222,5 +222,5 @@ a, button {
 
 /* Global Utilities */
 .bg-brand-gradient {
-  @apply bg-gradient-to-b from-blue-100 via-white to-blue-50;
+  @apply bg-gradient-to-b from-[#dbeafe] via-white to-[#eff6ff];
 }
