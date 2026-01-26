@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import api from '@/lib/axios';
-import { User, MapPin, Heart, Lock, Camera, LogOut } from 'lucide-react';
+import { User, MapPin, Heart, Lock, Camera, LogOut, Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface UserData {
@@ -34,6 +34,9 @@ export default function Profile() {
     // Form states
     const [name, setName] = useState('');
     const [passwordData, setPasswordData] = useState({ current: '', new: '', confirm: '' });
+    const [showCurrentPass, setShowCurrentPass] = useState(false);
+    const [showNewPass, setShowNewPass] = useState(false);
+    const [showConfirmPass, setShowConfirmPass] = useState(false);
     const [uploading, setUploading] = useState(false);
 
     useEffect(() => {
@@ -98,6 +101,23 @@ export default function Profile() {
     };
 
     const handleLocation = () => {
+        if (user?.ubicacion_lat) {
+            // Deactivate location
+             api.put('/me', {
+                name,
+                ubicacion_lat: null,
+                ubicacion_lon: null
+            })
+            .then(() => {
+                fetchData();
+                setMessage({ text: 'Ubicación desactivada', type: 'success' });
+            })
+            .catch(() => {
+                setMessage({ text: 'Error al desactivar ubicación', type: 'error' });
+            });
+            return;
+        }
+
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(async (position) => {
                 try {
@@ -269,12 +289,59 @@ export default function Profile() {
                                                 </div>
                                                 <span className="font-bold text-sm">Geolocalización</span>
                                             </div>
-                                            <button 
-                                                onClick={handleLocation} 
-                                                className="text-sm font-bold text-blue-600 hover:text-blue-700 hover:underline decoration-2 underline-offset-4"
-                                            >
-                                                {user?.ubicacion_lat ? 'Actualizar mi ubicación' : 'Activar ubicación'}
-                                            </button>
+                                            <div className="flex gap-3">
+                                                {user?.ubicacion_lat && (
+                                                    <button 
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            handleLocation();
+                                                        }}
+                                                        className="text-sm font-bold text-red-500 hover:text-red-700 hover:underline decoration-2 underline-offset-4"
+                                                    >
+                                                        Desactivar
+                                                    </button>
+                                                )}
+                                                <button 
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        if (!user?.ubicacion_lat) handleLocation();
+                                                        else {
+                                                            // Logic to force update if already active?
+                                                            // For now we treat 'handleLocation' as 'toggle' based on state, 
+                                                            // but here we might want separate actions.
+                                                            // If we want a separate 'Update' button we can add it.
+                                                            // But reusing 'handleLocation' logic above handles toggle.
+                                                            // Let's rely on the separate 'Desactivar' button I just added,
+                                                            // and make this button only for 'Update' if present, or 'Activate' if not.
+                                                            if (user?.ubicacion_lat) {
+                                                                 // Re-run geolocation to update
+                                                                 if (navigator.geolocation) {
+                                                                    navigator.geolocation.getCurrentPosition(async (position) => {
+                                                                        try {
+                                                                           await api.put('/me', {
+                                                                               name,
+                                                                               ubicacion_lat: position.coords.latitude,
+                                                                               ubicacion_lon: position.coords.longitude
+                                                                           });
+                                                                           fetchData();
+                                                                           setMessage({ text: 'Ubicación actualizada', type: 'success' });
+                                                                        } catch (e) {
+                                                                           setMessage({ text: 'Error al actualizar ubicación', type: 'error' });
+                                                                        }
+                                                                    });
+                                                                }
+                                                            } else {
+                                                                handleLocation(); 
+                                                            }
+                                                        }
+                                                    }}
+                                                    className="text-sm font-bold text-blue-600 hover:text-blue-700 hover:underline decoration-2 underline-offset-4"
+                                                >
+                                                    {user?.ubicacion_lat ? 'Actualizar' : 'Activar ubicación'}
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -290,31 +357,58 @@ export default function Profile() {
                                     <form onSubmit={handleUpdatePassword} className="space-y-5">
                                         <div className="space-y-2">
                                             <label className="text-xs font-bold text-[#223945] uppercase tracking-wider ml-1">Contraseña Actual</label>
-                                            <input 
-                                                type="password" 
-                                                value={passwordData.current} 
-                                                onChange={e => setPasswordData({...passwordData, current: e.target.value})} 
-                                                className="w-full px-4 py-3 rounded-xl bg-neutral-50 border-2 border-transparent focus:bg-white focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 outline-none transition-all font-medium text-neutral-700"
-                                            />
+                                            <div className="relative">
+                                                <input 
+                                                    type={showCurrentPass ? "text" : "password"} 
+                                                    value={passwordData.current} 
+                                                    onChange={e => setPasswordData({...passwordData, current: e.target.value})} 
+                                                    className="w-full px-4 py-3 rounded-xl bg-neutral-50 border-2 border-transparent focus:bg-white focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 outline-none transition-all font-medium text-neutral-700 pr-10"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowCurrentPass(!showCurrentPass)}
+                                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-[#223945] transition-colors"
+                                                >
+                                                    {showCurrentPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                                </button>
+                                            </div>
                                         </div>
                                         <div className="grid md:grid-cols-2 gap-5">
                                             <div className="space-y-2">
                                                 <label className="text-xs font-bold text-[#223945] uppercase tracking-wider ml-1">Nueva Contraseña</label>
-                                                <input 
-                                                    type="password" 
-                                                    value={passwordData.new} 
-                                                    onChange={e => setPasswordData({...passwordData, new: e.target.value})} 
-                                                    className="w-full px-4 py-3 rounded-xl bg-neutral-50 border-2 border-transparent focus:bg-white focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 outline-none transition-all font-medium text-neutral-700"
-                                                />
+                                                <div className="relative">
+                                                    <input 
+                                                        type={showNewPass ? "text" : "password"} 
+                                                        value={passwordData.new} 
+                                                        onChange={e => setPasswordData({...passwordData, new: e.target.value})} 
+                                                        className="w-full px-4 py-3 rounded-xl bg-neutral-50 border-2 border-transparent focus:bg-white focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 outline-none transition-all font-medium text-neutral-700 pr-10"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowNewPass(!showNewPass)}
+                                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-[#223945] transition-colors"
+                                                    >
+                                                        {showNewPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                                    </button>
+                                                </div>
                                             </div>
                                             <div className="space-y-2">
                                                 <label className="text-xs font-bold text-[#223945] uppercase tracking-wider ml-1">Confirmar Nueva</label>
-                                                <input 
-                                                    type="password" 
-                                                    value={passwordData.confirm} 
-                                                    onChange={e => setPasswordData({...passwordData, confirm: e.target.value})} 
-                                                    className="w-full px-4 py-3 rounded-xl bg-neutral-50 border-2 border-transparent focus:bg-white focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 outline-none transition-all font-medium text-neutral-700"
-                                                />
+                                                <div className="relative">
+                                                    <input 
+                                                        type={showConfirmPass ? "text" : "password"} 
+                                                        value={passwordData.confirm} 
+                                                        onChange={e => setPasswordData({...passwordData, confirm: e.target.value})} 
+                                                        className="w-full px-4 py-3 rounded-xl bg-neutral-50 border-2 border-transparent focus:bg-white focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 outline-none transition-all font-medium text-neutral-700 pr-10"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowConfirmPass(!showConfirmPass)}
+                                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-[#223945] transition-colors"
+                                                    >
+                                                        {showConfirmPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                         <div className="pt-4">
@@ -374,9 +468,10 @@ export default function Profile() {
                                                     </div>
                                                     <a 
                                                         href={`/mapa?centro=${fav.centro.id}`} 
-                                                        className="px-4 py-2 bg-neutral-50 text-neutral-600 rounded-lg text-sm font-bold hover:bg-[#223945] hover:text-white transition-all"
+                                                        className="flex items-center gap-2 px-4 py-2 bg-[#223945] text-white rounded-lg text-sm font-bold shadow hover:shadow-lg hover:-translate-y-0.5 transition-all"
                                                     >
-                                                        Ver ficha
+                                                        <MapPin className="w-4 h-4" />
+                                                        Localizar
                                                     </a>
                                                 </div>
                                             ))}
