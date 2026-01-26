@@ -57,44 +57,44 @@ export default function CentroCard({ centro, index }: CentroCardProps) {
       {/* Decorative top border/gradient */}
       <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-primary-500 to-primary-300"></div>
 
-      <div className="p-6 flex-grow flex flex-col">
+      <div className="p-5 flex-grow flex flex-col">
         {/* Header Section */}
-        <div className="flex justify-between items-start mb-4">
-          <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase border ${getNaturalezaBadge(centro.naturaleza)}`}>
+        <div className="flex justify-between items-start mb-3">
+          <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase border ${getNaturalezaBadge(centro.naturaleza)}`}>
             {centro.naturaleza || 'Otro'}
           </span>
           
           {centro.distancia !== undefined && (
-            <span className="flex items-center gap-1.5 text-xs font-bold text-[#223945] bg-primary-50 px-3 py-1 rounded-full border border-primary-100 group-hover:bg-[#223945]/10 transition-colors">
-              <MapPin className="w-3.5 h-3.5" />
+            <span className="flex items-center gap-1 text-[11px] font-bold text-white bg-[#223945] px-2.5 py-0.5 rounded-full shadow-sm">
+              <MapPin className="w-3 h-3" />
               {parseFloat(centro.distancia.toString()).toFixed(1)} km
             </span>
           )}
         </div>
         
         {/* Title - polished typography */}
-        <h3 className="text-xl font-bold text-neutral-900 mb-4 group-hover:text-[#223945] transition-colors line-clamp-2 md:min-h-[3.5rem] tracking-tight leading-snug">
+        <h3 className="text-lg font-bold text-[#111827] mb-3 group-hover:text-[#223945] transition-colors line-clamp-2 md:min-h-[3.2rem] tracking-tight leading-snug">
           {centro.nombre}
         </h3>
         
         {/* Info Icons - more refined spacing */}
-        <div className="space-y-3 mb-6 flex-grow">
-          <div className="flex items-start gap-3 text-neutral-600 group/item">
+        <div className="space-y-2.5 mb-5 flex-grow">
+          <div className="flex items-start gap-2.5 text-neutral-600 group/item">
             <div className="p-1.5 bg-neutral-50 rounded-md shrink-0 mt-0.5 group-hover/item:bg-[#223945]/10 transition-colors">
               <MapPin className="w-3.5 h-3.5 text-neutral-400 group-hover/item:text-[#223945] transition-colors" />
             </div>
             <p className="text-sm leading-relaxed">
-              <span className="font-semibold text-neutral-900 block text-[10px] uppercase tracking-wider mb-0.5 text-neutral-400">Ubicación</span>
+              <span className="font-bold text-[#223945] block text-[10px] uppercase tracking-wider mb-0.5 opacity-80">Ubicación</span>
               {centro.localidad} <span className="text-neutral-400">({centro.provincia})</span>
             </p>
           </div>
           
-          <div className="flex items-start gap-3 text-neutral-600 group/item">
+          <div className="flex items-start gap-2.5 text-neutral-600 group/item">
              <div className="p-1.5 bg-neutral-50 rounded-md shrink-0 mt-0.5 group-hover/item:bg-[#223945]/10 transition-colors">
               <Building2 className="w-3.5 h-3.5 text-neutral-400 group-hover/item:text-[#223945] transition-colors" />
             </div>
             <p className="text-sm leading-relaxed">
-              <span className="font-semibold text-neutral-900 block text-[10px] uppercase tracking-wider mb-0.5 text-neutral-400">Tipo</span>
+              <span className="font-bold text-[#223945] block text-[10px] uppercase tracking-wider mb-0.5 opacity-80">Tipo</span>
               {centro.denominacion_generica}
             </p>
           </div>
@@ -102,19 +102,19 @@ export default function CentroCard({ centro, index }: CentroCardProps) {
 
         {/* Highlighted Offer (Ciclos) - enhanced visual hierarchy */}
         {centro.ciclos && centro.ciclos.length > 0 ? (
-          <div className="mt-4 pt-4 border-t border-neutral-100">
-             <div className="flex items-center gap-2 mb-3">
-                <div className="p-1 bg-secondary-50 rounded text-secondary-600">
-                  <BookOpen className="w-3.5 h-3.5" />
+          <div className="mt-2 pt-3 border-t border-neutral-100">
+             <div className="flex items-center gap-2 mb-2.5">
+                <div className="p-1 bg-[#223945]/10 rounded text-[#223945]">
+                  <BookOpen className="w-3 h-3" />
                 </div>
-                <span className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest">Oferta destacada</span>
+                <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Oferta destacada</span>
              </div>
-             <div className="space-y-2">
+             <div className="space-y-1.5">
                 {cyclesToShow?.map((ciclo, idx) => (
-                  <div key={idx} className={`flex items-center gap-2 text-xs px-2.5 py-2 rounded-md border shadow-sm transition-colors animate-fade-in-up ${getLevelBackground(ciclo.nivel_educativo)}`}>
+                  <div key={idx} className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded-md border shadow-sm transition-colors animate-fade-in-up ${getLevelBackground(ciclo.nivel_educativo)}`}>
                     <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${getLevelDotColor(ciclo.nivel_educativo)}`}></div>
-                    <span className="truncate flex-1 font-medium text-neutral-800">{ciclo.ciclo_formativo}</span>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${getLevelColor(ciclo.nivel_educativo)}`}>
+                    <span className="truncate flex-1 font-medium text-neutral-800 text-[11px]">{ciclo.ciclo_formativo}</span>
+                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full border ${getLevelColor(ciclo.nivel_educativo)}`}>
                       {ciclo.nivel_educativo === 'Grado Superior' ? 'GS' : (ciclo.nivel_educativo === 'Grado Medio' ? 'GM' : 'FPB')}
                     </span>
                   </div>
@@ -127,7 +127,7 @@ export default function CentroCard({ centro, index }: CentroCardProps) {
                    e.preventDefault();
                    setExpanded(!expanded);
                  }}
-                 className="text-xs text-[#223945] font-semibold mt-3 pl-1 hover:underline cursor-pointer flex items-center gap-1 group/more bg-transparent border-0 p-0"
+                 className="text-[11px] text-[#223945] font-bold mt-2 pl-1 hover:underline cursor-pointer flex items-center gap-1 group/more bg-transparent border-0 p-0"
                >
                  {expanded ? 'Ver menos' : `Ver ${centro.ciclos.length - 2} más`}
                  {expanded ? 
@@ -143,13 +143,13 @@ export default function CentroCard({ centro, index }: CentroCardProps) {
       </div>
 
       {/* Footer / Action - filled button style on hover */}
-      <div className="p-4 bg-neutral-50/50 border-t border-neutral-100 group-hover:bg-white transition-colors">
+      <div className="p-3 bg-neutral-50/50 border-t border-neutral-100 group-hover:bg-white transition-colors">
         <Link 
           href={`/centro/${centro.id}`} 
-          className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-sm font-bold text-[#223945] bg-white border border-neutral-200/80 shadow-sm hover:bg-[#223945] hover:text-white hover:border-[#223945] hover:shadow-md transition-all duration-200"
+          className="flex items-center justify-center gap-2 w-full py-2 rounded-lg text-sm font-bold text-[#223945] bg-white border border-neutral-200/80 shadow-sm hover:bg-[#223945] hover:text-white hover:border-[#223945] hover:shadow-md transition-all duration-200"
         >
           Ver ficha completa
-          <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+          <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
         </Link>
       </div>
     </div>
