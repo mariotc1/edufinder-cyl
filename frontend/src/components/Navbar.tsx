@@ -47,9 +47,9 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-8">
             <Link 
               href="/mapa" 
-              className="flex items-center gap-2 text-neutral-600 hover:text-[#223945] font-bold text-sm uppercase tracking-wide transition-colors"
+              className="group flex items-center gap-2 text-neutral-600 hover:text-[#223945] font-bold text-sm uppercase tracking-wide transition-colors"
             >
-              <MapPin className="w-4 h-4" />
+              <MapPin className="w-4 h-4 group-hover:text-blue-600 transition-colors" />
               Mapa
             </Link>
             
@@ -57,9 +57,9 @@ export default function Navbar() {
               <>
                 <Link 
                   href="/favoritos" 
-                  className="flex items-center gap-2 text-neutral-600 hover:text-[#223945] font-bold text-sm uppercase tracking-wide transition-colors"
+                  className="group flex items-center gap-2 text-neutral-600 hover:text-[#223945] font-bold text-sm uppercase tracking-wide transition-colors"
                 >
-                  <Heart className="w-4 h-4" />
+                  <Heart className="w-4 h-4 group-hover:text-red-500 transition-colors" />
                   Favoritos
                 </Link>
                 
