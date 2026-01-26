@@ -75,8 +75,8 @@ export default function CentroCard({ centro, index }: CentroCardProps) {
         {/* Info Icons - fixed height for alignment */}
         <div className="space-y-2.5 mb-5 min-h-[4.5rem]">
           <div className="flex items-start gap-2.5 text-neutral-600 group/item">
-            <div className="p-1.5 bg-neutral-50 rounded-md shrink-0 mt-0.5 group-hover/item:bg-[#223945]/10 transition-colors">
-              <MapPin className="w-3.5 h-3.5 text-neutral-400 group-hover/item:text-[#223945] transition-colors" />
+            <div className="p-1.5 bg-[#223945] rounded-md shrink-0 mt-0.5 shadow-sm">
+              <MapPin className="w-3.5 h-3.5 text-white" />
             </div>
             <p className="text-sm leading-relaxed line-clamp-2">
               <span className="font-bold text-[#223945] block text-[11px] uppercase tracking-wider mb-0.5 opacity-80">Ubicación</span>
@@ -85,8 +85,8 @@ export default function CentroCard({ centro, index }: CentroCardProps) {
           </div>
           
           <div className="flex items-start gap-2.5 text-neutral-600 group/item">
-             <div className="p-1.5 bg-neutral-50 rounded-md shrink-0 mt-0.5 group-hover/item:bg-[#223945]/10 transition-colors">
-              <Building2 className="w-3.5 h-3.5 text-neutral-400 group-hover/item:text-[#223945] transition-colors" />
+             <div className="p-1.5 bg-[#223945] rounded-md shrink-0 mt-0.5 shadow-sm">
+              <Building2 className="w-3.5 h-3.5 text-white" />
             </div>
             {/* Removed line-clamp-1 to allow text to show fully, or increased clamp limit if needed */}
             <p className="text-sm leading-relaxed line-clamp-2">
@@ -100,7 +100,7 @@ export default function CentroCard({ centro, index }: CentroCardProps) {
         {centro.ciclos && centro.ciclos.length > 0 ? (
           <div className="pt-3 border-t border-neutral-100">
              <div className="flex items-center gap-2 mb-2.5">
-                <div className="p-1 bg-[#223945]/10 rounded text-[#223945]">
+                <div className="p-1 bg-[#223945] rounded text-white shadow-sm">
                   <BookOpen className="w-3 h-3" />
                 </div>
                 <span className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest">Oferta destacada</span>

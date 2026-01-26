@@ -67,7 +67,7 @@ function SearchContent() {
       </section>
 
       {/* Results Section */}
-      <section className="flex-grow px-4 sm:px-6 lg:px-8 py-12 bg-gray-50/50">
+      <section className="flex-grow px-4 sm:px-6 lg:px-8 py-12 bg-blue-50">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl font-bold text-neutral-900 flex items-center gap-2">
@@ -75,7 +75,7 @@ function SearchContent() {
               Resultados
             </h2>
             {data && (
-              <span className="text-sm font-medium text-neutral-500 bg-white px-3 py-1 rounded-full border border-neutral-200 shadow-sm">
+              <span className="text-sm font-bold text-white bg-[#223945] px-4 py-1.5 rounded-full shadow-md">
                 {data.total} Centros encontrados
               </span>
             )}
@@ -105,20 +105,20 @@ function SearchContent() {
                   <button 
                     disabled={!data.prev_page_url}
                     onClick={() => setPage(p => Math.max(1, p - 1))}
-                    className="flex items-center gap-2 px-6 py-2 rounded-full bg-white border border-neutral-300 text-neutral-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-neutral-50 hover:border-primary-500 hover:text-primary-700 transition-all shadow-sm"
+                    className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#223945] text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#1a2c35] hover:shadow-lg transition-all shadow-md"
                   >
                     <ChevronLeft className="w-4 h-4" />
                     Anterior
                   </button>
                   
-                  <span className="px-4 py-2 bg-primary-50 text-primary-800 font-bold rounded-lg text-sm">
+                  <span className="px-4 py-2 font-bold text-[#223945] text-sm">
                      Página {data.current_page}
                   </span>
                   
                   <button 
                     disabled={!data.next_page_url}
                     onClick={() => setPage(p => p + 1)}
-                    className="flex items-center gap-2 px-6 py-2 rounded-full bg-white border border-neutral-300 text-neutral-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-neutral-50 hover:border-primary-500 hover:text-primary-700 transition-all shadow-sm"
+                    className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#223945] text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#1a2c35] hover:shadow-lg transition-all shadow-md"
                   >
                     Siguiente
                     <ChevronRight className="w-4 h-4" />
