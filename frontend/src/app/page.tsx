@@ -67,7 +67,7 @@ function SearchContent() {
       </section>
 
       {/* Results Section */}
-      <section className="flex-grow px-4 sm:px-6 lg:px-8 py-12 bg-gray-50/50">
+      <section className="flex-grow px-4 sm:px-6 lg:px-8 py-12 bg-blue-50">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl font-bold text-neutral-900 flex items-center gap-2">
