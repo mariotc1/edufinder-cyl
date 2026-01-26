@@ -94,8 +94,8 @@ function SearchContent() {
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {data?.data?.map((centro: Centro) => (
-                  <CentroCard key={centro.id} centro={centro} />
+                {data?.data?.map((centro: Centro, index: number) => (
+                  <CentroCard key={centro.id} centro={centro} index={index} />
                 ))}
               </div>
 
