@@ -86,6 +86,24 @@ export default function CentroDetail() {
         }
     };
 
+    const getLevelColor = (nivel: string) => {
+        switch (nivel?.toUpperCase()) {
+            case 'GRADO SUPERIOR': return 'bg-purple-600 text-white border-purple-600 shadow-sm';
+            case 'GRADO MEDIO': return 'bg-amber-500 text-white border-amber-500 shadow-sm';
+            case 'FP BÁSICA': return 'bg-blue-600 text-white border-blue-600 shadow-sm';
+            default: return 'bg-neutral-600 text-white border-neutral-600';
+        }
+    };
+
+    const getLevelBackground = (nivel: string) => {
+        switch (nivel?.toUpperCase()) {
+            case 'GRADO SUPERIOR': return 'bg-purple-50 border-purple-100';
+            case 'GRADO MEDIO': return 'bg-amber-50 border-amber-100';
+            case 'FP BÁSICA': return 'bg-blue-50 border-blue-100';
+            default: return 'bg-neutral-50 border-neutral-100';
+        }
+    };
+
     return (
         <div className="min-h-screen bg-neutral-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -189,19 +207,21 @@ export default function CentroDetail() {
                                     {ciclos.data.map((ciclo: any) => (
                                         <div 
                                             key={ciclo.id} 
-                                            className="bg-neutral-50 border border-neutral-200 p-4 rounded-lg hover:border-primary-300 hover:bg-primary-50/30 transition-all"
+                                            className={`border p-4 rounded-lg transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 ${getLevelBackground(ciclo.nivel_educativo)}`}
                                         >
-                                            <p className="font-semibold text-neutral-900 mb-2">{ciclo.ciclo_formativo}</p>
-                                            <div className="flex flex-wrap gap-2">
-                                                <span className="badge badge-primary">
-                                                    {ciclo.nivel_educativo}
-                                                </span>
-                                                <span className="badge badge-secondary">
-                                                    {ciclo.familia_profesional}
-                                                </span>
-                                                <span className="badge bg-neutral-200 text-neutral-700">
-                                                    {ciclo.modalidad}
-                                                </span>
+                                            <div>
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <span className={`badge ${getLevelColor(ciclo.nivel_educativo)}`}>
+                                                        {ciclo.nivel_educativo}
+                                                    </span>
+                                                    <span className="text-xs font-medium text-neutral-500 uppercase tracking-wide bg-white px-2 py-0.5 rounded border border-neutral-200">
+                                                        {ciclo.modalidad}
+                                                    </span>
+                                                </div>
+                                                <p className="font-bold text-neutral-900 text-lg">{ciclo.ciclo_formativo}</p>
+                                                <p className="text-sm text-neutral-600 mt-1 flex items-center gap-1">
+                                                     Familia: <span className="font-medium text-primary-700">{ciclo.familia_profesional}</span>
+                                                </p>
                                             </div>
                                         </div>
                                     ))}
