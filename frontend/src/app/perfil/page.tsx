@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import api from '@/lib/axios';
 import { User, MapPin, Heart, Lock, Camera, LogOut, Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import CentroCard from '@/components/CentroCard';
+import { Centro } from '@/types';
 
 interface UserData {
     name: string;
@@ -15,12 +17,7 @@ interface UserData {
 
 interface Favorito {
     id: number;
-    centro: {
-        id: number;
-        nombre: string;
-        direccion?: string;
-        // Add other properties as needed
-    };
+    centro: Centro;
 }
 
 export default function Profile() {
@@ -454,26 +451,20 @@ export default function Profile() {
                                     </div>
 
                                     {favoritos.length > 0 ? (
-                                        <div className="grid gap-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             {favoritos.map(fav => (
-                                                <div key={fav.id} className="group flex items-center justify-between p-5 bg-white border border-neutral-100 rounded-2xl shadow-sm hover:shadow-md hover:border-blue-100 transition-all">
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="bg-blue-50 p-3 rounded-xl text-blue-600 group-hover:bg-[#223945] group-hover:text-white transition-colors">
-                                                            <Heart className="w-5 h-5 fill-current" />
-                                                        </div>
-                                                        <div>
-                                                            <h4 className="font-bold text-neutral-900 group-hover:text-[#223945] transition-colors">{fav.centro.nombre}</h4>
-                                                            <p className="text-sm text-neutral-500">{fav.centro.direccion}</p>
-                                                        </div>
-                                                    </div>
-                                                    <a 
-                                                        href={`/mapa?centro=${fav.centro.id}`} 
-                                                        className="flex items-center gap-2 px-4 py-2 bg-[#223945] text-white rounded-lg text-sm font-bold shadow hover:shadow-lg hover:-translate-y-0.5 transition-all"
-                                                    >
-                                                        <MapPin className="w-4 h-4" />
-                                                        Localizar
-                                                    </a>
-                                                </div>
+                                                <CentroCard 
+                                                    key={fav.id} 
+                                                    centro={fav.centro} 
+                                                    index={fav.id}
+                                                    initialIsFavorite={true}
+                                                    onToggle={(isActive) => {
+                                                        if (!isActive) {
+                                                            // Instant remove from profile list
+                                                            setFavoritos(prev => prev.filter(item => item.id !== fav.id));
+                                                        }
+                                                    }}
+                                                />
                                             ))}
                                         </div>
                                     ) : (

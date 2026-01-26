@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { MapPin, Building2, BookOpen, ArrowRight, Heart } from 'lucide-react';
 import { Centro } from '@/types';
 import { useState, useEffect } from 'react';
-import { toggleFavorite } from '@/services/api';
+import { addFavorite, removeFavorite } from '@/services/api';
 
 interface CentroCardProps {
   centro: Centro;
@@ -33,7 +33,11 @@ export default function CentroCard({ centro, index, initialIsFavorite = false, o
 
     setLoading(true);
     try {
-      await toggleFavorite(centro.id);
+      if (newStatus) {
+        await addFavorite(centro.id);
+      } else {
+        await removeFavorite(centro.id);
+      }
     } catch (error) {
       // Revert on error
       setIsFavorite(!newStatus);

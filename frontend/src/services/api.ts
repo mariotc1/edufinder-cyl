@@ -23,14 +23,12 @@ export const searchCentros = async (filters: FilterOptions) => {
   return response.data;
 };
 
-export const toggleFavorite = async (centroId: number) => {
-  // Assuming POST /favoritos/toggle matches the backend convention for "smart toggle"
-  // If not, we might need separate add/remove endpoints. 
-  // For now, usually POST to a resource collection with an ID implies adding, 
-  // but a specific 'toggle' action is common in these apps.
-  // Converting to standard REST: usually POST to add, DELETE to remove.
-  // Let's assume a toggle endpoint exists or we use POST to 'favoritos' which handles uniqueness.
-  // I will use a robust approach: try to toggle.
-  const response = await axios.post('/favoritos/toggle', { centro_id: centroId });
+export const addFavorite = async (centroId: number) => {
+  const response = await axios.post(`/favoritos/${centroId}`);
+  return response.data;
+};
+
+export const removeFavorite = async (centroId: number) => {
+  const response = await axios.delete(`/favoritos/${centroId}`);
   return response.data;
 };
