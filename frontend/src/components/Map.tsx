@@ -22,7 +22,9 @@ interface MapProps {
 
 function ChangeView({ center, zoom }: { center: [number, number], zoom: number }) {
   const map = useMap();
-  map.setView(center, zoom);
+  useEffect(() => {
+    map.setView(center, zoom, { animate: false });
+  }, [center, zoom, map]);
   return null;
 }
 
