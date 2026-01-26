@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation';
 import useSWR from 'swr';
 import api from '@/lib/axios';
 import dynamic from 'next/dynamic';
-import { Mail, Phone, MapPin, Globe, Star, BookOpen, Building2, ChevronLeft } from 'lucide-react';
+import { Mail, Phone, MapPin, Globe, Star, BookOpen, Building2, ChevronLeft, Heart } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
@@ -26,32 +26,38 @@ export default function CentroDetail() {
     const [isFavorite, setIsFavorite] = useState(false);
     const [loadingFav, setLoadingFav] = useState(false);
 
-    const toggleFavorite = async () => {
+    // Initial check
+    const { data: favoritesData } = useSWR('/favoritos', fetcher);
+    useEffect(() => {
+        if (favoritesData && centro) {
+            const favArray = Array.isArray(favoritesData) ? favoritesData : favoritesData.data || [];
+            setIsFavorite(favArray.some((fav: any) => fav.centro_id === centro.data.id || fav.centro.id === centro.data.id));
+        }
+    }, [favoritesData, centro]);
+
+    const toggleFavorite = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        if (loadingFav) return;
+        
+        // Optimistic UI
+        const newStatus = !isFavorite;
+        setIsFavorite(newStatus);
         setLoadingFav(true);
+
         try {
-            if (isFavorite) {
-                await api.delete(`/favoritos/${id}`);
-                setIsFavorite(false);
-            } else {
+            if (newStatus) {
                 await api.post(`/favoritos/${id}`);
-                setIsFavorite(true);
+            } else {
+                await api.delete(`/favoritos/${id}`);
             }
         } catch (e) {
+            // Revert
+            setIsFavorite(!newStatus);
             alert('Debes iniciar sesión para guardar favoritos');
         } finally {
             setLoadingFav(false);
         }
     };
-
-    const { data: favoritos } = useSWR('/favoritos', fetcher);
-    
-    useEffect(() => {
-        if (favoritos && centro) {
-            // Favoritos API returns array directly now
-            const favArray = Array.isArray(favoritos) ? favoritos : favoritos.data || [];
-            setIsFavorite(favArray.some((fav: any) => fav.centro_id === centro.data.id || fav.centro.id === centro.data.id));
-        }
-    }, [favoritos, centro]);
 
     if (error) return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -64,25 +70,21 @@ export default function CentroDetail() {
     if (!centro) return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
             <div className="flex flex-col items-center justify-center py-20">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-200 border-t-primary-600 mb-4"></div>
-                <p className="text-neutral-600">Cargando información del centro...</p>
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-200 border-t-[#223945] mb-4"></div>
+                <p className="text-[#223945] font-bold">Cargando información...</p>
             </div>
         </div>
     );
 
     const c = centro.data;
 
-    // Badge color based on naturaleza
+    // Badge Logic (Synced with CentroCard)
     const getNaturalezaBadge = (naturaleza: string) => {
         switch (naturaleza?.toUpperCase()) {
-            case 'PÚBLICO':
-                return 'bg-primary-100 text-primary-800 border border-primary-200';
-            case 'PRIVADO':
-                return 'bg-secondary-100 text-secondary-800 border border-secondary-200';
-            case 'CONCERTADO':
-                return 'bg-success-100 text-success-700 border border-success-200';
-            default:
-                return 'bg-neutral-100 text-neutral-700 border border-neutral-200';
+            case 'PÚBLICO': return 'bg-blue-50 text-blue-700 border-blue-200 ring-1 ring-blue-100';
+            case 'PRIVADO': return 'bg-amber-50 text-amber-700 border-amber-200 ring-1 ring-amber-100';
+            case 'CONCERTADO': return 'bg-emerald-50 text-emerald-700 border-emerald-200 ring-1 ring-emerald-100';
+            default: return 'bg-gray-50 text-gray-700 border-gray-200';
         }
     };
 
@@ -104,124 +106,143 @@ export default function CentroDetail() {
         }
     };
 
+    const getMapsLink = (mode: 'driving' | 'walking' | 'transit') => {
+        const destination = `${c.latitud},${c.longitud}`;
+        return `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=${mode}`;
+    };
+
     return (
-        <div className="min-h-screen bg-brand-gradient">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Breadcrumb */}
+        <div className="min-h-screen bg-brand-gradient py-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                {/* Back Link */}
                 <Link 
                     href="/" 
-                    className="inline-flex items-center gap-2 text-neutral-600 hover:text-primary-600 font-medium mb-6 transition-colors"
+                    className="inline-flex items-center gap-2 text-neutral-500 hover:text-[#223945] font-bold mb-8 transition-colors text-sm uppercase tracking-wide"
                 >
                     <ChevronLeft className="w-4 h-4" />
                     Volver a resultados
                 </Link>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Left Column: Info */}
-                    <div className="space-y-6">
-                        {/* Header */}
-                        <div>
-                            <div className="flex items-center gap-3 mb-3">
-                                <span className={`badge ${getNaturalezaBadge(c.naturaleza)}`}>
-                                    {c.naturaleza || 'Sin especificar'}
-                                </span>
-                                <span className="text-sm text-neutral-600">{c.denominacion_generica}</span>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    {/* Left Column: Info (Now 7/12) */}
+                    <div className="lg:col-span-7 space-y-8">
+                        {/* Header Card */}
+                        <div className="bg-white rounded-2xl p-8 border border-neutral-100 shadow-xl shadow-neutral-200/50 relative overflow-hidden">
+                             {/* Decorative Top Gradient */}
+                            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300"></div>
+                            
+                            <div className="flex justify-between items-start gap-4">
+                                <div>
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <span className={`px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase border ${getNaturalezaBadge(c.naturaleza)}`}>
+                                            {c.naturaleza || 'Sin especificar'}
+                                        </span>
+                                    </div>
+                                    <h1 className="text-3xl md:text-4xl font-bold text-[#111827] mb-2 font-heading leading-tight">
+                                        {c.nombre}
+                                    </h1>
+                                    <p className="text-lg text-neutral-500 font-medium">{c.denominacion_generica}</p>
+                                </div>
+                                <button 
+                                    onClick={toggleFavorite}
+                                    className="shrink-0 p-3 rounded-full bg-white border border-neutral-200 shadow-sm hover:shadow-md hover:scale-105 active:scale-95 transition-all group"
+                                    title={isFavorite ? "Eliminar de favoritos" : "Añadir a favoritos"}
+                                >
+                                    <Heart className={`w-8 h-8 transition-colors ${isFavorite ? 'fill-red-500 text-red-500' : 'text-neutral-300 group-hover:text-red-400'}`} />
+                                </button>
                             </div>
-                            <h1 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-2">
-                                {c.nombre}
-                            </h1>
                         </div>
 
-                        {/* Contact Information Card */}
-                        <div className="card p-6 space-y-4">
-                            <h3 className="text-lg font-bold text-neutral-900 mb-4 flex items-center gap-2">
-                                <Building2 className="w-5 h-5 text-primary-600" />
-                                Información de contacto
-                            </h3>
-                            
-                            <div className="space-y-3">
-                                <div className="flex items-start gap-3 text-neutral-700">
-                                    <MapPin className="w-5 h-5 text-primary-600 mt-0.5 flex-shrink-0" />
+                        {/* Pro Contact Grid - NO HOVER EFFECTS */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Address */}
+                            <div className="bg-white/80 backdrop-blur-sm p-5 rounded-xl border border-neutral-100 shadow-sm hover:shadow-md transition-all group">
+                                <div className="flex items-start gap-4">
+                                    <div className="p-3 bg-blue-50 text-blue-600 rounded-lg transition-colors">
+                                        <MapPin className="w-6 h-6" />
+                                    </div>
                                     <div>
-                                        <p className="font-medium">{c.direccion}</p>
-                                        <p className="text-sm text-neutral-600">{c.codigo_postal}, {c.localidad} ({c.provincia})</p>
+                                        <h4 className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-1">Dirección</h4>
+                                        <p className="font-bold text-neutral-800 leading-snug">{c.direccion}</p>
+                                        <p className="text-sm text-neutral-500 mt-0.5">{c.codigo_postal}, {c.localidad}</p>
                                     </div>
                                 </div>
-                                
-                                {c.telefono && (
-                                    <div className="flex items-center gap-3 text-neutral-700">
-                                        <Phone className="w-5 h-5 text-secondary-600 flex-shrink-0" />
-                                        <a href={`tel:${c.telefono}`} className="hover:text-primary-600 transition-colors">
-                                            {c.telefono}
-                                        </a>
-                                    </div>
-                                )}
-                                
-                                {c.email && (
-                                    <div className="flex items-center gap-3 text-neutral-700">
-                                        <Mail className="w-5 h-5 text-success-600 flex-shrink-0" />
-                                        <a href={`mailto:${c.email}`} className="hover:text-primary-600 transition-colors break-all">
-                                            {c.email}
-                                        </a>
-                                    </div>
-                                )}
-                                
-                                {c.web && (
-                                    <div className="flex items-center gap-3 text-neutral-700">
-                                        <Globe className="w-5 h-5 text-primary-600 flex-shrink-0" />
-                                        <a 
-                                            href={c.web} 
-                                            target="_blank" 
-                                            rel="noreferrer" 
-                                            className="hover:text-primary-600 transition-colors truncate"
-                                        >
-                                            Visitar sitio web
-                                        </a>
-                                    </div>
-                                )}
                             </div>
+                             {/* Phone */}
+                             {c.telefono && (
+                                <a href={`tel:${c.telefono}`} className="bg-white/80 backdrop-blur-sm p-5 rounded-xl border border-neutral-100 shadow-sm hover:shadow-md transition-all group block">
+                                    <div className="flex items-center gap-4">
+                                        <div className="p-3 bg-amber-50 text-amber-600 rounded-lg transition-colors">
+                                            <Phone className="w-6 h-6" />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-1">Teléfono</h4>
+                                            <p className="font-bold text-neutral-800 text-lg">{c.telefono}</p>
+                                        </div>
+                                    </div>
+                                </a>
+                             )}
+                             {/* Email */}
+                             {c.email && (
+                                <a href={`mailto:${c.email}`} className="bg-white/80 backdrop-blur-sm p-5 rounded-xl border border-neutral-100 shadow-sm hover:shadow-md transition-all group block md:col-span-2">
+                                    <div className="flex items-center gap-4">
+                                        <div className="p-3 bg-emerald-50 text-emerald-600 rounded-lg transition-colors">
+                                            <Mail className="w-6 h-6" />
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <h4 className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-1">Correo Electrónico</h4>
+                                            <p className="font-bold text-neutral-800 truncate">{c.email}</p>
+                                        </div>
+                                    </div>
+                                </a>
+                             )}
+                              {/* Web */}
+                              {c.web && (
+                                <a href={c.web} target="_blank" rel="noreferrer" className="bg-white/80 backdrop-blur-sm p-5 rounded-xl border border-neutral-100 shadow-sm hover:shadow-md transition-all group block md:col-span-2">
+                                    <div className="flex items-center gap-4">
+                                        <div className="p-3 bg-indigo-50 text-indigo-600 rounded-lg transition-colors">
+                                            <Globe className="w-6 h-6" />
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <h4 className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-1">Sitio Web</h4>
+                                            <p className="font-bold text-neutral-800 truncate">{c.web}</p>
+                                        </div>
+                                    </div>
+                                </a>
+                             )}
                         </div>
 
-                        {/* Favorites Button */}
-                        <button 
-                            onClick={toggleFavorite}
-                            disabled={loadingFav}
-                            className={`w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all ${
-                                isFavorite 
-                                ? 'bg-secondary-500 hover:bg-secondary-600 text-white shadow-md' 
-                                : 'bg-white border-2 border-neutral-300 text-neutral-700 hover:border-secondary-500 hover:text-secondary-600'
-                            }`}
-                        >
-                            <Star className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''}`} />
-                            {isFavorite ? 'Guardado en favoritos' : 'Añadir a favoritos'}
-                        </button>
-                        
-                        {/* FP Cycles */}
-                        {ciclos && ciclos.data.length > 0 && (
-                            <div className="card p-6">
-                                <h3 className="text-lg font-bold text-neutral-900 mb-4 flex items-center gap-2">
-                                    <BookOpen className="w-5 h-5 text-primary-600" />
-                                    Oferta de Formación Profesional
+                        {/* Educational Offer (Ciclos) */}
+                         {ciclos && ciclos.data.length > 0 && (
+                            <div className="bg-white rounded-2xl p-8 border border-neutral-100 shadow-lg">
+                                <h3 className="text-xl font-bold text-[#223945] mb-6 flex items-center gap-3">
+                                    <div className="p-2 bg-[#223945] text-white rounded-lg">
+                                        <BookOpen className="w-5 h-5" />
+                                    </div>
+                                    Oferta Educativa
                                 </h3>
-                                <div className="space-y-3">
+                                
+                                <div className="space-y-4">
                                     {ciclos.data.map((ciclo: any) => (
                                         <div 
                                             key={ciclo.id} 
-                                            className={`border p-4 rounded-lg transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 ${getLevelBackground(ciclo.nivel_educativo)}`}
+                                            className={`p-5 rounded-xl border transition-all hover:-translate-y-1 hover:shadow-md ${getLevelBackground(ciclo.nivel_educativo)}`}
                                         >
-                                            <div>
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <span className={`badge ${getLevelColor(ciclo.nivel_educativo)}`}>
-                                                        {ciclo.nivel_educativo}
-                                                    </span>
-                                                    <span className="text-xs font-medium text-neutral-500 uppercase tracking-wide bg-white px-2 py-0.5 rounded border border-neutral-200">
-                                                        {ciclo.modalidad}
-                                                    </span>
+                                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                                <div>
+                                                    <div className="flex flex-wrap items-center gap-2 mb-3">
+                                                        <span className={`badge ${getLevelColor(ciclo.nivel_educativo)} px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide`}>
+                                                            {ciclo.nivel_educativo}
+                                                        </span>
+                                                        <span className="text-xs font-bold text-[#223945] bg-white/80 px-2.5 py-1 rounded-md border border-neutral-200/50 uppercase tracking-wide">
+                                                            {ciclo.modalidad}
+                                                        </span>
+                                                    </div>
+                                                    <h4 className="font-bold text-[#111827] text-lg leading-snug">{ciclo.ciclo_formativo}</h4>
+                                                    <p className="text-sm text-neutral-600 mt-2 font-medium">
+                                                         Familia Profesional: <span className="text-[#223945]">{ciclo.familia_profesional}</span>
+                                                    </p>
                                                 </div>
-                                                <p className="font-bold text-neutral-900 text-lg">{ciclo.ciclo_formativo}</p>
-                                                <p className="text-sm text-neutral-600 mt-1 flex items-center gap-1">
-                                                     Familia: <span className="font-medium text-primary-700">{ciclo.familia_profesional}</span>
-                                                </p>
                                             </div>
                                         </div>
                                     ))}
@@ -230,19 +251,76 @@ export default function CentroDetail() {
                         )}
                     </div>
 
-                    {/* Right Column: Map */}
-                    <div className="h-[400px] lg:h-auto lg:sticky lg:top-24">
-                        <div className="card overflow-hidden h-full">
-                            {c.latitud && c.longitud ? (
-                                <Map centros={[c]} center={[parseFloat(c.latitud), parseFloat(c.longitud)]} zoom={15} />
-                            ) : (
-                                <div className="h-full flex flex-col items-center justify-center bg-neutral-50 text-neutral-500 p-8 text-center">
-                                    <MapPin className="w-12 h-12 mb-3 text-neutral-400" />
-                                    <p className="font-medium">Ubicación no disponible</p>
-                                    <p className="text-sm">No hay coordenadas para este centro</p>
+                    {/* Right Column: Refined Map & Directions - Sticky */}
+                    <div className="lg:col-span-5 relative">
+                         <div className="sticky top-28 space-y-4">
+                            {/* Map Card - ENLARGED to 600px */}
+                            <div className="bg-white rounded-2xl shadow-xl shadow-neutral-200/40 border border-neutral-100 overflow-hidden h-[600px] relative group z-0">
+                                {c.latitud && c.longitud ? (
+                                    <>
+                                        <div className="absolute inset-0 z-0">
+                                            <Map centros={[c]} center={[parseFloat(c.latitud), parseFloat(c.longitud)]} zoom={15} />
+                                        </div>
+                                        {/* Overlay gradient for map bottom */}
+                                        <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-black/50 to-transparent pointer-events-none"></div>
+                                        <div className="absolute bottom-4 left-4 z-10">
+                                            <p className="text-white text-xs font-bold bg-black/50 backdrop-blur-md px-3 py-1 rounded-full border border-white/20">
+                                                Ubicación Exacta
+                                            </p>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="h-full flex flex-col items-center justify-center bg-neutral-50 text-neutral-400 p-8 text-center border-dashed border-2 border-neutral-200 m-4 rounded-xl">
+                                        <MapPin className="w-16 h-16 mb-4 opacity-50" />
+                                        <p className="font-bold text-lg text-neutral-500">Ubicación no disponible</p>
+                                    </div>
+                                )}
+                            </div>
+                            
+                            {/* Directions Card - New Feature */}
+                            {c.latitud && c.longitud && (
+                                <div className="bg-white rounded-xl p-5 shadow-lg border border-neutral-100">
+                                    <h4 className="font-bold text-[#223945] mb-3 flex items-center gap-2 text-sm uppercase tracking-wide">
+                                        <MapPin className="w-4 h-4" />
+                                        Cómo llegar
+                                    </h4>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <a 
+                                            href={getMapsLink('driving')} 
+                                            target="_blank" 
+                                            rel="noreferrer"
+                                            className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg bg-neutral-50 hover:bg-[#223945] hover:text-white transition-all group/dir border border-neutral-100 text-neutral-600"
+                                        >
+                                            <span className="font-bold text-xs uppercase">Coche</span>
+                                        </a>
+                                        <a 
+                                            href={getMapsLink('transit')} 
+                                            target="_blank" 
+                                            rel="noreferrer"
+                                            className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg bg-neutral-50 hover:bg-[#223945] hover:text-white transition-all group/dir border border-neutral-100 text-neutral-600"
+                                        >
+                                            <span className="font-bold text-xs uppercase">Bus</span>
+                                        </a>
+                                        <a 
+                                            href={getMapsLink('walking')} 
+                                            target="_blank" 
+                                            rel="noreferrer"
+                                            className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg bg-neutral-50 hover:bg-[#223945] hover:text-white transition-all group/dir border border-neutral-100 text-neutral-600"
+                                        >
+                                            <span className="font-bold text-xs uppercase">Andando</span>
+                                        </a>
+                                    </div>
+                                    <a 
+                                        href={`https://www.google.com/maps/dir/?api=1&destination=${c.latitud},${c.longitud}`} 
+                                        target="_blank" 
+                                        rel="noreferrer" 
+                                        className="mt-3 block w-full text-center py-2.5 rounded-lg border-2 border-[#223945] text-[#223945] font-bold text-sm hover:bg-[#223945] hover:text-white transition-all"
+                                    >
+                                        Abrir en Google Maps
+                                    </a>
                                 </div>
                             )}
-                        </div>
+                         </div>
                     </div>
                 </div>
             </div>
