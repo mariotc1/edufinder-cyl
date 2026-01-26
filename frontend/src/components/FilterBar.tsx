@@ -132,19 +132,26 @@ export default function FilterBar({ onFilterChange, isLoading }: FilterBarProps)
   ];
 
   const hasActiveFilters = Object.values(filters).some(val => val !== undefined && val !== '' && val !== 10) || geolocationStatus === 'success';
+  
+  // Clases comunes para inputs y selects
+  const inputClasses = "w-full appearance-none bg-neutral-50 border border-neutral-200 text-neutral-700 py-3 px-4 pr-8 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#223945]/20 focus:border-[#223945] transition-all font-medium text-sm hover:border-[#223945]/50 placeholder:text-neutral-400";
+  const labelClasses = "text-[11px] font-bold text-[#223945] ml-1 uppercase tracking-wider mb-1 block opacity-80";
 
   return (
-    <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/50 p-6 transition-all hover:shadow-2xl">
-      <div className="flex flex-col gap-6">
+    <div className="relative bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/50 p-6 transition-all hover:shadow-2xl overflow-hidden">
+       {/* Decorative top border/gradient - matching cards */}
+       <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300"></div>
+
+      <div className="flex flex-col gap-6 pt-2">
         
         {/* Top Row: Search & Location */}
         <div className="flex flex-col md:flex-row gap-4 items-stretch">
           <div className="flex-grow relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400 group-focus-within:text-primary-600 transition-colors" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400 group-focus-within:text-[#223945] transition-colors" />
             <input 
               type="text"
               placeholder="Buscar por nombre, localidad..." 
-              className="w-full pl-12 pr-4 py-3 rounded-2xl bg-neutral-50 border-2 border-transparent focus:bg-white focus:border-primary-100 focus:ring-4 focus:ring-primary-50 transition-all outline-none font-medium placeholder:text-neutral-400 text-neutral-800"
+              className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-neutral-50 border border-neutral-200 focus:bg-white focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 transition-all outline-none font-medium placeholder:text-neutral-400 text-neutral-800 hover:border-[#223945]/50"
               value={filters.q || ''}
               onChange={(e) => handleChange('q', e.target.value)}
             />
@@ -152,15 +159,15 @@ export default function FilterBar({ onFilterChange, isLoading }: FilterBarProps)
           
           <div className="flex-shrink-0 flex gap-2">
             {geolocationStatus === 'success' ? (
-               <div className="flex items-center gap-2 bg-primary-50 text-primary-700 px-4 py-2 rounded-2xl border border-primary-100 animate-in fade-in slide-in-from-bottom-2">
+               <div className="flex items-center gap-2 bg-[#223945]/10 text-[#223945] px-4 py-2 rounded-xl border border-[#223945]/20 animate-in fade-in slide-in-from-bottom-2">
                  <div className="flex items-center gap-2">
                     <MapPin className="w-4 h-4" />
                     <span className="text-sm font-bold">Cerca de mí</span>
                  </div>
-                 <div className="h-4 w-px bg-primary-200 mx-1"></div>
+                 <div className="h-4 w-px bg-[#223945]/20 mx-1"></div>
                  <button 
                    onClick={clearGeolocation} 
-                   className="p-1 hover:bg-white rounded-full transition-colors text-primary-400 hover:text-red-500"
+                   className="p-1 hover:bg-white rounded-full transition-colors text-[#223945]/60 hover:text-red-500"
                    title="Desactivar ubicación"
                  >
                    <X className="w-4 h-4" />
@@ -170,7 +177,7 @@ export default function FilterBar({ onFilterChange, isLoading }: FilterBarProps)
               <button 
                 onClick={handleGeolocation}
                 disabled={geolocationStatus === 'loading'}
-                className="btn-primary px-6 py-3 rounded-2xl shadow-lg shadow-primary-500/20 hover:shadow-primary-500/30 flex items-center gap-2 whitespace-nowrap"
+                className="bg-[#223945] text-white px-6 py-3.5 rounded-xl shadow-lg shadow-[#223945]/20 hover:shadow-[#223945]/40 hover:-translate-y-0.5 transition-all active:translate-y-0 flex items-center gap-2 whitespace-nowrap font-bold text-sm"
               >
                 {geolocationStatus === 'loading' ? (
                   <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
@@ -185,7 +192,7 @@ export default function FilterBar({ onFilterChange, isLoading }: FilterBarProps)
             {hasActiveFilters && (
                 <button 
                     onClick={clearAll}
-                    className="p-3 text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all border border-transparent hover:border-red-100"
+                    className="p-3.5 text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all border border-transparent hover:border-red-100"
                     title="Limpiar filtros"
                 >
                     <Trash2 className="w-5 h-5" />
@@ -196,8 +203,8 @@ export default function FilterBar({ onFilterChange, isLoading }: FilterBarProps)
 
         {/* Radius Slider (Conditional) */}
         {geolocationStatus === 'success' && (
-             <div className="bg-gradient-to-r from-primary-50 to-white p-4 rounded-2xl border border-primary-100/50 flex flex-col sm:flex-row gap-4 items-center animate-in zoom-in-95 duration-200">
-                <div className="flex items-center gap-2 text-primary-700 min-w-[140px]">
+             <div className="bg-gradient-to-r from-blue-50 to-white p-4 rounded-xl border border-blue-100/50 flex flex-col sm:flex-row gap-4 items-center animate-in zoom-in-95 duration-200 shadow-inner">
+                <div className="flex items-center gap-2 text-[#223945] min-w-[140px]">
                     <SlidersHorizontal className="w-4 h-4" />
                     <span className="text-sm font-bold">Radio: {filters.radio} km</span>
                 </div>
@@ -209,9 +216,9 @@ export default function FilterBar({ onFilterChange, isLoading }: FilterBarProps)
                         step="1"
                         value={filters.radio || 10}
                         onChange={(e) => handleChange('radio', Number(e.target.value))}
-                        className="w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer accent-primary-600 hover:accent-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                        className="w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer accent-[#223945] hover:accent-[#1a2c35] focus:outline-none focus:ring-2 focus:ring-[#223945]/20"
                         style={{
-                            backgroundImage: `linear-gradient(to right, var(--primary-500) 0%, var(--primary-500) ${(filters.radio!/100)*100}%, #e5e5e5 ${(filters.radio!/100)*100}%, #e5e5e5 100%)`
+                            backgroundImage: `linear-gradient(to right, #223945 0%, #223945 ${(filters.radio!/100)*100}%, #e5e5e5 ${(filters.radio!/100)*100}%, #e5e5e5 100%)`
                         }}
                     />
                      <div className="flex justify-between text-[10px] font-bold text-neutral-400 mt-1 uppercase tracking-wider">
@@ -224,38 +231,38 @@ export default function FilterBar({ onFilterChange, isLoading }: FilterBarProps)
         )}
 
         {/* Filters Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           
           <div className="space-y-1">
-            <label className="text-xs font-bold text-neutral-500 ml-1 uppercase tracking-wider">Provincia</label>
+            <label className={labelClasses}>Provincia</label>
             <div className="relative">
                 <select 
-                className="w-full appearance-none bg-neutral-50 border border-neutral-200 text-neutral-700 py-2.5 px-4 pr-8 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-300 transition-all font-medium text-sm"
+                className={inputClasses}
                 value={filters.provincia || ''}
                 onChange={(e) => handleChange('provincia', e.target.value)}
                 >
                 <option value="">Todas las provincias</option>
                 {provincias.map(p => <option key={p} value={p}>{p}</option>)}
                 </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-neutral-500">
-                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#223945]">
+                    <ChevronDown className="w-4 h-4" />
                 </div>
             </div>
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-bold text-neutral-500 ml-1 uppercase tracking-wider">Tipo</label>
+            <label className={labelClasses}>Tipo</label>
             <div className="relative">
                 <select 
-                className="w-full appearance-none bg-neutral-50 border border-neutral-200 text-neutral-700 py-2.5 px-4 pr-8 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-300 transition-all font-medium text-sm"
+                className={inputClasses}
                 value={filters.tipo || ''}
                 onChange={(e) => handleChange('tipo', e.target.value)}
                 >
                 <option value="">Todos los tipos</option>
                 {tiposEnsenanza.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                 </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-neutral-500">
-                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#223945]">
+                    <ChevronDown className="w-4 h-4" />
                 </div>
             </div>
           </div>
@@ -264,29 +271,29 @@ export default function FilterBar({ onFilterChange, isLoading }: FilterBarProps)
 
         {/* FP Conditional Filters - Dedicated Row */}
           {filters.tipo === 'FP' && (
-             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-4 border-t border-neutral-100 animate-in slide-in-from-top-2 fade-in duration-300">
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t border-neutral-100 animate-in slide-in-from-top-2 fade-in duration-300">
                <div className="space-y-1">
-                <label className="text-xs font-bold text-neutral-500 ml-1 uppercase tracking-wider">Familia</label>
+                <label className={labelClasses}>Familia</label>
                  <div className="relative">
                     <select 
-                    className="w-full appearance-none bg-neutral-50 border border-neutral-200 text-neutral-700 py-2.5 px-4 pr-8 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-300 transition-all font-medium text-sm text-ellipsis"
+                    className={inputClasses}
                     value={filters.familia || ''}
                     onChange={(e) => handleChange('familia', e.target.value)}
                     >
                     <option value="">Todas</option>
                     {familiasFP.map(f => <option key={f} value={f}>{f}</option>)}
                     </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-neutral-500">
-                        <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#223945]">
+                        <ChevronDown className="w-4 h-4" />
                     </div>
                 </div>
               </div>
 
                <div className="space-y-1">
-                <label className="text-xs font-bold text-neutral-500 ml-1 uppercase tracking-wider">Nivel</label>
+                <label className={labelClasses}>Nivel</label>
                 <div className="relative">
                     <select 
-                    className="w-full appearance-none bg-neutral-50 border border-neutral-200 text-neutral-700 py-2.5 px-4 pr-8 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-300 transition-all font-medium text-sm"
+                    className={inputClasses}
                     value={filters.nivel || ''}
                     onChange={(e) => handleChange('nivel', e.target.value)}
                     >
@@ -296,17 +303,17 @@ export default function FilterBar({ onFilterChange, isLoading }: FilterBarProps)
                     <option value="GS">Grado Superior</option>
                     <option value="CE">Curso de Especialización</option>
                     </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-neutral-500">
-                        <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#223945]">
+                        <ChevronDown className="w-4 h-4" />
                     </div>
                 </div>
               </div>
 
               <div className="space-y-1">
-                 <label className="text-xs font-bold text-neutral-500 ml-1 uppercase tracking-wider">Modalidad</label>
+                 <label className={labelClasses}>Modalidad</label>
                  <div className="relative">
                     <select 
-                    className="w-full appearance-none bg-neutral-50 border border-neutral-200 text-neutral-700 py-2.5 px-4 pr-8 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-300 transition-all font-medium text-sm"
+                    className={inputClasses}
                     value={filters.modalidad || ''}
                     onChange={(e) => handleChange('modalidad', e.target.value)}
                     >
@@ -314,8 +321,8 @@ export default function FilterBar({ onFilterChange, isLoading }: FilterBarProps)
                     <option value="PRESENCIAL">Presencial</option>
                     <option value="DISTANCIA">Distancia</option>
                     </select>
-                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-neutral-500">
-                        <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#223945]">
+                        <ChevronDown className="w-4 h-4" />
                     </div>
                 </div>
               </div>
@@ -324,5 +331,25 @@ export default function FilterBar({ onFilterChange, isLoading }: FilterBarProps)
 
       </div>
     </div>
+  );
+}
+
+// Added simplified ChevronDown component since it was missing in imports but used in replacement
+function ChevronDown({ className }: { className?: string }) {
+  return (
+    <svg 
+      xmlns="http://www.w3.org/2000/svg" 
+      width="24" 
+      height="24" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      className={className}
+    >
+      <path d="m6 9 6 6 6-6"/>
+    </svg>
   );
 }

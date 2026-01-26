@@ -48,14 +48,14 @@ function SearchContent() {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-primary-50 via-white to-secondary-50 py-12 px-4 sm:px-6 lg:px-8">
+      <section className="relative bg-gradient-to-br from-blue-50 via-white to-blue-50 py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-10">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-neutral-900 mb-4 font-heading tracking-tight">
-              EduFinder <span className="text-primary-600">CYL</span>
+          <div className="text-center mb-12">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#111827] mb-4 font-heading tracking-tight">
+              Excelencia educativa <span className="text-[#223945] block md:inline">a tu alcance</span>
             </h1>
-            <p className="text-lg sm:text-xl text-neutral-600 max-w-2xl mx-auto">
-              Descubre tu futuro académico. Encuentra el centro ideal en Castilla y León con nuestra búsqueda inteligente.
+            <p className="text-lg sm:text-xl text-neutral-600 max-w-2xl mx-auto leading-relaxed">
+              Encuentra el centro ideal en <span className="font-semibold text-[#223945]">Castilla y León</span> con nuestra búsqueda inteligente.
             </p>
           </div>
 
