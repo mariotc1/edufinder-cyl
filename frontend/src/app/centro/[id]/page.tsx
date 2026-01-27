@@ -1,15 +1,15 @@
 'use client';
 
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import useSWR from 'swr';
 import api from '@/lib/axios';
 import dynamic from 'next/dynamic';
 import { Mail, Phone, MapPin, Globe, Star, BookOpen, Building2, ChevronLeft, Heart } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
+
 
 // Dynamic import map to avoid SSR issues
-const Map = dynamic(() => import('@/components/Map'), { 
+const Map = dynamic(() => import('@/components/Map'), {
     ssr: false,
     loading: () => <div className="h-64 md:h-full bg-neutral-100 animate-pulse rounded-xl flex items-center justify-center text-neutral-500">Cargando mapa...</div>
 });
@@ -18,10 +18,11 @@ const fetcher = (url: string) => api.get(url).then(res => res.data);
 
 export default function CentroDetail() {
     const params = useParams();
+    const router = useRouter();
     const id = params.id;
     const { data: centro, error } = useSWR(id ? `/centros/${id}` : null, fetcher);
     const { data: ciclos } = useSWR(id ? `/centros/${id}/ciclos` : null, fetcher);
-    
+
     // Favorites logic
     const [isFavorite, setIsFavorite] = useState(false);
     const [loadingFav, setLoadingFav] = useState(false);
@@ -38,7 +39,7 @@ export default function CentroDetail() {
     const toggleFavorite = async (e: React.MouseEvent) => {
         e.preventDefault();
         if (loadingFav) return;
-        
+
         // Optimistic UI
         const newStatus = !isFavorite;
         setIsFavorite(newStatus);
@@ -66,7 +67,7 @@ export default function CentroDetail() {
             </div>
         </div>
     );
-    
+
     if (!centro) return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
             <div className="flex flex-col items-center justify-center py-20">
@@ -115,22 +116,23 @@ export default function CentroDetail() {
         <div className="min-h-screen bg-brand-gradient py-8">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Back Link */}
-                <Link 
-                    href="/" 
-                    className="inline-flex items-center gap-2 text-neutral-500 hover:text-[#223945] font-bold mb-8 transition-colors text-sm uppercase tracking-wide"
+                {/* Back Button */}
+                <button
+                    onClick={() => router.back()}
+                    className="inline-flex items-center gap-2 text-neutral-500 hover:text-[#223945] font-bold mb-8 transition-colors text-sm uppercase tracking-wide cursor-pointer"
                 >
                     <ChevronLeft className="w-4 h-4" />
                     Volver a resultados
-                </Link>
+                </button>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                     {/* Left Column: Info (Now 7/12) */}
                     <div className="lg:col-span-7 space-y-8">
                         {/* Header Card */}
                         <div className="bg-white rounded-2xl p-8 border border-neutral-100 shadow-xl shadow-neutral-200/50 relative overflow-hidden">
-                             {/* Decorative Top Gradient */}
+                            {/* Decorative Top Gradient */}
                             <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300"></div>
-                            
+
                             <div className="flex justify-between items-start gap-4">
                                 <div>
                                     <div className="flex items-center gap-3 mb-4">
@@ -143,7 +145,7 @@ export default function CentroDetail() {
                                     </h1>
                                     <p className="text-lg text-neutral-500 font-medium">{c.denominacion_generica}</p>
                                 </div>
-                                <button 
+                                <button
                                     onClick={toggleFavorite}
                                     className="shrink-0 p-3 rounded-full bg-white border border-neutral-200 shadow-sm hover:shadow-md hover:scale-105 active:scale-95 transition-all group"
                                     title={isFavorite ? "Eliminar de favoritos" : "Añadir a favoritos"}
@@ -168,8 +170,8 @@ export default function CentroDetail() {
                                     </div>
                                 </div>
                             </div>
-                             {/* Phone */}
-                             {c.telefono && (
+                            {/* Phone */}
+                            {c.telefono && (
                                 <a href={`tel:${c.telefono}`} className="bg-white/80 backdrop-blur-sm p-5 rounded-xl border border-neutral-100 shadow-sm hover:shadow-md transition-all group block">
                                     <div className="flex items-center gap-4">
                                         <div className="p-3 bg-amber-50 text-amber-600 rounded-lg transition-colors">
@@ -181,9 +183,9 @@ export default function CentroDetail() {
                                         </div>
                                     </div>
                                 </a>
-                             )}
-                             {/* Email */}
-                             {c.email && (
+                            )}
+                            {/* Email */}
+                            {c.email && (
                                 <a href={`mailto:${c.email}`} className="bg-white/80 backdrop-blur-sm p-5 rounded-xl border border-neutral-100 shadow-sm hover:shadow-md transition-all group block md:col-span-2">
                                     <div className="flex items-center gap-4">
                                         <div className="p-3 bg-emerald-50 text-emerald-600 rounded-lg transition-colors">
@@ -195,9 +197,9 @@ export default function CentroDetail() {
                                         </div>
                                     </div>
                                 </a>
-                             )}
-                              {/* Web */}
-                              {c.web && (
+                            )}
+                            {/* Web */}
+                            {c.web && (
                                 <a href={c.web} target="_blank" rel="noreferrer" className="bg-white/80 backdrop-blur-sm p-5 rounded-xl border border-neutral-100 shadow-sm hover:shadow-md transition-all group block md:col-span-2">
                                     <div className="flex items-center gap-4">
                                         <div className="p-3 bg-indigo-50 text-indigo-600 rounded-lg transition-colors">
@@ -209,11 +211,11 @@ export default function CentroDetail() {
                                         </div>
                                     </div>
                                 </a>
-                             )}
+                            )}
                         </div>
 
                         {/* Educational Offer (Ciclos) */}
-                         {ciclos && ciclos.data.length > 0 && (
+                        {ciclos && ciclos.data.length > 0 && (
                             <div className="bg-white rounded-2xl p-8 border border-neutral-100 shadow-lg">
                                 <h3 className="text-xl font-bold text-[#223945] mb-6 flex items-center gap-3">
                                     <div className="p-2 bg-[#223945] text-white rounded-lg">
@@ -221,11 +223,11 @@ export default function CentroDetail() {
                                     </div>
                                     Oferta Educativa
                                 </h3>
-                                
+
                                 <div className="space-y-4">
                                     {ciclos.data.map((ciclo: any) => (
-                                        <div 
-                                            key={ciclo.id} 
+                                        <div
+                                            key={ciclo.id}
                                             className={`p-5 rounded-xl border transition-all hover:-translate-y-1 hover:shadow-md ${getLevelBackground(ciclo.nivel_educativo)}`}
                                         >
                                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -240,7 +242,7 @@ export default function CentroDetail() {
                                                     </div>
                                                     <h4 className="font-bold text-[#111827] text-lg leading-snug">{ciclo.ciclo_formativo}</h4>
                                                     <p className="text-sm text-neutral-600 mt-2 font-medium">
-                                                         Familia Profesional: <span className="text-[#223945]">{ciclo.familia_profesional}</span>
+                                                        Familia Profesional: <span className="text-[#223945]">{ciclo.familia_profesional}</span>
                                                     </p>
                                                 </div>
                                             </div>
@@ -253,9 +255,9 @@ export default function CentroDetail() {
 
                     {/* Right Column: Refined Map & Directions - Sticky */}
                     <div className="lg:col-span-5 relative">
-                         <div className="sticky top-28 space-y-4">
+                        <div className="sticky top-28 space-y-4">
                             {/* Map Card - ENLARGED to 600px -> Reduced to 500px for alignment */}
-                            <div className="bg-white rounded-2xl shadow-xl shadow-neutral-200/40 border border-neutral-100 overflow-hidden h-[500px] relative group z-0">
+                            <div className="bg-white rounded-2xl shadow-xl shadow-neutral-200/40 border border-neutral-100 overflow-hidden h-[700px] relative group z-0">
                                 {c.latitud && c.longitud ? (
                                     <>
                                         <div className="absolute inset-0 z-0">
@@ -270,48 +272,48 @@ export default function CentroDetail() {
                                                     <span className="flex h-2 w-2 rounded-full bg-green-500"></span>
                                                     <p className="text-xs font-bold text-[#223945] uppercase tracking-wide">Ubicación Exacta</p>
                                                 </div>
-                                                
+
                                                 <div className="flex items-center gap-1">
-                                                    <a 
-                                                        href={getMapsLink('driving')} 
-                                                        target="_blank" 
+                                                    <a
+                                                        href={getMapsLink('driving')}
+                                                        target="_blank"
                                                         rel="noreferrer"
                                                         title="Cómo llegar en Coche"
                                                         className="p-2 rounded-lg text-neutral-500 hover:text-white hover:bg-[#223945] transition-all"
                                                     >
                                                         <span className="sr-only">Coche</span>
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M2 12h12"/></svg>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" /><circle cx="7" cy="17" r="2" /><circle cx="17" cy="17" r="2" /><path d="M2 12h12" /></svg>
                                                     </a>
-                                                    <a 
-                                                        href={getMapsLink('transit')} 
-                                                        target="_blank" 
+                                                    <a
+                                                        href={getMapsLink('transit')}
+                                                        target="_blank"
                                                         rel="noreferrer"
                                                         title="Cómo llegar en Transporte Público"
                                                         className="p-2 rounded-lg text-neutral-500 hover:text-white hover:bg-[#223945] transition-all"
                                                     >
                                                         <span className="sr-only">Transporte Público</span>
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="16" height="16" x="4" y="3" rx="2"/><path d="M8 21v-2"/><path d="M16 21v-2"/><path d="M4 11h16"/><path d="M10 15.5V17"/><path d="M14 15.5V17"/></svg>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="16" height="16" x="4" y="3" rx="2" /><path d="M8 21v-2" /><path d="M16 21v-2" /><path d="M4 11h16" /><path d="M10 15.5V17" /><path d="M14 15.5V17" /></svg>
                                                     </a>
-                                                    <a 
-                                                        href={getMapsLink('walking')} 
-                                                        target="_blank" 
+                                                    <a
+                                                        href={getMapsLink('walking')}
+                                                        target="_blank"
                                                         rel="noreferrer"
                                                         title="Cómo llegar Andando"
                                                         className="p-2 rounded-lg text-neutral-500 hover:text-white hover:bg-[#223945] transition-all"
                                                     >
                                                         <span className="sr-only">Andando</span>
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0"/><path d="M13 31.6V12h3"/><path d="M8 19l4 1 2-2"/></svg>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0" /><path d="M13 31.6V12h3" /><path d="M8 19l4 1 2-2" /></svg>
                                                     </a>
                                                     <div className="w-px h-4 bg-neutral-200 mx-1"></div>
-                                                    <a 
-                                                        href={`https://www.google.com/maps/dir/?api=1&destination=${c.latitud},${c.longitud}`} 
-                                                        target="_blank" 
-                                                        rel="noreferrer" 
+                                                    <a
+                                                        href={`https://www.google.com/maps/dir/?api=1&destination=${c.latitud},${c.longitud}`}
+                                                        target="_blank"
+                                                        rel="noreferrer"
                                                         title="Abrir en Google Maps"
                                                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#223945] text-white hover:bg-black transition-all text-xs font-bold ml-1"
                                                     >
                                                         <span>IR</span>
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
                                                     </a>
                                                 </div>
                                             </div>
@@ -324,7 +326,7 @@ export default function CentroDetail() {
                                     </div>
                                 )}
                             </div>
-                         </div>
+                        </div>
                     </div>
                 </div>
             </div>
