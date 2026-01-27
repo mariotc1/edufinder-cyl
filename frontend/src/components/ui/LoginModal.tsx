@@ -3,7 +3,7 @@
 import { Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { X, LogIn, UserPlus } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -12,15 +12,27 @@ interface LoginModalProps {
 
 export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // Construct the redirect URL for modal
+  const getRedirectUrl = () => {
+    const currentPath = `${pathname}${searchParams.toString() ? '?' + searchParams.toString() : ''}`;
+    // Avoid double redirect if we somehow opened this on login page
+    if (currentPath.startsWith('/login') || currentPath.startsWith('/registro')) return '';
+    return `?redirect=${encodeURIComponent(currentPath)}`;
+  };
+
+  const redirectParam = getRedirectUrl();
 
   const handleLogin = () => {
     onClose();
-    router.push('/login');
+    router.push(`/login${redirectParam}`);
   };
 
   const handleRegister = () => {
     onClose();
-    router.push('/registro');
+    router.push(`/registro${redirectParam}`);
   };
 
   return (
@@ -64,7 +76,6 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
                 {/* Header - Simple clean background, no pulse animations */}
                 <div className="bg-[#223945] px-6 pt-12 pb-8 relative overflow-hidden text-center">
-                    {/* Subtle grid only, no colorful glowing blobs to ensure contrast */}
                     {/* Pure color background, no obscured grid */}
                     
                     <div className="relative z-10 flex flex-col items-center">

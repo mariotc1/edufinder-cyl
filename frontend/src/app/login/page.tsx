@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import api from '@/lib/axios';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { LogIn, Mail, Lock, Eye, EyeOff, ChevronLeft } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -14,6 +14,7 @@ export default function Login() {
     const [error, setError] = useState('');
     const { login } = useAuth();
     const router = useRouter();
+    const searchParams = useSearchParams();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -21,7 +22,14 @@ export default function Login() {
         try {
             const res = await api.post('/login', { email, password });
             login(res.data.user, res.data.access_token);
-            router.push('/');
+            
+            // Check for redirect param
+            const redirectUrl = searchParams.get('redirect');
+            if (redirectUrl) {
+                router.push(redirectUrl);
+            } else {
+                router.push('/');
+            }
         } catch (err: any) {
             setError(err.response?.data?.message || 'Error al iniciar sesión');
         }
@@ -128,7 +136,10 @@ export default function Login() {
                     <div className="mt-8 text-center pt-6 border-t border-neutral-100">
                         <p className="text-sm text-neutral-600 font-medium">
                             ¿No tienes cuenta?{' '}
-                            <Link href="/registro" className="text-[#223945] hover:text-black font-bold hover:underline decoration-2 underline-offset-4 transition-all">
+                            <Link 
+                                href="/registro" 
+                                className="text-[#223945] hover:text-black font-bold hover:underline decoration-2 underline-offset-4 transition-all"
+                            >
                                 Regístrate aquí
                             </Link>
                         </p>

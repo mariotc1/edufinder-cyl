@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Menu, X, MapPin, Heart, LogIn, UserPlus } from 'lucide-react';
 // Remove local api import as it's used via context
 import Logo from './Logo';
@@ -14,11 +14,23 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const handleLogout = () => {
       logout();
       router.push('/login');
   };
+
+  // Construct the redirect URL
+  const getRedirectUrl = () => {
+      const currentPath = `${pathname}${searchParams.toString() ? '?' + searchParams.toString() : ''}`;
+      // Avoid redirect loops if already on auth pages
+      if (currentPath.startsWith('/login') || currentPath.startsWith('/registro')) return '';
+      return `?redirect=${encodeURIComponent(currentPath)}`;
+  };
+  
+  const redirectParam = getRedirectUrl();
 
   return (
     <nav className="fixed top-0 left-0 w-full z-50 bg-white/95 backdrop-blur-md border-b border-neutral-200 shadow-sm">
@@ -106,14 +118,14 @@ export default function Navbar() {
             ) : (
               <>
                 <Link 
-                  href="/login"
+                  href={`/login${redirectParam}`}
                   className="flex items-center gap-2 text-neutral-600 hover:text-[#223945] font-bold text-sm uppercase tracking-wide transition-colors px-4 py-2"
                 >
                   <LogIn className="w-4 h-4" />
                   Entrar
                 </Link>
                 <Link 
-                  href="/registro" 
+                  href={`/registro${redirectParam}`} 
                   className="flex items-center gap-2 bg-[#223945] text-white px-5 py-2.5 rounded-full font-bold text-sm shadow-md hover:shadow-lg hover:bg-[#1a2c35] hover:-translate-y-0.5 transition-all duration-200"
                 >
                   <UserPlus className="w-4 h-4" />
@@ -194,7 +206,7 @@ export default function Navbar() {
             ) : (
               <div className="pt-4 border-t border-neutral-100 flex flex-col gap-3">
                 <Link 
-                  href="/login" 
+                  href={`/login${redirectParam}`}
                   className="flex items-center gap-3 text-neutral-600 hover:text-[#223945] font-bold py-2 transition-colors justify-center"
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -202,7 +214,7 @@ export default function Navbar() {
                   Entrar
                 </Link>
                 <Link 
-                  href="/registro" 
+                  href={`/registro${redirectParam}`} 
                   className="w-full flex items-center justify-center gap-2 bg-[#223945] text-white px-5 py-3 rounded-xl font-bold text-sm shadow-md active:scale-95 transition-all"
                   onClick={() => setMobileMenuOpen(false)}
                 >
