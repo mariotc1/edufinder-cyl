@@ -40,6 +40,7 @@ services:
       - /app/node_modules
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:8000/api
+    command: npm run dev
     depends_on:
       - backend
     networks:
