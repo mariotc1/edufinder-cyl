@@ -4,7 +4,7 @@ import { Centro } from "@/types";
 import { useState, useEffect, useRef } from "react";
 import { addFavorite, removeFavorite } from "@/services/api";
 import { useAuth } from "@/context/AuthContext";
-import { motion } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 import { useFavoritesAnimation } from "@/context/FavoritesAnimationContext";
 
 interface CentroCardProps {
@@ -13,6 +13,34 @@ interface CentroCardProps {
   initialIsFavorite?: boolean;
   onToggle?: (newStatus: boolean) => void;
 }
+
+const cardVariants: Variants = {
+  hidden: { 
+    opacity: 0, 
+    y: 20,
+    scale: 0.95
+  },
+  show: { 
+    opacity: 1, 
+    y: 0,
+    scale: 1,
+    transition: {
+      type: "spring",
+      stiffness: 100, // Reduced stiffness (softer)
+      damping: 15,    // Damped to prevent overshoot/oscillation
+      mass: 1
+    }
+  },
+  exit: { 
+    opacity: 0, 
+    scale: 0.9, 
+    transition: { duration: 0.2 } 
+  },
+  hover: {
+    y: -4,
+    transition: { duration: 0.2 }
+  }
+};
 
 export default function CentroCard({
   centro,
@@ -128,10 +156,16 @@ export default function CentroCard({
   };
 
   return (
-    <div
+    <motion.div
       ref={cardRef}
-      className="group relative bg-white rounded-xl overflow-hidden border border-neutral-200 shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-1 hover:border-[#223945] transition-all duration-300 flex flex-col h-full animate-fade-in-up"
-      style={{ animationDelay: `${index * 100}ms` }}
+      // Framer Motion Props
+      // Removed layout={true} to prevent calculation glitches
+      variants={cardVariants}
+      initial="hidden"
+      animate="show"
+      whileHover="hover"
+      className="group relative bg-white rounded-xl overflow-hidden border border-neutral-200 shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-[#223945] transition-[box-shadow,background-color,border-color] duration-300 flex flex-col h-full"
+      // Removed hover:-translate-y-1 as it fights with layout prop
     >
       {/* Decorative top border/gradient */}
       <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-primary-500 to-primary-300"></div>
@@ -209,7 +243,7 @@ export default function CentroCard({
               {centro.ciclos.map((ciclo, idx) => (
                 <div
                   key={idx}
-                  className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded-md border shadow-sm transition-colors animate-fade-in-up ${getLevelBackground(ciclo.nivel_educativo)}`}
+                  className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded-md border shadow-sm transition-colors ${getLevelBackground(ciclo.nivel_educativo)}`}
                 >
                   <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${getLevelDotColor(ciclo.nivel_educativo)}`}></div>
                   <span className="truncate flex-1 font-medium text-neutral-800 text-sm">{ciclo.ciclo_formativo}</span>
@@ -241,6 +275,6 @@ export default function CentroCard({
           <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
         </Link>
       </div>
-    </div>
+    </motion.div>
   );
 }
