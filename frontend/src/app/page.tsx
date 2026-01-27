@@ -9,6 +9,7 @@ import { searchCentros } from '@/services/api';
 import { FilterOptions, Centro } from '@/types';
 import FilterBar from '@/components/FilterBar';
 import CentroCard from '@/components/CentroCard';
+import CentroCardSkeleton from '@/components/ui/CentroCardSkeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { Suspense } from 'react';
@@ -117,13 +118,18 @@ function SearchContent() {
                 {data.total} Centros encontrados
               </span>
             )}
+            {!data && isLoading && (
+                <div className="h-6 w-32 bg-neutral-100 rounded-full animate-pulse"></div>
+            )}
           </div>
 
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-20">
-              <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-200 border-t-primary-600 mb-4"></div>
-              <p className="text-neutral-600 font-medium">Buscando los mejores centros...</p>
-            </div>
+             // SKELETON GRID - Replaces old spinner
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                    <CentroCardSkeleton key={`skeleton-${i}`} />
+                ))}
+             </div>
           ) : error ? (
             <div className="text-center py-20 bg-white rounded-xl border border-red-100 shadow-sm">
               <p className="text-red-500 font-medium text-lg">Ocurrió un error al cargar los datos.</p>
