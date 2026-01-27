@@ -25,7 +25,9 @@ export default function CentroCard({
   const { triggerAnimation } = useFavoritesAnimation();
   const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
   const [loading, setLoading] = useState(false);
-  const heartButtonRef = useRef<HTMLButtonElement>(null);
+  
+  // Refs
+  const cardRef = useRef<HTMLDivElement>(null); // Ref for the entire card
 
   // Sync state with prop if it changes (important for async data loading in parent)
   useEffect(() => {
@@ -48,10 +50,13 @@ export default function CentroCard({
     setIsFavorite(newStatus);
     if (onToggle) onToggle(newStatus);
 
-    // Trigger Animation on Add
-    if (newStatus && heartButtonRef.current) {
-        const rect = heartButtonRef.current.getBoundingClientRect();
-        triggerAnimation(rect);
+    // Trigger Ghost Card Animation on Add
+    if (newStatus && cardRef.current) {
+        const rect = cardRef.current.getBoundingClientRect();
+        triggerAnimation(rect, {
+            title: centro.nombre,
+            naturaleza: centro.naturaleza
+        });
     }
 
     setLoading(true);
@@ -124,6 +129,7 @@ export default function CentroCard({
 
   return (
     <div
+      ref={cardRef}
       className="group relative bg-white rounded-xl overflow-hidden border border-neutral-200 shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-1 hover:border-[#223945] transition-all duration-300 flex flex-col h-full animate-fade-in-up"
       style={{ animationDelay: `${index * 100}ms` }}
     >
@@ -132,7 +138,6 @@ export default function CentroCard({
 
       {/* Favorite Button - Absolute Position - SMALLER PADDING (p-1.5) and ICON (w-4 h-4) */}
       <motion.button
-        ref={heartButtonRef}
         onClick={handleToggleFavorite}
         whileTap={{ scale: 0.8 }}
         className="absolute top-4 right-4 z-20 p-1.5 rounded-full bg-white/90 backdrop-blur-sm shadow-sm border border-neutral-100 hover:bg-red-50 active:bg-red-100 transition-colors group/heart"

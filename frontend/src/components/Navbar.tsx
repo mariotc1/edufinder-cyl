@@ -7,10 +7,13 @@ import { Menu, X, MapPin, Heart, LogIn, UserPlus } from 'lucide-react';
 // Remove local api import as it's used via context
 import Logo from './Logo';
 import { useAuth } from '@/context/AuthContext';
+import { useFavoritesAnimation } from '@/context/FavoritesAnimationContext';
+import { motion } from 'framer-motion';
 
 export default function Navbar() {
   /* Refactored to use AuthContext */
   const { user, logout, openLoginModal } = useAuth();
+  const { favoritesPulse } = useFavoritesAnimation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const router = useRouter();
@@ -58,7 +61,17 @@ export default function Navbar() {
                   href="/favoritos" 
                   className="group flex items-center gap-2 text-neutral-600 hover:text-[#223945] font-bold text-sm uppercase tracking-wide transition-colors"
                 >
-                  <Heart id="nav-favorites-icon-desktop" className="w-4 h-4 group-hover:text-red-500 transition-colors" />
+                  {/* Puliing Heart Icon */}
+                  <motion.div
+                    animate={favoritesPulse ? { scale: [1, 1.4, 1], color: ['#525252', '#ef4444', '#525252'] } : {}}
+                    transition={{ duration: 0.3 }}
+                    className="relative"
+                  >
+                     <Heart id="nav-favorites-icon-desktop" className="w-4 h-4 group-hover:text-red-500 transition-colors" />
+                     {favoritesPulse && (
+                         <span className="absolute inset-0 bg-red-400 rounded-full animate-ping opacity-75"></span>
+                     )}
+                  </motion.div>
                   Favoritos
                 </Link>
                 
@@ -136,14 +149,16 @@ export default function Navbar() {
           </div>
 
           {/* Mobile Menu Button */}
-          <button
+          <motion.button
+            animate={favoritesPulse ? { scale: [1, 1.2, 1], backgroundColor: ["rgba(0,0,0,0)", "rgba(239,68,68,0.1)", "rgba(0,0,0,0)"] } : {}}
+            transition={{ duration: 0.3 }}
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-lg text-neutral-700 hover:bg-neutral-100 transition-colors"
+            className="md:hidden p-2 rounded-lg text-neutral-700 hover:bg-neutral-100 transition-colors relative"
             aria-label="Toggle menu"
             id="nav-mobile-menu-button"
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          </motion.button>
         </div>
       </div>
 
