@@ -9,6 +9,8 @@ import { searchCentros } from '@/services/api';
 import { FilterOptions, Centro } from '@/types';
 import FilterBar from '@/components/FilterBar';
 import CentroCard from '@/components/CentroCard';
+import CentroCardSkeleton from '@/components/ui/CentroCardSkeleton';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import { Suspense } from 'react';
 
@@ -53,20 +55,7 @@ function SearchContent() {
   });
 
   // Fetch Favorites to check status
-  // We use the same key as the favorites page so it shares cache
   const { data: favoritesData } = useSWR('/favoritos', async (url) => {
-    // Small inline fetcher or import logic. Importing to keep it clean would be better but inline is ok here.
-    // We import 'api' if we need it, but current file imports 'searchCentros'.
-    // I'll need to use api instance.
-    // Let's rely on standard fetch or import api.
-    // Actually 'searchCentros' is from api.ts, which uses axios instance. 
-    // I'll import 'api' from lib/axios to be safe or add getFavorites to api.ts.
-    // Since I can't easily edit api.ts and page.tsx at same time cleanly without failure risk,
-    // I'll assume I can import default api from lib/axios. 
-    // Wait, 'api' is not imported in page.tsx. I need to add it.
-    // OR I can use a simpler approach: define fetcher in page.tsx or import it?
-    // For now I'll just use a try/catch with the imported searchCentros... no that's wrong.
-    // I will add 'import api from "@/lib/axios"' to top of file
     return (await import('@/lib/axios')).default.get(url).then(res => res.data);
   }, {
     shouldRetryOnError: false, // If 401 (not logged in), don't retry loop
@@ -84,7 +73,16 @@ function SearchContent() {
     setPage(1);
   }, []);
 
-
+  // Animation Variants for the Container
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.05 // Delay between each child animation
+      }
+    }
+  };
 
   return (
     <>
@@ -120,13 +118,18 @@ function SearchContent() {
                 {data.total} Centros encontrados
               </span>
             )}
+            {!data && isLoading && (
+                <div className="h-6 w-32 bg-neutral-100 rounded-full animate-pulse"></div>
+            )}
           </div>
 
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-20">
-              <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-200 border-t-primary-600 mb-4"></div>
-              <p className="text-neutral-600 font-medium">Buscando los mejores centros...</p>
-            </div>
+             // SKELETON GRID - Replaces old spinner
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                    <CentroCardSkeleton key={`skeleton-${i}`} />
+                ))}
+             </div>
           ) : error ? (
             <div className="text-center py-20 bg-white rounded-xl border border-red-100 shadow-sm">
               <p className="text-red-500 font-medium text-lg">Ocurrió un error al cargar los datos.</p>
@@ -134,16 +137,22 @@ function SearchContent() {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {data?.data?.map((centro: Centro, index: number) => (
-                  <CentroCard
-                    key={centro.id}
-                    centro={centro}
-                    index={index}
-                    initialIsFavorite={favoriteIds.has(centro.id)}
-                  />
-                ))}
-              </div>
+              {/* Orchestrated Staggered Grid */}
+              <motion.div 
+                variants={containerVariants}
+                initial="hidden"
+                animate="show"
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              >
+                  {data?.data?.map((centro: Centro, index: number) => (
+                    <CentroCard
+                      key={centro.id}
+                      centro={centro}
+                      index={index}
+                      initialIsFavorite={favoriteIds.has(centro.id)}
+                    />
+                  ))}
+              </motion.div>
 
               {/* Pagination */}
               {/* Enhanced Pagination */}
@@ -260,4 +269,3 @@ function SearchContent() {
     </>
   );
 }
-
