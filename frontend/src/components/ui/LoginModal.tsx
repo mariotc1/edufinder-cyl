@@ -65,7 +65,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 {/* Header - Simple clean background, no pulse animations */}
                 <div className="bg-[#223945] px-6 pt-12 pb-8 relative overflow-hidden text-center">
                     {/* Subtle grid only, no colorful glowing blobs to ensure contrast */}
-                    <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
+                    {/* Pure color background, no obscured grid */}
                     
                     <div className="relative z-10 flex flex-col items-center">
                         {/* Icon Circle - Stationary, clean */}

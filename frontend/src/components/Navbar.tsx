@@ -105,13 +105,13 @@ export default function Navbar() {
               </>
             ) : (
               <>
-                <button 
-                  onClick={openLoginModal}
+                <Link 
+                  href="/login"
                   className="flex items-center gap-2 text-neutral-600 hover:text-[#223945] font-bold text-sm uppercase tracking-wide transition-colors px-4 py-2"
                 >
                   <LogIn className="w-4 h-4" />
                   Entrar
-                </button>
+                </Link>
                 <Link 
                   href="/registro" 
                   className="flex items-center gap-2 bg-[#223945] text-white px-5 py-2.5 rounded-full font-bold text-sm shadow-md hover:shadow-lg hover:bg-[#1a2c35] hover:-translate-y-0.5 transition-all duration-200"
