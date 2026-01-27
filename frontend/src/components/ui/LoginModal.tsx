@@ -62,28 +62,26 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                   </button>
                 </div>
 
-                {/* Decorative Pattern / Header */}
+                {/* Header - Simple clean background, no pulse animations */}
                 <div className="bg-[#223945] px-6 pt-12 pb-8 relative overflow-hidden text-center">
-                    {/* Background effects */}
-                    <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-20"></div>
-                    <div className="absolute top-0 right-0 p-8 w-64 h-64 bg-blue-500 rounded-full mix-blend-overlay filter blur-3xl opacity-20 -translate-y-1/2 translate-x-1/2 animate-pulse"></div>
-                    <div className="absolute bottom-0 left-0 p-8 w-48 h-48 bg-emerald-500 rounded-full mix-blend-overlay filter blur-3xl opacity-10 translate-y-1/2 -translate-x-1/2"></div>
+                    {/* Subtle grid only, no colorful glowing blobs to ensure contrast */}
+                    <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
                     
                     <div className="relative z-10 flex flex-col items-center">
-                        {/* Icon Circle - Improved look */}
+                        {/* Icon Circle - Stationary, clean */}
                         <div className="mb-6 relative">
-                            <div className="absolute inset-0 bg-blue-400 rounded-full blur-xl opacity-20 animate-pulse"></div>
                             <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-md border border-white/20 shadow-[0_0_15px_rgba(255,255,255,0.1)]">
                                 <LogIn className="h-9 w-9 text-white drop-shadow-md" aria-hidden="true" />
                             </div>
                         </div>
 
+                        {/* Title - Pure white */}
                         <Dialog.Title as="h3" className="text-2xl font-bold leading-6 text-white tracking-tight mb-3">
                             Inicia sesión
                         </Dialog.Title>
                         
-                        {/* Improved contrast for description */}
-                        <p className="text-base text-white/90 font-medium leading-relaxed max-w-[280px] mx-auto">
+                        {/* Description - Pure white */}
+                        <p className="text-base text-white font-medium leading-relaxed max-w-[280px] mx-auto">
                             Necesitas una cuenta para guardar tus centros favoritos y acceder a ellos siempre.
                         </p>
                     </div>
@@ -91,23 +89,19 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
                 {/* Content / Buttons */}
                 <div className="px-6 py-8 space-y-4 bg-white relative">
-                  {/* Decorative faint gradient at top of white area */}
-                  <div className="absolute top-0 left-0 w-full h-8 bg-gradient-to-b from-[#223945]/5 to-transparent"></div>
-
                   <div className="flex flex-col gap-3.5 relative z-10">
-                    {/* Primary Button - Polished */}
+                    {/* Primary Button */}
                     <button
                         onClick={handleLogin}
-                        className="group relative w-full flex justify-center py-3.5 px-4 border border-transparent text-sm font-bold rounded-2xl text-white bg-[#223945] hover:bg-[#1a2c35] focus:outline-none shadow-lg shadow-[#223945]/20 hover:shadow-[#223945]/40 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden"
+                        className="group relative w-full flex justify-center py-3.5 px-4 border border-transparent text-sm font-bold rounded-2xl text-white bg-[#223945] hover:bg-[#1a2c35] focus:outline-none shadow-lg shadow-[#223945]/20 hover:shadow-[#223945]/40 hover:-translate-y-0.5 transition-all duration-300"
                     >
-                        <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-shimmer"></div>
                         <span className="flex items-center gap-2">
                             <LogIn className="h-5 w-5 text-blue-200" aria-hidden="true" />
                             Iniciar Sesión
                         </span>
                     </button>
 
-                    {/* Secondary Button - Polished */}
+                    {/* Secondary Button */}
                     <button
                         onClick={handleRegister}
                         className="group relative w-full flex justify-center py-3.5 px-4 border-2 border-neutral-100 text-sm font-bold rounded-2xl text-neutral-600 bg-white hover:bg-neutral-50 hover:border-[#223945]/20 hover:text-[#223945] focus:outline-none transition-all duration-300"
@@ -119,13 +113,11 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                     </button>
                   </div>
                   
+                  {/* Footer - Restored full text */}
                   <div className="mt-6 text-center border-t border-neutral-100 pt-6">
-                    <button 
-                        onClick={onClose} 
-                        className="text-xs font-bold text-neutral-400 hover:text-[#223945] transition-colors uppercase tracking-wider"
-                    >
-                        Continuar sin cuenta
-                    </button>
+                    <p className="text-xs text-neutral-500">
+                        ¿Solo estás mirando? <button onClick={onClose} className="text-[#223945] font-bold hover:underline">Continuar sin cuenta</button>
+                    </p>
                   </div>
                 </div>
               </Dialog.Panel>
