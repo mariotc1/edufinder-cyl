@@ -5,11 +5,13 @@ import api from '@/lib/axios';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { LogIn, Mail, Lock } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const { login } = useAuth();
     const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -17,40 +19,49 @@ export default function Login() {
         setError('');
         try {
             const res = await api.post('/login', { email, password });
-            localStorage.setItem('token', res.data.access_token);
-            localStorage.setItem('user', JSON.stringify(res.data.user));
-            window.location.href = '/';
+            // Use context to update state
+            login(res.data.user, res.data.access_token);
+            router.push('/');
         } catch (err: any) {
             setError(err.response?.data?.message || 'Error al iniciar sesión');
         }
     };
 
     return (
-        <div className="min-h-[calc(100vh-80px)] flex items-center justify-center p-4 bg-gradient-to-br from-primary-50 via-white to-secondary-50">
+        <div className="min-h-screen bg-brand-gradient flex items-center justify-center p-4 pt-20">
             <div className="w-full max-w-md">
-                <div className="card p-8 shadow-xl">
+                <div className="relative bg-white/90 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/50 overflow-hidden p-8">
+                    {/* Decorative Top Gradient */}
+                    <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300"></div>
+
                     <div className="text-center mb-8">
-                        <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-100 rounded-full mb-4">
-                            <LogIn className="w-8 h-8 text-primary-600" />
+                        {/* Icon Circle */}
+                        <div className="mb-6 relative inline-block">
+                            <div className="absolute inset-0 bg-blue-400 rounded-full blur-xl opacity-20 animate-pulse"></div>
+                            <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-white border border-neutral-100 shadow-md">
+                                <LogIn className="w-8 h-8 text-[#223945]" />
+                            </div>
                         </div>
-                        <h2 className="text-3xl font-bold text-neutral-900 mb-2">
+                        
+                        <h2 className="text-3xl font-bold text-[#223945] mb-2 tracking-tight">
                             Bienvenido de nuevo
                         </h2>
-                        <p className="text-neutral-600">
+                        <p className="text-neutral-500 font-medium">
                             Accede a tu cuenta de EduFinder CYL
                         </p>
                     </div>
 
                     {error && (
-                        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg mb-6 text-sm">
+                        <div className="bg-red-50 border border-red-100 text-red-600 p-4 rounded-xl mb-6 text-sm font-medium flex items-center justify-center gap-2">
+                             <div className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
                             {error}
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-5">
-                        <div>
-                            <label htmlFor="email" className="flex items-center gap-2 text-sm font-semibold text-neutral-700 mb-2">
-                                <Mail className="w-4 h-4 text-primary-600" />
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="space-y-2">
+                            <label htmlFor="email" className="flex items-center gap-2 text-xs font-bold text-[#223945] uppercase tracking-wider ml-1">
+                                <Mail className="w-3.5 h-3.5" />
                                 Correo electrónico
                             </label>
                             <input 
@@ -58,23 +69,31 @@ export default function Login() {
                                 type="email" 
                                 required
                                 placeholder="tu@email.com"
-                                className="input"
+                                className="w-full px-4 py-3 rounded-xl bg-neutral-50 border-2 border-transparent focus:bg-white focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 outline-none transition-all font-medium text-neutral-700 placeholder:text-neutral-400"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                             />
                         </div>
 
-                        <div>
-                            <label htmlFor="password" className="flex items-center gap-2 text-sm font-semibold text-neutral-700 mb-2">
-                                <Lock className="w-4 h-4 text-primary-600" />
-                                Contraseña
-                            </label>
+                        <div className="space-y-2">
+                            <div className="flex justify-between items-center ml-1">
+                                <label htmlFor="password" className="flex items-center gap-2 text-xs font-bold text-[#223945] uppercase tracking-wider">
+                                    <Lock className="w-3.5 h-3.5" />
+                                    Contraseña
+                                </label>
+                                <Link 
+                                    href="/forgot-password"
+                                    className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline"
+                                >
+                                    ¿Olvidaste tu contraseña?
+                                </Link>
+                            </div>
                             <input 
                                 id="password"
                                 type="password" 
                                 required
                                 placeholder="••••••••"
-                                className="input"
+                                className="w-full px-4 py-3 rounded-xl bg-neutral-50 border-2 border-transparent focus:bg-white focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 outline-none transition-all font-medium text-neutral-700 placeholder:text-neutral-400"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                             />
@@ -82,16 +101,16 @@ export default function Login() {
 
                         <button 
                             type="submit" 
-                            className="btn-primary w-full"
+                            className="w-full bg-[#223945] text-white px-8 py-3.5 rounded-xl font-bold shadow-lg shadow-[#223945]/20 hover:shadow-[#223945]/40 hover:-translate-y-0.5 transition-all text-sm uppercase tracking-wide flex items-center justify-center gap-2 group"
                         >
-                            Iniciar Sesión
+                            <span className="group-hover:translate-x-0.5 transition-transform">Iniciar Sesión</span>
                         </button>
                     </form>
 
-                    <div className="mt-6 text-center">
-                        <p className="text-sm text-neutral-600">
+                    <div className="mt-8 text-center pt-6 border-t border-neutral-100">
+                        <p className="text-sm text-neutral-600 font-medium">
                             ¿No tienes cuenta?{' '}
-                            <Link href="/registro" className="text-primary-600 hover:text-primary-700 font-semibold">
+                            <Link href="/registro" className="text-[#223945] hover:text-black font-bold hover:underline decoration-2 underline-offset-4 transition-all">
                                 Regístrate aquí
                             </Link>
                         </p>
