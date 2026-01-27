@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { MapPin, Building2, BookOpen, ArrowRight, Heart } from "lucide-react";
 import { Centro } from "@/types";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { addFavorite, removeFavorite } from "@/services/api";
 import { useAuth } from "@/context/AuthContext";
+import { motion } from "framer-motion";
+import { useFavoritesAnimation } from "@/context/FavoritesAnimationContext";
 
 interface CentroCardProps {
   centro: Centro;
@@ -20,8 +22,10 @@ export default function CentroCard({
 }: CentroCardProps) {
   /* Refactored to use AuthContext */
   const { user, openLoginModal } = useAuth(); // We need to import useAuth
+  const { triggerAnimation } = useFavoritesAnimation();
   const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
   const [loading, setLoading] = useState(false);
+  const heartButtonRef = useRef<HTMLButtonElement>(null);
 
   // Sync state with prop if it changes (important for async data loading in parent)
   useEffect(() => {
@@ -43,6 +47,12 @@ export default function CentroCard({
     const newStatus = !isFavorite;
     setIsFavorite(newStatus);
     if (onToggle) onToggle(newStatus);
+
+    // Trigger Animation on Add
+    if (newStatus && heartButtonRef.current) {
+        const rect = heartButtonRef.current.getBoundingClientRect();
+        triggerAnimation(rect);
+    }
 
     setLoading(true);
     try {
@@ -121,14 +131,16 @@ export default function CentroCard({
       <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-primary-500 to-primary-300"></div>
 
       {/* Favorite Button - Absolute Position - SMALLER PADDING (p-1.5) and ICON (w-4 h-4) */}
-      <button
+      <motion.button
+        ref={heartButtonRef}
         onClick={handleToggleFavorite}
-        className="absolute top-4 right-4 z-20 p-1.5 rounded-full bg-white/90 backdrop-blur-sm shadow-sm border border-neutral-100 hover:bg-red-50 hover:scale-110 active:scale-95 transition-all group/heart"
+        whileTap={{ scale: 0.8 }}
+        className="absolute top-4 right-4 z-20 p-1.5 rounded-full bg-white/90 backdrop-blur-sm shadow-sm border border-neutral-100 hover:bg-red-50 active:bg-red-100 transition-colors group/heart"
       >
         <Heart
           className={`w-4 h-4 transition-colors ${isFavorite ? "fill-red-500 text-red-500" : "text-neutral-400 group-hover/heart:text-red-500"}`}
         />
-      </button>
+      </motion.button>
 
       <div className="p-5 flex-grow flex flex-col">
         {/* Header Section */}

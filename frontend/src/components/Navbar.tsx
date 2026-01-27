@@ -58,7 +58,7 @@ export default function Navbar() {
                   href="/favoritos" 
                   className="group flex items-center gap-2 text-neutral-600 hover:text-[#223945] font-bold text-sm uppercase tracking-wide transition-colors"
                 >
-                  <Heart className="w-4 h-4 group-hover:text-red-500 transition-colors" />
+                  <Heart id="nav-favorites-icon-desktop" className="w-4 h-4 group-hover:text-red-500 transition-colors" />
                   Favoritos
                 </Link>
                 
@@ -140,6 +140,7 @@ export default function Navbar() {
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="md:hidden p-2 rounded-lg text-neutral-700 hover:bg-neutral-100 transition-colors"
             aria-label="Toggle menu"
+            id="nav-mobile-menu-button"
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
