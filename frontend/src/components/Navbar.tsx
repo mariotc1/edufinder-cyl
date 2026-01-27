@@ -1,36 +1,23 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Menu, X, MapPin, Heart, LogIn, UserPlus } from 'lucide-react';
-import api from '@/lib/axios';
+// Remove local api import as it's used via context
 import Logo from './Logo';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Navbar() {
-  const [user, setUser] = useState<{name: string; foto_perfil?: string; email?: string} | null>(null);
+  /* Refactored to use AuthContext */
+  const { user, logout, openLoginModal } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const router = useRouter();
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-    if (token && userData) {
-      setUser(JSON.parse(userData));
-    }
-  }, []);
-
-  const handleLogout = async () => {
-    try {
-      await api.post('/logout');
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      setUser(null);
+  const handleLogout = () => {
+      logout();
       router.push('/login');
-    } catch (error) {
-      console.error('Logout failed', error);
-    }
   };
 
   return (
@@ -118,13 +105,13 @@ export default function Navbar() {
               </>
             ) : (
               <>
-                <Link 
-                  href="/login" 
+                <button 
+                  onClick={openLoginModal}
                   className="flex items-center gap-2 text-neutral-600 hover:text-[#223945] font-bold text-sm uppercase tracking-wide transition-colors px-4 py-2"
                 >
                   <LogIn className="w-4 h-4" />
                   Entrar
-                </Link>
+                </button>
                 <Link 
                   href="/registro" 
                   className="flex items-center gap-2 bg-[#223945] text-white px-5 py-2.5 rounded-full font-bold text-sm shadow-md hover:shadow-lg hover:bg-[#1a2c35] hover:-translate-y-0.5 transition-all duration-200"

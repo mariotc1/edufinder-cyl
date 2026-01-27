@@ -3,6 +3,7 @@ import { MapPin, Building2, BookOpen, ArrowRight, Heart } from "lucide-react";
 import { Centro } from "@/types";
 import { useState, useEffect } from "react";
 import { addFavorite, removeFavorite } from "@/services/api";
+import { useAuth } from "@/context/AuthContext";
 
 interface CentroCardProps {
   centro: Centro;
@@ -17,6 +18,8 @@ export default function CentroCard({
   initialIsFavorite = false,
   onToggle,
 }: CentroCardProps) {
+  /* Refactored to use AuthContext */
+  const { user, openLoginModal } = useAuth(); // We need to import useAuth
   const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
   const [loading, setLoading] = useState(false);
 
@@ -28,6 +31,11 @@ export default function CentroCard({
   const handleToggleFavorite = async (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent Link navigation
     e.stopPropagation();
+
+    if (!user) {
+        openLoginModal();
+        return;
+    }
 
     if (loading) return;
 
