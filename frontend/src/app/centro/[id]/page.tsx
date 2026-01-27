@@ -6,6 +6,7 @@ import api from '@/lib/axios';
 import dynamic from 'next/dynamic';
 import { Mail, Phone, MapPin, Globe, Star, BookOpen, Building2, ChevronLeft, Heart } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/context/AuthContext';
 
 
 // Dynamic import map to avoid SSR issues
@@ -23,7 +24,8 @@ export default function CentroDetail() {
     const { data: centro, error } = useSWR(id ? `/centros/${id}` : null, fetcher);
     const { data: ciclos } = useSWR(id ? `/centros/${id}/ciclos` : null, fetcher);
 
-    // Favorites logic
+    // Auth & Favorites logic
+    const { user, openLoginModal } = useAuth();
     const [isFavorite, setIsFavorite] = useState(false);
     const [loadingFav, setLoadingFav] = useState(false);
 
@@ -38,6 +40,12 @@ export default function CentroDetail() {
 
     const toggleFavorite = async (e: React.MouseEvent) => {
         e.preventDefault();
+        
+        if (!user) {
+            openLoginModal();
+            return;
+        }
+
         if (loadingFav) return;
 
         // Optimistic UI
@@ -54,7 +62,7 @@ export default function CentroDetail() {
         } catch (e) {
             // Revert
             setIsFavorite(!newStatus);
-            alert('Debes iniciar sesión para guardar favoritos');
+            // No alert needed, just revert
         } finally {
             setLoadingFav(false);
         }
