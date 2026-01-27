@@ -76,12 +76,19 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                         </div>
 
                         {/* Title - Pure white */}
-                        <Dialog.Title as="h3" className="text-2xl font-bold leading-6 text-white tracking-tight mb-3">
+                        <Dialog.Title 
+                            as="h3" 
+                            className="text-2xl font-bold leading-6 !text-white tracking-tight mb-3"
+                            style={{ color: '#ffffff' }}
+                        >
                             Inicia sesión
                         </Dialog.Title>
                         
                         {/* Description - Pure white */}
-                        <p className="text-base text-white font-medium leading-relaxed max-w-[280px] mx-auto">
+                        <p 
+                            className="text-base !text-white font-medium leading-relaxed max-w-[280px] mx-auto"
+                            style={{ color: '#ffffff' }}
+                        >
                             Necesitas una cuenta para guardar tus centros favoritos y acceder a ellos siempre.
                         </p>
                     </div>
