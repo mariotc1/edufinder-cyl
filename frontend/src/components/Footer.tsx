@@ -1,6 +1,5 @@
 import Link from 'next/link';
-import { Github, Linkedin, Database, Code2, Cpu, ExternalLink, Heart, Globe } from 'lucide-react';
-import Logo from './Logo';
+import { Github, Linkedin, Database, Code2, Cpu, Heart } from 'lucide-react';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -13,10 +12,13 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
           
-          {/* Section 1: Identity & Repo (Compact) */}
+          {/* Section 1: Text Logo & Repo (Compact) */}
           <div className="flex flex-col gap-3 lg:w-1/3">
              <div className="flex items-center gap-3">
-               <Logo showSubtitle={false} className="text-white scale-90 origin-left" />
+               {/* Text Only Logo as requested */}
+               <Link href="/" className="text-xl font-bold tracking-tight text-white hover:text-blue-200 transition-colors">
+                  EduFinder CYL
+               </Link>
                <span className="px-2 py-0.5 rounded-full border border-blue-400/30 bg-blue-500/20 text-[10px] font-bold text-blue-200 tracking-wide uppercase">
                  Proyecto DAW
                </span>
@@ -29,37 +31,42 @@ export default function Footer() {
                     rel="noopener noreferrer"
                     className="flex items-center gap-1.5 hover:text-white transition-colors"
                  >
-                    <Github className="w-3.5 h-3.5" />
+                    <Github className="w-4 h-4" />
                     <span>Repositorio GitHub</span>
                  </a>
                  <span className="text-white/20">|</span>
-                 <div className="flex items-center gap-2" title="Tech Stack">
-                    <Code2 className="w-3.5 h-3.5" />
-                    <Cpu className="w-3.5 h-3.5" />
-                    <Database className="w-3.5 h-3.5" />
+                 <div className="flex items-center gap-2 text-neutral-400" title="Tech Stack">
+                    <Code2 className="w-4 h-4" />
+                    <Cpu className="w-4 h-4" />
+                    <Database className="w-4 h-4" />
                  </div>
             </div>
           </div>
 
           {/* Section 2: Team (Horizontal Row) */}
           <div className="lg:w-1/3 flex flex-col items-start lg:items-center gap-2">
-            <h3 className="text-[10px] font-bold uppercase tracking-widest text-blue-300 opacity-80 mb-1">Equipo de Desarrollo</h3>
+            {/* Header WHITE, no icon */}
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-white opacity-90 mb-1">
+                Equipo de Desarrollo
+            </h3>
             <div className="flex gap-4">
                 {/* Mario */}
                 <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/10 hover:border-blue-500/50 transition-colors">
                     <span className="text-xs font-bold text-white">Mario Tomé</span>
-                     <div className="flex gap-1.5 border-l border-white/20 pl-1.5">
-                        <SocialIconTiny href="https://github.com/mariotc1" icon={<Github className="w-3 h-3" />} />
-                        <SocialIconTiny href="https://www.linkedin.com/in/mario-tome-core/" icon={<Linkedin className="w-3 h-3" />} />
+                     <div className="flex gap-2 border-l border-white/20 pl-2">
+                        {/* Larger Icons (w-4 h-4 or w-5 h-5) */}
+                        <SocialIconTiny href="https://github.com/mariotc1" icon={<Github className="w-4 h-4" />} />
+                        <SocialIconTiny href="https://www.linkedin.com/in/mario-tome-core/" icon={<Linkedin className="w-4 h-4" />} />
                     </div>
                 </div>
 
                 {/* Raúl */}
                 <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/10 hover:border-purple-500/50 transition-colors">
                     <span className="text-xs font-bold text-white">Raúl Ortega</span>
-                     <div className="flex gap-1.5 border-l border-white/20 pl-1.5">
-                        <SocialIconTiny href="https://github.com/Raul9097" icon={<Github className="w-3 h-3" />} />
-                        <SocialIconTiny href="https://www.linkedin.com/in/raúl-ortega-frutos-140485332/" icon={<Linkedin className="w-3 h-3" />} />
+                     <div className="flex gap-2 border-l border-white/20 pl-2">
+                        {/* Larger Icons */}
+                        <SocialIconTiny href="https://github.com/Raul9097" icon={<Github className="w-4 h-4" />} />
+                        <SocialIconTiny href="https://www.linkedin.com/in/raúl-ortega-frutos-140485332/" icon={<Linkedin className="w-4 h-4" />} />
                     </div>
                 </div>
             </div>
@@ -67,8 +74,8 @@ export default function Footer() {
 
           {/* Section 3: Data Sources (Compact Right Aligned) */}
           <div className="lg:w-1/3 flex flex-col items-start lg:items-end gap-2 text-right">
-             <h3 className="text-[10px] font-bold uppercase tracking-widest text-emerald-300 opacity-80 mb-1 flex items-center gap-1.5">
-                <Database className="w-3 h-3" />
+             {/* Header WHITE, NO ICON */}
+             <h3 className="text-[10px] font-bold uppercase tracking-widest text-white opacity-90 mb-1">
                 Datos Abiertos JCyL
             </h3>
             <div className="flex flex-col lg:items-end gap-1.5">
@@ -76,7 +83,7 @@ export default function Footer() {
                     href="https://analisis.datosabiertos.jcyl.es/explore/dataset/directorio-de-centros-docentes/export/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-neutral-200 hover:text-white hover:underline decoration-emerald-500/50 underline-offset-2 transition-all"
+                    className="text-xs text-neutral-300 hover:text-white hover:underline decoration-emerald-500/50 underline-offset-2 transition-all"
                 >
                     Directorio de Centros Docentes
                 </a>
@@ -84,7 +91,7 @@ export default function Footer() {
                     href="https://analisis.datosabiertos.jcyl.es/explore/dataset/oferta-de-formacion-profesional/export/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-neutral-200 hover:text-white hover:underline decoration-emerald-500/50 underline-offset-2 transition-all"
+                    className="text-xs text-neutral-300 hover:text-white hover:underline decoration-emerald-500/50 underline-offset-2 transition-all"
                 >
                     Oferta de Formación Profesional
                 </a>
@@ -112,14 +119,14 @@ export default function Footer() {
   );
 }
 
-// Micro Component
+// Micro Component - Updated for slightly larger icons hit area
 function SocialIconTiny({ href, icon }: { href: string; icon: React.ReactNode }) {
     return (
         <a 
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-neutral-400 hover:text-white transition-colors"
+            className="text-neutral-400 hover:text-white transition-colors hover:scale-110 transform duration-200"
         >
             {icon}
         </a>
