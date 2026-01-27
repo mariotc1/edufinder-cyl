@@ -116,7 +116,7 @@ function SearchContent() {
               Resultados
             </h2>
             {data && (
-              <span className="text-sm font-bold text-white bg-[#223945] px-4 py-1.5 rounded-full shadow-md">
+              <span className="text-xs sm:text-sm font-bold text-white bg-[#223945] px-3 py-1 rounded-full shadow-sm">
                 {data.total} Centros encontrados
               </span>
             )}
