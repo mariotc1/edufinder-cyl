@@ -140,7 +140,7 @@ export default function CentroCard({
         </div>
 
         {/* Title - polished typography with fixed height for alignment */}
-        <h3 className="text-lg font-bold text-[#111827] mb-3 group-hover:text-[#223945] transition-colors line-clamp-2 min-h-[3.5rem] tracking-tight leading-snug">
+        <h3 className="text-[17px] font-bold text-[#111827] mb-3 group-hover:text-[#223945] transition-colors line-clamp-2 min-h-[3.5rem] tracking-tight leading-snug">
           {centro.nombre}
         </h3>
 
@@ -150,12 +150,10 @@ export default function CentroCard({
             <div className="p-1.5 bg-[#223945] rounded-md shrink-0 mt-0.5 shadow-sm">
               <MapPin className="w-3.5 h-3.5 text-white" />
             </div>
-            <p className="text-sm leading-relaxed line-clamp-2">
-              <span className="font-bold text-[#223945] block text-[11px] uppercase tracking-wider mb-0.5 opacity-80">
-                Ubicación
-              </span>
+            <p className="text-[15px] font-medium leading-relaxed line-clamp-2">
+              <span className="font-bold text-[#223945] block text-xs uppercase tracking-wider mb-0.5 opacity-80">Ubicación</span>
               {centro.localidad}{" "}
-              <span className="text-neutral-400">({centro.provincia})</span>
+              <span className="text-neutral-400 font-normal">({centro.provincia})</span>
             </p>
           </div>
 
@@ -164,10 +162,8 @@ export default function CentroCard({
               <Building2 className="w-3.5 h-3.5 text-white" />
             </div>
             {/* Removed line-clamp-1 to allow text to show fully, or increased clamp limit if needed */}
-            <p className="text-sm leading-relaxed line-clamp-2">
-              <span className="font-bold text-[#223945] block text-[11px] uppercase tracking-wider mb-0.5 opacity-80">
-                Tipo
-              </span>
+            <p className="text-[15px] font-medium leading-relaxed line-clamp-2">
+              <span className="font-bold text-[#223945] block text-xs uppercase tracking-wider mb-0.5 opacity-80">Tipo</span>
               {centro.denominacion_generica}
             </p>
           </div>
@@ -179,10 +175,8 @@ export default function CentroCard({
             <div className="flex items-center gap-2 mb-2.5">
               <div className="p-1 bg-[#223945] rounded text-white shadow-sm">
                 <BookOpen className="w-3 h-3" />
-              </div>
-              <span className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest">
-                Oferta destacada
-              </span>
+                </div>
+                <span className="text-xs font-bold text-neutral-500 uppercase tracking-widest">Oferta destacada</span>
             </div>
 
             {/* Static height scrollable container */}
@@ -192,12 +186,8 @@ export default function CentroCard({
                   key={idx}
                   className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded-md border shadow-sm transition-colors animate-fade-in-up ${getLevelBackground(ciclo.nivel_educativo)}`}
                 >
-                  <div
-                    className={`w-1.5 h-1.5 rounded-full shrink-0 ${getLevelDotColor(ciclo.nivel_educativo)}`}
-                  ></div>
-                  <span className="truncate flex-1 font-medium text-neutral-800 text-[13px]">
-                    {ciclo.ciclo_formativo}
-                  </span>
+                  <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${getLevelDotColor(ciclo.nivel_educativo)}`}></div>
+                  <span className="truncate flex-1 font-medium text-neutral-800 text-sm">{ciclo.ciclo_formativo}</span>
                   <span
                     className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full border ${getLevelColor(ciclo.nivel_educativo)}`}
                   >
