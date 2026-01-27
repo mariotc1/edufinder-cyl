@@ -222,7 +222,7 @@ export default function CentroCard({
           href={`/centro/${centro.id}`}
           className="flex items-center justify-center gap-2 w-full py-2 rounded-lg text-sm font-bold bg-[#223945] text-white shadow-lg shadow-[#223945]/20 hover:shadow-[#223945]/40 hover:-translate-y-0.5 transition-all duration-200"
         >
-          Ver ficha completa
+          Explorar centro
           <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
         </Link>
       </div>
