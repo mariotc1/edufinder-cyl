@@ -180,7 +180,7 @@ export default function CentroCard({
             </div>
 
             {/* Static height scrollable container */}
-            <div className="space-y-1.5 max-h-[100px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-neutral-200 scrollbar-track-transparent">
+            <div className="space-y-1.5 max-h-[100px] overflow-y-auto pr-1 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-[#223945]/20 hover:scrollbar-thumb-[#223945]/50 scrollbar-thumb-rounded-full transition-colors">
               {centro.ciclos.map((ciclo, idx) => (
                 <div
                   key={idx}
