@@ -36,7 +36,7 @@ export default function MapPopup({ centro }: MapPopupProps) {
                     <button 
                         onClick={(e) => toggleFavorite(e, cardRef.current!)}
                         disabled={loading}
-                        className="shrink-0 p-1 -mr-1 -mt-1 rounded-full hover:bg-red-50 transition-colors group/heart"
+                        className="shrink-0 p-1.5 -mr-1 -mt-1 rounded-full bg-white border border-neutral-200 shadow-sm hover:bg-neutral-50 transition-all group/heart"
                         title={isFavorite ? "Quitar de favoritos" : "Añadir a favoritos"}
                     >
                         <svg 
@@ -70,10 +70,10 @@ export default function MapPopup({ centro }: MapPopupProps) {
                 {/* Big Clear Action Button */}
                 <Link 
                     href={`/centro/${centro.id}`} 
-                    className="flex items-center justify-center gap-1.5 w-full py-1.5 bg-[#223945] text-white rounded text-[11px] font-bold hover:bg-[#1a2c35] transition-colors shadow-sm"
+                    className="flex items-center justify-center gap-1.5 w-full py-1.5 bg-[#223945] text-white rounded text-[11px] font-bold hover:bg-[#1a2c35] transition-colors shadow-sm decoration-0"
                 >
-                    Explorar Centro
-                    <ArrowRight className="w-3 h-3" />
+                    <span className="text-white">Explorar Centro</span>
+                    <ArrowRight className="w-3 h-3 text-white" />
                 </Link>
             </div>
         </div>
