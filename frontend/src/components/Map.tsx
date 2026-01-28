@@ -151,10 +151,7 @@ export default function Map({ centros, userLocation, radius }: MapProps) {
                  </Marker>
             )}
 
-// ... imports
-import MapPopup from '@/components/map/MapPopup';
 
-// ... (previous code)
 
              {/* Center Markers */}
              {centros.map((centro) => {
@@ -172,8 +169,8 @@ import MapPopup from '@/components/map/MapPopup';
                          <Popup 
                             className="premium-popup-container" 
                             closeButton={false} 
-                            maxWidth={280}
-                            minWidth={260}
+                            maxWidth={320}
+                            minWidth={320}
                          >
                             <MapPopup centro={centro} />
                          </Popup>
