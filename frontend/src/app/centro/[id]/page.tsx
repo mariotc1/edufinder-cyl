@@ -273,7 +273,12 @@ export default function CentroDetail() {
                                 {c.latitud && c.longitud ? (
                                     <>
                                         <div className="absolute inset-0 z-0">
-                                            <Map centros={[c]} center={[parseFloat(c.latitud), parseFloat(c.longitud)]} zoom={15} />
+                                            <Map 
+                                                centros={[c]} 
+                                                center={[parseFloat(c.latitud), parseFloat(c.longitud)]} 
+                                                zoom={15} 
+                                                favoriteIds={(favoritesData && (Array.isArray(favoritesData) ? favoritesData : favoritesData.data || [])).map((f: any) => f.centro_id || f.centro?.id)}
+                                            />
                                         </div>
                                         {/* Overlay gradient for map bottom */}
                                         <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>

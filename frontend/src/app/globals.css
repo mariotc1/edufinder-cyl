@@ -14,7 +14,9 @@ body {
   color: #111827;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-feature-settings: 'rlig' 1, 'calt' 1;
+  font-feature-settings:
+    "rlig" 1,
+    "calt" 1;
   overflow-x: hidden;
 }
 
@@ -47,14 +49,17 @@ p {
 }
 
 /* Smooth Transitions */
-a, button {
+a,
+button {
   transition: all 200ms ease-in-out;
 }
 
 /* Focus Styles for Accessibility */
 *:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #3b82f6;
+  box-shadow:
+    0 0 0 2px #ffffff,
+    0 0 0 4px #3b82f6;
 }
 
 /* Custom Scrollbar */
@@ -223,4 +228,23 @@ a, button {
 /* Global Utilities */
 .bg-brand-gradient {
   @apply bg-gradient-to-b from-[#dbeafe] via-white to-[#eff6ff];
+}
+
+/* Premium Map Popup Overrides (Leaflet) */
+.premium-popup-container .leaflet-popup-content-wrapper {
+  padding: 0 !important;
+  border-radius: 0.75rem !important; /* rounded-xl */
+  overflow: hidden !important;
+  border: 1px solid #e5e7eb;
+}
+.premium-popup-container .leaflet-popup-content {
+  margin: 0 !important;
+  width: 100% !important;
+  padding: 0 !important;
+}
+.premium-popup-container a.leaflet-popup-close-button {
+  display: none !important;
+}
+.premium-popup-container .leaflet-popup-tip {
+  background: white;
 }
