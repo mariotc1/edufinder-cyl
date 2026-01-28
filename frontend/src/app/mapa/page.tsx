@@ -73,6 +73,16 @@ export default function MapaPage() {
         }
     };
 
+    const handleClearLocation = () => {
+        setUserLocation(null);
+        setRadius(50); // Reset radius or keep it, user choice. Resetting feels cleaner.
+        setFilters(prev => {
+             // Use 'lng' to match FilterOptions interface
+             const { lat, lng, ...rest } = prev; 
+             return rest;
+        });
+    };
+
     return (
         <div className="h-[calc(100vh-80px)] w-full relative bg-neutral-100 overflow-hidden">
             {/* Sidebar Controls */}
@@ -82,6 +92,7 @@ export default function MapaPage() {
                 filters={filters}
                 setFilters={setFilters} 
                 onLocateUser={handleLocateUser}
+                onClearLocation={handleClearLocation}
                 userLocation={userLocation}
                 centerCount={data?.data?.length || 0}
                 loading={isLoading || status === 'locating'}

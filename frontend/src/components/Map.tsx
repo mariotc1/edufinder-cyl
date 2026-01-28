@@ -85,13 +85,36 @@ const UserIcon = L.divIcon({
 function MapController({ userLocation, radius }: { userLocation: { lat: number, lon: number } | null, radius: number }) {
   const map = useMap();
 
+  // Initial FlyTo when location is found
   useEffect(() => {
     if (userLocation) {
-        map.flyTo([userLocation.lat, userLocation.lon], 10, {
-            duration: 1.5
+        map.flyTo([userLocation.lat, userLocation.lon], 14, { // Increased zoom from 10 to 14 for better visibility
+            duration: 2.0
         });
     }
   }, [userLocation, map]);
+
+  // Adjust Zoom/Bounds when Radius changes
+  useEffect(() => {
+    if (userLocation && radius) {
+       // Manual bounds calculation to avoid L.circle 'layerPointToLatLng' errors (layer not on map)
+       const latRadian = userLocation.lat * (Math.PI / 180);
+       const metersPerDegreeLat = 111000; // Approx
+       const metersPerDegreeLon = 111000 * Math.cos(latRadian);
+       
+       const rMeters = radius * 1000;
+       
+       const deltaLat = rMeters / metersPerDegreeLat;
+       const deltaLon = rMeters / metersPerDegreeLon;
+
+       const southWest = L.latLng(userLocation.lat - deltaLat, userLocation.lon - deltaLon);
+       const northEast = L.latLng(userLocation.lat + deltaLat, userLocation.lon + deltaLon);
+       
+       const bounds = L.latLngBounds(southWest, northEast);
+
+       map.fitBounds(bounds, { padding: [50, 50], animate: true, duration: 1 });
+    }
+  }, [radius, userLocation, map]);
 
   return null;
 }
