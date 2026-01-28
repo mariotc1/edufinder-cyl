@@ -3,10 +3,12 @@
 import { useParams, useRouter } from 'next/navigation';
 import useSWR from 'swr';
 import api from '@/lib/axios';
+import { useRef, useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { Mail, Phone, MapPin, Globe, Star, BookOpen, Building2, ChevronLeft, Heart } from 'lucide-react';
-import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useFavorite } from '@/hooks/useFavorite';
+import { motion } from 'framer-motion';
 
 
 // Dynamic import map to avoid SSR issues
@@ -25,48 +27,45 @@ export default function CentroDetail() {
     const { data: ciclos } = useSWR(id ? `/centros/${id}/ciclos` : null, fetcher);
 
     // Auth & Favorites logic
-    const { user, openLoginModal } = useAuth();
-    const [isFavorite, setIsFavorite] = useState(false);
-    const [loadingFav, setLoadingFav] = useState(false);
+    const { user } = useAuth();
+    // Use unified hook
+    const { isFavorite, toggleFavorite, loading: loadingFav } = useFavorite({
+        centro: centro?.data, // Pass the data object when available
+        initialIsFavorite: false, // Will be updated by effect
+        onToggle: () => {} // Optional callback if needed
+    });
+    
+    // Header Ref for Animation Source
+    const headerRef = useRef<HTMLDivElement>(null);
 
-    // Initial check
+    // Initial check - Sync with Hook
+    // Note: The hook takes initialIsFavorite, but we load async.
+    // We need to sync the hook's internal state when data arrives.
+    // However, the hook uses standard state. Let's rely on the hook's effect if we pass the prop, 
+    // OR we can just let the hook handle it if we move the check logic inside?
+    // Actually, the hook expects 'initialIsFavorite'. 
+    // Let's keep the check logic here for now and pass it, or better:
+    // The current hook implementation allows prop update via useEffect.
+    // So we calculate 'initialIsFavorite' here and pass it.
+    
     const { data: favoritesData } = useSWR('/favoritos', fetcher);
+    // Calculated State
+    const [calculatedIsFavorite, setCalculatedIsFavorite] = useState(false);
+
     useEffect(() => {
         if (favoritesData && centro) {
             const favArray = Array.isArray(favoritesData) ? favoritesData : favoritesData.data || [];
-            setIsFavorite(favArray.some((fav: any) => fav.centro_id === centro.data.id || fav.centro.id === centro.data.id));
+            const isFav = favArray.some((fav: any) => fav.centro_id === centro.data.id || fav.centro.id === centro.data.id);
+            setCalculatedIsFavorite(isFav);
         }
     }, [favoritesData, centro]);
 
-    const toggleFavorite = async (e: React.MouseEvent) => {
-        e.preventDefault();
-        
-        if (!user) {
-            openLoginModal();
-            return;
-        }
+    // Re-bind hook with correct initial value when loaded
+    const favoriteLogic = useFavorite({
+        centro: centro?.data,
+        initialIsFavorite: calculatedIsFavorite
+    });
 
-        if (loadingFav) return;
-
-        // Optimistic UI
-        const newStatus = !isFavorite;
-        setIsFavorite(newStatus);
-        setLoadingFav(true);
-
-        try {
-            if (newStatus) {
-                await api.post(`/favoritos/${id}`);
-            } else {
-                await api.delete(`/favoritos/${id}`);
-            }
-        } catch (e) {
-            // Revert
-            setIsFavorite(!newStatus);
-            // No alert needed, just revert
-        } finally {
-            setLoadingFav(false);
-        }
-    };
 
     if (error) return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -137,7 +136,10 @@ export default function CentroDetail() {
                     {/* Left Column: Info (Now 7/12) */}
                     <div className="lg:col-span-7 space-y-8">
                         {/* Header Card */}
-                        <div className="bg-white rounded-2xl p-8 border border-neutral-100 shadow-xl shadow-neutral-200/50 relative overflow-hidden">
+                        <div 
+                            ref={headerRef}
+                            className="bg-white rounded-2xl p-8 border border-neutral-100 shadow-xl shadow-neutral-200/50 relative overflow-hidden"
+                        >
                             {/* Decorative Top Gradient */}
                             <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300"></div>
 
@@ -153,13 +155,15 @@ export default function CentroDetail() {
                                     </h1>
                                     <p className="text-lg text-neutral-500 font-medium">{c.denominacion_generica}</p>
                                 </div>
-                                <button
-                                    onClick={toggleFavorite}
+                                <motion.button
+                                    onClick={(e) => favoriteLogic.toggleFavorite(e, headerRef.current!)}
+                                    whileTap={{ scale: 0.8 }}
                                     className="shrink-0 p-3 rounded-full bg-white border border-neutral-200 shadow-sm hover:shadow-md hover:scale-105 active:scale-95 transition-all group"
-                                    title={isFavorite ? "Eliminar de favoritos" : "Añadir a favoritos"}
+                                    title={favoriteLogic.isFavorite ? "Eliminar de favoritos" : "Añadir a favoritos"}
+                                    disabled={favoriteLogic.loading}
                                 >
-                                    <Heart className={`w-8 h-8 transition-colors ${isFavorite ? 'fill-red-500 text-red-500' : 'text-neutral-300 group-hover:text-red-400'}`} />
-                                </button>
+                                    <Heart className={`w-8 h-8 transition-colors ${favoriteLogic.isFavorite ? 'fill-red-500 text-red-500' : 'text-neutral-300 group-hover:text-red-400'}`} />
+                                </motion.button>
                             </div>
                         </div>
 
