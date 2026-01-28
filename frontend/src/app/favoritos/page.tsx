@@ -37,7 +37,7 @@ export default function Favoritos() {
     const favoritosList = Array.isArray(data) ? data : (data?.data || []);
 
     return (
-        <div className="min-h-screen bg-brand-gradient pt-28 pb-12">
+        <div className="min-h-screen bg-brand-gradient pt-20 pb-12">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Back Link */}
                 <button
