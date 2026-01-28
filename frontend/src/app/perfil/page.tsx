@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import api from '@/lib/axios';
-import { User, MapPin, Heart, Lock, Camera, LogOut, Eye, EyeOff, ChevronRight } from 'lucide-react';
+import { User, MapPin, Heart, Lock, Camera, LogOut, Eye, EyeOff, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import CentroCard from '@/components/CentroCard';
@@ -145,6 +145,15 @@ export default function Profile() {
     return (
         <div className="min-h-screen bg-brand-gradient pt-28 pb-12 px-4 sm:px-6"> 
             <div className="max-w-5xl mx-auto">
+                {/* Back Link */}
+                <button
+                    onClick={() => router.back()}
+                    className="inline-flex items-center gap-2 text-neutral-500 hover:text-[#223945] font-bold mb-8 transition-colors text-sm uppercase tracking-wide cursor-pointer"
+                >
+                    <ChevronLeft className="w-4 h-4" />
+                    Volver a resultados
+                </button>
+
                 {/* Main Profile Card */}
                 <div className="relative bg-white/90 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/50 overflow-hidden">
                     {/* Decorative Top Gradient */}
