@@ -9,15 +9,8 @@ import { useEffect, useState } from 'react';
 import L from 'leaflet';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MapPin, Building2, Star } from 'lucide-react';
-
-interface Centro {
-    id: number;
-    nombre: string;
-    latitud: number;
-    longitud: number;
-    tipo: string;
-    direccion: string;
-}
+import MapPopup from '@/components/map/MapPopup';
+import { Centro } from '@/types';
 
 interface MapProps {
     centros: Centro[];
@@ -27,8 +20,8 @@ interface MapProps {
 
 // Function to generate Custom Icons (Google Maps Pointed Style)
 const createCustomIcon = (type: string) => {
-    // Determine color based on type (public vs private/concertado)
-    // User requested UNIFIED Dark Blue (#223945) for all icons to match the app theme, regardless of type.
+    // Determine color based on nature (public vs private/concertado)
+    // User requested UNIFIED Dark Blue (#223945) for all icons to match the app theme.
     const colorHex = '#223945'; 
 
     // A nicer, sharper "Teardrop/Pin" SVG shape
@@ -158,41 +151,35 @@ export default function Map({ centros, userLocation, radius }: MapProps) {
                  </Marker>
             )}
 
-            {/* Center Markers */}
-            {centros.map((centro) => (
-                (centro.latitud && centro.longitud) ? (
-                    <Marker 
-                        key={centro.id} 
-                        position={[centro.latitud, centro.longitud]}
-                        icon={createCustomIcon('default')}
-                    >
-                        <Popup className="premium-popup">
-                            <div className="min-w-[200px] p-1">
-                                <div className="flex items-start gap-3 mb-3">
-                                    <div className="p-2 bg-neutral-100 rounded-lg shrink-0">
-                                        <Building2 className="w-5 h-5 text-[#223945]" />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-bold text-[#223945] text-sm leading-tight mb-1">{centro.nombre}</h3>
-                                        <p className="text-[10px] text-neutral-500 uppercase font-bold tracking-wider">{centro.tipo}</p>
-                                    </div>
-                                </div>
-                                
-                                <div className="text-xs text-neutral-600 mb-3 line-clamp-2">
-                                    {centro.direccion || 'Sin dirección disponible'}
-                                </div>
+// ... imports
+import MapPopup from '@/components/map/MapPopup';
 
-                                <Link 
-                                    href={`/centro/${centro.id}`} 
-                                    className="block w-full text-center py-2 bg-[#223945] text-white text-xs font-bold rounded-lg hover:bg-[#1a2c35] transition-colors"
-                                >
-                                    Ver Ficha Completa
-                                </Link>
-                            </div>
-                        </Popup>
-                    </Marker>
-                ) : null
-            ))}
-        </MapContainer>
+// ... (previous code)
+
+             {/* Center Markers */}
+             {centros.map((centro) => {
+                 const lat = parseFloat(centro.latitud);
+                 const lon = parseFloat(centro.longitud);
+
+                 if (isNaN(lat) || isNaN(lon)) return null;
+
+                 return (
+                     <Marker 
+                         key={centro.id} 
+                         position={[lat, lon]}
+                         icon={createCustomIcon(centro.naturaleza || 'default')}
+                     >
+                         <Popup 
+                            className="premium-popup-container" 
+                            closeButton={false} 
+                            maxWidth={280}
+                            minWidth={260}
+                         >
+                            <MapPopup centro={centro} />
+                         </Popup>
+                     </Marker>
+                 );
+             })}
+         </MapContainer>
     );
 }
