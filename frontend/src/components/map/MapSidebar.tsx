@@ -6,21 +6,66 @@ import { useState } from 'react';
 interface MapSidebarProps {
     radius: number;
     setRadius: (radius: number) => void;
+    filters: FilterOptions;
+    setFilters: (filters: FilterOptions) => void;
     onLocateUser: () => void;
     userLocation: { lat: number, lon: number } | null;
     centerCount: number;
     loading: boolean;
 }
 
-export default function MapSidebar({ radius, setRadius, onLocateUser, userLocation, centerCount, loading }: MapSidebarProps) {
+import { FilterOptions } from '@/types';
+
+export default function MapSidebar({ radius, setRadius, filters, setFilters, onLocateUser, userLocation, centerCount, loading }: MapSidebarProps) {
     const [isExpanded, setIsExpanded] = useState(true);
+
+    // Data Selectors (Duplicated from FilterBar for consistency)
+    const provincias = ['AVILA', 'BURGOS', 'LEON', 'PALENCIA', 'SALAMANCA', 'SEGOVIA', 'SORIA', 'VALLADOLID', 'ZAMORA'];
+    const tiposEnsenanza = [
+        { value: 'FP', label: 'Formación Profesional' },
+        { value: 'ESO', label: 'ESO / Bachillerato' },
+        { value: 'PRIMARIA', label: 'Infantil y Primaria' },
+        { value: 'ESPECIAL', label: 'Educación Especial' },
+    ];
+    const familiasFP = [
+        'ADMINISTRACIÓN Y GESTIÓN', 'INFORMÁTICA Y COMUNICACIONES', 'SANIDAD', 'COMERCIO Y MARKETING', 
+        'ELECTRICIDAD Y ELECTRÓNICA', 'HOTELERÍA Y TURISMO', 'SERVICIOS SOCIOCULTURALES Y A LA COMUNIDAD',
+        'TRANSPORTE Y MANTENIMIENTO DE VEHÍCULOS', 'INSTALACIÓN Y MANTENIMIENTO', 'ACTIVIDADES FÍSICAS Y DEPORTIVAS',
+        'IMAGEN PERSONAL', 'AGRARIA', 'HOSTELERÍA Y TURISMO'
+    ];
+    const niveles = [
+        { value: 'BASICA', label: 'FP Básica' },
+        { value: 'GM', label: 'Grado Medio' },
+        { value: 'GS', label: 'Grado Superior' },
+        { value: 'CE', label: 'Curso de Especialización' },
+    ];
+    const modalidades = [
+        { value: 'PRESENCIAL', label: 'Presencial' },
+        { value: 'DISTANCIA', label: 'Distancia' },
+    ];
+
+    // Handle Filter Changes with Dependency Clearing logic
+    const handleChange = (key: keyof FilterOptions, value: any) => {
+        if (key === 'tipo' && value !== 'FP') {
+             // If switching away from FP, clear specific FP fields
+             setFilters({
+                 ...filters,
+                 [key]: value,
+                 familia: '',
+                 nivel: '',
+                 modalidad: ''
+             });
+        } else {
+            setFilters({ ...filters, [key]: value });
+        }
+    };
 
     return (
         <div className={`absolute bottom-0 left-0 right-0 md:top-24 md:left-6 md:right-auto md:bottom-auto z-[1000] transition-all duration-300 ${isExpanded ? 'translate-y-0' : 'translate-y-[calc(100%-60px)] md:translate-y-0'}`}>
-            <div className="bg-white/95 backdrop-blur-md border border-white/20 shadow-xl rounded-t-2xl md:rounded-2xl w-full md:w-80 overflow-hidden">
-                {/* Header / Handle for Mobile */}
+            <div className="bg-white/95 backdrop-blur-md border border-white/20 shadow-xl rounded-t-2xl md:rounded-2xl w-full md:w-80 overflow-hidden flex flex-col max-h-[80vh] md:max-h-[calc(100vh-120px)]">
+                {/* Header */}
                 <div 
-                    className="p-4 border-b border-neutral-100 flex items-center justify-between cursor-pointer md:cursor-default"
+                    className="p-4 border-b border-neutral-100 flex items-center justify-between cursor-pointer md:cursor-default shrink-0"
                     onClick={() => setIsExpanded(!isExpanded)}
                 >
                     <div className="flex items-center gap-2">
@@ -28,7 +73,7 @@ export default function MapSidebar({ radius, setRadius, onLocateUser, userLocati
                             <Layers className="w-5 h-5" />
                         </div>
                         <div>
-                            <h2 className="font-bold text-[#223945]">Explorar Centros</h2>
+                            <h2 className="font-bold text-[#223945]">Filtros Avanzados</h2>
                             <p className="text-xs text-neutral-500 font-medium">
                                 {loading ? 'Buscando...' : `${centerCount} centros encontrados`}
                             </p>
@@ -36,8 +81,84 @@ export default function MapSidebar({ radius, setRadius, onLocateUser, userLocati
                     </div>
                 </div>
 
-                {/* Content */}
-                <div className="p-5 space-y-6">
+                {/* Content - Scrollable */}
+                <div className="p-5 space-y-5 overflow-y-auto custom-scrollbar">
+                    {/* Search & Basic Filters */}
+                    <div className="space-y-4">
+                        <div className="relative group">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 group-focus-within:text-[#223945] transition-colors" />
+                            <input 
+                                type="text"
+                                placeholder="Nombre, localidad..."
+                                className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm font-medium focus:bg-white focus:border-[#223945] outline-none transition-all placeholder:text-neutral-400"
+                                value={filters.q || ''}
+                                onChange={(e) => handleChange('q', e.target.value)}
+                            />
+                        </div>
+
+                         <select 
+                            className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm font-medium focus:bg-white focus:border-[#223945] outline-none transition-all appearance-none cursor-pointer text-neutral-700"
+                            value={filters.provincia || ''}
+                            onChange={(e) => handleChange('provincia', e.target.value)}
+                        >
+                            <option value="">Todas las provincias</option>
+                            {provincias.map(p => (
+                                <option key={p} value={p}>{p}</option>
+                            ))}
+                        </select>
+
+                         <select 
+                            className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm font-medium focus:bg-white focus:border-[#223945] outline-none transition-all appearance-none cursor-pointer text-neutral-700"
+                            value={filters.tipo || ''}
+                            onChange={(e) => handleChange('tipo', e.target.value)}
+                        >
+                             <option value="">Todos los tipos</option>
+                             {tiposEnsenanza.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                        </select>
+                    </div>
+
+                    {/* FP Specific Filters (Conditional) */}
+                    {filters.tipo === 'FP' && (
+                        <div className="space-y-4 pt-4 border-t border-neutral-100 animate-in slide-in-from-top-2">
+                             <label className="text-xs font-bold text-neutral-400 uppercase tracking-wider block mb-2">Filtros de FP</label>
+                             
+                             <select 
+                                className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm font-medium focus:bg-white focus:border-[#223945] outline-none transition-all appearance-none cursor-pointer text-neutral-700"
+                                value={filters.familia || ''}
+                                onChange={(e) => handleChange('familia', e.target.value)}
+                            >
+                                <option value="">Todas las Familias</option>
+                                {familiasFP.map(f => (
+                                    <option key={f} value={f}>{f}</option>
+                                ))}
+                            </select>
+
+                            <select 
+                                className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm font-medium focus:bg-white focus:border-[#223945] outline-none transition-all appearance-none cursor-pointer text-neutral-700"
+                                value={filters.nivel || ''}
+                                onChange={(e) => handleChange('nivel', e.target.value)}
+                            >
+                                <option value="">Todos los Niveles</option>
+                                {niveles.map(obj => (
+                                    <option key={obj.value} value={obj.value}>{obj.label}</option>
+                                ))}
+                            </select>
+
+                             <select 
+                                className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm font-medium focus:bg-white focus:border-[#223945] outline-none transition-all appearance-none cursor-pointer text-neutral-700"
+                                value={filters.modalidad || ''}
+                                onChange={(e) => handleChange('modalidad', e.target.value)}
+                            >
+                                <option value="">Todas las Modalidades</option>
+                                {modalidades.map(obj => (
+                                    <option key={obj.value} value={obj.value}>{obj.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+
+                    <div className="h-px bg-neutral-100 w-full" />
+
                     {/* Location Control */}
                     <div className="space-y-3">
                         <label className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Tu Ubicación</label>
@@ -50,31 +171,23 @@ export default function MapSidebar({ radius, setRadius, onLocateUser, userLocati
                                 }`}
                         >
                             <Navigation className={`w-4 h-4 ${userLocation ? 'fill-current' : ''}`} />
-                            {userLocation ? 'Ubicación Actualizada' : 'Usar mi ubicación GPS'}
+                            {userLocation ? 'Ubicación y Radio' : 'Usar mi ubicación GPS'}
                         </button>
                     </div>
 
                     {/* Radius Slider */}
                     <div className={`space-y-4 transition-opacity duration-300 ${!userLocation ? 'opacity-50 pointer-events-none grayscale' : 'opacity-100'}`}>
                         <div className="flex items-center justify-between">
-                            <label className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Radio de Búsqueda</label>
-                            <span className="text-sm font-bold text-[#223945] bg-[#223945]/5 px-2 py-1 rounded-md">
-                                {radius} km
-                            </span>
+                            <label className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Radio: {radius} km</label>
                         </div>
-                        <div className="relative h-6 flex items-center">
-                             <input 
-                                type="range" 
-                                min="1" 
-                                max="100" 
-                                value={radius} 
-                                onChange={(e) => setRadius(parseInt(e.target.value))}
-                                className="w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer accent-[#223945]"
-                            />
-                        </div>
-                        <p className="text-xs text-neutral-400 leading-relaxed">
-                            Ajusta el radio para encontrar centros educativos cerca de tu posición actual.
-                        </p>
+                        <input 
+                            type="range" 
+                            min="1" 
+                            max="100" 
+                            value={radius} 
+                            onChange={(e) => setRadius(parseInt(e.target.value))}
+                            className="w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer accent-[#223945]"
+                        />
                     </div>
                 </div>
             </div>

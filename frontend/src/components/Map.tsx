@@ -25,22 +25,48 @@ interface MapProps {
     radius: number;
 }
 
-// Function to generate Custom Icons
+// Function to generate Custom Icons (Google Maps Pointed Style)
 const createCustomIcon = (type: string) => {
+    // Determine color based on type (public vs private/concertado)
+    // User requested UNIFIED Dark Blue (#223945) for all icons to match the app theme, regardless of type.
+    const colorHex = '#223945'; 
+
+    // A nicer, sharper "Teardrop/Pin" SVG shape
     const iconMarkup = renderToStaticMarkup(
-        <div className="relative flex items-center justify-center w-10 h-10 group">
-            <div className="absolute inset-0 bg-[#223945] rounded-full shadow-lg transform group-hover:scale-110 transition-transform duration-300 border-2 border-white"></div>
-            <div className="absolute bottom-0 translate-y-1/2 rotate-45 w-3 h-3 bg-[#223945] border-r-2 border-b-2 border-white"></div>
-            <MapPin className="relative z-10 w-5 h-5 text-white" />
+        <div className="relative group" style={{ width: '40px', height: '40px' }}>
+            {/* Shadow Effect at bottom */}
+            <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-1.5 bg-black/30 rounded-[50%] blur-[2px] transition-all group-hover:w-6 group-hover:blur-[3px]"></div>
+            
+            {/* Main Pin Shape - using SVG for crisp sharpness */}
+            <svg 
+                viewBox="0 0 32 43" 
+                fill="none" 
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-10 h-10 drop-shadow-md transform origin-bottom transition-all duration-300 group-hover:-translate-y-2 group-hover:scale-110"
+            >
+                <path 
+                    d="M16 0C7.16344 0 0 7.16344 0 16C0 24.8366 16 43 16 43C16 43 32 24.8366 32 16C32 7.16344 24.8366 0 16 0Z" 
+                    fill={colorHex}
+                    stroke="white" 
+                    strokeWidth="1.5"
+                />
+                <circle cx="16" cy="16" r="6" fill="white" />
+            </svg>
+            
+            {/* Icon inside the white circle - optional, but maybe too small. Let's keep it simple: just the white dot like standard pins, or a tiny icon. */}
+            <div className="absolute top-[8px] left-1/2 -translate-x-1/2 pointer-events-none transform group-hover:-translate-y-2 transition-transform duration-300">
+                {/* Could add a mini icon here if needed, but clean dot is often "Pro" */}
+                {/* <MapPin className="w-4 h-4 text-[#223945]" /> */}
+            </div>
         </div>
     );
 
     return L.divIcon({
         html: iconMarkup,
-        className: 'custom-marker',
-        iconSize: [40, 40],
-        iconAnchor: [20, 40],
-        popupAnchor: [0, -40]
+        className: 'custom-pin-marker',
+        iconSize: [40, 48], // Match SVG aspect ratio roughly 
+        iconAnchor: [20, 48], // Tip of the pin is at bottom center
+        popupAnchor: [0, -50] // Popup should open well above the pin
     });
 };
 
@@ -78,12 +104,13 @@ export default function Map({ centros, userLocation, radius }: MapProps) {
             center={defaultCenter} 
             zoom={8} 
             scrollWheelZoom={true} 
-            className="h-full w-full z-0 outline-none"
+            className="h-full w-full z-0 outline-none bg-neutral-100" // Added bg color
             zoomControl={false}
         >
             <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
                 url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                // Voyager usually has good local labels. If English persists, we can try OSM DE or specialized tiles, but Voyager is generally best for UI.
             />
             
             <MapController userLocation={userLocation} radius={radius} />

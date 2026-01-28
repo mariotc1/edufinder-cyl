@@ -43,6 +43,25 @@ class CentroController extends Controller
             });
         }
 
+        // Advanced Filters (Relations)
+        if ($request->has('nivel')) {
+            $query->whereHas('ciclos', function ($q) use ($request) {
+                $q->where('nivel', 'ilike', '%' . $request->nivel . '%');
+            });
+        }
+
+        if ($request->has('familia')) {
+            $query->whereHas('ciclos', function ($q) use ($request) {
+                $q->where('familia_profesional', 'ilike', '%' . $request->familia . '%');
+            });
+        }
+
+        if ($request->has('modalidad')) {
+            $query->whereHas('ciclos', function ($q) use ($request) {
+                $q->where('modalidad', 'ilike', '%' . $request->modalidad . '%');
+            });
+        }
+
         // Geolocation Radius Filter
         if ($request->has(['lat', 'lon', 'radius'])) {
             $lat = $request->lat;

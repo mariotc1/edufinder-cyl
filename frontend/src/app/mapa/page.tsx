@@ -6,6 +6,8 @@ import api from '@/lib/axios';
 import dynamic from 'next/dynamic';
 import MapSidebar from '@/components/map/MapSidebar';
 
+import { FilterOptions } from '@/types';
+
 // Dynamic import with custom loading
 const Map = dynamic(() => import('@/components/Map'), { 
     ssr: false,
@@ -24,38 +26,49 @@ const fetcher = (url: string) => api.get(url).then(res => res.data);
 export default function MapaPage() {
     const [userLocation, setUserLocation] = useState<{ lat: number, lon: number } | null>(null);
     const [radius, setRadius] = useState(50); // Default 50km
+    const [filters, setFilters] = useState<FilterOptions>({});
     const [status, setStatus] = useState<'idle' | 'locating'>('idle');
 
-    // Construct API URL based on active filters
-    const apiUrl = userLocation 
-        ? `/centros?map=true&lat=${userLocation.lat}&lon=${userLocation.lon}&radius=${radius}`
-        : '/centros?map=true';
+    // Debounce params construction (Optional but good practice, here direct for simplicity)
+    const queryParams = new URLSearchParams();
+    queryParams.append('map', 'true');
+    if (userLocation) {
+        queryParams.append('lat', userLocation.lat.toString());
+        queryParams.append('lon', userLocation.lon.toString());
+        queryParams.append('radius', radius.toString());
+    }
+    // Add all active filters to query
+    Object.entries(filters).forEach(([key, value]) => {
+        if (value) queryParams.append(key, String(value));
+    });
+
+    const apiUrl = `/centros?${queryParams.toString()}`;
 
     const { data, isLoading } = useSWR(apiUrl, fetcher, {
-        keepPreviousData: true // Smooth transitions
+        keepPreviousData: true,
+        revalidateOnFocus: false
     });
 
     const handleLocateUser = () => {
         setStatus('locating');
         if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
+             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     setUserLocation({
                         lat: position.coords.latitude,
                         lon: position.coords.longitude
                     });
                     setStatus('idle');
-                    // Reset value to reasonable default when locating first time
                     if (!userLocation) setRadius(20);
                 },
                 (error) => {
                     console.error("Error getting location", error);
                     setStatus('idle');
-                    alert("No pudimos obtener tu ubicación. Por favor revisa los permisos del navegador.");
+                    alert("No pudimos obtener tu ubicación.");
                 }
             );
         } else {
-            alert("Tu navegador no soporta geolocalización.");
+            alert("No geolocation support");
             setStatus('idle');
         }
     };
@@ -65,7 +78,9 @@ export default function MapaPage() {
             {/* Sidebar Controls */}
             <MapSidebar 
                 radius={radius} 
-                setRadius={setRadius} 
+                setRadius={setRadius}
+                filters={filters}
+                setFilters={setFilters} 
                 onLocateUser={handleLocateUser}
                 userLocation={userLocation}
                 centerCount={data?.data?.length || 0}
