@@ -1,32 +1,83 @@
 'use client';
 
+import { useState } from 'react';
 import useSWR from 'swr';
 import api from '@/lib/axios';
 import dynamic from 'next/dynamic';
-import { MapPin } from 'lucide-react';
+import MapSidebar from '@/components/map/MapSidebar';
 
+// Dynamic import with custom loading
 const Map = dynamic(() => import('@/components/Map'), { 
     ssr: false,
-    loading: () => <div className="h-full flex items-center justify-center bg-neutral-100 text-neutral-600">Cargando mapa interactivo...</div>
+    loading: () => (
+        <div className="h-full w-full flex items-center justify-center bg-neutral-100">
+            <div className="flex flex-col items-center gap-4">
+                <div className="w-12 h-12 border-4 border-[#223945]/20 border-t-[#223945] rounded-full animate-spin"></div>
+                <p className="font-bold text-[#223945] animate-pulse">Cargando Mapa...</p>
+            </div>
+        </div>
+    )
 });
 
 const fetcher = (url: string) => api.get(url).then(res => res.data);
 
 export default function MapaPage() {
-    const { data } = useSWR('/centros?map=true', fetcher);
+    const [userLocation, setUserLocation] = useState<{ lat: number, lon: number } | null>(null);
+    const [radius, setRadius] = useState(50); // Default 50km
+    const [status, setStatus] = useState<'idle' | 'locating'>('idle');
+
+    // Construct API URL based on active filters
+    const apiUrl = userLocation 
+        ? `/centros?map=true&lat=${userLocation.lat}&lon=${userLocation.lon}&radius=${radius}`
+        : '/centros?map=true';
+
+    const { data, isLoading } = useSWR(apiUrl, fetcher, {
+        keepPreviousData: true // Smooth transitions
+    });
+
+    const handleLocateUser = () => {
+        setStatus('locating');
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    setUserLocation({
+                        lat: position.coords.latitude,
+                        lon: position.coords.longitude
+                    });
+                    setStatus('idle');
+                    // Reset value to reasonable default when locating first time
+                    if (!userLocation) setRadius(20);
+                },
+                (error) => {
+                    console.error("Error getting location", error);
+                    setStatus('idle');
+                    alert("No pudimos obtener tu ubicación. Por favor revisa los permisos del navegador.");
+                }
+            );
+        } else {
+            alert("Tu navegador no soporta geolocalización.");
+            setStatus('idle');
+        }
+    };
 
     return (
-        <div className="h-[calc(100vh-80px)] w-full relative bg-neutral-50">
-            <div className="absolute bottom-6 left-6 z-10 card p-5 max-w-xs shadow-lg animate-fade-in">
-                <div className="flex items-center gap-2 mb-2">
-                    <MapPin className="w-5 h-5 text-primary-600" />
-                    <h1 className="text-lg font-bold text-neutral-900">Mapa Interactivo</h1>
-                </div>
-                <p className="text-sm text-neutral-600">
-                    Mostrando <span className="font-semibold text-primary-700">{data?.data?.length || 0}</span> centros educativos
-                </p>
-            </div>
-            <Map centros={data?.data || []} zoom={8} />
+        <div className="h-[calc(100vh-80px)] w-full relative bg-neutral-100 overflow-hidden">
+            {/* Sidebar Controls */}
+            <MapSidebar 
+                radius={radius} 
+                setRadius={setRadius} 
+                onLocateUser={handleLocateUser}
+                userLocation={userLocation}
+                centerCount={data?.data?.length || 0}
+                loading={isLoading || status === 'locating'}
+            />
+
+            {/* Map Container */}
+            <Map 
+                centros={data?.data || []} 
+                userLocation={userLocation}
+                radius={radius}
+            />
         </div>
     );
 }
