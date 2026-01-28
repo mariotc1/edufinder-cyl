@@ -106,56 +106,7 @@ export default function MapSidebar({ radius, setRadius, filters, setFilters, onL
                                 <option key={p} value={p}>{p}</option>
                             ))}
                         </select>
-
-                         <select 
-                            className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm font-medium focus:bg-white focus:border-[#223945] outline-none transition-all appearance-none cursor-pointer text-neutral-700"
-                            value={filters.tipo || ''}
-                            onChange={(e) => handleChange('tipo', e.target.value)}
-                        >
-                             <option value="">Todos los tipos</option>
-                             {tiposEnsenanza.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                        </select>
                     </div>
-
-                    {/* FP Specific Filters (Conditional) */}
-                    {filters.tipo === 'FP' && (
-                        <div className="space-y-4 pt-4 border-t border-neutral-100 animate-in slide-in-from-top-2">
-                             <label className="text-xs font-bold text-neutral-400 uppercase tracking-wider block mb-2">Filtros de FP</label>
-                             
-                             <select 
-                                className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm font-medium focus:bg-white focus:border-[#223945] outline-none transition-all appearance-none cursor-pointer text-neutral-700"
-                                value={filters.familia || ''}
-                                onChange={(e) => handleChange('familia', e.target.value)}
-                            >
-                                <option value="">Todas las Familias</option>
-                                {familiasFP.map(f => (
-                                    <option key={f} value={f}>{f}</option>
-                                ))}
-                            </select>
-
-                            <select 
-                                className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm font-medium focus:bg-white focus:border-[#223945] outline-none transition-all appearance-none cursor-pointer text-neutral-700"
-                                value={filters.nivel || ''}
-                                onChange={(e) => handleChange('nivel', e.target.value)}
-                            >
-                                <option value="">Todos los Niveles</option>
-                                {niveles.map(obj => (
-                                    <option key={obj.value} value={obj.value}>{obj.label}</option>
-                                ))}
-                            </select>
-
-                             <select 
-                                className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm font-medium focus:bg-white focus:border-[#223945] outline-none transition-all appearance-none cursor-pointer text-neutral-700"
-                                value={filters.modalidad || ''}
-                                onChange={(e) => handleChange('modalidad', e.target.value)}
-                            >
-                                <option value="">Todas las Modalidades</option>
-                                {modalidades.map(obj => (
-                                    <option key={obj.value} value={obj.value}>{obj.label}</option>
-                                ))}
-                            </select>
-                        </div>
-                    )}
 
                     <div className="h-px bg-neutral-100 w-full" />
 

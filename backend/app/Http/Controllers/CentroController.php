@@ -77,7 +77,7 @@ class CentroController extends Controller
         }
 
         if ($request->has('map')) {
-            return CentroResource::collection($query->limit(500)->get());
+            return CentroResource::collection($query->limit(2000)->get());
         }
 
         return CentroResource::collection($query->paginate(20));
