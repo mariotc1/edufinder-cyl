@@ -3,13 +3,15 @@
 import useSWR from 'swr';
 import api from '@/lib/axios';
 import Link from 'next/link';
-import { Heart, School } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Heart, School, ChevronLeft } from 'lucide-react';
 import CentroCard from '@/components/CentroCard';
 import { Centro } from '@/types';
 
 const fetcher = (url: string) => api.get(url).then(res => res.data);
 
 export default function Favoritos() {
+    const router = useRouter();
     const { data, error, isLoading, mutate } = useSWR('/favoritos', fetcher);
 
     if (error) return (
@@ -35,8 +37,17 @@ export default function Favoritos() {
     const favoritosList = Array.isArray(data) ? data : (data?.data || []);
 
     return (
-        <div className="min-h-screen bg-brand-gradient pt-28 pb-12">
+        <div className="min-h-screen bg-brand-gradient pt-20 pb-12">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                {/* Back Link */}
+                <button
+                    onClick={() => router.back()}
+                    className="inline-flex items-center gap-2 text-neutral-500 hover:text-[#223945] font-bold mb-8 transition-colors text-sm uppercase tracking-wide cursor-pointer"
+                >
+                    <ChevronLeft className="w-4 h-4" />
+                    Volver a resultados
+                </button>
+
                 {/* Header */}
                 <div className="mb-10 animate-in fade-in slide-in-from-top-4 duration-500">
                     <h1 className="text-3xl md:text-4xl font-bold text-[#111827] flex items-center gap-3 mb-2 font-heading tracking-tight">

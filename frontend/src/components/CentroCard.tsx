@@ -1,11 +1,9 @@
 import Link from "next/link";
 import { MapPin, Building2, BookOpen, ArrowRight, Heart } from "lucide-react";
 import { Centro } from "@/types";
-import { useState, useEffect, useRef } from "react";
-import { addFavorite, removeFavorite } from "@/services/api";
-import { useAuth } from "@/context/AuthContext";
+import { useRef } from "react";
 import { motion, Variants } from "framer-motion";
-import { useFavoritesAnimation } from "@/context/FavoritesAnimationContext";
+import { useFavorite } from "@/hooks/useFavorite"; // Import Hook
 
 interface CentroCardProps {
   centro: Centro;
@@ -26,8 +24,8 @@ const cardVariants: Variants = {
     scale: 1,
     transition: {
       type: "spring",
-      stiffness: 100, // Reduced stiffness (softer)
-      damping: 15,    // Damped to prevent overshoot/oscillation
+      stiffness: 100, 
+      damping: 15,    
       mass: 1
     }
   },
@@ -48,60 +46,15 @@ export default function CentroCard({
   initialIsFavorite = false,
   onToggle,
 }: CentroCardProps) {
-  /* Refactored to use AuthContext */
-  const { user, openLoginModal } = useAuth(); // We need to import useAuth
-  const { triggerAnimation } = useFavoritesAnimation();
-  const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
-  const [loading, setLoading] = useState(false);
+  // Use Custom Hook
+  const { isFavorite, toggleFavorite, loading } = useFavorite({
+    centro,
+    initialIsFavorite,
+    onToggle
+  });
   
-  // Refs
-  const cardRef = useRef<HTMLDivElement>(null); // Ref for the entire card
-
-  // Sync state with prop if it changes (important for async data loading in parent)
-  useEffect(() => {
-    setIsFavorite(initialIsFavorite);
-  }, [initialIsFavorite]);
-
-  const handleToggleFavorite = async (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent Link navigation
-    e.stopPropagation();
-
-    if (!user) {
-        openLoginModal();
-        return;
-    }
-
-    if (loading) return;
-
-    // Optimistic update
-    const newStatus = !isFavorite;
-    setIsFavorite(newStatus);
-    if (onToggle) onToggle(newStatus);
-
-    // Trigger Ghost Card Animation on Add
-    if (newStatus && cardRef.current) {
-        const rect = cardRef.current.getBoundingClientRect();
-        triggerAnimation(rect, {
-            title: centro.nombre,
-            naturaleza: centro.naturaleza
-        });
-    }
-
-    setLoading(true);
-    try {
-      if (newStatus) {
-        await addFavorite(centro.id);
-      } else {
-        await removeFavorite(centro.id);
-      }
-    } catch (error) {
-      // Revert on error
-      setIsFavorite(!newStatus);
-      if (onToggle) onToggle(!newStatus);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Ref for the entire card (needed for animation source)
+  const cardRef = useRef<HTMLDivElement>(null); 
 
   const getNaturalezaBadge = (naturaleza: string) => {
     switch (naturaleza?.toUpperCase()) {
@@ -158,23 +111,21 @@ export default function CentroCard({
   return (
     <motion.div
       ref={cardRef}
-      // Framer Motion Props
-      // Removed layout={true} to prevent calculation glitches
       variants={cardVariants}
       initial="hidden"
       animate="show"
       whileHover="hover"
       className="group relative bg-white rounded-xl overflow-hidden border border-neutral-200 shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-[#223945] transition-[box-shadow,background-color,border-color] duration-300 flex flex-col h-full"
-      // Removed hover:-translate-y-1 as it fights with layout prop
     >
       {/* Decorative top border/gradient */}
       <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-primary-500 to-primary-300"></div>
 
-      {/* Favorite Button - Absolute Position - SMALLER PADDING (p-1.5) and ICON (w-4 h-4) */}
+      {/* Favorite Button - Absolute Position - Uses Framer internally */}
       <motion.button
-        onClick={handleToggleFavorite}
+         onClick={(e) => toggleFavorite(e, cardRef.current!)}
         whileTap={{ scale: 0.8 }}
         className="absolute top-4 right-4 z-20 p-1.5 rounded-full bg-white/90 backdrop-blur-sm shadow-sm border border-neutral-100 hover:bg-red-50 active:bg-red-100 transition-colors group/heart"
+        disabled={loading}
       >
         <Heart
           className={`w-4 h-4 transition-colors ${isFavorite ? "fill-red-500 text-red-500" : "text-neutral-400 group-hover/heart:text-red-500"}`}
@@ -220,7 +171,6 @@ export default function CentroCard({
             <div className="p-1.5 bg-[#223945] rounded-md shrink-0 mt-0.5 shadow-sm">
               <Building2 className="w-3.5 h-3.5 text-white" />
             </div>
-            {/* Removed line-clamp-1 to allow text to show fully, or increased clamp limit if needed */}
             <p className="text-[15px] font-medium leading-relaxed line-clamp-2">
               <span className="font-bold text-[#223945] block text-xs uppercase tracking-wider mb-0.5 opacity-80">Tipo</span>
               {centro.denominacion_generica}
