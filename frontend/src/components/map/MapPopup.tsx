@@ -6,13 +6,15 @@ import { useRef } from 'react';
 
 interface MapPopupProps {
     centro: Centro;
+    initialIsFavorite?: boolean;
 }
 
-export default function MapPopup({ centro }: MapPopupProps) {
+export default function MapPopup({ centro, initialIsFavorite = false }: MapPopupProps) {
     const cardRef = useRef<HTMLDivElement>(null);
 
     const { isFavorite, toggleFavorite, loading } = useFavorite({
         centro,
+        initialIsFavorite
     });
 
     return (

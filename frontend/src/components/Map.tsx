@@ -12,13 +12,7 @@ import { MapPin, Building2, Star } from 'lucide-react';
 import MapPopup from '@/components/map/MapPopup';
 import { Centro } from '@/types';
 
-interface MapProps {
-    centros: Centro[];
-    userLocation?: { lat: number, lon: number } | null;
-    radius?: number;
-    center?: [number, number];
-    zoom?: number;
-}
+
 
 // Function to generate Custom Icons (Google Maps Pointed Style)
 const createCustomIcon = (type: string) => {
@@ -126,7 +120,18 @@ function MapController({ userLocation, radius, center, zoom }: MapControllerProp
   return null;
 }
 
-export default function Map({ centros, userLocation, radius, center, zoom }: MapProps) {
+interface MapProps {
+    centros: Centro[];
+    userLocation?: { lat: number, lon: number } | null;
+    radius?: number;
+    center?: [number, number];
+    zoom?: number;
+    favoriteIds?: number[];
+}
+
+
+
+export default function Map({ centros, userLocation, radius, center, zoom, favoriteIds = [] }: MapProps) {
     const defaultCenter: [number, number] = [41.652, -4.728]; // Valladolid center
 
     // Use passed center if available, otherwise default
@@ -190,7 +195,7 @@ export default function Map({ centros, userLocation, radius, center, zoom }: Map
                             maxWidth={320}
                             minWidth={320}
                          >
-                            <MapPopup centro={centro} />
+                            <MapPopup centro={centro} initialIsFavorite={favoriteIds.includes(centro.id)} />
                          </Popup>
                      </Marker>
                  );

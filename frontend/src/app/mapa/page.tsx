@@ -49,6 +49,12 @@ export default function MapaPage() {
         revalidateOnFocus: false
     });
 
+    // Fetch favorites for the map
+    const { data: favoritesData } = useSWR('/favoritos', fetcher);
+    const favoriteIds = (favoritesData && (Array.isArray(favoritesData) ? favoritesData : favoritesData?.data) || [])
+        .map((fav: any) => fav.centro_id || fav.centro?.id)
+        .filter(Boolean);
+
     const handleLocateUser = () => {
         setStatus('locating');
         if (navigator.geolocation) {
@@ -103,6 +109,7 @@ export default function MapaPage() {
                 centros={data?.data || []} 
                 userLocation={userLocation}
                 radius={radius}
+                favoriteIds={favoriteIds}
             />
         </div>
     );
