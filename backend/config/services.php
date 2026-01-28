@@ -41,4 +41,6 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URL'),
     ],
 
+    'frontend_url' => env('FRONTEND_URL', 'http://localhost:3000'),
+
 ];
