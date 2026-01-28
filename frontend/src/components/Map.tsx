@@ -14,8 +14,10 @@ import { Centro } from '@/types';
 
 interface MapProps {
     centros: Centro[];
-    userLocation: { lat: number, lon: number } | null;
-    radius: number;
+    userLocation?: { lat: number, lon: number } | null;
+    radius?: number;
+    center?: [number, number];
+    zoom?: number;
 }
 
 // Function to generate Custom Icons (Google Maps Pointed Style)
@@ -75,7 +77,14 @@ const UserIcon = L.divIcon({
     iconAnchor: [16, 16]
 });
 
-function MapController({ userLocation, radius }: { userLocation: { lat: number, lon: number } | null, radius: number }) {
+interface MapControllerProps {
+    userLocation?: { lat: number, lon: number } | null;
+    radius?: number;
+    center?: [number, number];
+    zoom?: number;
+}
+
+function MapController({ userLocation, radius, center, zoom }: MapControllerProps) {
   const map = useMap();
 
   // Initial FlyTo when location is found
@@ -84,8 +93,13 @@ function MapController({ userLocation, radius }: { userLocation: { lat: number, 
         map.flyTo([userLocation.lat, userLocation.lon], 14, { // Increased zoom from 10 to 14 for better visibility
             duration: 2.0
         });
+    } else if (center) {
+        // If no user location but center is provided (Detail Mode), fly to center
+        // We use setView for instant transition if it's initial load, but flyTo is fine too.
+        // Actually, for detail page, we might want it to be static or grounded.
+        map.flyTo(center, zoom || 15, { duration: 1.5 });
     }
-  }, [userLocation, map]);
+  }, [userLocation, map, center, zoom]);
 
   // Adjust Zoom/Bounds when Radius changes
   useEffect(() => {
@@ -112,13 +126,17 @@ function MapController({ userLocation, radius }: { userLocation: { lat: number, 
   return null;
 }
 
-export default function Map({ centros, userLocation, radius }: MapProps) {
+export default function Map({ centros, userLocation, radius, center, zoom }: MapProps) {
     const defaultCenter: [number, number] = [41.652, -4.728]; // Valladolid center
+
+    // Use passed center if available, otherwise default
+    const effectiveCenter = center || defaultCenter;
+    const effectiveZoom = zoom || 8;
 
     return (
         <MapContainer 
-            center={defaultCenter} 
-            zoom={8} 
+            center={effectiveCenter} 
+            zoom={effectiveZoom} 
             scrollWheelZoom={true} 
             className="h-full w-full z-0 outline-none bg-neutral-100" // Added bg color
             zoomControl={false}
@@ -129,10 +147,10 @@ export default function Map({ centros, userLocation, radius }: MapProps) {
                 // Voyager usually has good local labels. If English persists, we can try OSM DE or specialized tiles, but Voyager is generally best for UI.
             />
             
-            <MapController userLocation={userLocation} radius={radius} />
+            <MapController userLocation={userLocation} radius={radius} center={center} zoom={zoom} />
 
             {/* Radius Circle */}
-            {userLocation && (
+            {userLocation && radius && (
                 <Circle 
                     center={[userLocation.lat, userLocation.lon]}
                     radius={radius * 1000} // Convert km to meters
