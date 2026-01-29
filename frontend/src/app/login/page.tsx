@@ -4,7 +4,7 @@ import { useState } from 'react';
 import api from '@/lib/axios';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { LogIn, Mail, Lock, Eye, EyeOff, ChevronLeft } from 'lucide-react';
+import { LogIn, Mail, Lock, Eye, EyeOff, ChevronLeft, Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 export default function Login() {
@@ -12,17 +12,20 @@ export default function Login() {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
     const { login } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (isLoading) return;
         setError('');
+        setIsLoading(true);
         try {
             const res = await api.post('/login', { email, password });
             login(res.data.user, res.data.access_token);
-            
+
             // Check for redirect param
             const redirectUrl = searchParams.get('redirect');
             if (redirectUrl) {
@@ -32,6 +35,7 @@ export default function Login() {
             }
         } catch (err: any) {
             setError(err.response?.data?.message || 'Error al iniciar sesión');
+            setIsLoading(false);
         }
     };
 
@@ -39,8 +43,8 @@ export default function Login() {
         <div className="min-h-screen bg-brand-gradient flex flex-col items-center justify-start p-4 pt-12 md:pt-16">
             <div className="w-full max-w-md">
                 {/* Back Link - Breadcrumb style */}
-                <Link 
-                    href="/" 
+                <Link
+                    href="/"
                     className="inline-flex items-center gap-2 text-neutral-500 hover:text-[#223945] font-bold mb-6 transition-colors text-sm uppercase tracking-wide group"
                 >
                     <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
@@ -59,7 +63,7 @@ export default function Login() {
                                 <LogIn className="w-8 h-8 text-[#223945]" />
                             </div>
                         </div>
-                        
+
                         <h2 className="text-3xl font-bold text-[#223945] mb-2 tracking-tight">
                             Bienvenido de nuevo
                         </h2>
@@ -70,7 +74,7 @@ export default function Login() {
 
                     {error && (
                         <div className="bg-red-50 border border-red-100 text-red-600 p-4 rounded-xl mb-6 text-sm font-medium flex items-center justify-center gap-2">
-                             <div className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
+                            <div className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
                             {error}
                         </div>
                     )}
@@ -81,14 +85,15 @@ export default function Login() {
                                 <Mail className="w-3.5 h-3.5" />
                                 Correo electrónico
                             </label>
-                            <input 
+                            <input
                                 id="email"
-                                type="email" 
+                                type="email"
                                 required
                                 placeholder="tu@email.com"
                                 className="w-full px-4 py-3 rounded-xl bg-neutral-50 border-2 border-transparent focus:bg-white focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 outline-none transition-all font-medium text-neutral-700 placeholder:text-neutral-400"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
+                                disabled={isLoading}
                             />
                         </div>
 
@@ -98,7 +103,7 @@ export default function Login() {
                                     <Lock className="w-3.5 h-3.5" />
                                     Contraseña
                                 </label>
-                                <Link 
+                                <Link
                                     href="/forgot-password"
                                     className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline"
                                 >
@@ -106,7 +111,7 @@ export default function Login() {
                                 </Link>
                             </div>
                             <div className="relative">
-                                <input 
+                                <input
                                     id="password"
                                     type={showPassword ? "text" : "password"}
                                     required
@@ -114,30 +119,40 @@ export default function Login() {
                                     className="w-full px-4 py-3 rounded-xl bg-neutral-50 border-2 border-transparent focus:bg-white focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 outline-none transition-all font-medium text-neutral-700 placeholder:text-neutral-400 pr-10"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
+                                    disabled={isLoading}
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
                                     className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-[#223945] transition-colors focus:outline-none"
+                                    disabled={isLoading}
                                 >
                                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                 </button>
                             </div>
                         </div>
 
-                        <button 
-                            type="submit" 
-                            className="w-full bg-[#223945] text-white px-8 py-3.5 rounded-xl font-bold shadow-lg shadow-[#223945]/20 hover:shadow-[#223945]/40 hover:-translate-y-0.5 transition-all text-sm uppercase tracking-wide flex items-center justify-center gap-2 group"
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className={`w-full bg-[#223945] text-white px-8 py-3.5 rounded-xl font-bold shadow-lg shadow-[#223945]/20 hover:shadow-[#223945]/40 hover:-translate-y-0.5 transition-all text-sm uppercase tracking-wide flex items-center justify-center gap-2 group ${isLoading ? 'opacity-80 cursor-not-allowed transform-none hover:transform-none' : ''}`}
                         >
-                            <span className="group-hover:translate-x-0.5 transition-transform">Iniciar Sesión</span>
+                            {isLoading ? (
+                                <>
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                    <span>Iniciando sesión...</span>
+                                </>
+                            ) : (
+                                <span className="group-hover:translate-x-0.5 transition-transform">Iniciar Sesión</span>
+                            )}
                         </button>
                     </form>
 
                     <div className="mt-8 text-center pt-6 border-t border-neutral-100">
                         <p className="text-sm text-neutral-600 font-medium">
                             ¿No tienes cuenta?{' '}
-                            <Link 
-                                href="/registro" 
+                            <Link
+                                href="/registro"
                                 className="text-[#223945] hover:text-black font-bold hover:underline decoration-2 underline-offset-4 transition-all"
                             >
                                 Regístrate aquí

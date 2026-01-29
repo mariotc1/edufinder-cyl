@@ -28,6 +28,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/me', [AuthController::class, 'user']);
     Route::put('/me', [AuthController::class, 'updateProfile']);
+    Route::post('/me/photo', [AuthController::class, 'updateProfilePhoto']);
+    Route::delete('/me/photo', [AuthController::class, 'deleteProfilePhoto']);
     Route::put('/me/password', [AuthController::class, 'updatePassword']);
 
     Route::get('/favoritos', [FavoritoController::class, 'index']);

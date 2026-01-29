@@ -1,9 +1,12 @@
-'use client';
+﻿'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import api from '@/lib/axios';
-import { User, MapPin, Heart, Lock, Camera, LogOut, Eye, EyeOff, ChevronLeft, Trash, AlertCircle } from 'lucide-react';
+import { User, MapPin, Heart, Lock, Camera, LogOut, Eye, EyeOff, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import CentroCard from '@/components/CentroCard';
+import { Centro } from '@/types';
 
 interface UserData {
     name: string;
@@ -15,12 +18,7 @@ interface UserData {
 
 interface Favorito {
     id: number;
-    centro: {
-        id: number;
-        nombre: string;
-        direccion?: string;
-        // Add other properties as needed
-    };
+    centro: Centro;
 }
 
 export default function Profile() {
@@ -38,8 +36,6 @@ export default function Profile() {
     const [showNewPass, setShowNewPass] = useState(false);
     const [showConfirmPass, setShowConfirmPass] = useState(false);
     const [uploading, setUploading] = useState(false);
-    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         fetchData();
@@ -71,7 +67,7 @@ export default function Profile() {
             // Update local storage if needed
             const stored = JSON.parse(localStorage.getItem('user') || '{}');
             localStorage.setItem('user', JSON.stringify({ ...stored, ...res.data.user }));
-
+            
             setMessage({ text: 'Perfil actualizado correctamente', type: 'success' });
             // window.location.reload(); // Optional, to refresh navbar
         } catch (error) {
@@ -79,11 +75,13 @@ export default function Profile() {
         }
     };
 
+
+
     const handleUpdatePassword = async (e: React.FormEvent) => {
         e.preventDefault();
         setMessage(null);
         if (passwordData.new !== passwordData.confirm) {
-            setMessage({ text: 'Las contraseñas no coinciden', type: 'error' });
+            setMessage({ text: 'Las contrase├▒as no coinciden', type: 'error' });
             return;
         }
 
@@ -93,98 +91,49 @@ export default function Profile() {
                 password: passwordData.new,
                 password_confirmation: passwordData.confirm
             });
-            setMessage({ text: 'Contraseña actualizada', type: 'success' });
+            setMessage({ text: 'Contrase├▒a actualizada', type: 'success' });
             setPasswordData({ current: '', new: '', confirm: '' });
         } catch (error: any) {
-            setMessage({ text: error.response?.data?.message || 'Error al cambiar contraseña', type: 'error' });
-        }
-    };
-
-    const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        // Validation (max 2MB)
-        if (file.size > 2 * 1024 * 1024) {
-            setMessage({ text: 'La imagen no debe superar los 2MB', type: 'error' });
-            return;
-        }
-
-        setUploading(true);
-        const formData = new FormData();
-        formData.append('photo', file);
-
-        try {
-            const res = await api.post('/me/photo', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
-            setUser(prev => prev ? { ...prev, foto_perfil: res.data.user.foto_perfil } : null);
-            setMessage({ text: 'Foto actualizada correctamente', type: 'success' });
-
-            // Update local storage
-            const stored = JSON.parse(localStorage.getItem('user') || '{}');
-            localStorage.setItem('user', JSON.stringify({ ...stored, foto_perfil: res.data.user.foto_perfil }));
-        } catch (error) {
-            setMessage({ text: 'Error al subir la imagen', type: 'error' });
-        } finally {
-            setUploading(false);
-            if (fileInputRef.current) fileInputRef.current.value = '';
-        }
-    };
-
-    const confirmDelete = async () => {
-        try {
-            await api.delete('/me/photo');
-            setUser(prev => prev ? { ...prev, foto_perfil: undefined } : null);
-            setMessage({ text: 'Foto eliminada correctamente', type: 'success' });
-
-            // Update local storage
-            const stored = JSON.parse(localStorage.getItem('user') || '{}');
-            localStorage.setItem('user', JSON.stringify({ ...stored, foto_perfil: null }));
-        } catch (error: any) {
-            const errorMsg = error.response?.data?.message || 'Error al eliminar la foto';
-            setMessage({ text: errorMsg, type: 'error' });
-        } finally {
-            setShowDeleteConfirm(false);
+            setMessage({ text: error.response?.data?.message || 'Error al cambiar contrase├▒a', type: 'error' });
         }
     };
 
     const handleLocation = () => {
         if (user?.ubicacion_lat) {
             // Deactivate location
-            api.put('/me', {
+             api.put('/me', {
                 name,
                 ubicacion_lat: null,
                 ubicacion_lon: null
             })
-                .then(() => {
-                    fetchData();
-                    setMessage({ text: 'Ubicación desactivada', type: 'success' });
-                })
-                .catch(() => {
-                    setMessage({ text: 'Error al desactivar ubicación', type: 'error' });
-                });
+            .then(() => {
+                fetchData();
+                setMessage({ text: 'Ubicaci├│n desactivada', type: 'success' });
+            })
+            .catch(() => {
+                setMessage({ text: 'Error al desactivar ubicaci├│n', type: 'error' });
+            });
             return;
         }
 
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(async (position) => {
                 try {
-                    await api.put('/me', {
-                        name,
-                        ubicacion_lat: position.coords.latitude,
-                        ubicacion_lon: position.coords.longitude
-                    });
-                    fetchData();
-                    setMessage({ text: 'Ubicación actualizada', type: 'success' });
+                   await api.put('/me', {
+                       name,
+                       ubicacion_lat: position.coords.latitude,
+                       ubicacion_lon: position.coords.longitude
+                   });
+                   fetchData();
+                   setMessage({ text: 'Ubicaci├│n actualizada', type: 'success' });
                 } catch (e) {
-                    setMessage({ text: 'Error al actualizar ubicación', type: 'error' });
+                   setMessage({ text: 'Error al actualizar ubicaci├│n', type: 'error' });
                 }
             });
         }
     };
 
-    const handleLogout = async () => {
+     const handleLogout = async () => {
         await api.post('/logout');
         localStorage.removeItem('token');
         localStorage.removeItem('user');
@@ -194,7 +143,7 @@ export default function Profile() {
     if (loading) return <div className="p-8 text-center">Cargando...</div>;
 
     return (
-        <div className="min-h-screen bg-brand-gradient pt-28 pb-12 px-4 sm:px-6">
+        <div className="min-h-screen bg-brand-gradient pt-28 pb-12 px-4 sm:px-6"> 
             <div className="max-w-5xl mx-auto">
                 {/* Back Link */}
                 <button
@@ -213,7 +162,7 @@ export default function Profile() {
                     <div className="md:flex min-h-[600px]">
                         {/* Sidebar - High Contrast & Branding */}
                         <div className="md:w-1/3 bg-white p-8 border-r border-neutral-100 relative">
-                            {/* Avatar Section */}
+                             {/* Avatar Section */}
                             <div className="text-center mb-8 relative">
                                 <div className="relative inline-block group">
                                     <div className="absolute inset-0 bg-[#223945] rounded-full blur opacity-20 group-hover:opacity-30 transition-opacity"></div>
@@ -224,36 +173,9 @@ export default function Profile() {
                                             {user?.name?.charAt(0)}
                                         </div>
                                     )}
-                                    <input
-                                        type="file"
-                                        ref={fileInputRef}
-                                        className="hidden"
-                                        accept="image/png, image/jpeg, image/jpg"
-                                        onChange={handlePhotoUpload}
-                                    />
-
-                                    {/* Botonera Fotos */}
-                                    <div className="absolute bottom-1 right-1/2 translate-x-1/2 flex gap-2 z-20">
-                                        <button
-                                            onClick={() => fileInputRef.current?.click()}
-                                            disabled={uploading}
-                                            className="bg-white p-2 rounded-full shadow-lg border border-neutral-100 text-neutral-500 hover:text-[#223945] transition-colors disabled:opacity-50"
-                                            title="Subir foto"
-                                        >
-                                            <Camera className="w-4 h-4" />
-                                        </button>
-
-                                        {user?.foto_perfil && (
-                                            <button
-                                                onClick={() => setShowDeleteConfirm(true)}
-                                                disabled={uploading}
-                                                className="bg-white p-2 rounded-full shadow-lg border border-neutral-100 text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
-                                                title="Eliminar foto"
-                                            >
-                                                <Trash className="w-4 h-4" />
-                                            </button>
-                                        )}
-                                    </div>
+                                    <button className="absolute bottom-1 right-1 z-20 bg-white p-2 rounded-full shadow-lg border border-neutral-100 text-neutral-500 hover:text-[#223945] transition-colors">
+                                        <Camera className="w-4 h-4" />
+                                    </button>
                                 </div>
                                 <h2 className="mt-5 text-xl font-bold text-[#223945]">{user?.name}</h2>
                                 <p className="text-sm text-neutral-500 font-medium">{user?.email}</p>
@@ -261,40 +183,43 @@ export default function Profile() {
 
                             {/* Navigation Menu */}
                             <nav className="space-y-2">
-                                <button
-                                    onClick={() => setActiveTab('profile')}
-                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'profile'
-                                            ? 'bg-[#223945] text-white shadow-md shadow-[#223945]/20'
-                                            : 'text-neutral-500 hover:bg-neutral-50 hover:text-[#223945]'
-                                        }`}
+                                <button 
+                                    onClick={() => setActiveTab('profile')} 
+                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${
+                                        activeTab === 'profile' 
+                                        ? 'bg-[#223945] text-white shadow-md shadow-[#223945]/20' 
+                                        : 'text-neutral-500 hover:bg-neutral-50 hover:text-[#223945]'
+                                    }`}
                                 >
-                                    <User className="w-4 h-4" />
+                                    <User className="w-4 h-4" /> 
                                     <span>Perfil Personal</span>
                                 </button>
-                                <button
-                                    onClick={() => setActiveTab('security')}
-                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'security'
-                                            ? 'bg-[#223945] text-white shadow-md shadow-[#223945]/20'
-                                            : 'text-neutral-500 hover:bg-neutral-50 hover:text-[#223945]'
-                                        }`}
+                                <button 
+                                    onClick={() => setActiveTab('security')} 
+                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${
+                                        activeTab === 'security' 
+                                        ? 'bg-[#223945] text-white shadow-md shadow-[#223945]/20' 
+                                        : 'text-neutral-500 hover:bg-neutral-50 hover:text-[#223945]'
+                                    }`}
                                 >
-                                    <Lock className="w-4 h-4" />
+                                    <Lock className="w-4 h-4" /> 
                                     <span>Seguridad</span>
                                 </button>
-                                <button
-                                    onClick={() => setActiveTab('favorites')}
-                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'favorites'
-                                            ? 'bg-[#223945] text-white shadow-md shadow-[#223945]/20'
-                                            : 'text-neutral-500 hover:bg-neutral-50 hover:text-[#223945]'
-                                        }`}
+                                <button 
+                                    onClick={() => setActiveTab('favorites')} 
+                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${
+                                        activeTab === 'favorites' 
+                                        ? 'bg-[#223945] text-white shadow-md shadow-[#223945]/20' 
+                                        : 'text-neutral-500 hover:bg-neutral-50 hover:text-[#223945]'
+                                    }`}
                                 >
-                                    <Heart className="w-4 h-4" />
+                                    <Heart className="w-4 h-4" /> 
                                     <span>Mis Favoritos</span>
                                 </button>
-
+                                
                                 <div className="pt-8 mt-4 border-t border-neutral-100">
                                     <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 transition-colors">
-                                        <LogOut className="w-4 h-4" /> Cerrar Sesión
+                                        <LogOut className="w-4 h-4" /> Cerrar Sesi├│n
                                     </button>
                                 </div>
                             </nav>
@@ -303,10 +228,11 @@ export default function Profile() {
                         {/* Content Area */}
                         <div className="md:w-2/3 p-8 lg:p-12 bg-white/50">
                             {message && (
-                                <div className={`mb-8 p-4 rounded-xl flex items-center gap-3 text-sm font-medium animate-in fade-in slide-in-from-top-2 ${message.type === 'success'
-                                        ? 'bg-green-50 text-green-700 border border-green-100'
-                                        : 'bg-red-50 text-red-700 border border-red-100'
-                                    }`}>
+                                <div className={`mb-8 p-4 rounded-xl flex items-center gap-3 text-sm font-medium animate-in fade-in slide-in-from-top-2 ${
+                                    message.type === 'success' 
+                                    ? 'bg-green-50 text-green-700 border border-green-100' 
+                                    : 'bg-red-50 text-red-700 border border-red-100'
+                                }`}>
                                     <div className={`w-2 h-2 rounded-full ${message.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}></div>
                                     {message.text}
                                 </div>
@@ -315,39 +241,35 @@ export default function Profile() {
                             {activeTab === 'profile' && (
                                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                     <div className="mb-6">
-                                        <h3 className="text-2xl font-bold text-[#223945]">Información Personal</h3>
-                                        <p className="text-neutral-500 text-sm mt-1">Gestiona tu información básica y ubicación.</p>
+                                        <h3 className="text-2xl font-bold text-[#223945]">Informaci├│n Personal</h3>
+                                        <p className="text-neutral-500 text-sm mt-1">Gestiona tu informaci├│n b├ísica y ubicaci├│n.</p>
                                     </div>
-
+                                    
                                     <form onSubmit={handleUpdateProfile} className="space-y-6">
                                         <div className="grid gap-6">
                                             <div className="space-y-2">
                                                 <label className="text-xs font-bold text-[#223945] uppercase tracking-wider ml-1">Nombre Completo</label>
-                                                <input
-                                                    type="text"
-                                                    value={name}
-                                                    onChange={e => setName(e.target.value)}
+                                                <input 
+                                                    type="text" 
+                                                    value={name} 
+                                                    onChange={e => setName(e.target.value)} 
                                                     className="w-full px-4 py-3 rounded-xl bg-neutral-50 border-2 border-transparent focus:bg-white focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 outline-none transition-all font-medium text-neutral-700 placeholder:text-neutral-400"
                                                 />
                                             </div>
                                             <div className="space-y-2">
-                                                <label className="text-xs font-bold text-[#223945] uppercase tracking-wider ml-1">Correo Electrónico</label>
-                                                <input
-                                                    type="email"
-                                                    value={user?.email}
-                                                    disabled
-                                                    className="w-full px-4 py-3 rounded-xl bg-neutral-100 border-2 border-transparent text-neutral-500 font-medium cursor-not-allowed"
+                                                <label className="text-xs font-bold text-[#223945] uppercase tracking-wider ml-1">Correo Electr├│nico</label>
+                                                <input 
+                                                    type="email" 
+                                                    value={user?.email} 
+                                                    disabled 
+                                                    className="w-full px-4 py-3 rounded-xl bg-neutral-100 border-2 border-transparent text-neutral-500 font-medium cursor-not-allowed" 
                                                 />
                                             </div>
                                         </div>
                                         <div className="pt-2">
-                                            <button
-                                                type="submit"
-                                                disabled={name === user?.name}
-                                                className={`bg-[#223945] text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-[#223945]/20 transition-all text-sm uppercase tracking-wide ${name === user?.name
-                                                        ? 'opacity-50 cursor-not-allowed'
-                                                        : 'hover:shadow-[#223945]/40 hover:-translate-y-0.5'
-                                                    }`}
+                                            <button 
+                                                type="submit" 
+                                                className="bg-[#223945] text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-[#223945]/20 hover:shadow-[#223945]/40 hover:-translate-y-0.5 transition-all text-sm uppercase tracking-wide"
                                             >
                                                 Guardar Cambios
                                             </button>
@@ -357,8 +279,8 @@ export default function Profile() {
                                     <div className="mt-10 pt-10 border-t border-neutral-100">
                                         <div className="flex items-start justify-between">
                                             <div>
-                                                <h3 className="text-lg font-bold text-[#223945]">Ubicación</h3>
-                                                <p className="text-sm text-neutral-500 mt-1">Para mejorar los resultados de búsqueda "Cerca de mí".</p>
+                                                <h3 className="text-lg font-bold text-[#223945]">Ubicaci├│n</h3>
+                                                <p className="text-sm text-neutral-500 mt-1">Para mejorar los resultados de b├║squeda "Cerca de m├¡".</p>
                                             </div>
                                             {user?.ubicacion_lat && (
                                                 <span className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full border border-green-200">
@@ -366,17 +288,17 @@ export default function Profile() {
                                                 </span>
                                             )}
                                         </div>
-
+                                        
                                         <div className="mt-6 p-4 bg-blue-50/50 rounded-xl border border-blue-100 flex items-center justify-between">
                                             <div className="flex items-center gap-3 text-[#223945]">
                                                 <div className="bg-white p-2 rounded-lg shadow-sm">
                                                     <MapPin className="w-5 h-5 text-blue-500" />
                                                 </div>
-                                                <span className="font-bold text-sm">Geolocalización</span>
+                                                <span className="font-bold text-sm">Geolocalizaci├│n</span>
                                             </div>
                                             <div className="flex gap-3">
                                                 {user?.ubicacion_lat && (
-                                                    <button
+                                                    <button 
                                                         type="button"
                                                         onClick={(e) => {
                                                             e.preventDefault();
@@ -387,7 +309,7 @@ export default function Profile() {
                                                         Desactivar
                                                     </button>
                                                 )}
-                                                <button
+                                                <button 
                                                     type="button"
                                                     onClick={(e) => {
                                                         e.preventDefault();
@@ -401,30 +323,30 @@ export default function Profile() {
                                                             // Let's rely on the separate 'Desactivar' button I just added,
                                                             // and make this button only for 'Update' if present, or 'Activate' if not.
                                                             if (user?.ubicacion_lat) {
-                                                                // Re-run geolocation to update
-                                                                if (navigator.geolocation) {
+                                                                 // Re-run geolocation to update
+                                                                 if (navigator.geolocation) {
                                                                     navigator.geolocation.getCurrentPosition(async (position) => {
                                                                         try {
-                                                                            await api.put('/me', {
-                                                                                name,
-                                                                                ubicacion_lat: position.coords.latitude,
-                                                                                ubicacion_lon: position.coords.longitude
-                                                                            });
-                                                                            fetchData();
-                                                                            setMessage({ text: 'Ubicación actualizada', type: 'success' });
+                                                                           await api.put('/me', {
+                                                                               name,
+                                                                               ubicacion_lat: position.coords.latitude,
+                                                                               ubicacion_lon: position.coords.longitude
+                                                                           });
+                                                                           fetchData();
+                                                                           setMessage({ text: 'Ubicaci├│n actualizada', type: 'success' });
                                                                         } catch (e) {
-                                                                            setMessage({ text: 'Error al actualizar ubicación', type: 'error' });
+                                                                           setMessage({ text: 'Error al actualizar ubicaci├│n', type: 'error' });
                                                                         }
                                                                     });
                                                                 }
                                                             } else {
-                                                                handleLocation();
+                                                                handleLocation(); 
                                                             }
                                                         }
                                                     }}
                                                     className="text-sm font-bold text-blue-600 hover:text-blue-700 hover:underline decoration-2 underline-offset-4"
                                                 >
-                                                    {user?.ubicacion_lat ? 'Actualizar' : 'Activar ubicación'}
+                                                    {user?.ubicacion_lat ? 'Actualizar' : 'Activar ubicaci├│n'}
                                                 </button>
                                             </div>
                                         </div>
@@ -436,17 +358,17 @@ export default function Profile() {
                                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                     <div className="mb-6">
                                         <h3 className="text-2xl font-bold text-[#223945]">Seguridad</h3>
-                                        <p className="text-neutral-500 text-sm mt-1">Gestiona tu contraseña y acceso.</p>
+                                        <p className="text-neutral-500 text-sm mt-1">Gestiona tu contrase├▒a y acceso.</p>
                                     </div>
 
                                     <form onSubmit={handleUpdatePassword} className="space-y-5">
                                         <div className="space-y-2">
-                                            <label className="text-xs font-bold text-[#223945] uppercase tracking-wider ml-1">Contraseña Actual</label>
+                                            <label className="text-xs font-bold text-[#223945] uppercase tracking-wider ml-1">Contrase├▒a Actual</label>
                                             <div className="relative">
-                                                <input
-                                                    type={showCurrentPass ? "text" : "password"}
-                                                    value={passwordData.current}
-                                                    onChange={e => setPasswordData({ ...passwordData, current: e.target.value })}
+                                                <input 
+                                                    type={showCurrentPass ? "text" : "password"} 
+                                                    value={passwordData.current} 
+                                                    onChange={e => setPasswordData({...passwordData, current: e.target.value})} 
                                                     className="w-full px-4 py-3 rounded-xl bg-neutral-50 border-2 border-transparent focus:bg-white focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 outline-none transition-all font-medium text-neutral-700 pr-10"
                                                 />
                                                 <button
@@ -460,12 +382,12 @@ export default function Profile() {
                                         </div>
                                         <div className="grid md:grid-cols-2 gap-5">
                                             <div className="space-y-2">
-                                                <label className="text-xs font-bold text-[#223945] uppercase tracking-wider ml-1">Nueva Contraseña</label>
+                                                <label className="text-xs font-bold text-[#223945] uppercase tracking-wider ml-1">Nueva Contrase├▒a</label>
                                                 <div className="relative">
-                                                    <input
-                                                        type={showNewPass ? "text" : "password"}
-                                                        value={passwordData.new}
-                                                        onChange={e => setPasswordData({ ...passwordData, new: e.target.value })}
+                                                    <input 
+                                                        type={showNewPass ? "text" : "password"} 
+                                                        value={passwordData.new} 
+                                                        onChange={e => setPasswordData({...passwordData, new: e.target.value})} 
                                                         className="w-full px-4 py-3 rounded-xl bg-neutral-50 border-2 border-transparent focus:bg-white focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 outline-none transition-all font-medium text-neutral-700 pr-10"
                                                     />
                                                     <button
@@ -480,10 +402,10 @@ export default function Profile() {
                                             <div className="space-y-2">
                                                 <label className="text-xs font-bold text-[#223945] uppercase tracking-wider ml-1">Confirmar Nueva</label>
                                                 <div className="relative">
-                                                    <input
-                                                        type={showConfirmPass ? "text" : "password"}
-                                                        value={passwordData.confirm}
-                                                        onChange={e => setPasswordData({ ...passwordData, confirm: e.target.value })}
+                                                    <input 
+                                                        type={showConfirmPass ? "text" : "password"} 
+                                                        value={passwordData.confirm} 
+                                                        onChange={e => setPasswordData({...passwordData, confirm: e.target.value})} 
                                                         className="w-full px-4 py-3 rounded-xl bg-neutral-50 border-2 border-transparent focus:bg-white focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 outline-none transition-all font-medium text-neutral-700 pr-10"
                                                     />
                                                     <button
@@ -497,67 +419,89 @@ export default function Profile() {
                                             </div>
                                         </div>
                                         <div className="pt-4">
-                                            <button
-                                                type="submit"
+                                            <button 
+                                                type="submit" 
                                                 className="bg-[#223945] text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-[#223945]/20 hover:shadow-[#223945]/40 hover:-translate-y-0.5 transition-all text-sm uppercase tracking-wide"
                                             >
-                                                Actualizar Contraseña
+                                                Actualizar Contrase├▒a
                                             </button>
                                         </div>
                                     </form>
-
+                                    
                                     <div className="mt-8 pt-8 border-t border-neutral-100 bg-neutral-50/50 p-6 rounded-xl border border-neutral-100">
                                         <div className="flex items-center gap-3 mb-2">
                                             <div className="bg-red-100 p-2 rounded-lg text-red-600">
                                                 <Lock className="w-5 h-5" />
                                             </div>
-                                            <h3 className="text-lg font-bold text-neutral-900">¿Olvidaste tu contraseña?</h3>
+                                            <h3 className="text-lg font-bold text-neutral-900">┬┐Olvidaste tu contrase├▒a?</h3>
                                         </div>
                                         <p className="text-sm text-neutral-600 mb-4 pl-[3.25rem]">Te enviaremos un enlace seguro a tu correo para restablecerla.</p>
-                                        <button
+                                        <button 
                                             onClick={async () => {
                                                 try {
                                                     await api.post('/forgot-password', { email: user?.email });
-                                                    setMessage({ text: 'Email de recuperación enviado', type: 'success' });
+                                                    setMessage({ text: 'Email de recuperaci├│n enviado', type: 'success' });
                                                 } catch (e) {
                                                     setMessage({ text: 'Error al enviar email', type: 'error' });
                                                 }
                                             }}
                                             className="ml-[3.25rem] text-[#223945] hover:text-[#1a2c35] text-sm font-bold underline underline-offset-4 decoration-2"
                                         >
-                                            Enviar email de recuperación
+                                            Enviar email de recuperaci├│n
                                         </button>
                                     </div>
                                 </div>
                             )}
 
                             {activeTab === 'favorites' && (
-                                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                    <div className="mb-6">
+                                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-6">
+                                    <div className="mb-6 sticky top-0 bg-white/95 backdrop-blur-sm py-2 z-10 border-b border-transparent">
                                         <h3 className="text-2xl font-bold text-[#223945]">Mis Favoritos</h3>
-                                        <p className="text-neutral-500 text-sm mt-1">Centros que has guardado para consultar más tarde.</p>
+                                        <p className="text-neutral-500 text-sm mt-1">Centros que has guardado para consultar m├ís tarde.</p>
                                     </div>
 
                                     {favoritos.length > 0 ? (
-                                        <div className="grid gap-4">
+                                        <div className="space-y-3">
                                             {favoritos.map(fav => (
-                                                <div key={fav.id} className="group flex items-center justify-between p-5 bg-white border border-neutral-100 rounded-2xl shadow-sm hover:shadow-md hover:border-blue-100 transition-all">
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="bg-blue-50 p-3 rounded-xl text-blue-600 group-hover:bg-[#223945] group-hover:text-white transition-colors">
-                                                            <Heart className="w-5 h-5 fill-current" />
-                                                        </div>
-                                                        <div>
-                                                            <h4 className="font-bold text-neutral-900 group-hover:text-[#223945] transition-colors">{fav.centro.nombre}</h4>
-                                                            <p className="text-sm text-neutral-500">{fav.centro.direccion}</p>
-                                                        </div>
-                                                    </div>
-                                                    <a
-                                                        href={`/mapa?centro=${fav.centro.id}`}
-                                                        className="flex items-center gap-2 px-4 py-2 bg-[#223945] text-white rounded-lg text-sm font-bold shadow hover:shadow-lg hover:-translate-y-0.5 transition-all"
+                                                <div key={fav.id} className="group relative flex items-center gap-4 p-4 bg-white border border-neutral-100 rounded-xl shadow-sm hover:shadow-md hover:border-[#223945]/20 hover:-translate-y-0.5 transition-all">
+                                                    
+                                                    {/* Interactive Heart Button - Left */}
+                                                    <button 
+                                                        onClick={async (e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation(); // Stop click from triggering link
+                                                            // Optimistic update
+                                                            setFavoritos(prev => prev.filter(item => item.id !== fav.id));
+                                                            try {
+                                                                await api.delete(`/favoritos/${fav.centro.id}`);
+                                                            } catch (error) {
+                                                                console.error("Failed to remove favorite");
+                                                            }
+                                                        }}
+                                                        className="relative z-20 shrink-0 p-2.5 rounded-full bg-red-50 text-red-500 hover:bg-red-100 hover:scale-110 active:scale-95 transition-all"
+                                                        title="Eliminar de favoritos"
                                                     >
-                                                        <MapPin className="w-4 h-4" />
-                                                        Localizar
-                                                    </a>
+                                                        <Heart className="w-5 h-5 fill-current" />
+                                                    </button>
+
+                                                    {/* Main Content Payload - Clickable Link */}
+                                                    <Link 
+                                                        href={`/centro/${fav.centro.id}`}
+                                                        className="flex-grow flex items-center justify-between group/link min-w-0"
+                                                    >
+                                                        <div className="min-w-0 pr-4">
+                                                            <h4 className="font-bold text-neutral-900 group-hover/link:text-[#223945] transition-colors truncate text-base">{fav.centro.nombre}</h4>
+                                                            <p className="text-xs text-neutral-500 font-medium truncate flex items-center gap-1 mt-0.5">
+                                                                <MapPin className="w-3 h-3" />
+                                                                {fav.centro.direccion || 'Direcci├│n no disponible'}
+                                                            </p>
+                                                        </div>
+
+                                                        {/* Minimalist Arrow */}
+                                                        <div className="shrink-0 text-neutral-300 group-hover:text-[#223945] transition-colors">
+                                                            <ChevronRight className="w-5 h-5" />
+                                                        </div>
+                                                    </Link>
                                                 </div>
                                             ))}
                                         </div>
@@ -565,7 +509,7 @@ export default function Profile() {
                                         <div className="text-center py-16 bg-neutral-50/50 rounded-2xl border border-dashed border-neutral-200">
                                             <Heart className="w-16 h-16 mx-auto text-neutral-300 mb-4" />
                                             <h4 className="text-lg font-bold text-neutral-900">No tienes favoritos</h4>
-                                            <p className="text-neutral-500 text-sm mt-1">Explora el mapa para añadir centros a tu lista.</p>
+                                            <p className="text-neutral-500 text-sm mt-1">Explora el mapa para a├▒adir centros a tu lista.</p>
                                             <a href="/mapa" className="inline-block mt-6 bg-[#223945] text-white px-6 py-2.5 rounded-full font-bold text-sm shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all">
                                                 Ir al Mapa
                                             </a>
@@ -577,36 +521,6 @@ export default function Profile() {
                     </div>
                 </div>
             </div>
-
-            {/* Delete Confirmation Modal */}
-            {showDeleteConfirm && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-in zoom-in-95 duration-200 border border-neutral-100">
-                        <div className="flex flex-col items-center text-center">
-                            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4 text-red-600">
-                                <AlertCircle className="w-6 h-6" />
-                            </div>
-                            <h3 className="text-lg font-bold text-neutral-900 mb-2">¿Eliminar foto de perfil?</h3>
-                            <p className="text-sm text-neutral-500 mb-6">Esta acción no se puede deshacer. Volverás a tener tus iniciales como avatar.</p>
-
-                            <div className="flex gap-3 w-full">
-                                <button
-                                    onClick={() => setShowDeleteConfirm(false)}
-                                    className="flex-1 px-4 py-2.5 rounded-xl border border-neutral-200 text-neutral-600 font-bold text-sm hover:bg-neutral-50 transition-colors"
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    onClick={confirmDelete}
-                                    className="flex-1 px-4 py-2.5 rounded-xl bg-red-600 text-white font-bold text-sm hover:bg-red-700 shadow-lg shadow-red-600/20 transition-all hover:shadow-red-600/30 hover:-translate-y-0.5"
-                                >
-                                    Eliminar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

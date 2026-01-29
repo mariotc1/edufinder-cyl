@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react';
 import useSWR from 'swr';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { MapPin, Building2, ChevronLeft, ChevronRight, School, BookOpen, ArrowRight } from 'lucide-react';
+import { MapPin, Building2, ChevronLeft, ChevronRight, School, ArrowRight } from 'lucide-react';
 import { searchCentros } from '@/services/api';
 import { FilterOptions, Centro } from '@/types';
 import FilterBar from '@/components/FilterBar';
@@ -86,12 +86,14 @@ function SearchContent() {
 
   return (
     <>
-      {/* Hero Section - Backgrounds removed to let page gradient show */}
-      <section className="relative py-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
+      {/* Hero Section */}
+      <section className="relative py-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
+        <div className="max-w-7xl mx-auto relative z-10">
           <div className="text-center mb-12">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#111827] mb-4 font-heading tracking-tight">
-              Excelencia educativa <span className="text-[#223945] block md:inline">a tu alcance</span>
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl mb-3 tracking-tight font-bold flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+              <span className="bg-gradient-to-r from-[#223945] via-blue-600 to-blue-400 bg-clip-text text-transparent text-center leading-tight py-2">
+                Excelencia educativa a tu alcance
+              </span>
             </h1>
             <p className="text-lg sm:text-xl text-neutral-600 max-w-2xl mx-auto leading-relaxed">
               Encuentra el centro ideal en <span className="font-semibold text-[#223945]">Castilla y León</span> con nuestra búsqueda inteligente.
@@ -119,17 +121,17 @@ function SearchContent() {
               </span>
             )}
             {!data && isLoading && (
-                <div className="h-6 w-32 bg-neutral-100 rounded-full animate-pulse"></div>
+              <div className="h-6 w-32 bg-neutral-100 rounded-full animate-pulse"></div>
             )}
           </div>
 
           {isLoading ? (
-             // SKELETON GRID - Replaces old spinner
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[...Array(6)].map((_, i) => (
-                    <CentroCardSkeleton key={`skeleton-${i}`} />
-                ))}
-             </div>
+            // SKELETON GRID - Replaces old spinner
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <CentroCardSkeleton key={`skeleton-${i}`} />
+              ))}
+            </div>
           ) : error ? (
             <div className="text-center py-20 bg-white rounded-xl border border-red-100 shadow-sm">
               <p className="text-red-500 font-medium text-lg">Ocurrió un error al cargar los datos.</p>
@@ -138,20 +140,20 @@ function SearchContent() {
           ) : (
             <>
               {/* Orchestrated Staggered Grid */}
-              <motion.div 
+              <motion.div
                 variants={containerVariants}
                 initial="hidden"
                 animate="show"
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
               >
-                  {data?.data?.map((centro: Centro, index: number) => (
-                    <CentroCard
-                      key={centro.id}
-                      centro={centro}
-                      index={index}
-                      initialIsFavorite={favoriteIds.has(centro.id)}
-                    />
-                  ))}
+                {data?.data?.map((centro: Centro, index: number) => (
+                  <CentroCard
+                    key={centro.id}
+                    centro={centro}
+                    index={index}
+                    initialIsFavorite={favoriteIds.has(centro.id)}
+                  />
+                ))}
               </motion.div>
 
               {/* Pagination */}

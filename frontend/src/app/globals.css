@@ -35,6 +35,11 @@ h2 {
   line-height: 1.3;
 }
 
+.font-serif {
+  font-family: serif;
+  letter-spacing: 0.02em;
+}
+
 h3 {
   font-size: clamp(1.25rem, 3vw, 1.5rem);
   font-weight: 600;
@@ -215,6 +220,7 @@ button {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -233,23 +239,28 @@ button {
 /* Premium Map Popup Overrides (Leaflet) */
 .premium-popup-container .leaflet-popup-content-wrapper {
   padding: 0 !important;
-  border-radius: 0.75rem !important; /* rounded-xl */
+  border-radius: 0.75rem !important;
+  /* rounded-xl */
   overflow: hidden !important;
   border: 1px solid #e5e7eb;
   width: 90vw !important;
   max-width: 500px !important;
 }
+
 .premium-popup-container .leaflet-popup-content {
   margin: 0 !important;
   width: 100% !important;
   padding: 0 !important;
   min-width: 100% !important; /* Ensure content stretches */
 }
+
 .premium-popup-container a.leaflet-popup-close-button {
   display: none !important;
 }
+
 .premium-popup-container .leaflet-popup-tip {
   background: white;
+}
 }
 
 /* Custom Range Slider Styles for MapSidebar */

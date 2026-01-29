@@ -5,8 +5,8 @@ import Navbar from '@/components/Navbar';
 import ConditionalFooter from '@/components/ConditionalFooter';
 import { Providers } from './providers';
 
-const inter = Inter({ 
-  subsets: ['latin'], 
+const inter = Inter({
+  subsets: ['latin'],
   variable: '--font-inter',
   display: 'swap',
 });
