@@ -6,6 +6,7 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Menu, X, MapPin, Heart, LogIn, UserPlus } from 'lucide-react';
 // Remove local api import as it's used via context
 import Logo from './Logo';
+import UserMenu from './UserMenu';
 import { useAuth } from '@/context/AuthContext';
 import { useFavoritesAnimation } from '@/context/FavoritesAnimationContext';
 import { motion } from 'framer-motion';
@@ -15,7 +16,6 @@ export default function Navbar() {
   const { user, logout, openLoginModal } = useAuth();
   const { favoritesPulse } = useFavoritesAnimation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -75,58 +75,8 @@ export default function Navbar() {
                   Favoritos
                 </Link>
                 
-                    {/* Dropdown with State for robustness */}
-                    <div className="relative">
-                        <button 
-                            onClick={() => setUserMenuOpen(!userMenuOpen)}
-                            className="flex items-center gap-3 text-neutral-700 hover:text-[#223945] font-medium pl-2 pr-4 py-1.5 rounded-full border border-transparent hover:border-neutral-200 hover:bg-neutral-50 transition-all focus:outline-none group"
-                        >
-                            {user.foto_perfil ? (
-                                 <img src={user.foto_perfil} alt={user.name} className="w-9 h-9 rounded-full object-cover border-2 border-white shadow-sm group-hover:border-[#223945]/20" />
-                            ) : (
-                                <div className="w-9 h-9 bg-[#223945]/10 text-[#223945] rounded-full flex items-center justify-center font-bold border-2 border-white shadow-sm group-hover:bg-[#223945] group-hover:text-white transition-colors">
-                                    {user.name.charAt(0)}
-                                </div>
-                            )}
-                            <span className="hidden lg:inline text-sm font-semibold">{user.name}</span>
-                        </button>
-                        
-                        {userMenuOpen && (
-                            <>
-                                <div className="fixed inset-0 z-10" onClick={() => setUserMenuOpen(false)}></div>
-                                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-[0_4px_20px_rgb(0,0,0,0.08)] py-2 border border-neutral-100 z-20 animate-in fade-in zoom-in-95 duration-200">
-                                    <div className="px-5 py-4 border-b border-neutral-100 mb-2 bg-neutral-50/50">
-                                        <p className="text-sm font-bold text-[#223945] truncate">{user.name}</p>
-                                        <p className="text-xs text-neutral-500 truncate mt-0.5">{user.email}</p>
-                                    </div>
-                                    <Link 
-                                        href="/perfil" 
-                                        className="block px-5 py-2.5 text-sm font-medium text-neutral-600 hover:bg-neutral-50 hover:text-[#223945] transition-colors"
-                                        onClick={() => setUserMenuOpen(false)}
-                                    >
-                                        Mi Perfil
-                                    </Link>
-                                    <Link 
-                                        href="/favoritos" 
-                                        className="block px-5 py-2.5 text-sm font-medium text-neutral-600 hover:bg-neutral-50 hover:text-[#223945] transition-colors"
-                                        onClick={() => setUserMenuOpen(false)}
-                                    >
-                                        Mis Favoritos
-                                    </Link>
-                                    <div className="border-t border-neutral-100 my-2"></div>
-                                    <button 
-                                        onClick={() => {
-                                            handleLogout();
-                                            setUserMenuOpen(false);
-                                        }}
-                                        className="w-full text-left block px-5 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 transition-colors"
-                                    >
-                                        Cerrar Sesión
-                                    </button>
-                                </div>
-                            </>
-                        )}
-                    </div>
+                {/* New Modern User Menu */}
+                <UserMenu />
               </>
             ) : (
               <>
