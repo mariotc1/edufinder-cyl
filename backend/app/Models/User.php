@@ -23,6 +23,7 @@ class User extends Authenticatable
         'email',
         'password',
         'google_id',
+        'github_id',
         'foto_perfil',
         'ubicacion_lat',
         'ubicacion_lon',
