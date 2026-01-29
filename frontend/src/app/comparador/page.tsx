@@ -159,8 +159,8 @@ export default function ComparadorPage() {
                                         hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-[#223945]/20 transition-all duration-300
                                     "
                                 >
-                                    {/* CARD HEADER */}
-                                    <div className="p-6 pb-4 border-b border-neutral-50 relative">
+                                    {/* CARD HEADER - Fixed Height for Alignment */}
+                                    <div className="p-6 pb-4 border-b border-neutral-50 relative flex flex-col">
                                         <button 
                                             onClick={() => removeFromCompare(d.id)}
                                             className="absolute top-4 right-4 p-2 text-neutral-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
@@ -169,21 +169,27 @@ export default function ComparadorPage() {
                                             <X className="w-5 h-5" />
                                         </button>
                                         
-                                        <span className={`inline-block mb-3 text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-lg border ${
-                                            d.naturaleza.includes('Público') 
-                                                ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
-                                                : 'bg-indigo-50 text-indigo-700 border-indigo-100'
-                                        }`}>
-                                            {d.naturaleza}
-                                        </span>
+                                        {/* Naturaleza Badge - Matched to CentroCard */}
+                                        <div className="mb-4">
+                                            <span className={`inline-block text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${
+                                                d.naturaleza.toUpperCase().includes('PÚBLICO') 
+                                                    ? 'bg-blue-50 text-blue-700 border-blue-200' 
+                                                    : d.naturaleza.toUpperCase().includes('CONCERTADO')
+                                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                        : 'bg-amber-50 text-amber-700 border-amber-200'
+                                            }`}>
+                                                {d.naturaleza}
+                                            </span>
+                                        </div>
                                         
-                                        <h3 className="text-xl font-bold text-[#223945] leading-tight min-h-[3.5rem] flex items-center">
+                                        {/* Name - Fixed Min Height for Alignment */}
+                                        <h3 className="text-lg font-bold text-[#223945] leading-tight min-h-[4rem] flex items-start">
                                             {d.nombre}
                                         </h3>
                                         
                                         <div className="flex items-center gap-2 mt-2 text-sm text-neutral-500 font-medium">
-                                            <MapPin className="w-4 h-4 text-rose-500" />
-                                            <span>{d.localidad}</span>
+                                            <MapPin className="w-4 h-4 text-rose-500 shrink-0" />
+                                            <span className="truncate">{d.localidad}</span>
                                         </div>
                                     </div>
 
@@ -198,7 +204,7 @@ export default function ComparadorPage() {
                                                         <div className="p-2 bg-white rounded-lg border border-neutral-100 shadow-sm group-hover:border-blue-200">
                                                             <Globe className="w-4 h-4" />
                                                         </div>
-                                                        <span className="font-bold underline decoration-neutral-200 underline-offset-4 group-hover:decoration-blue-400">Visitar Web</span>
+                                                        <span className="font-bold underline decoration-neutral-200 underline-offset-4 group-hover:decoration-blue-400 truncate">Visitar Web</span>
                                                     </a>
                                                 )}
                                                 {d.telefono && (
@@ -232,29 +238,30 @@ export default function ComparadorPage() {
                                                         <div key={familia}>
                                                             {/* Family Header */}
                                                             <div className="flex items-center gap-2 mb-2 text-[#223945]">
-                                                                <div className="w-1 h-4 bg-[#223945] rounded-full"></div>
+                                                                <div className="w-1 h-4 bg-[#223945] rounded-full shrink-0"></div>
                                                                 <h5 className="text-[11px] font-extrabold uppercase tracking-tight leading-tight">
                                                                     {familia}
                                                                 </h5>
                                                             </div>
 
-                                                            {/* Cycles Chips */}
-                                                            <div className="flex flex-wrap gap-2 pl-3">
+                                                            {/* Cycles Chips - More Vibrant Colors */}
+                                                            <div className="flex flex-col gap-2 pl-3">
                                                                 {ciclos.map(c => {
                                                                     const nivel = c.nivel_educativo || "Otros";
                                                                     const isSup = nivel === 'Grado Superior';
                                                                     const isMed = nivel === 'Grado Medio';
+                                                                    const isBasic = nivel === 'FP Básica';
                                                                     
                                                                     return (
-                                                                        <div key={c.id} className="w-full bg-white rounded-lg border border-neutral-150 p-2 shadow-sm flex items-start gap-2 hover:border-blue-200 transition-colors">
+                                                                        <div key={c.id} className="w-full bg-white rounded-lg border border-neutral-200 p-2 shadow-sm flex items-start gap-2 hover:border-blue-300 transition-colors group/chip">
                                                                             <span className={`
-                                                                                text-[9px] font-black uppercase px-1.5 py-0.5 rounded
-                                                                                ${isSup ? 'bg-purple-100 text-purple-700' : isMed ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'}
+                                                                                text-[10px] font-bold uppercase px-1.5 py-0.5 rounded shadow-sm shrink-0 mt-0.5
+                                                                                ${isSup ? 'bg-purple-600 text-white' : isMed ? 'bg-amber-500 text-white' : 'bg-blue-600 text-white'}
                                                                             `}>
                                                                                 {isSup ? 'GS' : isMed ? 'GM' : 'FPB'}
                                                                             </span>
                                                                             <div className="flex-1">
-                                                                                <p className="text-[13px] font-bold text-neutral-700 leading-tight mb-0.5">
+                                                                                <p className="text-[13px] font-bold text-neutral-700 leading-snug mb-0.5 group-hover/chip:text-[#223945]">
                                                                                     {c.ciclo_formativo}
                                                                                 </p>
                                                                                 {c.modalidad && (
