@@ -554,7 +554,7 @@ export default function Profile() {
                             {favoritos.length > 0 ? (
                                         <div className="grid gap-4 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-neutral-200 hover:scrollbar-thumb-neutral-300">
                                             {favoritos.map(fav => (
-                                                <div key={fav.id} className="group relative bg-white border border-neutral-100 rounded-2xl shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-[#223945] transition-all p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                                <div key={fav.id} className="group relative bg-white border border-neutral-100 rounded-2xl shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-[#223945] transition-all p-5 pr-14 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                                     
                                                     {/* Content */}
                                                     <div className="flex items-center gap-4">
@@ -571,14 +571,14 @@ export default function Profile() {
                                                     <div className="flex flex-col gap-2 w-full sm:w-auto mt-2 sm:mt-0">
                                                         <Link
                                                             href={`/centro/${fav.centro.id}`}
-                                                            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white border border-neutral-200 text-neutral-600 rounded-lg text-sm font-bold shadow-sm hover:bg-neutral-50 transition-all hover:-translate-y-0.5"
+                                                            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white border border-neutral-200 text-neutral-600 rounded-lg text-sm font-bold shadow-sm hover:bg-neutral-50 transition-all hover:-translate-y-0.5 whitespace-nowrap"
                                                         >
                                                             <Eye className="w-4 h-4" />
-                                                            Ver Ficha
+                                                            Ver más
                                                         </Link>
                                                         <Link
                                                             href={`/mapa?centro=${fav.centro.id}`}
-                                                            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#223945] text-white rounded-lg text-sm font-bold shadow hover:shadow-lg hover:-translate-y-0.5 transition-all"
+                                                            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#223945] text-white rounded-lg text-sm font-bold shadow hover:shadow-lg hover:-translate-y-0.5 transition-all whitespace-nowrap"
                                                         >
                                                             <MapPin className="w-4 h-4" />
                                                             Localizar
