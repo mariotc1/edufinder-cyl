@@ -236,8 +236,8 @@ button {
   border-radius: 0.75rem !important; /* rounded-xl */
   overflow: hidden !important;
   border: 1px solid #e5e7eb;
-  width: 500px !important;
-  max-width: 90vw !important;
+  width: 90vw !important;
+  max-width: 500px !important;
 }
 .premium-popup-container .leaflet-popup-content {
   margin: 0 !important;
