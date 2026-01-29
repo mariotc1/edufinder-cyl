@@ -3,7 +3,7 @@
 import { useComparison } from '@/context/ComparisonContext';
 import { useEffect, useState } from 'react';
 import api from '@/lib/axios';
-import { ChevronLeft, Info, MapPin, Phone, Mail, Globe, Check, X, Loader2, AlertTriangle, GraduationCap } from 'lucide-react';
+import { ChevronLeft, Info, MapPin, Phone, Mail, Globe, Check, X, Loader2, AlertTriangle, GraduationCap, Scale } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 
@@ -118,22 +118,41 @@ export default function ComparadorPage() {
         }
     };
 
-    if (selectedCentros.length === 0) {
+    if (selectedCentros.length < 2) {
         return (
             <div className="min-h-[70vh] flex flex-col items-center justify-center p-4">
-                <div className="bg-neutral-100 p-6 rounded-full mb-6">
-                    <AlertTriangle className="w-12 h-12 text-neutral-400" />
+                
+                {/* Icon wrapper similar to No Favorites */}
+                <div className="bg-neutral-50 p-6 rounded-full border border-dashed border-neutral-200 mb-6">
+                    <Scale className="w-12 h-12 text-neutral-300" />
                 </div>
-                <h2 className="text-2xl font-bold text-[#223945] mb-2 text-center">No hay centros seleccionados</h2>
-                <p className="text-neutral-500 mb-8 max-w-md text-center">
-                    Añade hasta 3 centros desde el mapa o el buscador para ver sus diferencias.
+                
+                <h2 className="text-2xl font-bold text-[#223945] mb-2 text-center">
+                    {selectedCentros.length === 0 ? "Comparador Vacío" : "Necesitas al menos 2 centros"}
+                </h2>
+                
+                <p className="text-neutral-500 mb-8 max-w-md text-center text-sm">
+                    {selectedCentros.length === 0 
+                        ? "Ve a tus favoritos para seleccionar los centros que quieres comparar."
+                        : "Comparar un solo centro no tiene mucha gracia. ¡Añade otro para empezar el duelo!"}
                 </p>
-                <Link 
-                    href="/mapa"
-                    className="bg-[#223945] text-white px-8 py-3 rounded-xl font-bold hover:-translate-y-1 transition-transform shadow-lg shadow-[#223945]/20"
-                >
-                    Ir al Mapa
-                </Link>
+
+                <div className="flex gap-4">
+                    <Link 
+                        href="/favoritos"
+                        className="bg-[#223945] text-white px-8 py-3 rounded-xl font-bold hover:shadow-lg hover:-translate-y-0.5 transition-all shadow-md shadow-[#223945]/20"
+                    >
+                        Ir a Favoritos
+                    </Link>
+                    {selectedCentros.length > 0 && (
+                         <button 
+                            onClick={() => removeFromCompare(selectedCentros[0].id)}
+                            className="px-8 py-3 rounded-xl font-bold text-red-500 hover:bg-red-50 transition-colors"
+                        >
+                            Limpiar
+                        </button>
+                    )}
+                </div>
             </div>
         );
     }
@@ -148,9 +167,12 @@ export default function ComparadorPage() {
 
                 <div className="mb-0">
                     <h1 className="text-2xl font-bold text-[#223945] mb-2 flex items-center gap-3">
+                        <div className="p-2 bg-[#223945] text-white rounded-lg shadow-sm">
+                            <Scale className="w-6 h-6" />
+                        </div>
                         Comparador de Centros
                     </h1>
-                    <p className="text-neutral-500 max-w-2xl text-sm mb-8">
+                    <p className="text-neutral-500 max-w-2xl text-sm mb-8 pl-[3.25rem]">
                         Analiza las fortalezas de cada centro lado a lado.
                     </p>
                 </div>
@@ -160,7 +182,7 @@ export default function ComparadorPage() {
                         <Loader2 className="w-12 h-12 animate-spin text-[#223945]" />
                     </div>
                 ) : (
-                    <div className="relative bg-white/90 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/50 overflow-hidden p-6 md:p-8">
+                    <div className={`relative bg-white/90 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/50 overflow-hidden p-6 md:p-8 transition-all duration-500 ${details.length === 2 ? 'max-w-5xl' : ''}`}>
                         {/* Decorative Top Gradient */}
                         <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300"></div>
                         
@@ -179,12 +201,13 @@ export default function ComparadorPage() {
                         <div 
                             id="comparison-carousel"
                             onScroll={handleScroll}
-                            className="
-                                flex md:grid md:grid-cols-2 lg:grid-cols-3 gap-6 
+                            className={`
+                                flex md:grid gap-6 
                                 overflow-x-auto snap-x snap-mandatory 
                                 pb-4 -mx-4 px-4 md:mx-0 md:px-0 md:overflow-visible
                                 scrollbar-hide
-                            "
+                                ${details.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-2 lg:grid-cols-3'}
+                            `}
                         >
                             {details.map((d) => (
                                 <div 

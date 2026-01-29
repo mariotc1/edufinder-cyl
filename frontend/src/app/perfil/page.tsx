@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import api from '@/lib/axios';
 import { User, MapPin, Heart, Lock, Camera, LogOut, Eye, EyeOff, ChevronLeft, Trash, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 interface UserData {
     name: string;
@@ -31,6 +31,7 @@ export default function Profile() {
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
     const router = useRouter();
+    const searchParams = useSearchParams();
 
     // Form states
     const [name, setName] = useState('');
@@ -47,7 +48,13 @@ export default function Profile() {
 
     useEffect(() => {
         fetchData();
-    }, []);
+        
+        // Handle URL params for tab navigation
+        const tab = searchParams.get('tab');
+        if (tab === 'favorites') setActiveTab('favorites');
+        if (tab === 'security') setActiveTab('security');
+        if (tab === 'profile') setActiveTab('profile');
+    }, [searchParams]);
 
     const fetchData = async () => {
         try {
