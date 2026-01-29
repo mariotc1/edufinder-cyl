@@ -192,4 +192,28 @@ class AuthController extends Controller
             ? response()->json(['message' => __($status)])
             : response()->json(['email' => [__($status)]], 400);
     }
+    public function updateProfilePhoto(Request $request)
+    {
+        $request->validate([
+            'photo' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+        ]);
+
+        $user = $request->user();
+
+        if ($request->hasFile('photo')) {
+            $path = $request->file('photo')->store('profile-photos', 'public');
+            
+            // Generate full URL
+            $url = asset('storage/' . $path);
+            
+            $user->update(['foto_perfil' => $url]);
+
+            return response()->json([
+                'message' => 'Foto de perfil actualizada successfully',
+                'user' => $user
+            ]);
+        }
+
+        return response()->json(['message' => 'No se ha subido ninguna foto'], 400);
+    }
 }
