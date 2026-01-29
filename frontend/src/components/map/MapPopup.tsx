@@ -22,14 +22,14 @@ export default function MapPopup({ centro, initialIsFavorite = false }: MapPopup
             {/* Minimalist Gradient Line (Top) */}
             <div className="h-1 w-full bg-gradient-to-r from-[#223945] via-blue-500 to-blue-400" />
             
-            <div className="p-3">
+            <div className="p-4">
                 {/* Header: Title + Heart (Flex Row for perfect alignment) */}
-                <div className="flex justify-between items-start gap-1.5 mb-1.5">
+                <div className="flex justify-between items-start gap-2 mb-2">
                     <div className="min-w-0 flex-1">
-                        <span className="text-[8px] font-bold text-blue-600 uppercase tracking-wider block mb-0.5">
+                        <span className="text-xs font-bold text-blue-600 uppercase tracking-wider block mb-0.5">
                             {centro.denominacion_generica || "Centro"}
                         </span>
-                        <div className="text-[9px] font-bold text-[#223945] leading-3 line-clamp-2" title={centro.nombre}>
+                        <div className="text-lg font-bold text-[#223945] leading-tight line-clamp-2" title={centro.nombre}>
                             {centro.nombre}
                         </div>
                     </div>
@@ -38,7 +38,7 @@ export default function MapPopup({ centro, initialIsFavorite = false }: MapPopup
                     <button 
                         onClick={(e) => toggleFavorite(e, cardRef.current!)}
                         disabled={loading}
-                        className="shrink-0 p-1.5 -mr-1 -mt-1 rounded-full bg-white border border-neutral-200 shadow-sm hover:bg-neutral-50 transition-all group/heart"
+                        className="shrink-0 p-2 -mr-1 -mt-1 rounded-full bg-white border border-neutral-200 shadow-sm hover:bg-neutral-50 transition-all group/heart"
                         title={isFavorite ? "Quitar de favoritos" : "Añadir a favoritos"}
                     >
                         <svg 
@@ -49,7 +49,7 @@ export default function MapPopup({ centro, initialIsFavorite = false }: MapPopup
                             strokeWidth="2" 
                             strokeLinecap="round" 
                             strokeLinejoin="round" 
-                            className={`w-3.5 h-3.5 transition-colors ${
+                            className={`w-5 h-5 transition-colors ${
                                 isFavorite 
                                 ? "fill-red-500 text-red-500 border-red-500" 
                                 : "text-neutral-300 group-hover/heart:text-red-500"
@@ -60,22 +60,22 @@ export default function MapPopup({ centro, initialIsFavorite = false }: MapPopup
                     </button>
                 </div>
 
-                {/* Address - Ultra Compact */}
-                <div className="flex items-start gap-1 mb-2 text-neutral-500">
-                    <MapPin className="w-2.5 h-2.5 mt-0.5 shrink-0" />
-                    <div className="text-[9px] leading-tight flex flex-col">
-                        <span className="line-clamp-1">{centro.direccion || 'Ubicación no disponible'}</span>
-                        <span className="text-neutral-400 text-[8px] font-medium leading-none mt-0.5">{centro.localidad}</span>
+                {/* Address - Larger */}
+                <div className="flex items-start gap-1.5 mb-3 text-neutral-500">
+                    <MapPin className="w-4 h-4 mt-0.5 shrink-0" />
+                    <div className="text-sm leading-snug flex flex-col">
+                        <span className="line-clamp-2">{centro.direccion || 'Ubicación no disponible'}</span>
+                        <span className="text-neutral-400 text-xs font-medium leading-none mt-1">{centro.localidad}</span>
                     </div>
                 </div>
 
                 {/* Big Clear Action Button */}
                 <Link 
                     href={`/centro/${centro.id}`} 
-                    className="flex items-center justify-center gap-1.5 w-full py-1.5 bg-[#223945] text-white rounded text-[11px] font-bold hover:bg-[#1a2c35] transition-colors shadow-sm decoration-0"
+                    className="flex items-center justify-center gap-2 w-full py-2 bg-[#223945] text-white rounded-md text-sm font-bold hover:bg-[#1a2c35] transition-colors shadow-sm decoration-0"
                 >
                     <span className="text-white">Explorar Centro</span>
-                    <ArrowRight className="w-3 h-3 text-white" />
+                    <ArrowRight className="w-4 h-4 text-white" />
                 </Link>
             </div>
         </div>

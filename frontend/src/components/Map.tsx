@@ -192,8 +192,8 @@ export default function Map({ centros, userLocation, radius, center, zoom, favor
                          <Popup 
                             className="premium-popup-container" 
                             closeButton={false} 
-                            maxWidth={320}
-                            minWidth={320}
+                            maxWidth={400}
+                            minWidth={400}
                          >
                             <MapPopup centro={centro} initialIsFavorite={favoriteIds.includes(centro.id)} />
                          </Popup>
