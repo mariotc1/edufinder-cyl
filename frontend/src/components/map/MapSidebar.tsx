@@ -1,4 +1,4 @@
-import { MapPin, Navigation, Layers, Search, ChevronDown, ChevronUp, Settings, Filter } from 'lucide-react';
+import { MapPin, Navigation, Layers, Search, ChevronDown, ChevronUp, Settings, Filter, X } from 'lucide-react';
 import { useState } from 'react';
 import { FilterOptions } from '@/types';
 
@@ -72,19 +72,23 @@ export default function MapSidebar({ radius, setRadius, filters, setFilters, onL
                     <div className="p-4 bg-white border-b border-neutral-100 space-y-4">
                         {/* Location Toggle */}
                         {userLocation ? (
-                            <div className="flex flex-col gap-2">
-                                <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-xl animate-in fade-in">
-                                    <div className="flex items-center gap-2 text-green-700 w-full">
+                            <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-xl animate-in fade-in transition-all">
+                                <div className="flex items-center gap-2.5 text-green-700">
+                                    <div className="relative">
                                         <Navigation className="w-4 h-4 fill-current" />
-                                        <span className="text-xs font-bold leading-tight flex-grow">Ubicación Activa</span>
-                                        <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
+                                        <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                                        </span>
                                     </div>
+                                    <span className="text-xs font-bold leading-tight">Ubicación Activa</span>
                                 </div>
                                 <button 
                                     onClick={onClearLocation} 
-                                    className="text-xs font-bold text-red-500 hover:text-red-600 hover:bg-red-50 py-2 rounded-lg transition-colors border border-transparent hover:border-red-100"
+                                    className="p-1.5 text-green-600 hover:text-red-500 hover:bg-green-100 rounded-lg transition-colors group"
+                                    title="Desactivar ubicación"
                                 >
-                                    Desactivar ubicación
+                                    <X className="w-4 h-4 group-hover:scale-110 transition-transform" />
                                 </button>
                             </div>
                         ) : (
@@ -110,27 +114,11 @@ export default function MapSidebar({ radius, setRadius, filters, setFilters, onL
                                     max="100" 
                                     value={radius} 
                                     onChange={(e) => setRadius(parseInt(e.target.value))}
-                                    className="absolute w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#223945]/20 z-10"
+                                    className="absolute w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#223945]/20 z-10 custom-range-slider"
                                     style={{
                                         background: `linear-gradient(to right, #223945 ${radius}%, #e5e5e5 ${radius}%)`
                                     }}
                                 />
-                                <style jsx>{`
-                                    input[type=range]::-webkit-slider-thumb {
-                                        -webkit-appearance: none;
-                                        height: 18px;
-                                        width: 18px;
-                                        border-radius: 50%;
-                                        background: #ffffff;
-                                        border: 2px solid #223945;
-                                        cursor: pointer;
-                                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                                        transition: transform 0.1s;
-                                    }
-                                    input[type=range]::-webkit-slider-thumb:hover {
-                                        transform: scale(1.1);
-                                    }
-                                `}</style>
                             </div>
                         </div>
                     </div>

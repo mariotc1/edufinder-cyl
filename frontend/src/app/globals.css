@@ -251,3 +251,20 @@ button {
 .premium-popup-container .leaflet-popup-tip {
   background: white;
 }
+
+/* Custom Range Slider Styles for MapSidebar */
+.custom-range-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 18px;
+  width: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid #223945;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.1s;
+}
+
+.custom-range-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
