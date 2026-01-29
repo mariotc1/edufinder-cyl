@@ -127,11 +127,10 @@ interface MapProps {
     center?: [number, number];
     zoom?: number;
     favoriteIds?: number[];
+    focusCenterId?: number;
 }
 
-
-
-export default function Map({ centros, userLocation, radius, center, zoom, favoriteIds = [] }: MapProps) {
+export default function Map({ centros, userLocation, radius, center, zoom, favoriteIds = [], focusCenterId }: MapProps) {
     const defaultCenter: [number, number] = [41.652, -4.728]; // Valladolid center
 
     // Use passed center if available, otherwise default
@@ -174,8 +173,6 @@ export default function Map({ centros, userLocation, radius, center, zoom, favor
                  </Marker>
             )}
 
-
-
              {/* Center Markers */}
              {centros.map((centro) => {
                  const lat = parseFloat(centro.latitud);
@@ -188,6 +185,11 @@ export default function Map({ centros, userLocation, radius, center, zoom, favor
                          key={centro.id} 
                          position={[lat, lon]}
                          icon={createCustomIcon(centro.naturaleza || 'default')}
+                         ref={(ref) => {
+                             if (ref && focusCenterId === centro.id) {
+                                 setTimeout(() => ref.openPopup(), 500); // Small delay to ensure map animation finishes
+                             }
+                         }}
                      >
                          <Popup 
                             className="premium-popup-container" 

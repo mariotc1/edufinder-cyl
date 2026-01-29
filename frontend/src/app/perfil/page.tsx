@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '@/lib/axios';
 import { User, MapPin, Heart, Lock, Camera, LogOut, Eye, EyeOff, ChevronLeft, Trash, AlertCircle } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 interface UserData {
@@ -37,7 +38,10 @@ export default function Profile() {
     const [showCurrentPass, setShowCurrentPass] = useState(false);
     const [showNewPass, setShowNewPass] = useState(false);
     const [showConfirmPass, setShowConfirmPass] = useState(false);
+
     const [uploading, setUploading] = useState(false);
+    const [updatingPassword, setUpdatingPassword] = useState(false);
+    const [sendingRecovery, setSendingRecovery] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -87,6 +91,7 @@ export default function Profile() {
             return;
         }
 
+        setUpdatingPassword(true);
         try {
             await api.put('/me/password', {
                 current_password: passwordData.current,
@@ -97,6 +102,8 @@ export default function Profile() {
             setPasswordData({ current: '', new: '', confirm: '' });
         } catch (error: any) {
             setMessage({ text: error.response?.data?.message || 'Error al cambiar contraseña', type: 'error' });
+        } finally {
+            setUpdatingPassword(false);
         }
     };
 
@@ -194,7 +201,7 @@ export default function Profile() {
     if (loading) return <div className="p-8 text-center">Cargando...</div>;
 
     return (
-        <div className="min-h-screen bg-brand-gradient pt-28 pb-12 px-4 sm:px-6">
+        <div className="min-h-screen bg-brand-gradient pt-20 pb-12 px-4 sm:px-6">
             <div className="max-w-5xl mx-auto">
                 {/* Back Link */}
                 <button
@@ -218,12 +225,20 @@ export default function Profile() {
                                 <div className="relative inline-block group">
                                     <div className="absolute inset-0 bg-[#223945] rounded-full blur opacity-20 group-hover:opacity-30 transition-opacity"></div>
                                     {user?.foto_perfil ? (
-                                        <img src={user.foto_perfil} className="w-28 h-28 rounded-full object-cover border-4 border-white shadow-xl relative z-10" />
+                                        <img 
+                                            src={user.foto_perfil} 
+                                            alt={user.name}
+                                            className="w-28 h-28 rounded-full object-cover border-4 border-white shadow-xl relative z-10 bg-white" 
+                                        />
                                     ) : (
                                         <div className="w-28 h-28 rounded-full bg-[#223945] text-white flex items-center justify-center text-4xl font-bold shadow-xl relative z-10 border-4 border-white">
                                             {user?.name?.charAt(0)}
                                         </div>
                                     )}
+                                    {/* Fallback for onError (hidden by default) */}
+                                    <div className="hidden w-28 h-28 rounded-full bg-[#223945] text-white flex items-center justify-center text-4xl font-bold shadow-xl relative z-10 border-4 border-white absolute top-0 left-0">
+                                        {user?.name?.charAt(0)}
+                                    </div>
                                     <input
                                         type="file"
                                         ref={fileInputRef}
@@ -232,28 +247,26 @@ export default function Profile() {
                                         onChange={handlePhotoUpload}
                                     />
 
-                                    {/* Botonera Fotos */}
-                                    <div className="absolute bottom-1 right-1/2 translate-x-1/2 flex gap-2 z-20">
-                                        <button
-                                            onClick={() => fileInputRef.current?.click()}
-                                            disabled={uploading}
-                                            className="bg-white p-2 rounded-full shadow-lg border border-neutral-100 text-neutral-500 hover:text-[#223945] transition-colors disabled:opacity-50"
-                                            title="Subir foto"
-                                        >
-                                            <Camera className="w-4 h-4" />
-                                        </button>
+                                    {/* Botonera Fotos - Premium Corner Badges */}
+                                    <button
+                                        onClick={() => fileInputRef.current?.click()}
+                                        disabled={uploading}
+                                        className="absolute bottom-0 right-0 p-2.5 bg-white text-[#223945] rounded-full shadow-[0_4px_12px_rgba(0,0,0,0.12)] border-[3px] border-white hover:bg-neutral-50 hover:scale-105 hover:shadow-lg transition-all z-20 group-hover:border-[#223945]/10"
+                                        title="Cambiar foto"
+                                    >
+                                        <Camera className="w-5 h-5" />
+                                    </button>
 
-                                        {user?.foto_perfil && (
-                                            <button
-                                                onClick={() => setShowDeleteConfirm(true)}
-                                                disabled={uploading}
-                                                className="bg-white p-2 rounded-full shadow-lg border border-neutral-100 text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
-                                                title="Eliminar foto"
-                                            >
-                                                <Trash className="w-4 h-4" />
-                                            </button>
-                                        )}
-                                    </div>
+                                    {user?.foto_perfil && (
+                                        <button
+                                            onClick={() => setShowDeleteConfirm(true)}
+                                            disabled={uploading}
+                                            className="absolute top-0 right-0 p-2 bg-white text-red-500 rounded-full shadow-md border-2 border-white hover:bg-red-50 hover:text-red-600 hover:scale-110 transition-all z-20 translate-x-1/4 -translate-y-1/4 opacity-100 md:opacity-0 md:group-hover:opacity-100 duration-200"
+                                            title="Eliminar foto"
+                                        >
+                                            <Trash className="w-3.5 h-3.5" />
+                                        </button>
+                                    )}
                                 </div>
                                 <h2 className="mt-5 text-xl font-bold text-[#223945]">{user?.name}</h2>
                                 <p className="text-sm text-neutral-500 font-medium">{user?.email}</p>
@@ -496,12 +509,31 @@ export default function Profile() {
                                                 </div>
                                             </div>
                                         </div>
+
                                         <div className="pt-4">
                                             <button
                                                 type="submit"
-                                                className="bg-[#223945] text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-[#223945]/20 hover:shadow-[#223945]/40 hover:-translate-y-0.5 transition-all text-sm uppercase tracking-wide"
+                                                disabled={
+                                                    !passwordData.current || 
+                                                    !passwordData.new || 
+                                                    !passwordData.confirm || 
+                                                    passwordData.new !== passwordData.confirm ||
+                                                    updatingPassword
+                                                }
+                                                className={`bg-[#223945] text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-[#223945]/20 hover:shadow-[#223945]/40 hover:-translate-y-0.5 transition-all text-sm uppercase tracking-wide flex items-center gap-2 ${
+                                                    (!passwordData.current || !passwordData.new || !passwordData.confirm || passwordData.new !== passwordData.confirm || updatingPassword)
+                                                    ? 'opacity-50 cursor-not-allowed transform-none hover:shadow-none hover:translate-y-0'
+                                                    : ''
+                                                }`}
                                             >
-                                                Actualizar Contraseña
+                                                {updatingPassword ? (
+                                                    <>
+                                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                        Actualizando...
+                                                    </>
+                                                ) : (
+                                                    'Actualizar Contraseña'
+                                                )}
                                             </button>
                                         </div>
                                     </form>
@@ -516,16 +548,21 @@ export default function Profile() {
                                         <p className="text-sm text-neutral-600 mb-4 pl-[3.25rem]">Te enviaremos un enlace seguro a tu correo para restablecerla.</p>
                                         <button
                                             onClick={async () => {
+                                                if (sendingRecovery) return;
+                                                setSendingRecovery(true);
                                                 try {
                                                     await api.post('/forgot-password', { email: user?.email });
                                                     setMessage({ text: 'Email de recuperación enviado', type: 'success' });
                                                 } catch (e) {
                                                     setMessage({ text: 'Error al enviar email', type: 'error' });
+                                                } finally {
+                                                    setSendingRecovery(false);
                                                 }
                                             }}
-                                            className="ml-[3.25rem] text-[#223945] hover:text-[#1a2c35] text-sm font-bold underline underline-offset-4 decoration-2"
+                                            disabled={sendingRecovery}
+                                            className={`ml-[3.25rem] text-[#223945] hover:text-[#1a2c35] text-sm font-bold underline underline-offset-4 decoration-2 ${sendingRecovery ? 'opacity-50 cursor-wait' : ''}`}
                                         >
-                                            Enviar email de recuperación
+                                            {sendingRecovery ? 'Enviando...' : 'Enviar email de recuperación'}
                                         </button>
                                     </div>
                                 </div>
@@ -538,26 +575,57 @@ export default function Profile() {
                                         <p className="text-neutral-500 text-sm mt-1">Centros que has guardado para consultar más tarde.</p>
                                     </div>
 
-                                    {favoritos.length > 0 ? (
-                                        <div className="grid gap-4">
+                            {favoritos.length > 0 ? (
+                                        <div className="grid gap-4 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-neutral-200 hover:scrollbar-thumb-neutral-300">
                                             {favoritos.map(fav => (
-                                                <div key={fav.id} className="group flex items-center justify-between p-5 bg-white border border-neutral-100 rounded-2xl shadow-sm hover:shadow-md hover:border-blue-100 transition-all">
+                                                <div key={fav.id} className="group relative bg-white border border-neutral-100 rounded-2xl shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-[#223945] transition-all p-5 pr-14 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                                    
+                                                    {/* Content */}
                                                     <div className="flex items-center gap-4">
-                                                        <div className="bg-blue-50 p-3 rounded-xl text-blue-600 group-hover:bg-[#223945] group-hover:text-white transition-colors">
-                                                            <Heart className="w-5 h-5 fill-current" />
+                                                        <div className="bg-[#223945]/5 p-3 rounded-xl text-[#223945]">
+                                                            <Heart className="w-6 h-6 fill-[#223945]" />
                                                         </div>
                                                         <div>
-                                                            <h4 className="font-bold text-neutral-900 group-hover:text-[#223945] transition-colors">{fav.centro.nombre}</h4>
-                                                            <p className="text-sm text-neutral-500">{fav.centro.direccion}</p>
+                                                            <h4 className="font-bold text-neutral-900 text-lg group-hover:text-[#223945] transition-colors">{fav.centro.nombre}</h4>
+                                                            <p className="text-sm text-neutral-500 font-medium">{fav.centro.direccion}</p>
                                                         </div>
                                                     </div>
-                                                    <a
-                                                        href={`/mapa?centro=${fav.centro.id}`}
-                                                        className="flex items-center gap-2 px-4 py-2 bg-[#223945] text-white rounded-lg text-sm font-bold shadow hover:shadow-lg hover:-translate-y-0.5 transition-all"
+
+                                                    {/* Actions */}
+                                                    <div className="flex flex-col gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+                                                        <Link
+                                                            href={`/centro/${fav.centro.id}`}
+                                                            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white border border-neutral-200 text-neutral-600 rounded-lg text-sm font-bold shadow-sm hover:bg-neutral-50 transition-all hover:-translate-y-0.5 whitespace-nowrap"
+                                                        >
+                                                            <Eye className="w-4 h-4" />
+                                                            Ver más
+                                                        </Link>
+                                                        <Link
+                                                            href={`/mapa?centro=${fav.centro.id}`}
+                                                            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#223945] text-white rounded-lg text-sm font-bold shadow hover:shadow-lg hover:-translate-y-0.5 transition-all whitespace-nowrap"
+                                                        >
+                                                            <MapPin className="w-4 h-4" />
+                                                            Localizar
+                                                        </Link>
+                                                    </div>
+
+                                                    {/* Remove Button (Heart) - Floating like CentroCard */}
+                                                    <button 
+                                                        onClick={async (e) => {
+                                                            e.preventDefault();
+                                                            try {
+                                                                await api.delete(`/favoritos/${fav.centro.id}`);
+                                                                setFavoritos(prev => prev.filter(f => f.id !== fav.id));
+                                                                setMessage({ text: 'Centro eliminado de favoritos', type: 'success' });
+                                                            } catch (error) {
+                                                                setMessage({ text: 'Error al eliminar favorito', type: 'error' });
+                                                            }
+                                                        }}
+                                                        className="absolute top-4 right-4 p-1.5 rounded-full bg-white/90 backdrop-blur-sm shadow-sm border border-neutral-100 hover:bg-red-50 text-red-500 hover:text-red-600 transition-colors"
+                                                        title="Eliminar de favoritos"
                                                     >
-                                                        <MapPin className="w-4 h-4" />
-                                                        Localizar
-                                                    </a>
+                                                        <Heart className="w-4 h-4 fill-current" />
+                                                    </button>
                                                 </div>
                                             ))}
                                         </div>
