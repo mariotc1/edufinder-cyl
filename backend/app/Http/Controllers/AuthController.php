@@ -203,10 +203,8 @@ class AuthController extends Controller
         if ($request->hasFile('photo')) {
             $path = $request->file('photo')->store('profile-photos', 'public');
 
-            // Generate full URL
-            $url = asset('storage/' . $path);
-
-            $user->update(['foto_perfil' => $url]);
+            // Store relative path (Accessor in User model handles the full URL)
+            $user->update(['foto_perfil' => $path]);
 
             return response()->json([
                 'message' => 'Foto de perfil actualizada successfully',

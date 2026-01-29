@@ -65,4 +65,24 @@ class User extends Authenticatable
     {
         $this->notify(new \App\Notifications\ResetPasswordNotification($token));
     }
+    /**
+     * Get the user's profile photo URL.
+     *
+     * @param  string  $value
+     * @return string
+     */
+    public function getFotoPerfilAttribute($value)
+    {
+        if (!$value) {
+            return null;
+        }
+
+        // If it's already an absolute URL (e.g. Google Auth), return it
+        if (filter_var($value, FILTER_VALIDATE_URL)) {
+            return $value;
+        }
+
+        // Otherwise return the full URL to the storage
+        return asset('storage/' . $value);
+    }
 }

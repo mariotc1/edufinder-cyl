@@ -226,12 +226,8 @@ export default function Profile() {
                                     <div className="absolute inset-0 bg-[#223945] rounded-full blur opacity-20 group-hover:opacity-30 transition-opacity"></div>
                                     {user?.foto_perfil ? (
                                         <img 
-                                            src={user.foto_perfil.startsWith('http') ? user.foto_perfil : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}`.replace('/api', '') + `/storage/${user.foto_perfil.replace('storage/', '')}`} 
-                                            onError={(e) => {
-                                                e.currentTarget.onerror = null; 
-                                                e.currentTarget.style.display = 'none';
-                                                e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                                            }}
+                                            src={user.foto_perfil} 
+                                            alt={user.name}
                                             className="w-28 h-28 rounded-full object-cover border-4 border-white shadow-xl relative z-10 bg-white" 
                                         />
                                     ) : (
@@ -261,6 +257,7 @@ export default function Profile() {
                                         >
                                             <Camera className="w-4 h-4" />
                                         </button>
+                                        <span className="sr-only">Formatos: JPG, PNG (Max 2MB)</span>
 
                                         {user?.foto_perfil && (
                                             <button
