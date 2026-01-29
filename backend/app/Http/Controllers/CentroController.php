@@ -85,7 +85,7 @@ class CentroController extends Controller
 
     public function show($id)
     {
-        $centro = Centro::findOrFail($id);
+        $centro = Centro::with('ciclos')->findOrFail($id);
         return new CentroResource($centro);
     }
 

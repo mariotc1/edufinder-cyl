@@ -20,6 +20,8 @@ export const metadata: Metadata = {
   themeColor: '#3b82f6',
 };
 
+import ComparisonTray from '@/components/ComparisonTray';
+
 export default function RootLayout({
   children,
 }: {
@@ -34,6 +36,7 @@ export default function RootLayout({
             {children}
           </main>
           <ConditionalFooter />
+          <ComparisonTray />
         </Providers>
       </body>
     </html>

@@ -4,6 +4,7 @@ import { Centro } from "@/types";
 import { useRef } from "react";
 import { motion, Variants } from "framer-motion";
 import { useFavorite } from "@/hooks/useFavorite"; // Import Hook
+import AddToCompareButton from "./ui/AddToCompareButton";
 
 interface CentroCardProps {
   centro: Centro;
@@ -133,20 +134,23 @@ export default function CentroCard({
       </motion.button>
 
       <div className="p-5 flex-grow flex flex-col">
-        {/* Header Section */}
-        <div className="flex justify-start items-center gap-2 mb-3 pr-8">
-          <span
-            className={`px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase border ${getNaturalezaBadge(centro.naturaleza)}`}
-          >
-            {centro.naturaleza || "Otro"}
-          </span>
+        <div className="flex justify-between items-start mb-3 pr-8 relative z-10">
+           <div className="flex items-center gap-2">
+              <span
+                className={`px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase border ${getNaturalezaBadge(centro.naturaleza)}`}
+              >
+                {centro.naturaleza || "Otro"}
+              </span>
 
-          {centro.distancia !== undefined && (
-            <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase text-white bg-[#223945] shadow-sm">
-              <MapPin className="w-3 h-3" />
-              {parseFloat(centro.distancia.toString()).toFixed(1)} km
-            </span>
-          )}
+              {centro.distancia !== undefined && (
+                <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase text-white bg-[#223945] shadow-sm">
+                  <MapPin className="w-3 h-3" />
+                  {parseFloat(centro.distancia.toString()).toFixed(1)} km
+                </span>
+              )}
+           </div>
+           
+           <AddToCompareButton centro={centro} className="-mt-1 -mr-1" />
         </div>
 
         {/* Title - polished typography with fixed height for alignment */}

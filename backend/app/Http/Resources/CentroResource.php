@@ -31,6 +31,7 @@ class CentroResource extends JsonResource
             'latitud' => $this->latitud,
             'longitud' => $this->longitud,
             'distance' => $this->when(isset($this->distance), fn() => round($this->distance, 2)),
+            'ciclos' => CicloFpResource::collection($this->whenLoaded('ciclos')),
         ];
     }
 }
