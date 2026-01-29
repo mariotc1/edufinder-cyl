@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
+import ConditionalFooter from '@/components/ConditionalFooter';
 import { Providers } from './providers';
 
 const inter = Inter({ 
@@ -33,7 +33,7 @@ export default function RootLayout({
           <main className="pt-20 min-h-screen">
             {children}
           </main>
-          <Footer />
+          <ConditionalFooter />
         </Providers>
       </body>
     </html>
