@@ -21,11 +21,11 @@ export default function ComparisonTray() {
                         initial={{ y: 100, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         exit={{ y: 100, opacity: 0 }}
-                        className="pointer-events-auto bg-white/90 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.12)] rounded-2xl p-4 w-full max-w-2xl flex items-center justify-between gap-4"
+                        className="pointer-events-auto bg-white/90 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.12)] rounded-2xl p-4 w-full max-w-4xl flex items-center justify-between gap-4"
                     >
                         {/* Header / Counter */}
-                        <div className="flex items-center gap-3">
-                            <div className="bg-[#223945] text-white p-2.5 rounded-xl shadow-lg shadow-[#223945]/20">
+                        <div className="flex items-center gap-3 shrink-0">
+                             <div className="bg-[#223945] text-white p-2.5 rounded-xl shadow-lg shadow-[#223945]/20">
                                 <Scale className="w-5 h-5" />
                             </div>
                             <div className="flex flex-col">
@@ -39,24 +39,31 @@ export default function ComparisonTray() {
                         </div>
 
                         {/* Selected Avatars / Names (Desktop) */}
-                        <div className="flex-1 hidden md:flex items-center gap-2 justify-center">
+                        <div className="flex-1 hidden md:flex items-center gap-3 justify-center overflow-x-auto px-2 scrollbar-hide">
                             {selectedCentros.map(centro => (
-                                <div key={centro.id} className="relative group bg-neutral-50 border border-neutral-100 px-3 py-1.5 rounded-lg flex items-center gap-2 max-w-[140px]">
-                                    <span className="text-xs font-medium text-neutral-700 truncate">
+                                <div key={centro.id} className="relative group bg-white border border-neutral-100 shadow-sm pl-3 pr-2 py-2 rounded-xl flex items-center gap-3 w-48 hover:border-[#223945]/30 transition-all shrink-0">
+                                    {/* Icon/Avatar Placeholder */}
+                                    <div className="w-6 h-6 rounded-full bg-neutral-100 flex items-center justify-center text-[10px] font-bold text-neutral-500 border border-neutral-200 shrink-0">
+                                        {centro.nombre.charAt(0)}
+                                    </div>
+                                    
+                                    <span className="text-xs font-bold text-neutral-700 truncate min-w-0 flex-1" title={centro.nombre}>
                                         {centro.nombre}
                                     </span>
+                                    
                                     <button 
                                         onClick={() => removeFromCompare(centro.id)}
-                                        className="text-neutral-400 hover:text-red-500 transition-colors"
+                                        className="text-neutral-300 hover:text-red-500 hover:bg-red-50 rounded-lg p-1 transition-colors shrink-0"
+                                        title="Eliminar"
                                     >
-                                        <X className="w-3.5 h-3.5" />
+                                        <X className="w-4 h-4" />
                                     </button>
                                 </div>
                             ))}
                         </div>
 
                         {/* Actions */}
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 shrink-0">
                              <button
                                 onClick={clearComparison}
                                 className="p-2.5 rounded-xl hover:bg-red-50 text-neutral-400 hover:text-red-500 transition-colors"
@@ -67,7 +74,7 @@ export default function ComparisonTray() {
                              
                              <Link
                                 href="/comparador"
-                                className="bg-[#223945] text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-[#223945]/20 hover:shadow-[#223945]/40 hover:-translate-y-0.5 transition-all flex items-center gap-2"
+                                className="bg-[#223945] text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-[#223945]/20 hover:shadow-[#223945]/40 hover:-translate-y-0.5 transition-all flex items-center gap-2"
                              >
                                 <span>Comparar</span>
                                 <ArrowRight className="w-4 h-4" />
