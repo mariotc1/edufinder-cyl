@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { Menu, X, MapPin, Heart, LogIn, UserPlus } from 'lucide-react';
+import { Menu, X, MapPin, Heart, LogIn, UserPlus, User as UserMenuIcon, LogOut as LogOutIcon } from 'lucide-react';
 // Remove local api import as it's used via context
 import Logo from './Logo';
 import UserMenu from './UserMenu';
@@ -113,15 +113,42 @@ export default function Navbar() {
       </div>
 
       {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden border-t border-neutral-200 bg-white shadow-lg">
+      <motion.div 
+          initial={{ height: 0, opacity: 0 }}
+          animate={mobileMenuOpen ? { height: 'auto', opacity: 1 } : { height: 0, opacity: 0 }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
+          className="md:hidden overflow-hidden bg-white border-b border-neutral-100 shadow-xl"
+      >
           <div className="px-4 py-6 space-y-4">
+            
+            {/* User Header (Mobile) */}
+            {user && (
+                <div className="bg-gradient-to-r from-[#223945] to-blue-600 rounded-2xl p-5 text-white mb-6 shadow-lg relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
+                    <div className="relative z-10 flex items-center gap-4">
+                         {user.foto_perfil ? (
+                             <img src={user.foto_perfil} alt={user.name} className="w-14 h-14 rounded-full border-2 border-white/30 shadow-sm object-cover" />
+                        ) : (
+                            <div className="w-14 h-14 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center text-xl font-bold border-2 border-white/20">
+                                {user.name.charAt(0)}
+                            </div>
+                        )}
+                        <div>
+                            <p className="font-bold text-lg leading-tight !text-white">{user.name}</p>
+                            <p className="!text-white/90 text-xs font-medium truncate">{user.email}</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <Link 
               href="/mapa" 
-              className="flex items-center gap-3 text-neutral-600 hover:text-[#223945] font-bold py-2 transition-colors"
+              className="flex items-center gap-4 px-4 py-3 rounded-xl bg-neutral-50 text-neutral-700 font-bold hover:bg-blue-50 hover:text-blue-700 transition-all"
               onClick={() => setMobileMenuOpen(false)}
             >
-              <MapPin className="w-5 h-5" />
+              <div className="w-8 h-8 rounded-full bg-white text-blue-500 shadow-sm flex items-center justify-center">
+                  <MapPin className="w-4 h-4" />
+              </div>
               Mapa
             </Link>
             
@@ -129,51 +156,46 @@ export default function Navbar() {
               <>
                 <Link 
                   href="/favoritos" 
-                  className="flex items-center gap-3 text-neutral-600 hover:text-[#223945] font-bold py-2 transition-colors"
+                  className="flex items-center gap-4 px-4 py-3 rounded-xl bg-neutral-50 text-neutral-700 font-bold hover:bg-red-50 hover:text-red-600 transition-all"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  <Heart className="w-5 h-5" />
+                  <div className="w-8 h-8 rounded-full bg-white text-red-500 shadow-sm flex items-center justify-center">
+                      <Heart className="w-4 h-4" />
+                  </div>
                   Favoritos
                 </Link>
-                <div className="pt-4 border-t border-neutral-100 mt-2">
-                  <div className="flex items-center gap-3 mb-4">
-                      {user.foto_perfil ? (
-                           <img src={user.foto_perfil} alt={user.name} className="w-10 h-10 rounded-full object-cover border border-neutral-200" />
-                      ) : (
-                          <div className="w-10 h-10 bg-[#223945]/10 text-[#223945] rounded-full flex items-center justify-center font-bold">
-                              {user.name.charAt(0)}
-                          </div>
-                      )}
-                      <div>
-                          <p className="text-sm font-bold text-[#223945]">{user.name}</p>
-                          <p className="text-xs text-neutral-500">{user.email}</p>
-                      </div>
-                  </div>
-                  
-                  <Link 
-                    href="/perfil"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block text-sm font-medium text-neutral-600 py-2 hover:text-[#223945]"
-                   >
-                     Mi Perfil
-                   </Link>
 
-                  <button 
-                    onClick={() => {
-                      handleLogout();
-                      setMobileMenuOpen(false);
-                    }} 
-                    className="w-full text-left text-sm font-bold text-red-600 hover:text-red-700 py-2 mt-2"
-                  >
-                    Cerrar sesión
-                  </button>
-                </div>
+                <div className="h-px bg-neutral-100 my-2"></div>
+                  
+                <Link 
+                  href="/perfil"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-neutral-50 text-neutral-600 font-medium transition-all"
+                 >
+                   <div className="w-8 h-8 rounded-full bg-neutral-100 text-neutral-500 flex items-center justify-center">
+                       <UserMenuIcon className="w-4 h-4" /> 
+                   </div>
+                   Mi Perfil
+                 </Link>
+
+                <button 
+                  onClick={() => {
+                    handleLogout();
+                    setMobileMenuOpen(false);
+                  }} 
+                  className="w-full flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-red-50 text-red-600 font-bold transition-all text-left"
+                >
+                  <div className="w-8 h-8 rounded-full bg-red-100 text-red-500 flex items-center justify-center">
+                      <LogOutIcon className="w-4 h-4" />
+                  </div>
+                  Cerrar sesión
+                </button>
               </>
             ) : (
-              <div className="pt-4 border-t border-neutral-100 flex flex-col gap-3">
+              <div className="flex flex-col gap-3 mt-4">
                 <Link 
                   href={`/login${redirectParam}`}
-                  className="flex items-center gap-3 text-neutral-600 hover:text-[#223945] font-bold py-2 transition-colors justify-center"
+                  className="flex items-center justify-center gap-2 text-neutral-600 font-bold py-3 bg-neutral-50 rounded-xl hover:bg-neutral-100 transition-all"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <LogIn className="w-5 h-5" />
@@ -181,7 +203,7 @@ export default function Navbar() {
                 </Link>
                 <Link 
                   href={`/registro${redirectParam}`} 
-                  className="w-full flex items-center justify-center gap-2 bg-[#223945] text-white px-5 py-3 rounded-xl font-bold text-sm shadow-md active:scale-95 transition-all"
+                  className="flex items-center justify-center gap-2 bg-[#223945] text-white py-3 rounded-xl font-bold shadow-lg shadow-blue-900/20 active:scale-95 transition-all"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <UserPlus className="w-5 h-5" />
@@ -190,8 +212,7 @@ export default function Navbar() {
               </div>
             )}
           </div>
-        </div>
-      )}
+      </motion.div>
     </nav>
   );
 }
