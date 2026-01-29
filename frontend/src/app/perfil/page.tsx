@@ -261,7 +261,7 @@ export default function Profile() {
                                         <button
                                             onClick={() => setShowDeleteConfirm(true)}
                                             disabled={uploading}
-                                            className="absolute top-0 right-0 p-2 bg-white text-red-500 rounded-full shadow-md border-2 border-white hover:bg-red-50 hover:text-red-600 hover:scale-110 transition-all z-20 translate-x-1/4 -translate-y-1/4 opacity-0 group-hover:opacity-100 duration-200"
+                                            className="absolute top-0 right-0 p-2 bg-white text-red-500 rounded-full shadow-md border-2 border-white hover:bg-red-50 hover:text-red-600 hover:scale-110 transition-all z-20 translate-x-1/4 -translate-y-1/4 opacity-100 md:opacity-0 md:group-hover:opacity-100 duration-200"
                                             title="Eliminar foto"
                                         >
                                             <Trash className="w-3.5 h-3.5" />
