@@ -38,7 +38,10 @@ export default function Profile() {
     const [showCurrentPass, setShowCurrentPass] = useState(false);
     const [showNewPass, setShowNewPass] = useState(false);
     const [showConfirmPass, setShowConfirmPass] = useState(false);
+
     const [uploading, setUploading] = useState(false);
+    const [updatingPassword, setUpdatingPassword] = useState(false);
+    const [sendingRecovery, setSendingRecovery] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -88,6 +91,7 @@ export default function Profile() {
             return;
         }
 
+        setUpdatingPassword(true);
         try {
             await api.put('/me/password', {
                 current_password: passwordData.current,
@@ -98,6 +102,8 @@ export default function Profile() {
             setPasswordData({ current: '', new: '', confirm: '' });
         } catch (error: any) {
             setMessage({ text: error.response?.data?.message || 'Error al cambiar contraseña', type: 'error' });
+        } finally {
+            setUpdatingPassword(false);
         }
     };
 
@@ -509,12 +515,31 @@ export default function Profile() {
                                                 </div>
                                             </div>
                                         </div>
+
                                         <div className="pt-4">
                                             <button
                                                 type="submit"
-                                                className="bg-[#223945] text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-[#223945]/20 hover:shadow-[#223945]/40 hover:-translate-y-0.5 transition-all text-sm uppercase tracking-wide"
+                                                disabled={
+                                                    !passwordData.current || 
+                                                    !passwordData.new || 
+                                                    !passwordData.confirm || 
+                                                    passwordData.new !== passwordData.confirm ||
+                                                    updatingPassword
+                                                }
+                                                className={`bg-[#223945] text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-[#223945]/20 hover:shadow-[#223945]/40 hover:-translate-y-0.5 transition-all text-sm uppercase tracking-wide flex items-center gap-2 ${
+                                                    (!passwordData.current || !passwordData.new || !passwordData.confirm || passwordData.new !== passwordData.confirm || updatingPassword)
+                                                    ? 'opacity-50 cursor-not-allowed transform-none hover:shadow-none hover:translate-y-0'
+                                                    : ''
+                                                }`}
                                             >
-                                                Actualizar Contraseña
+                                                {updatingPassword ? (
+                                                    <>
+                                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                        Actualizando...
+                                                    </>
+                                                ) : (
+                                                    'Actualizar Contraseña'
+                                                )}
                                             </button>
                                         </div>
                                     </form>
@@ -529,16 +554,21 @@ export default function Profile() {
                                         <p className="text-sm text-neutral-600 mb-4 pl-[3.25rem]">Te enviaremos un enlace seguro a tu correo para restablecerla.</p>
                                         <button
                                             onClick={async () => {
+                                                if (sendingRecovery) return;
+                                                setSendingRecovery(true);
                                                 try {
                                                     await api.post('/forgot-password', { email: user?.email });
                                                     setMessage({ text: 'Email de recuperación enviado', type: 'success' });
                                                 } catch (e) {
                                                     setMessage({ text: 'Error al enviar email', type: 'error' });
+                                                } finally {
+                                                    setSendingRecovery(false);
                                                 }
                                             }}
-                                            className="ml-[3.25rem] text-[#223945] hover:text-[#1a2c35] text-sm font-bold underline underline-offset-4 decoration-2"
+                                            disabled={sendingRecovery}
+                                            className={`ml-[3.25rem] text-[#223945] hover:text-[#1a2c35] text-sm font-bold underline underline-offset-4 decoration-2 ${sendingRecovery ? 'opacity-50 cursor-wait' : ''}`}
                                         >
-                                            Enviar email de recuperación
+                                            {sendingRecovery ? 'Enviando...' : 'Enviar email de recuperación'}
                                         </button>
                                     </div>
                                 </div>
