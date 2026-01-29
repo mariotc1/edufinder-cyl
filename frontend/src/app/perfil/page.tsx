@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '@/lib/axios';
 import { User, MapPin, Heart, Lock, Camera, LogOut, Eye, EyeOff, ChevronLeft, Trash, AlertCircle } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 interface UserData {
@@ -553,35 +554,54 @@ export default function Profile() {
                             {favoritos.length > 0 ? (
                                         <div className="grid gap-4 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-neutral-200 hover:scrollbar-thumb-neutral-300">
                                             {favoritos.map(fav => (
-                                                <div key={fav.id} className="group flex items-center justify-between p-5 bg-white border border-neutral-100 rounded-2xl shadow-sm hover:shadow-md hover:border-blue-100 transition-all">
+                                                <div key={fav.id} className="group relative bg-white border border-neutral-100 rounded-2xl shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-[#223945] transition-all p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                                    
+                                                    {/* Content */}
                                                     <div className="flex items-center gap-4">
-                                                        <button 
-                                                            onClick={async () => {
-                                                                try {
-                                                                    await api.delete(`/favoritos/${fav.centro.id}`);
-                                                                    setFavoritos(prev => prev.filter(f => f.id !== fav.id));
-                                                                    setMessage({ text: 'Centro eliminado de favoritos', type: 'success' });
-                                                                } catch (error) {
-                                                                    setMessage({ text: 'Error al eliminar favorito', type: 'error' });
-                                                                }
-                                                            }}
-                                                            title="Eliminar de favoritos"
-                                                            className="bg-blue-50 p-3 rounded-xl text-blue-600 group-hover:bg-red-500 group-hover:text-white transition-colors cursor-pointer"
-                                                        >
-                                                            <Heart className="w-5 h-5 fill-current" />
-                                                        </button>
+                                                        <div className="bg-[#223945]/5 p-3 rounded-xl text-[#223945]">
+                                                            <Heart className="w-6 h-6 fill-[#223945]" />
+                                                        </div>
                                                         <div>
-                                                            <h4 className="font-bold text-neutral-900 group-hover:text-[#223945] transition-colors">{fav.centro.nombre}</h4>
-                                                            <p className="text-sm text-neutral-500">{fav.centro.direccion}</p>
+                                                            <h4 className="font-bold text-neutral-900 text-lg group-hover:text-[#223945] transition-colors">{fav.centro.nombre}</h4>
+                                                            <p className="text-sm text-neutral-500 font-medium">{fav.centro.direccion}</p>
                                                         </div>
                                                     </div>
-                                                    <a
-                                                        href={`/mapa?centro=${fav.centro.id}`}
-                                                        className="flex items-center gap-2 px-4 py-2 bg-[#223945] text-white rounded-lg text-sm font-bold shadow hover:shadow-lg hover:-translate-y-0.5 transition-all"
+
+                                                    {/* Actions */}
+                                                    <div className="flex flex-col gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+                                                        <Link
+                                                            href={`/centro/${fav.centro.id}`}
+                                                            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white border border-neutral-200 text-neutral-600 rounded-lg text-sm font-bold shadow-sm hover:bg-neutral-50 transition-all hover:-translate-y-0.5"
+                                                        >
+                                                            <Eye className="w-4 h-4" />
+                                                            Ver Ficha
+                                                        </Link>
+                                                        <Link
+                                                            href={`/mapa?centro=${fav.centro.id}`}
+                                                            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#223945] text-white rounded-lg text-sm font-bold shadow hover:shadow-lg hover:-translate-y-0.5 transition-all"
+                                                        >
+                                                            <MapPin className="w-4 h-4" />
+                                                            Localizar
+                                                        </Link>
+                                                    </div>
+
+                                                    {/* Remove Button (Heart) - Floating like CentroCard */}
+                                                    <button 
+                                                        onClick={async (e) => {
+                                                            e.preventDefault();
+                                                            try {
+                                                                await api.delete(`/favoritos/${fav.centro.id}`);
+                                                                setFavoritos(prev => prev.filter(f => f.id !== fav.id));
+                                                                setMessage({ text: 'Centro eliminado de favoritos', type: 'success' });
+                                                            } catch (error) {
+                                                                setMessage({ text: 'Error al eliminar favorito', type: 'error' });
+                                                            }
+                                                        }}
+                                                        className="absolute top-4 right-4 p-1.5 rounded-full bg-white/90 backdrop-blur-sm shadow-sm border border-neutral-100 hover:bg-red-50 text-red-500 hover:text-red-600 transition-colors"
+                                                        title="Eliminar de favoritos"
                                                     >
-                                                        <MapPin className="w-4 h-4" />
-                                                        Localizar
-                                                    </a>
+                                                        <Heart className="w-4 h-4 fill-current" />
+                                                    </button>
                                                 </div>
                                             ))}
                                         </div>

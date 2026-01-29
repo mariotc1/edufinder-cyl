@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { startTransition, useState } from 'react';
 import useSWR from 'swr';
 import api from '@/lib/axios';
 import dynamic from 'next/dynamic';
 import MapSidebar from '@/components/map/MapSidebar';
+import { useSearchParams } from 'next/navigation';
 
 import { FilterOptions } from '@/types';
 
@@ -89,6 +90,21 @@ export default function MapaPage() {
         });
     };
 
+    const searchParams = useSearchParams();
+    const centroIdParam = searchParams.get('centro');
+    const focusCenterId = centroIdParam ? parseInt(centroIdParam) : undefined;
+
+    // ... existing logic ...
+
+    // Derived state for map focus
+    let mapCenter: [number, number] | undefined = undefined;
+    if (focusCenterId && data?.data) {
+        const target = data.data.find((c: any) => c.id === focusCenterId);
+        if (target && target.latitud && target.longitud) {
+             mapCenter = [parseFloat(target.latitud), parseFloat(target.longitud)];
+        }
+    }
+
     return (
         <div className="h-[calc(100vh-80px)] w-full relative bg-neutral-100 overflow-hidden">
             {/* Sidebar Controls */}
@@ -110,6 +126,9 @@ export default function MapaPage() {
                 userLocation={userLocation}
                 radius={radius}
                 favoriteIds={favoriteIds}
+                center={mapCenter}
+                zoom={mapCenter ? 16 : undefined} // Zoom in if looking for specific center
+                focusCenterId={focusCenterId}
             />
         </div>
     );
