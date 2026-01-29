@@ -247,29 +247,26 @@ export default function Profile() {
                                         onChange={handlePhotoUpload}
                                     />
 
-                                    {/* Botonera Fotos */}
-                                    <div className="absolute bottom-1 right-1/2 translate-x-1/2 flex gap-2 z-20">
-                                        <button
-                                            onClick={() => fileInputRef.current?.click()}
-                                            disabled={uploading}
-                                            className="bg-white p-2 rounded-full shadow-lg border border-neutral-100 text-neutral-500 hover:text-[#223945] transition-colors disabled:opacity-50"
-                                            title="Subir foto"
-                                        >
-                                            <Camera className="w-4 h-4" />
-                                        </button>
-                                        <span className="sr-only">Formatos: JPG, PNG (Max 2MB)</span>
+                                    {/* Botonera Fotos - Premium Corner Badges */}
+                                    <button
+                                        onClick={() => fileInputRef.current?.click()}
+                                        disabled={uploading}
+                                        className="absolute bottom-0 right-0 p-2.5 bg-white text-[#223945] rounded-full shadow-[0_4px_12px_rgba(0,0,0,0.12)] border-[3px] border-white hover:bg-neutral-50 hover:scale-105 hover:shadow-lg transition-all z-20 group-hover:border-[#223945]/10"
+                                        title="Cambiar foto"
+                                    >
+                                        <Camera className="w-5 h-5" />
+                                    </button>
 
-                                        {user?.foto_perfil && (
-                                            <button
-                                                onClick={() => setShowDeleteConfirm(true)}
-                                                disabled={uploading}
-                                                className="bg-white p-2 rounded-full shadow-lg border border-neutral-100 text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
-                                                title="Eliminar foto"
-                                            >
-                                                <Trash className="w-4 h-4" />
-                                            </button>
-                                        )}
-                                    </div>
+                                    {user?.foto_perfil && (
+                                        <button
+                                            onClick={() => setShowDeleteConfirm(true)}
+                                            disabled={uploading}
+                                            className="absolute top-0 right-0 p-2 bg-white text-red-500 rounded-full shadow-md border-2 border-white hover:bg-red-50 hover:text-red-600 hover:scale-110 transition-all z-20 translate-x-1/4 -translate-y-1/4 opacity-0 group-hover:opacity-100 duration-200"
+                                            title="Eliminar foto"
+                                        >
+                                            <Trash className="w-3.5 h-3.5" />
+                                        </button>
+                                    )}
                                 </div>
                                 <h2 className="mt-5 text-xl font-bold text-[#223945]">{user?.name}</h2>
                                 <p className="text-sm text-neutral-500 font-medium">{user?.email}</p>
