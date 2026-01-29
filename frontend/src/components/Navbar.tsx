@@ -82,14 +82,14 @@ export default function Navbar() {
               <>
                 <Link 
                   href={`/login${redirectParam}`}
-                  className="flex items-center gap-2 text-neutral-600 hover:text-[#223945] font-bold text-sm uppercase tracking-wide transition-colors px-4 py-2"
+                  className="flex items-center gap-2 text-neutral-700 hover:text-blue-700 font-bold text-sm uppercase tracking-wide transition-all px-5 py-2.5 rounded-full hover:bg-neutral-50"
                 >
                   <LogIn className="w-4 h-4" />
                   Entrar
                 </Link>
                 <Link 
                   href={`/registro${redirectParam}`} 
-                  className="flex items-center gap-2 bg-[#223945] text-white px-5 py-2.5 rounded-full font-bold text-sm shadow-md hover:shadow-lg hover:bg-[#1a2c35] hover:-translate-y-0.5 transition-all duration-200"
+                  className="flex items-center gap-2 bg-gradient-to-r from-[#223945] to-blue-600 text-white px-6 py-2.5 rounded-full font-bold text-sm shadow-lg shadow-blue-900/20 hover:shadow-blue-900/30 hover:-translate-y-0.5 transition-all duration-200"
                 >
                   <UserPlus className="w-4 h-4" />
                   Registrarse
@@ -203,7 +203,7 @@ export default function Navbar() {
                 </Link>
                 <Link 
                   href={`/registro${redirectParam}`} 
-                  className="flex items-center justify-center gap-2 bg-[#223945] text-white py-3 rounded-xl font-bold shadow-lg shadow-blue-900/20 active:scale-95 transition-all"
+                  className="flex items-center justify-center gap-2 bg-gradient-to-r from-[#223945] to-blue-600 text-white py-3 rounded-xl font-bold shadow-lg shadow-blue-900/20 active:scale-95 transition-all"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <UserPlus className="w-5 h-5" />
