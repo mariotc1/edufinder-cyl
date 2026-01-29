@@ -72,15 +72,20 @@ export default function MapSidebar({ radius, setRadius, filters, setFilters, onL
                     <div className="p-4 bg-white border-b border-neutral-100 space-y-4">
                         {/* Location Toggle */}
                         {userLocation ? (
-                            <div className="flex items-center justify-between gap-3 p-3 bg-green-50 border border-green-200 rounded-xl animate-in fade-in">
-                                <div className="flex items-center gap-2 text-green-700">
-                                    <Navigation className="w-4 h-4 fill-current" />
-                                    <div className="flex flex-col">
-                                        <span className="text-xs font-bold leading-tight">Ubicación Activa</span>
-                                        <button onClick={onClearLocation} className="text-[10px] hover:underline text-left opacity-80">Desactivar</button>
+                            <div className="flex flex-col gap-2">
+                                <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-xl animate-in fade-in">
+                                    <div className="flex items-center gap-2 text-green-700 w-full">
+                                        <Navigation className="w-4 h-4 fill-current" />
+                                        <span className="text-xs font-bold leading-tight flex-grow">Ubicación Activa</span>
+                                        <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
                                     </div>
                                 </div>
-                                <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
+                                <button 
+                                    onClick={onClearLocation} 
+                                    className="text-xs font-bold text-red-500 hover:text-red-600 hover:bg-red-50 py-2 rounded-lg transition-colors border border-transparent hover:border-red-100"
+                                >
+                                    Desactivar ubicación
+                                </button>
                             </div>
                         ) : (
                             <button 
@@ -93,19 +98,40 @@ export default function MapSidebar({ radius, setRadius, filters, setFilters, onL
                         )}
 
                         {/* Radius Slider (Only if location active) */}
-                        <div className={`space-y-2 transition-all duration-300 ${!userLocation ? 'opacity-50 blur-[1px] pointer-events-none' : 'opacity-100'}`}>
+                        <div className={`space-y-3 transition-all duration-300 ${!userLocation ? 'opacity-50 blur-[1px] pointer-events-none' : 'opacity-100'}`}>
                              <div className="flex items-center justify-between">
-                                <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Radio de Búsqueda</label>
-                                <span className="text-xs font-bold text-[#223945] bg-neutral-100 px-2 py-0.5 rounded">{radius} km</span>
+                                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Radio de Búsqueda</label>
+                                <span className="text-xs font-bold text-white bg-[#223945] px-2 py-0.5 rounded shadow-sm">{radius} km</span>
                             </div>
-                            <input 
-                                type="range" 
-                                min="1" 
-                                max="100" 
-                                value={radius} 
-                                onChange={(e) => setRadius(parseInt(e.target.value))}
-                                className="w-full h-1.5 bg-neutral-200 rounded-lg appearance-none cursor-pointer accent-[#223945]"
-                            />
+                            <div className="relative h-6 flex items-center">
+                                <input 
+                                    type="range" 
+                                    min="1" 
+                                    max="100" 
+                                    value={radius} 
+                                    onChange={(e) => setRadius(parseInt(e.target.value))}
+                                    className="absolute w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#223945]/20 z-10"
+                                    style={{
+                                        background: `linear-gradient(to right, #223945 ${radius}%, #e5e5e5 ${radius}%)`
+                                    }}
+                                />
+                                <style jsx>{`
+                                    input[type=range]::-webkit-slider-thumb {
+                                        -webkit-appearance: none;
+                                        height: 18px;
+                                        width: 18px;
+                                        border-radius: 50%;
+                                        background: #ffffff;
+                                        border: 2px solid #223945;
+                                        cursor: pointer;
+                                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                                        transition: transform 0.1s;
+                                    }
+                                    input[type=range]::-webkit-slider-thumb:hover {
+                                        transform: scale(1.1);
+                                    }
+                                `}</style>
+                            </div>
                         </div>
                     </div>
 
@@ -113,7 +139,6 @@ export default function MapSidebar({ radius, setRadius, filters, setFilters, onL
                     <div className="bg-white border-b border-neutral-100">
                         <div className="p-4 space-y-4">
                             <div className="flex items-center gap-2 pb-2">
-                                <Filter className="w-4 h-4 text-[#223945]" />
                                 <span className="font-bold text-sm text-[#223945]">Filtros</span>
                             </div>
 
