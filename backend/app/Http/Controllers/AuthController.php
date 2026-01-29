@@ -202,10 +202,10 @@ class AuthController extends Controller
 
         if ($request->hasFile('photo')) {
             $path = $request->file('photo')->store('profile-photos', 'public');
-            
+
             // Generate full URL
             $url = asset('storage/' . $path);
-            
+
             $user->update(['foto_perfil' => $url]);
 
             return response()->json([
@@ -215,5 +215,25 @@ class AuthController extends Controller
         }
 
         return response()->json(['message' => 'No se ha subido ninguna foto'], 400);
+    }
+    public function deleteProfilePhoto(Request $request)
+    {
+        try {
+            $user = $request->user();
+
+            // Optional: Delete file from storage checks could be added here
+
+            $user->update(['foto_perfil' => null]);
+
+            return response()->json([
+                'message' => 'Foto de perfil eliminada correctamente',
+                'user' => $user
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error al eliminar foto: ' . $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ], 500);
+        }
     }
 }

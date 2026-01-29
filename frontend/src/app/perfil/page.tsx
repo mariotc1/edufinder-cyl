@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import api from '@/lib/axios';
-import { User, MapPin, Heart, Lock, Camera, LogOut, Eye, EyeOff, ChevronLeft } from 'lucide-react';
+import { User, MapPin, Heart, Lock, Camera, LogOut, Eye, EyeOff, ChevronLeft, Trash, AlertCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface UserData {
@@ -38,6 +38,7 @@ export default function Profile() {
     const [showNewPass, setShowNewPass] = useState(false);
     const [showConfirmPass, setShowConfirmPass] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -131,6 +132,23 @@ export default function Profile() {
         }
     };
 
+    const confirmDelete = async () => {
+        try {
+            await api.delete('/me/photo');
+            setUser(prev => prev ? { ...prev, foto_perfil: undefined } : null);
+            setMessage({ text: 'Foto eliminada correctamente', type: 'success' });
+
+            // Update local storage
+            const stored = JSON.parse(localStorage.getItem('user') || '{}');
+            localStorage.setItem('user', JSON.stringify({ ...stored, foto_perfil: null }));
+        } catch (error: any) {
+            const errorMsg = error.response?.data?.message || 'Error al eliminar la foto';
+            setMessage({ text: errorMsg, type: 'error' });
+        } finally {
+            setShowDeleteConfirm(false);
+        }
+    };
+
     const handleLocation = () => {
         if (user?.ubicacion_lat) {
             // Deactivate location
@@ -213,13 +231,29 @@ export default function Profile() {
                                         accept="image/png, image/jpeg, image/jpg"
                                         onChange={handlePhotoUpload}
                                     />
-                                    <button
-                                        onClick={() => fileInputRef.current?.click()}
-                                        disabled={uploading}
-                                        className="absolute bottom-1 right-1 z-20 bg-white p-2 rounded-full shadow-lg border border-neutral-100 text-neutral-500 hover:text-[#223945] transition-colors disabled:opacity-50"
-                                    >
-                                        <Camera className="w-4 h-4" />
-                                    </button>
+
+                                    {/* Botonera Fotos */}
+                                    <div className="absolute bottom-1 right-1/2 translate-x-1/2 flex gap-2 z-20">
+                                        <button
+                                            onClick={() => fileInputRef.current?.click()}
+                                            disabled={uploading}
+                                            className="bg-white p-2 rounded-full shadow-lg border border-neutral-100 text-neutral-500 hover:text-[#223945] transition-colors disabled:opacity-50"
+                                            title="Subir foto"
+                                        >
+                                            <Camera className="w-4 h-4" />
+                                        </button>
+
+                                        {user?.foto_perfil && (
+                                            <button
+                                                onClick={() => setShowDeleteConfirm(true)}
+                                                disabled={uploading}
+                                                className="bg-white p-2 rounded-full shadow-lg border border-neutral-100 text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
+                                                title="Eliminar foto"
+                                            >
+                                                <Trash className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                                 <h2 className="mt-5 text-xl font-bold text-[#223945]">{user?.name}</h2>
                                 <p className="text-sm text-neutral-500 font-medium">{user?.email}</p>
@@ -230,8 +264,8 @@ export default function Profile() {
                                 <button
                                     onClick={() => setActiveTab('profile')}
                                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'profile'
-                                        ? 'bg-[#223945] text-white shadow-md shadow-[#223945]/20'
-                                        : 'text-neutral-500 hover:bg-neutral-50 hover:text-[#223945]'
+                                            ? 'bg-[#223945] text-white shadow-md shadow-[#223945]/20'
+                                            : 'text-neutral-500 hover:bg-neutral-50 hover:text-[#223945]'
                                         }`}
                                 >
                                     <User className="w-4 h-4" />
@@ -240,8 +274,8 @@ export default function Profile() {
                                 <button
                                     onClick={() => setActiveTab('security')}
                                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'security'
-                                        ? 'bg-[#223945] text-white shadow-md shadow-[#223945]/20'
-                                        : 'text-neutral-500 hover:bg-neutral-50 hover:text-[#223945]'
+                                            ? 'bg-[#223945] text-white shadow-md shadow-[#223945]/20'
+                                            : 'text-neutral-500 hover:bg-neutral-50 hover:text-[#223945]'
                                         }`}
                                 >
                                     <Lock className="w-4 h-4" />
@@ -250,8 +284,8 @@ export default function Profile() {
                                 <button
                                     onClick={() => setActiveTab('favorites')}
                                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'favorites'
-                                        ? 'bg-[#223945] text-white shadow-md shadow-[#223945]/20'
-                                        : 'text-neutral-500 hover:bg-neutral-50 hover:text-[#223945]'
+                                            ? 'bg-[#223945] text-white shadow-md shadow-[#223945]/20'
+                                            : 'text-neutral-500 hover:bg-neutral-50 hover:text-[#223945]'
                                         }`}
                                 >
                                     <Heart className="w-4 h-4" />
@@ -270,8 +304,8 @@ export default function Profile() {
                         <div className="md:w-2/3 p-8 lg:p-12 bg-white/50">
                             {message && (
                                 <div className={`mb-8 p-4 rounded-xl flex items-center gap-3 text-sm font-medium animate-in fade-in slide-in-from-top-2 ${message.type === 'success'
-                                    ? 'bg-green-50 text-green-700 border border-green-100'
-                                    : 'bg-red-50 text-red-700 border border-red-100'
+                                        ? 'bg-green-50 text-green-700 border border-green-100'
+                                        : 'bg-red-50 text-red-700 border border-red-100'
                                     }`}>
                                     <div className={`w-2 h-2 rounded-full ${message.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}></div>
                                     {message.text}
@@ -309,7 +343,11 @@ export default function Profile() {
                                         <div className="pt-2">
                                             <button
                                                 type="submit"
-                                                className="bg-[#223945] text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-[#223945]/20 hover:shadow-[#223945]/40 hover:-translate-y-0.5 transition-all text-sm uppercase tracking-wide"
+                                                disabled={name === user?.name}
+                                                className={`bg-[#223945] text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-[#223945]/20 transition-all text-sm uppercase tracking-wide ${name === user?.name
+                                                        ? 'opacity-50 cursor-not-allowed'
+                                                        : 'hover:shadow-[#223945]/40 hover:-translate-y-0.5'
+                                                    }`}
                                             >
                                                 Guardar Cambios
                                             </button>
@@ -539,6 +577,36 @@ export default function Profile() {
                     </div>
                 </div>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteConfirm && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-in zoom-in-95 duration-200 border border-neutral-100">
+                        <div className="flex flex-col items-center text-center">
+                            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4 text-red-600">
+                                <AlertCircle className="w-6 h-6" />
+                            </div>
+                            <h3 className="text-lg font-bold text-neutral-900 mb-2">¿Eliminar foto de perfil?</h3>
+                            <p className="text-sm text-neutral-500 mb-6">Esta acción no se puede deshacer. Volverás a tener tus iniciales como avatar.</p>
+
+                            <div className="flex gap-3 w-full">
+                                <button
+                                    onClick={() => setShowDeleteConfirm(false)}
+                                    className="flex-1 px-4 py-2.5 rounded-xl border border-neutral-200 text-neutral-600 font-bold text-sm hover:bg-neutral-50 transition-colors"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={confirmDelete}
+                                    className="flex-1 px-4 py-2.5 rounded-xl bg-red-600 text-white font-bold text-sm hover:bg-red-700 shadow-lg shadow-red-600/20 transition-all hover:shadow-red-600/30 hover:-translate-y-0.5"
+                                >
+                                    Eliminar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
