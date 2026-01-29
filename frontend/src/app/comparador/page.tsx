@@ -81,6 +81,43 @@ export default function ComparadorPage() {
         setActiveIndex(index);
     };
 
+    // Helper functions for styling (matched to CentroCard)
+    const getNaturalezaBadge = (naturaleza: string) => {
+        switch (naturaleza?.toUpperCase()) {
+            case "PÚBLICO": return "bg-blue-50 text-blue-700 border-blue-200 ring-1 ring-blue-100";
+            case "PRIVADO": return "bg-amber-50 text-amber-700 border-amber-200 ring-1 ring-amber-100";
+            case "CONCERTADO": return "bg-emerald-50 text-emerald-700 border-emerald-200 ring-1 ring-emerald-100";
+            default: return "bg-gray-50 text-gray-700 border-gray-200";
+        }
+    };
+
+    const getLevelColor = (nivel: string) => {
+        switch (nivel?.toUpperCase()) {
+            case "GRADO SUPERIOR": return "bg-purple-600 text-white border-purple-600 shadow-sm";
+            case "GRADO MEDIO": return "bg-amber-500 text-white border-amber-500 shadow-sm";
+            case "FP BÁSICA": return "bg-blue-600 text-white border-blue-600 shadow-sm";
+            default: return "bg-neutral-600 text-white border-neutral-600";
+        }
+    };
+
+    const getLevelBackground = (nivel: string) => {
+        switch (nivel?.toUpperCase()) {
+            case "GRADO SUPERIOR": return "bg-purple-50 border-purple-100 group-hover:border-purple-200";
+            case "GRADO MEDIO": return "bg-amber-50 border-amber-100 group-hover:border-amber-200";
+            case "FP BÁSICA": return "bg-blue-50 border-blue-100 group-hover:border-blue-200";
+            default: return "bg-neutral-50 border-neutral-100";
+        }
+    };
+
+    const getLevelDotColor = (nivel: string) => {
+        switch (nivel?.toUpperCase()) {
+            case "GRADO SUPERIOR": return "bg-white/80";
+            case "GRADO MEDIO": return "bg-white/80";
+            case "FP BÁSICA": return "bg-white/80";
+            default: return "bg-neutral-400";
+        }
+    };
+
     if (selectedCentros.length === 0) {
         return (
             <div className="min-h-[70vh] flex flex-col items-center justify-center p-4">
@@ -171,13 +208,7 @@ export default function ComparadorPage() {
                                         
                                         {/* Naturaleza Badge - Matched to CentroCard */}
                                         <div className="mb-4">
-                                            <span className={`inline-block text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${
-                                                d.naturaleza.toUpperCase().includes('PÚBLICO') 
-                                                    ? 'bg-blue-50 text-blue-700 border-blue-200' 
-                                                    : d.naturaleza.toUpperCase().includes('CONCERTADO')
-                                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                                        : 'bg-amber-50 text-amber-700 border-amber-200'
-                                            }`}>
+                                            <span className={`inline-block text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${getNaturalezaBadge(d.naturaleza)}`}>
                                                 {d.naturaleza}
                                             </span>
                                         </div>
@@ -244,35 +275,32 @@ export default function ComparadorPage() {
                                                                 </h5>
                                                             </div>
 
-                                                            {/* Cycles Chips - More Vibrant Colors */}
+                                                            {/* Cycles Chips - More Vibrant Colors (CentroCard Style) */}
                                                             <div className="flex flex-col gap-2 pl-3">
-                                                                {ciclos.map(c => {
-                                                                    const nivel = c.nivel_educativo || "Otros";
-                                                                    const isSup = nivel === 'Grado Superior';
-                                                                    const isMed = nivel === 'Grado Medio';
-                                                                    const isBasic = nivel === 'FP Básica';
-                                                                    
-                                                                    return (
-                                                                        <div key={c.id} className="w-full bg-white rounded-lg border border-neutral-200 p-2 shadow-sm flex items-start gap-2 hover:border-blue-300 transition-colors group/chip">
-                                                                            <span className={`
-                                                                                text-[10px] font-bold uppercase px-1.5 py-0.5 rounded shadow-sm shrink-0 mt-0.5
-                                                                                ${isSup ? 'bg-purple-600 text-white' : isMed ? 'bg-amber-500 text-white' : 'bg-blue-600 text-white'}
-                                                                            `}>
-                                                                                {isSup ? 'GS' : isMed ? 'GM' : 'FPB'}
-                                                                            </span>
-                                                                            <div className="flex-1">
-                                                                                <p className="text-[13px] font-bold text-neutral-700 leading-snug mb-0.5 group-hover/chip:text-[#223945]">
-                                                                                    {c.ciclo_formativo}
-                                                                                </p>
-                                                                                {c.modalidad && (
-                                                                                    <span className="text-[10px] text-neutral-400 font-medium">
-                                                                                        {c.modalidad}
-                                                                                    </span>
-                                                                                )}
-                                                                            </div>
-                                                                        </div>
-                                                                    )
-                                                                })}
+                                                                {ciclos.map(c => (
+                                                                    <div 
+                                                                        key={c.id} 
+                                                                        className={`w-full flex items-center gap-2 text-xs px-2 py-1.5 rounded-lg border shadow-sm transition-colors group/chip ${getLevelBackground(c.nivel_educativo)}`}
+                                                                    >
+                                                                        <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${getLevelDotColor(c.nivel_educativo)}`}></div>
+                                                                        
+                                                                        <p className="flex-1 text-[13px] font-medium text-neutral-800 leading-snug mb-0">
+                                                                            {c.ciclo_formativo}
+                                                                            {c.modalidad && (
+                                                                                <span className="block text-[10px] text-neutral-500 font-normal mt-0.5">
+                                                                                    {c.modalidad}
+                                                                                </span>
+                                                                            )}
+                                                                        </p>
+
+                                                                        <span className={`
+                                                                            text-[9px] font-bold uppercase px-1.5 py-0.5 rounded shadow-sm shrink-0
+                                                                            ${getLevelColor(c.nivel_educativo)}
+                                                                        `}>
+                                                                            {c.nivel_educativo === 'Grado Superior' ? 'GS' : c.nivel_educativo === 'Grado Medio' ? 'GM' : 'FPB'}
+                                                                        </span>
+                                                                    </div>
+                                                                ))}
                                                             </div>
                                                         </div>
                                                     ))}
