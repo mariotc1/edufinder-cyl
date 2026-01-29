@@ -236,11 +236,14 @@ button {
   border-radius: 0.75rem !important; /* rounded-xl */
   overflow: hidden !important;
   border: 1px solid #e5e7eb;
+  width: 500px !important;
+  max-width: 90vw !important;
 }
 .premium-popup-container .leaflet-popup-content {
   margin: 0 !important;
   width: 100% !important;
   padding: 0 !important;
+  min-width: 100% !important; /* Ensure content stretches */
 }
 .premium-popup-container a.leaflet-popup-close-button {
   display: none !important;
