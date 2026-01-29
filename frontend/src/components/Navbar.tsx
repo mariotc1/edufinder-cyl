@@ -46,12 +46,12 @@ export default function Navbar() {
           <Logo showSubtitle />
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-4">
             <Link 
               href="/mapa" 
-              className="group flex items-center gap-2 text-neutral-600 hover:text-[#223945] font-bold text-sm uppercase tracking-wide transition-colors"
+              className="group flex items-center gap-2 px-4 py-2 rounded-full text-[#223945] font-bold text-sm uppercase tracking-wide border border-transparent hover:border-neutral-200 hover:bg-white hover:shadow-sm transition-all duration-300"
             >
-              <MapPin className="w-4 h-4 group-hover:text-blue-600 transition-colors" />
+              <MapPin className="w-4 h-4 text-neutral-400 group-hover:text-blue-600 transition-colors" />
               Mapa
             </Link>
             
@@ -59,7 +59,7 @@ export default function Navbar() {
               <>
                 <Link 
                   href="/favoritos" 
-                  className="group flex items-center gap-2 text-neutral-600 hover:text-[#223945] font-bold text-sm uppercase tracking-wide transition-colors"
+                  className="group flex items-center gap-2 px-4 py-2 rounded-full text-[#223945] font-bold text-sm uppercase tracking-wide border border-transparent hover:border-neutral-200 hover:bg-white hover:shadow-sm transition-all duration-300"
                 >
                   {/* Puliing Heart Icon */}
                   <motion.div
@@ -67,7 +67,7 @@ export default function Navbar() {
                     transition={{ duration: 0.3 }}
                     className="relative"
                   >
-                     <Heart id="nav-favorites-icon-desktop" className="w-4 h-4 group-hover:text-red-500 transition-colors" />
+                     <Heart id="nav-favorites-icon-desktop" className="w-4 h-4 text-neutral-400 group-hover:text-red-500 transition-colors" />
                      {favoritesPulse && (
                          <span className="absolute inset-0 bg-red-400 rounded-full animate-ping opacity-75"></span>
                      )}
