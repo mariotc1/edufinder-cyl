@@ -194,7 +194,7 @@ export default function Profile() {
     if (loading) return <div className="p-8 text-center">Cargando...</div>;
 
     return (
-        <div className="min-h-screen bg-brand-gradient pt-28 pb-12 px-4 sm:px-6">
+        <div className="min-h-screen bg-brand-gradient pt-20 pb-12 px-4 sm:px-6">
             <div className="max-w-5xl mx-auto">
                 {/* Back Link */}
                 <button
@@ -218,12 +218,24 @@ export default function Profile() {
                                 <div className="relative inline-block group">
                                     <div className="absolute inset-0 bg-[#223945] rounded-full blur opacity-20 group-hover:opacity-30 transition-opacity"></div>
                                     {user?.foto_perfil ? (
-                                        <img src={user.foto_perfil} className="w-28 h-28 rounded-full object-cover border-4 border-white shadow-xl relative z-10" />
+                                        <img 
+                                            src={user.foto_perfil.startsWith('http') ? user.foto_perfil : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}`.replace('/api', '') + `/storage/${user.foto_perfil.replace('storage/', '')}`} 
+                                            onError={(e) => {
+                                                e.currentTarget.onerror = null; 
+                                                e.currentTarget.style.display = 'none';
+                                                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                            }}
+                                            className="w-28 h-28 rounded-full object-cover border-4 border-white shadow-xl relative z-10 bg-white" 
+                                        />
                                     ) : (
                                         <div className="w-28 h-28 rounded-full bg-[#223945] text-white flex items-center justify-center text-4xl font-bold shadow-xl relative z-10 border-4 border-white">
                                             {user?.name?.charAt(0)}
                                         </div>
                                     )}
+                                    {/* Fallback for onError (hidden by default) */}
+                                    <div className="hidden w-28 h-28 rounded-full bg-[#223945] text-white flex items-center justify-center text-4xl font-bold shadow-xl relative z-10 border-4 border-white absolute top-0 left-0">
+                                        {user?.name?.charAt(0)}
+                                    </div>
                                     <input
                                         type="file"
                                         ref={fileInputRef}
@@ -538,14 +550,26 @@ export default function Profile() {
                                         <p className="text-neutral-500 text-sm mt-1">Centros que has guardado para consultar más tarde.</p>
                                     </div>
 
-                                    {favoritos.length > 0 ? (
-                                        <div className="grid gap-4">
+                            {favoritos.length > 0 ? (
+                                        <div className="grid gap-4 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-neutral-200 hover:scrollbar-thumb-neutral-300">
                                             {favoritos.map(fav => (
                                                 <div key={fav.id} className="group flex items-center justify-between p-5 bg-white border border-neutral-100 rounded-2xl shadow-sm hover:shadow-md hover:border-blue-100 transition-all">
                                                     <div className="flex items-center gap-4">
-                                                        <div className="bg-blue-50 p-3 rounded-xl text-blue-600 group-hover:bg-[#223945] group-hover:text-white transition-colors">
+                                                        <button 
+                                                            onClick={async () => {
+                                                                try {
+                                                                    await api.delete(`/favoritos/${fav.centro.id}`);
+                                                                    setFavoritos(prev => prev.filter(f => f.id !== fav.id));
+                                                                    setMessage({ text: 'Centro eliminado de favoritos', type: 'success' });
+                                                                } catch (error) {
+                                                                    setMessage({ text: 'Error al eliminar favorito', type: 'error' });
+                                                                }
+                                                            }}
+                                                            title="Eliminar de favoritos"
+                                                            className="bg-blue-50 p-3 rounded-xl text-blue-600 group-hover:bg-red-500 group-hover:text-white transition-colors cursor-pointer"
+                                                        >
                                                             <Heart className="w-5 h-5 fill-current" />
-                                                        </div>
+                                                        </button>
                                                         <div>
                                                             <h4 className="font-bold text-neutral-900 group-hover:text-[#223945] transition-colors">{fav.centro.nombre}</h4>
                                                             <p className="text-sm text-neutral-500">{fav.centro.direccion}</p>
