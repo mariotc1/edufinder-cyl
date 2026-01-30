@@ -266,16 +266,16 @@ export default function ComparadorPage() {
                                             <div className="space-y-2.5">
                                                 {d.web && (
                                                     <a href={d.web.startsWith('http') ? d.web : `http://${d.web}`} target="_blank" className="flex items-center gap-3 text-sm text-[#223945] hover:text-blue-600 transition-colors group">
-                                                        <div className="p-1.5 bg-white rounded-lg border border-neutral-100 shadow-sm group-hover:border-blue-200 group-hover:shadow-md transition-all">
-                                                            <Globe className="w-3.5 h-3.5" />
+                                                        <div className="p-1.5 bg-[#223945] rounded-lg shadow-sm group-hover:shadow-md transition-all shrink-0">
+                                                            <Globe className="w-3.5 h-3.5 text-white" />
                                                         </div>
                                                         <span className="font-semibold underline decoration-neutral-200 underline-offset-4 group-hover:decoration-blue-400 truncate">Visitar Web</span>
                                                     </a>
                                                 )}
                                                 {d.telefono && (
                                                     <div className="flex items-center gap-3 text-sm text-neutral-600">
-                                                        <div className="p-1.5 bg-white rounded-lg border border-neutral-100 shadow-sm">
-                                                            <Phone className="w-3.5 h-3.5" />
+                                                        <div className="p-1.5 bg-[#223945] rounded-lg shadow-sm shrink-0">
+                                                            <Phone className="w-3.5 h-3.5 text-white" />
                                                         </div>
                                                         <span className="font-mono text-xs font-medium">{d.telefono}</span>
                                                     </div>
