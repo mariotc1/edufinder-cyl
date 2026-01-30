@@ -242,15 +242,15 @@ export default function ComparadorPage() {
                                             </span>
                                         </div>
                                         
-                                        {/* Name - Strict 2 lines truncation & Fixed Height */}
+                                        {/* Name - Strict 2 lines truncation & Fixed Height - Reduced size */}
                                         <h3 
-                                            className="text-lg font-bold text-[#111827] leading-tight min-h-[3.5rem] line-clamp-2 w-full pr-6 mb-1"
+                                            className="text-[15px] font-bold text-[#111827] leading-tight min-h-[3rem] line-clamp-2 w-full pr-6 mb-1"
                                             title={d.nombre}
                                         >
                                             {d.nombre}
                                         </h3>
                                         
-                                        <div className="flex items-center gap-2 mt-auto text-sm text-neutral-500 font-medium w-full">
+                                        <div className="flex items-center gap-2 mt-auto text-xs text-neutral-500 font-medium w-full">
                                             <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
                                             <span className="truncate">{d.localidad}</span>
                                         </div>
@@ -260,7 +260,9 @@ export default function ComparadorPage() {
                                     <div className="flex-grow bg-neutral-50/20">
                                         {/* CONTACT SECTION */}
                                         <div className="p-5 border-b border-neutral-100/50">
-                                            <h4 className="text-[10px] font-bold text-[#223945]/60 uppercase tracking-widest mb-3">Contacto</h4>
+                                            <h4 className="text-xs font-bold text-[#223945] uppercase tracking-wider mb-3 flex items-center gap-2">
+                                                Contacto
+                                            </h4>
                                             <div className="space-y-2.5">
                                                 {d.web && (
                                                     <a href={d.web.startsWith('http') ? d.web : `http://${d.web}`} target="_blank" className="flex items-center gap-3 text-sm text-[#223945] hover:text-blue-600 transition-colors group">
@@ -275,7 +277,7 @@ export default function ComparadorPage() {
                                                         <div className="p-1.5 bg-white rounded-lg border border-neutral-100 shadow-sm">
                                                             <Phone className="w-3.5 h-3.5" />
                                                         </div>
-                                                        <span className="font-mono text-xs">{d.telefono}</span>
+                                                        <span className="font-mono text-xs font-medium">{d.telefono}</span>
                                                     </div>
                                                 )}
                                             </div>
@@ -283,8 +285,8 @@ export default function ComparadorPage() {
 
                                         {/* ACADEMIC OFFER - COMPACT LIST */}
                                         <div className="p-5">
-                                             <h4 className="text-[10px] font-bold text-[#223945]/60 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                                <GraduationCap className="w-3.5 h-3.5" />
+                                             <h4 className="text-xs font-bold text-[#223945] uppercase tracking-wider mb-4 flex items-center gap-2">
+                                                <GraduationCap className="w-4 h-4" />
                                                 Oferta Educativa
                                             </h4>
 
@@ -299,16 +301,16 @@ export default function ComparadorPage() {
                                                         }, {} as Record<string, Ciclo[]>)
                                                     ).sort().map(([familia, ciclos]) => (
                                                         <div key={familia}>
-                                                            {/* Family Header */}
+                                                            {/* Family Header - Larger & Bolder */}
                                                             <div className="flex items-center gap-2 mb-2 text-[#223945]">
-                                                                <div className="w-0.5 h-3 bg-[#223945] rounded-full shrink-0 opacity-40"></div>
-                                                                <h5 className="text-[10px] font-extrabold uppercase tracking-tight leading-tight text-neutral-700">
+                                                                <div className="w-1 h-3.5 bg-[#223945] rounded-full shrink-0"></div>
+                                                                <h5 className="text-[11px] sm:text-xs font-extrabold uppercase tracking-tight leading-tight text-[#111827]">
                                                                     {familia}
                                                                 </h5>
                                                             </div>
 
                                                             {/* Cycles Chips - More Vibrant Colors (CentroCard Style) */}
-                                                            <div className="flex flex-col gap-1.5 pl-2.5">
+                                                            <div className="flex flex-col gap-1.5 pl-3">
                                                                 {ciclos.map(c => (
                                                                     <div 
                                                                         key={c.id} 
