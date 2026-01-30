@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useAuth } from './AuthContext';
 
 // Define minimal Centro type for comparison to avoid circular deps
 // We can expand this Interface as needed based on the API response
@@ -28,8 +29,9 @@ const ComparisonContext = createContext<ComparisonContextType | undefined>(undef
 export function ComparisonProvider({ children }: { children: ReactNode }) {
     const [selectedCentros, setSelectedCentros] = useState<Centro[]>([]);
     const [isOpen, setIsOpen] = useState(false);
+    const { user } = useAuth(); // Get auth state
 
-    // Load from localStorage on mount
+    // Load from localStorage on mount (only if user might be logged in, currently we just load it)
     useEffect(() => {
         const saved = localStorage.getItem('edufinder_compare');
         if (saved) {
@@ -45,6 +47,15 @@ export function ComparisonProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         localStorage.setItem('edufinder_compare', JSON.stringify(selectedCentros));
     }, [selectedCentros]);
+
+    // Clear comparison when user logs out
+    useEffect(() => {
+        if (!user) {
+            setSelectedCentros([]);
+            setIsOpen(false);
+            localStorage.removeItem('edufinder_compare');
+        }
+    }, [user]);
 
     const addToCompare = (centro: Centro) => {
         // Limit to 3
