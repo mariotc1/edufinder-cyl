@@ -220,11 +220,14 @@ export default function ComparadorPage() {
                                         flex-shrink-0 w-full md:w-auto 
                                         bg-white/80 backdrop-blur-md rounded-2xl border border-white/50
                                         shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]
-                                        snap-center flex flex-col overflow-hidden
+                                        snap-center flex flex-col overflow-hidden relative
                                         hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] hover:border-blue-100/50 hover:-translate-y-1
                                         transition-all duration-300
                                     "
                                 >
+                                    {/* Decorative Top Gradient - Matches CentroCard */}
+                                    <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-primary-500 to-primary-300 z-10"></div>
+
                                     {/* CARD HEADER - Fixed Height for Alignment */}
                                     <div className="p-6 pb-4 border-b border-neutral-100/50 relative flex flex-col items-start bg-gradient-to-b from-white to-neutral-50/30">
                                         <button 
