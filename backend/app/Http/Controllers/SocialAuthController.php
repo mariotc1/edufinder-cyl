@@ -8,6 +8,7 @@ use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Laravel\Socialite\Two\AbstractProvider;
 
 class SocialAuthController extends Controller
 {
@@ -16,7 +17,13 @@ class SocialAuthController extends Controller
      */
     public function redirectToProvider($provider)
     {
-        return Socialite::driver($provider)->stateless()->redirect();
+        $driver = Socialite::driver($provider);
+
+        if ($driver instanceof AbstractProvider) {
+            $driver->stateless();
+        }
+
+        return $driver->redirect();
     }
 
     /**
@@ -26,7 +33,13 @@ class SocialAuthController extends Controller
     {
         try {
             // Stateless is crucial for API-driven logic (no session)
-            $socialUser = Socialite::driver($provider)->stateless()->user();
+            $driver = Socialite::driver($provider);
+
+            if ($driver instanceof AbstractProvider) {
+                $driver->stateless();
+            }
+
+            $socialUser = $driver->user();
         } catch (\Exception $e) {
             Log::error("Social Login Error ($provider): " . $e->getMessage());
             return redirect(env('FRONTEND_URL') . '/login?error=social_login_failed');
