@@ -277,7 +277,7 @@ export default function CentroDetail() {
                                                 centros={[c]} 
                                                 center={[parseFloat(c.latitud), parseFloat(c.longitud)]} 
                                                 zoom={15} 
-                                                favoriteIds={(favoritesData && (Array.isArray(favoritesData) ? favoritesData : favoritesData.data || [])).map((f: any) => f.centro_id || f.centro?.id)}
+                                                favoriteIds={(favoritesData ? (Array.isArray(favoritesData) ? favoritesData : favoritesData.data || []) : []).map((f: any) => f.centro_id || f.centro?.id)}
                                             />
                                         </div>
                                         {/* Overlay gradient for map bottom */}

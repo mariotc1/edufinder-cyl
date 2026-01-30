@@ -2,6 +2,7 @@
 
 import { Scale } from 'lucide-react';
 import { useComparison, Centro } from '@/context/ComparisonContext';
+import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
@@ -13,6 +14,7 @@ interface AddToCompareButtonProps {
 
 export default function AddToCompareButton({ centro, className, showLabel = false }: AddToCompareButtonProps) {
     const { selectedCentros, addToCompare, removeFromCompare } = useComparison();
+    const { user, openLoginModal } = useAuth();
     
     // Check if this specific centro is already selected
     const isSelected = selectedCentros.some(c => c.id === centro.id);
@@ -21,6 +23,11 @@ export default function AddToCompareButton({ centro, className, showLabel = fals
         e.preventDefault(); // Prevent navigating if inside a Link
         e.stopPropagation();
         
+        if (!user) {
+            openLoginModal();
+            return;
+        }
+
         if (isSelected) {
             removeFromCompare(centro.id);
         } else {

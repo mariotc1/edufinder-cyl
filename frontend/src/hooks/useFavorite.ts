@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { mutate } from 'swr';
 import { useAuth } from '@/context/AuthContext';
 import { useFavoritesAnimation } from '@/context/FavoritesAnimationContext';
 import { addFavorite, removeFavorite } from '@/services/api';
@@ -52,6 +53,7 @@ export function useFavorite({ centro, initialIsFavorite = false, onToggle }: Use
             } else {
                 await removeFavorite(centro.id);
             }
+            mutate('/favoritos'); // Revalidate global favorites cache
         } catch (error) {
             // Revert
             setIsFavorite(!newStatus);

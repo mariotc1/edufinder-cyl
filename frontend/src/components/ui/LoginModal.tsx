@@ -100,7 +100,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                             className="text-base !text-white font-medium leading-relaxed max-w-[280px] mx-auto"
                             style={{ color: '#ffffff' }}
                         >
-                            Necesitas una cuenta para guardar tus centros favoritos y acceder a ellos siempre.
+                            Necesitas una cuenta para guardar favoritos, comparar centros y acceder a tus preferencias siempre.
                         </p>
                     </div>
                 </div>
