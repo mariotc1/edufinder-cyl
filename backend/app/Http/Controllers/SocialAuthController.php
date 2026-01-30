@@ -37,10 +37,17 @@ class SocialAuthController extends Controller
         // 2. If not, check by email (link account)
         // 3. If not, create new user
 
+        $email = $socialUser->getEmail();
+
+        // Handle missing email (common in GitHub if private)
+        if (empty($email)) {
+            $email = "{$provider}_{$socialUser->getId()}@no-email.edufinder.com";
+        }
+
         $user = User::where($provider . '_id', $socialUser->getId())->first();
 
         if (!$user) {
-            $user = User::where('email', $socialUser->getEmail())->first();
+            $user = User::where('email', $email)->first();
 
             if ($user) {
                 // Link existing account
@@ -53,7 +60,7 @@ class SocialAuthController extends Controller
                 // Create new user
                 $user = User::create([
                     'name' => $socialUser->getName() ?? $socialUser->getNickname(), // GitHub sometimes uses nickname
-                    'email' => $socialUser->getEmail(),
+                    'email' => $email,
                     'password' => Hash::make(uniqid()), // Random password
                     $provider . '_id' => $socialUser->getId(),
                     // 'foto_perfil' => $socialUser->getAvatar(), // Disabled by user request (avoid broken/ugly images)

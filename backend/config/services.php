@@ -41,6 +41,12 @@ return [
         'redirect' => env('GOOGLE_REDIRECT'),
     ],
 
+    'github' => [
+        'client_id' => env('GITHUB_CLIENT_ID'),
+        'client_secret' => env('GITHUB_CLIENT_SECRET'),
+        'redirect' => env('GITHUB_REDIRECT'),
+    ],
+
     'frontend_url' => env('FRONTEND_URL', 'http://localhost:3000'),
 
 ];
