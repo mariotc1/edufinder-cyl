@@ -77,21 +77,20 @@ export default function ComparisonTray() {
                         <Trash2 className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
                     </button>
 
-                    {/* COMPARE BUTTON - Enhanced Gradient */}
+                    {/* COMPARE BUTTON - High Contrast White (Premium) */}
                     <Link
                         href="/comparador"
                         className="
                             relative overflow-hidden group
                             flex items-center gap-2 
-                            bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500
-                            text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-full 
+                            bg-white text-[#223945]
+                            hover:bg-blue-50
+                            px-4 sm:px-6 py-2 sm:py-2.5 rounded-full 
                             text-xs sm:text-sm font-bold 
-                            shadow-[0_0_20px_-5px_rgba(59,130,246,0.5)] transition-all hover:scale-105 active:scale-95
+                            shadow-[0_4px_15px_-3px_rgba(255,255,255,0.3)] hover:shadow-[0_6px_20px_-3px_rgba(255,255,255,0.4)]
+                            transition-all hover:scale-105 active:scale-95
                         "
                     >
-                        {/* Shine Effect */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-shimmer" />
-                        
                         <span>Comparar</span>
                         <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:translate-x-0.5 transition-transform" />
                     </Link>

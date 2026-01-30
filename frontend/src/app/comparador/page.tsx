@@ -228,17 +228,17 @@ export default function ComparadorPage() {
                                     {/* Decorative Top Gradient - Matches CentroCard */}
                                     <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-primary-500 to-primary-300 z-10"></div>
 
-                                    {/* CARD HEADER - Fixed Height for Alignment */}
-                                    <div className="p-6 pb-4 border-b border-neutral-100/50 relative flex flex-col items-start bg-gradient-to-b from-white to-neutral-50/30">
+                                    {/* CARD HEADER - Fixed Height for Alignment - Added Color Tint */}
+                                    <div className="p-6 pb-4 border-b border-blue-100/30 relative flex flex-col items-start bg-gradient-to-b from-blue-50/40 via-white/60 to-white">
                                         <button 
                                             onClick={() => removeFromCompare(d.id)}
-                                            className="absolute top-3 right-3 p-2 text-neutral-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
-                                            title="Eliminar"
+                                            className="absolute top-4 right-4 text-neutral-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition-all"
+                                            title="Quitar"
                                         >
-                                            <X className="w-5 h-5" />
+                                            <X className="w-4 h-4" />
                                         </button>
-                                        
-                                        {/* Naturaleza Badge - Matched to CentroCard */}
+
+                                        {/* Nature Badge - Refined */}                                   {/* Naturaleza Badge - Matched to CentroCard */}
                                         <div className="mb-3">
                                             <span className={`inline-block text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${getNaturalezaBadge(d.naturaleza)}`}>
                                                 {d.naturaleza}
@@ -263,7 +263,7 @@ export default function ComparadorPage() {
                                     <div className="flex-grow bg-neutral-50/20">
                                         {/* CONTACT SECTION */}
                                         <div className="p-5 border-b border-neutral-100/50">
-                                            <h4 className="text-xs font-bold text-[#223945] uppercase tracking-wider mb-3 flex items-center gap-2">
+                                            <h4 className="text-xs font-bold text-blue-900/80 uppercase tracking-wider mb-3 flex items-center gap-2">
                                                 Contacto
                                             </h4>
                                             <div className="space-y-2.5">
@@ -288,8 +288,8 @@ export default function ComparadorPage() {
 
                                         {/* ACADEMIC OFFER - COMPACT LIST */}
                                         <div className="p-5">
-                                             <h4 className="text-xs font-bold text-[#223945] uppercase tracking-wider mb-4 flex items-center gap-2">
-                                                <GraduationCap className="w-4 h-4" />
+                                             <h4 className="text-xs font-bold text-blue-900/80 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                                <GraduationCap className="w-4 h-4 text-blue-600" />
                                                 Oferta Educativa
                                             </h4>
 
@@ -306,7 +306,7 @@ export default function ComparadorPage() {
                                                         <div key={familia}>
                                                             {/* Family Header - Larger & Bolder */}
                                                             <div className="flex items-center gap-2 mb-2 text-[#223945]">
-                                                                <div className="w-1 h-3.5 bg-[#223945] rounded-full shrink-0"></div>
+                                                                <div className="w-1 h-3.5 bg-gradient-to-b from-blue-600 to-indigo-600 rounded-full shrink-0"></div>
                                                                 <h5 className="text-[11px] sm:text-xs font-extrabold uppercase tracking-tight leading-tight text-[#111827]">
                                                                     {familia}
                                                                 </h5>
