@@ -78,7 +78,7 @@ export default function Register() {
                     <div className="text-center mb-8">
                         {/* Icon Circle */}
                         <div className="mb-6 relative inline-block">
-                            <div className="absolute inset-0 bg-emerald-400 rounded-full blur-xl opacity-20 animate-pulse"></div>
+                            <div className="absolute inset-0 bg-blue-500 rounded-full blur-xl opacity-20 animate-pulse"></div>
                             <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-white border border-neutral-100 shadow-md">
                                 <UserPlus className="w-8 h-8 text-[#223945]" />
                             </div>
@@ -129,8 +129,8 @@ export default function Register() {
                                     required
                                     placeholder="tu@email.com"
                                     className={`w-full px-4 py-3 rounded-xl bg-neutral-50 border-2 focus:bg-white focus:ring-4 outline-none transition-all font-medium text-neutral-700 placeholder:text-neutral-400 ${touched.email && !isEmailValid
-                                            ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10'
-                                            : 'border-transparent focus:border-[#223945] focus:ring-[#223945]/10'
+                                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10'
+                                        : 'border-transparent focus:border-[#223945] focus:ring-[#223945]/10'
                                         }`}
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
@@ -144,7 +144,7 @@ export default function Register() {
                                 )}
                             </div>
                             {touched.email && !isEmailValid && email.length > 0 && (
-                                <p className="text-xs text-red-500 ml-1 font-medium">Por favor, introduce un correo válido</p>
+                                <p className="text-xs text-red-600 ml-1 font-bold">Por favor, introduce un correo válido</p>
                             )}
                         </div>
 
@@ -160,8 +160,8 @@ export default function Register() {
                                     required
                                     placeholder="••••••••"
                                     className={`w-full px-4 py-3 rounded-xl bg-neutral-50 border-2 focus:bg-white focus:ring-4 outline-none transition-all font-medium text-neutral-700 placeholder:text-neutral-400 pr-10 ${touched.password && !isPasswordValid
-                                            ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10'
-                                            : 'border-transparent focus:border-[#223945] focus:ring-[#223945]/10'
+                                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10'
+                                        : 'border-transparent focus:border-[#223945] focus:ring-[#223945]/10'
                                         }`}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
