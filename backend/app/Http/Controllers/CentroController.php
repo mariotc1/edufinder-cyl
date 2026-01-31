@@ -77,7 +77,58 @@ class CentroController extends Controller
         }
 
         if ($request->has('map')) {
-            return CentroResource::collection($query->limit(2000)->get());
+            // Optimización: Cachear respuesta si no hay otros filtros (solo map)
+            // Esto reduce masivamente la carga en la Home/Mapa inicial
+            $cacheKey = 'centros_map_' . md5(json_encode($request->except('map')));
+            $shouldCache = count($request->all()) === 1; // Solo cachear si es petición limpia
+
+            $callback = function () use ($query, $request) {
+                // Si hay filtro de radio, necesitamos la fórmula del Haversine (distance)
+                // y no podemos simplemente sobrescribir el select con un array.
+                if ($request->has(['lat', 'lon', 'radius'])) {
+                    $lat = $request->lat;
+                    $lon = $request->lon;
+                    // Re-aplicamos el selectRaw pero restringiendo columnas Base
+                    // Nota: query ya tiene having y orderBy, pero el selectRaw original seleccionaba "*"
+                    // Laravel permite addSelect o sobrescribir.
+                    // Al hacer ->selectRaw(...) de nuevo, reemplazamos el anterior.
+                    $query->selectRaw("id, nombre, latitud, longitud, naturaleza, provincia, municipio, denominacion_generica, ( 6371 * acos( cos( radians(?) ) * cos( radians( latitud ) ) * cos( radians( longitud ) - radians(?) ) + sin( radians(?) ) * sin( radians( latitud ) ) ) ) AS distance", [$lat, $lon, $lat]);
+                } else {
+                    // Seleccionar SOLO lo necesario para el mapa. Evita traer 'direccion', 'telefono', etc.
+                    $query->select([
+                        'id',
+                        'nombre',
+                        'latitud',
+                        'longitud',
+                        'naturaleza',
+                        'provincia',
+                        'municipio',
+                        'denominacion_generica'
+                    ]);
+                }
+
+                $centros = $query->limit(2000)->get();
+
+                return $centros->map(function ($centro) {
+                    return [
+                        'id' => $centro->id,
+                        'nombre' => $centro->nombre,
+                        'latitud' => $centro->latitud,
+                        'longitud' => $centro->longitud,
+                        'naturaleza' => $centro->naturaleza,
+                        'provincia' => $centro->provincia,
+                        'municipio' => $centro->municipio,
+                        'denominacion_generica' => $centro->denominacion_generica,
+                        'distance' => isset($centro->distance) ? round($centro->distance, 2) : null,
+                    ];
+                });
+            };
+
+            $data = $shouldCache
+                ? \Illuminate\Support\Facades\Cache::remember($cacheKey, 60 * 60, $callback) // 1 hora
+                : $callback();
+
+            return response()->json(['data' => $data]);
         }
 
         return CentroResource::collection($query->paginate(20));

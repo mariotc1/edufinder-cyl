@@ -95,6 +95,19 @@ class SearchService
                 // Cargar relación para mostrar datos en frontend
                 $query->with([
                     'ciclos' => function ($q) use ($filters) {
+                        // Optimización: Solo seleccionar columnas necesarias
+                        $q->select([
+                            'id',
+                            'centro_id',
+                            'familia_profesional',
+                            'codigo_familia',
+                            'nivel_educativo',
+                            'clave_ciclo',
+                            'ciclo_formativo',
+                            'modalidad',
+                            'tipo_ensenanza'
+                        ]);
+
                         // Aplicar los mismos filtros al eager loading
                         if (!empty($filters['familia'])) {
                             $q->where('familia_profesional', 'ILIKE', '%' . $filters['familia'] . '%')
