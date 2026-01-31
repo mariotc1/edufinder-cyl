@@ -12,6 +12,18 @@ import { MapPin, Building2, Star } from 'lucide-react';
 import MapPopup from '@/components/map/MapPopup';
 import { Centro } from '@/types';
 
+// Cache para iconos memoizados
+const iconCache: Record<string, L.DivIcon> = {};
+
+// Helper para obtener icono memoizado
+const getCachedIcon = (type: string) => {
+    if (!iconCache[type]) {
+        iconCache[type] = createCustomIcon(type);
+    }
+    return iconCache[type];
+};
+
+
 
 
 // Function to generate Custom Icons (Google Maps Pointed Style)
@@ -184,7 +196,7 @@ export default function Map({ centros, userLocation, radius, center, zoom, favor
                      <Marker 
                          key={centro.id} 
                          position={[lat, lon]}
-                         icon={createCustomIcon(centro.naturaleza || 'default')}
+                         icon={getCachedIcon(centro.naturaleza || 'default')}
                          ref={(ref) => {
                              if (ref && focusCenterId === centro.id) {
                                  setTimeout(() => ref.openPopup(), 500); // Small delay to ensure map animation finishes
