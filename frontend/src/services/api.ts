@@ -8,6 +8,7 @@ export const searchCentros = async (filters: FilterOptions) => {
   if (filters.provincia) params.append('provincia', filters.provincia);
   if (filters.tipo) params.append('tipo', filters.tipo);
   if (filters.familia) params.append('familia', filters.familia);
+  if (filters.ciclo) params.append('ciclo', filters.ciclo);
   if (filters.nivel) params.append('nivel', filters.nivel);
   if (filters.modalidad) params.append('modalidad', filters.modalidad);
   
