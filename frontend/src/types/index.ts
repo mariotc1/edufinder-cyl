@@ -35,6 +35,7 @@ export interface FilterOptions {
   provincia?: string;
   tipo?: string; // FP, ESO, BACHILLERATO, PRIMARIA
   familia?: string;
+  ciclo?: string;
   nivel?: string;
   modalidad?: string;
   lat?: number;

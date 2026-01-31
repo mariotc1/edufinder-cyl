@@ -21,6 +21,7 @@ export default function FilterBar({ onFilterChange, isLoading }: FilterBarProps)
     provincia: searchParams.get('provincia') || '',
     tipo: searchParams.get('tipo') || '',
     familia: searchParams.get('familia') || '',
+    ciclo: searchParams.get('ciclo') || '',
     nivel: searchParams.get('nivel') || '',
     modalidad: searchParams.get('modalidad') || '',
     radio: Number(searchParams.get('radio')) || 10,
@@ -45,6 +46,7 @@ export default function FilterBar({ onFilterChange, isLoading }: FilterBarProps)
       if (filters.provincia) params.set('provincia', filters.provincia);
       if (filters.tipo) params.set('tipo', filters.tipo);
       if (filters.familia) params.set('familia', filters.familia);
+      if (filters.ciclo) params.set('ciclo', filters.ciclo);
       if (filters.nivel) params.set('nivel', filters.nivel);
       if (filters.modalidad) params.set('modalidad', filters.modalidad);
       
@@ -67,6 +69,7 @@ export default function FilterBar({ onFilterChange, isLoading }: FilterBarProps)
          ...prev, 
          [key]: value,
          familia: '',
+         ciclo: '',
          nivel: '',
          modalidad: ''
        }));
@@ -271,7 +274,22 @@ export default function FilterBar({ onFilterChange, isLoading }: FilterBarProps)
 
         {/* FP Conditional Filters - Dedicated Row */}
           {filters.tipo === 'FP' && (
-             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t border-neutral-100 animate-in slide-in-from-top-2 fade-in duration-300">
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-neutral-100 animate-in slide-in-from-top-2 fade-in duration-300">
+               {/* Ciclo Name Search - NEW */}
+               <div className="space-y-1">
+                <label className={labelClasses}>Nombre del Ciclo</label>
+                 <div className="relative group">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 group-focus-within:text-[#223945] transition-colors" />
+                    <input 
+                      type="text"
+                      placeholder="Ej: Desarrollo Web" 
+                      className={`w-full bg-neutral-50 border border-neutral-200 text-neutral-700 py-3 pl-10 pr-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#223945]/20 focus:border-[#223945] transition-all font-medium text-sm hover:border-[#223945]/50 placeholder:text-neutral-400`}
+                      value={filters.ciclo || ''}
+                      onChange={(e) => handleChange('ciclo', e.target.value)}
+                    />
+                </div>
+              </div>
+
                <div className="space-y-1">
                 <label className={labelClasses}>Familia</label>
                  <div className="relative">
