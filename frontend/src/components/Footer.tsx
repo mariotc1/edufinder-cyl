@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Github, Linkedin, Database, Code2, Cpu, Heart } from 'lucide-react';
 
 export default function Footer() {
@@ -10,7 +11,7 @@ export default function Footer() {
       <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-blue-500/50 to-transparent"></div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+        <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-8">
 
           {/* Section 1: Text Logo & Repo (Compact) */}
           <div className="flex flex-col gap-3 lg:w-1/3">
@@ -46,7 +47,7 @@ export default function Footer() {
           {/* Section 2: Team (Horizontal Row) */}
           <div className="lg:w-1/3 flex flex-col items-start lg:items-center gap-2">
             {/* Header WHITE, no icon */}
-            <h3 className="text-[10px] font-bold uppercase tracking-widest text-white mb-1">
+            <h3 className="text-xl font-bold tracking-tight !text-white mb-2 hover:text-blue-200 transition-colors cursor-default">
               Equipo de Desarrollo
             </h3>
             <div className="flex gap-4">
@@ -73,28 +74,42 @@ export default function Footer() {
           </div>
 
           {/* Section 3: Data Sources (Compact Right Aligned) */}
-          <div className="lg:w-1/3 flex flex-col items-start lg:items-end gap-2 text-right">
+          <div className="lg:w-1/3 flex flex-col items-start lg:items-end gap-0.5 text-right">
             {/* Header WHITE, NO ICON */}
-            <h3 className="text-[10px] font-bold uppercase tracking-widest text-white mb-1">
+            <h3 className="text-xl font-bold tracking-tight !text-white mb-2 hover:text-blue-200 transition-colors cursor-default">
               Datos Abiertos JCyL
             </h3>
-            <div className="flex flex-col lg:items-end gap-1.5">
-              <a
-                href="https://analisis.datosabiertos.jcyl.es/explore/dataset/directorio-de-centros-docentes/export/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-neutral-300 hover:text-white hover:underline decoration-emerald-500/50 underline-offset-2 transition-all"
-              >
-                Directorio de Centros Docentes
-              </a>
-              <a
-                href="https://analisis.datosabiertos.jcyl.es/explore/dataset/oferta-de-formacion-profesional/export/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-neutral-300 hover:text-white hover:underline decoration-emerald-500/50 underline-offset-2 transition-all"
-              >
-                Oferta de Formación Profesional
-              </a>
+            
+            <div className="flex flex-row-reverse items-center gap-4">
+                <div className="flex flex-col lg:items-end gap-1.5">
+                <a
+                    href="https://analisis.datosabiertos.jcyl.es/explore/dataset/directorio-de-centros-docentes/export/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-neutral-300 hover:text-white hover:underline decoration-emerald-500/50 underline-offset-2 transition-all"
+                >
+                    Directorio de Centros Docentes
+                </a>
+                <a
+                    href="https://analisis.datosabiertos.jcyl.es/explore/dataset/oferta-de-formacion-profesional/export/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-neutral-300 hover:text-white hover:underline decoration-emerald-500/50 underline-offset-2 transition-all"
+                >
+                    Oferta de Formación Profesional
+                </a>
+                </div>
+
+                {/* JCYL Logo - Larger and side by side, no background */}
+                <div className="opacity-90 hover:opacity-100 transition-opacity">
+                    <Image 
+                        src="/img/jcyl.png" 
+                        alt="Junta de Castilla y León" 
+                        width={180} 
+                        height={80} 
+                        className="h-14 w-auto object-contain"
+                    />
+                </div>
             </div>
           </div>
 
