@@ -47,7 +47,7 @@ export default function Footer() {
           {/* Section 2: Team (Horizontal Row) */}
           <div className="lg:w-1/3 flex flex-col items-start lg:items-center gap-2">
             {/* Header WHITE, no icon */}
-            <h3 className="text-xs font-bold tracking-widest !text-white mb-1">
+            <h3 className="text-xl font-bold tracking-tight !text-white mb-2 hover:text-blue-200 transition-colors cursor-default">
               Equipo de Desarrollo
             </h3>
             <div className="flex gap-4">
@@ -76,7 +76,7 @@ export default function Footer() {
           {/* Section 3: Data Sources (Compact Right Aligned) */}
           <div className="lg:w-1/3 flex flex-col items-start lg:items-end gap-0.5 text-right">
             {/* Header WHITE, NO ICON */}
-            <h3 className="text-xs font-bold uppercase tracking-widest !text-white mb-1">
+            <h3 className="text-xl font-bold tracking-tight !text-white mb-2 hover:text-blue-200 transition-colors cursor-default">
               Datos Abiertos JCyL
             </h3>
             
