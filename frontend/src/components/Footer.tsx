@@ -74,9 +74,9 @@ export default function Footer() {
           </div>
 
           {/* Section 3: Data Sources (Compact Right Aligned) */}
-          <div className="lg:w-1/3 flex flex-col items-start lg:items-end gap-2 text-right">
+          <div className="lg:w-1/3 flex flex-col items-start lg:items-end gap-0.5 text-right">
             {/* Header WHITE, NO ICON */}
-            <h3 className="text-xs font-bold tracking-widest !text-white mb-1">
+            <h3 className="text-xs font-bold uppercase tracking-widest !text-white mb-1">
               Datos Abiertos JCyL
             </h3>
             
@@ -107,7 +107,7 @@ export default function Footer() {
                         alt="Junta de Castilla y León" 
                         width={180} 
                         height={80} 
-                        className="h-16 w-auto object-contain"
+                        className="h-14 w-auto object-contain"
                     />
                 </div>
             </div>
