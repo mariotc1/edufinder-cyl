@@ -66,8 +66,10 @@ class SearchService
                 $query->whereHas('ciclos', function ($q) use ($filters) {
                     // Filtros internos de FP
                     if (!empty($filters['familia'])) {
-                        $q->where('familia_profesional', 'ILIKE', '%' . $filters['familia'] . '%')
-                            ->orWhere('codigo_familia', $filters['familia']);
+                        $q->where(function ($sub) use ($filters) {
+                            $sub->where('familia_profesional', 'ILIKE', '%' . $filters['familia'] . '%')
+                                ->orWhere('codigo_familia', $filters['familia']);
+                        });
                     }
                     if (!empty($filters['nivel'])) {
                         // Logic inlined to avoid scope issues
@@ -110,8 +112,10 @@ class SearchService
 
                         // Aplicar los mismos filtros al eager loading
                         if (!empty($filters['familia'])) {
-                            $q->where('familia_profesional', 'ILIKE', '%' . $filters['familia'] . '%')
-                                ->orWhere('codigo_familia', $filters['familia']);
+                            $q->where(function ($sub) use ($filters) {
+                                $sub->where('familia_profesional', 'ILIKE', '%' . $filters['familia'] . '%')
+                                    ->orWhere('codigo_familia', $filters['familia']);
+                            });
                         }
                         if (!empty($filters['nivel'])) {
                             $nivel = mb_strtoupper($filters['nivel']);
