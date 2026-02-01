@@ -24,6 +24,7 @@ class Centro extends Model
         'direccion',
         'latitud',
         'longitud',
+        'data_hash',
     ];
 
     public function ciclos()
