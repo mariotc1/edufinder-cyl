@@ -154,9 +154,17 @@ export default function CentroCard({
         </div>
 
         {/* Title - polished typography with fixed height for alignment */}
-        <h3 className="text-[17px] font-bold text-[#111827] mb-3 group-hover:text-[#223945] transition-colors line-clamp-2 min-h-[3.5rem] tracking-tight leading-snug">
-          {centro.nombre}
-        </h3>
+        {/* Title Section - Enhanced for visual balance */}
+        <div className="mb-4 min-h-[4rem] flex flex-col justify-center">
+            {centro.denominacion_generica && (
+                <span className="text-[10px] font-bold text-[#223945]/70 uppercase tracking-widest leading-tight block mb-1">
+                    {centro.denominacion_generica}
+                </span>
+            )}
+            <h3 className="text-xl font-black text-[#111827] group-hover:text-[#223945] transition-colors line-clamp-2 tracking-tight leading-none">
+                {centro.nombre}
+            </h3>
+        </div>
 
         {/* Info Icons - fixed height for alignment */}
         <div className="space-y-2.5 mb-5 min-h-[4.5rem]">
@@ -176,8 +184,8 @@ export default function CentroCard({
               <Building2 className="w-3.5 h-3.5 text-white" />
             </div>
             <p className="text-[15px] font-medium leading-relaxed line-clamp-2">
-              <span className="font-bold text-[#223945] block text-xs uppercase tracking-wider mb-0.5 opacity-80">Tipo</span>
-              {centro.denominacion_generica}
+              <span className="font-bold text-[#223945] block text-xs uppercase tracking-wider mb-0.5 opacity-80">Dirección</span>
+              <span className="capitalize">{centro.direccion ? centro.direccion.toLowerCase() : "Sin dirección disponible"}</span>
             </p>
           </div>
         </div>
