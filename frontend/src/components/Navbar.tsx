@@ -36,7 +36,7 @@ export default function Navbar() {
   const redirectParam = getRedirectUrl();
 
   return (
-    <nav className="fixed top-0 left-0 w-full z-50 bg-white/95 backdrop-blur-md border-b border-neutral-200 shadow-sm">
+    <nav className="fixed top-0 left-0 w-full z-[100] bg-white/95 backdrop-blur-md border-b border-neutral-200 shadow-sm">
       {/* Decorative top gradient - matching other components */}
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300"></div>
 

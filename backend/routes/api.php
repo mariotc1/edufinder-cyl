@@ -21,6 +21,7 @@ Route::get('/centros/{id}/ciclos', [CentroController::class, 'ciclos']);
 
 Route::get('/busqueda', [App\Http\Controllers\SearchController::class, 'index']);
 
+Route::get('/ciclos/sugerencias', [CicloFpController::class, 'suggestions']);
 Route::get('/ciclos', [CicloFpController::class, 'index']);
 
 Route::middleware('auth:sanctum')->group(function () {

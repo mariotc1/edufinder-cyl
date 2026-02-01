@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { fetchCycleSuggestions } from '@/services/api';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Search, MapPin, Building2, SlidersHorizontal, Trash2, X } from 'lucide-react';
 import { FilterOptions } from '@/types';
@@ -30,6 +31,45 @@ export default function FilterBar({ onFilterChange, isLoading }: FilterBarProps)
   });
 
   const [geolocationStatus, setGeolocationStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  
+  // Autocomplete States
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  // Click Outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Fetch Suggestions Logic
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (filters.ciclo && filters.ciclo.length >= 2 && filters.tipo === 'FP') {
+          setIsSearching(true);
+          try {
+              const results = await fetchCycleSuggestions(filters.ciclo);
+              setSuggestions(results);
+              setShowSuggestions(true);
+          } catch (error) {
+              console.error("Error fetching suggestions", error);
+          } finally {
+              setIsSearching(false);
+          }
+      } else {
+          setSuggestions([]);
+          setShowSuggestions(false);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [filters.ciclo, filters.tipo]);
 
   // Recuperar estado geo si hay coordenadas en URL
   useEffect(() => {
@@ -141,7 +181,7 @@ export default function FilterBar({ onFilterChange, isLoading }: FilterBarProps)
   const labelClasses = "text-[11px] font-bold text-[#223945] ml-1 uppercase tracking-wider mb-1 block opacity-80";
 
   return (
-    <div className="relative bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/50 p-6 transition-all hover:shadow-2xl overflow-hidden">
+    <div className="relative z-30 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/50 p-6 transition-all hover:shadow-2xl">
        {/* Decorative top border/gradient - matching cards */}
        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300"></div>
 
@@ -275,18 +315,56 @@ export default function FilterBar({ onFilterChange, isLoading }: FilterBarProps)
         {/* FP Conditional Filters - Dedicated Row */}
           {filters.tipo === 'FP' && (
              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-neutral-100 animate-in slide-in-from-top-2 fade-in duration-300">
-               {/* Ciclo Name Search - NEW */}
-               <div className="space-y-1">
+               {/* Ciclo Name Search - Autocomplete */}
+               <div className="space-y-1" ref={wrapperRef}>
                 <label className={labelClasses}>Nombre del Ciclo</label>
                  <div className="relative group">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 group-focus-within:text-[#223945] transition-colors" />
                     <input 
                       type="text"
                       placeholder="Ej: Desarrollo Web" 
-                      className={`w-full bg-neutral-50 border border-neutral-200 text-neutral-700 py-3 pl-10 pr-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#223945]/20 focus:border-[#223945] transition-all font-medium text-sm hover:border-[#223945]/50 placeholder:text-neutral-400`}
+                      className={`w-full bg-neutral-50 border border-neutral-200 text-neutral-700 py-3 pl-10 pr-10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#223945]/20 focus:border-[#223945] transition-all font-medium text-sm hover:border-[#223945]/50 placeholder:text-neutral-400`}
                       value={filters.ciclo || ''}
                       onChange={(e) => handleChange('ciclo', e.target.value)}
+                      onFocus={() => { if(suggestions.length > 0) setShowSuggestions(true); }}
                     />
+                    
+                    {/* Loading Spinner */}
+                    {isSearching && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                            <div className="w-4 h-4 border-2 border-[#223945]/30 border-t-[#223945] rounded-full animate-spin"></div>
+                        </div>
+                    )}
+
+                    {/* Premium Dropdown */}
+                    {showSuggestions && suggestions.length > 0 && (
+                        <div className="absolute z-50 left-0 mt-2 w-[90vw] sm:w-[500px] bg-white rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] border border-neutral-100 ring-1 ring-black/5 max-h-[320px] overflow-y-auto animate-in fade-in zoom-in-95 duration-200 custom-scrollbar">
+                            <div className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-neutral-50 px-4 py-2 text-[10px] font-bold text-neutral-400 uppercase tracking-wider z-10">
+                                Sugerencias encontradas
+                            </div>
+                            <ul className="py-2">
+                                {suggestions.map((sug, i) => (
+                                    <li 
+                                        key={i}
+                                        onClick={() => {
+                                            handleChange('ciclo', sug);
+                                            setShowSuggestions(false);
+                                        }}
+                                        className="px-4 py-3 cursor-pointer hover:bg-gradient-to-r hover:from-neutral-50 hover:to-white transition-all flex items-start gap-3 group/item border-l-2 border-transparent hover:border-[#223945]"
+                                    >
+                                        <div className="mt-0.5 w-6 h-6 shrink-0 rounded-full bg-neutral-100 flex items-center justify-center group-hover/item:bg-[#223945] group-hover/item:text-white transition-all duration-300">
+                                            <Search className="w-3 h-3 text-neutral-400 group-hover/item:text-white transition-colors" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <span className="text-sm font-medium text-neutral-700 group-hover/item:text-[#223945] leading-snug block break-words whitespace-normal">
+                                                {sug}
+                                            </span>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
                 </div>
               </div>
 
