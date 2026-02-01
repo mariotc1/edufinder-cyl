@@ -37,6 +37,7 @@ export default function FilterBar({ onFilterChange, isLoading }: FilterBarProps)
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const skipFetchRef = useRef(false);
 
   // Click Outside
   useEffect(() => {
@@ -51,6 +52,12 @@ export default function FilterBar({ onFilterChange, isLoading }: FilterBarProps)
 
   // Fetch Suggestions Logic
   useEffect(() => {
+    // If we just selected an item, skip the fetch that would triggered by the value change
+    if (skipFetchRef.current) {
+        skipFetchRef.current = false;
+        return;
+    }
+
     const timer = setTimeout(async () => {
       if (filters.ciclo && filters.ciclo.length >= 2 && filters.tipo === 'FP') {
           setIsSearching(true);
@@ -316,57 +323,71 @@ export default function FilterBar({ onFilterChange, isLoading }: FilterBarProps)
           {filters.tipo === 'FP' && (
              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-neutral-100 animate-in slide-in-from-top-2 fade-in duration-300">
                {/* Ciclo Name Search - Autocomplete */}
-               <div className="space-y-1" ref={wrapperRef}>
-                <label className={labelClasses}>Nombre del Ciclo</label>
-                 <div className="relative group">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 group-focus-within:text-[#223945] transition-colors" />
-                    <input 
-                      type="text"
-                      placeholder="Ej: Desarrollo Web" 
-                      className={`w-full bg-neutral-50 border border-neutral-200 text-neutral-700 py-3 pl-10 pr-10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#223945]/20 focus:border-[#223945] transition-all font-medium text-sm hover:border-[#223945]/50 placeholder:text-neutral-400`}
-                      value={filters.ciclo || ''}
-                      onChange={(e) => handleChange('ciclo', e.target.value)}
-                      onFocus={() => { if(suggestions.length > 0) setShowSuggestions(true); }}
-                    />
-                    
-                    {/* Loading Spinner */}
-                    {isSearching && (
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                            <div className="w-4 h-4 border-2 border-[#223945]/30 border-t-[#223945] rounded-full animate-spin"></div>
-                        </div>
-                    )}
-
-                    {/* Premium Dropdown */}
-                    {showSuggestions && suggestions.length > 0 && (
-                        <div className="absolute z-50 left-0 mt-2 w-[90vw] sm:w-[500px] bg-white rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] border border-neutral-100 ring-1 ring-black/5 max-h-[320px] overflow-y-auto animate-in fade-in zoom-in-95 duration-200 custom-scrollbar">
-                            <div className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-neutral-50 px-4 py-2 text-[10px] font-bold text-neutral-400 uppercase tracking-wider z-10">
-                                Sugerencias encontradas
-                            </div>
-                            <ul className="py-2">
-                                {suggestions.map((sug, i) => (
-                                    <li 
-                                        key={i}
-                                        onClick={() => {
-                                            handleChange('ciclo', sug);
-                                            setShowSuggestions(false);
-                                        }}
-                                        className="px-4 py-3 cursor-pointer hover:bg-gradient-to-r hover:from-neutral-50 hover:to-white transition-all flex items-start gap-3 group/item border-l-2 border-transparent hover:border-[#223945]"
-                                    >
-                                        <div className="mt-0.5 w-6 h-6 shrink-0 rounded-full bg-neutral-100 flex items-center justify-center group-hover/item:bg-[#223945] group-hover/item:text-white transition-all duration-300">
-                                            <Search className="w-3 h-3 text-neutral-400 group-hover/item:text-white transition-colors" />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <span className="text-sm font-medium text-neutral-700 group-hover/item:text-[#223945] leading-snug block break-words whitespace-normal">
-                                                {sug}
-                                            </span>
-                                        </div>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-                </div>
-              </div>
+                <div className="space-y-1" ref={wrapperRef}>
+                 <label className={labelClasses}>Nombre del Ciclo</label>
+                  <div className="relative group">
+                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 group-focus-within:text-[#223945] transition-colors" />
+                     <input 
+                       type="text"
+                       placeholder="Ej: Desarrollo Web" 
+                       className={`w-full bg-neutral-50 border border-neutral-200 text-neutral-700 py-3 pl-10 pr-10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#223945]/20 focus:border-[#223945] transition-all font-medium text-sm hover:border-[#223945]/50 placeholder:text-neutral-400`}
+                       value={filters.ciclo || ''}
+                       onChange={(e) => handleChange('ciclo', e.target.value)}
+                       onFocus={() => { if(suggestions.length > 0) setShowSuggestions(true); }}
+                     />
+                     
+                     {/* Loading Spinner */}
+                     {isSearching ? (
+                         <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                             <div className="w-4 h-4 border-2 border-[#223945]/30 border-t-[#223945] rounded-full animate-spin"></div>
+                         </div>
+                     ) : filters.ciclo ? (
+                        // Clear Button (X)
+                        <button
+                            onClick={() => {
+                                handleChange('ciclo', '');
+                                setSuggestions([]);
+                                setShowSuggestions(false);
+                            }}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-full text-neutral-400 hover:text-red-500 hover:bg-neutral-100 transition-all"
+                            title="Borrar búsqueda"
+                        >
+                            <X className="w-3.5 h-3.5" />
+                        </button>
+                     ) : null}
+ 
+                     {/* Premium Dropdown */}
+                     {showSuggestions && suggestions.length > 0 && (
+                         <div className="absolute z-50 left-0 mt-2 w-[90vw] sm:w-[500px] bg-white rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] border border-neutral-100 ring-1 ring-black/5 max-h-[320px] overflow-y-auto animate-in fade-in zoom-in-95 duration-200 custom-scrollbar">
+                             <div className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-neutral-50 px-4 py-2 text-[10px] font-bold text-neutral-400 uppercase tracking-wider z-10">
+                                 Sugerencias encontradas
+                             </div>
+                             <ul className="py-2">
+                                 {suggestions.map((sug, i) => (
+                                     <li 
+                                         key={i}
+                                         onClick={() => {
+                                             skipFetchRef.current = true; // Prevent re-open
+                                             handleChange('ciclo', sug);
+                                             setShowSuggestions(false);
+                                         }}
+                                         className="px-4 py-3 cursor-pointer hover:bg-gradient-to-r hover:from-neutral-50 hover:to-white transition-all flex items-start gap-3 group/item border-l-2 border-transparent hover:border-[#223945]"
+                                     >
+                                         <div className="mt-0.5 w-6 h-6 shrink-0 rounded-full bg-neutral-100 flex items-center justify-center group-hover/item:bg-[#223945] group-hover/item:text-white transition-all duration-300">
+                                             <Search className="w-3 h-3 text-neutral-400 group-hover/item:text-white transition-colors" />
+                                         </div>
+                                         <div className="flex-1 min-w-0">
+                                             <span className="text-sm font-medium text-neutral-700 group-hover/item:text-[#223945] leading-snug block break-words whitespace-normal">
+                                                 {sug}
+                                             </span>
+                                         </div>
+                                     </li>
+                                 ))}
+                             </ul>
+                         </div>
+                     )}
+                 </div>
+               </div>
 
                <div className="space-y-1">
                 <label className={labelClasses}>Familia</label>
