@@ -1,6 +1,6 @@
 'use client';
 
-import { fetchCycleSuggestions } from '@/services/api';
+import { fetchCycleSuggestions, fetchCentroSuggestions } from '@/services/api';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Search, MapPin, Building2, SlidersHorizontal, Trash2, X } from 'lucide-react';
@@ -32,27 +32,39 @@ export default function FilterBar({ onFilterChange, isLoading }: FilterBarProps)
 
   const [geolocationStatus, setGeolocationStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   
-  // Autocomplete States
+  // Autocomplete States - Cycle
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const skipFetchRef = useRef(false);
 
+  // Autocomplete States - Centro (Main Search)
+  const [centroSuggestions, setCentroSuggestions] = useState<string[]>([]);
+  const [showCentroSuggestions, setShowCentroSuggestions] = useState(false);
+  const [isSearchingCentro, setIsSearchingCentro] = useState(false);
+  const wrapperCentroRef = useRef<HTMLDivElement>(null);
+  const skipFetchCentroRef = useRef(false);
+
   // Click Outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
+      // Cycle Suggestions
       if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
         setShowSuggestions(false);
+      }
+      // Centro Suggestions
+      if (wrapperCentroRef.current && !wrapperCentroRef.current.contains(event.target as Node)) {
+        setShowCentroSuggestions(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Fetch Suggestions Logic
+  // Fetch Suggestions Logic - Cycle
   useEffect(() => {
-    // If we just selected an item, skip the fetch that would triggered by the value change
+    // If we just selected an item, skip the fetch
     if (skipFetchRef.current) {
         skipFetchRef.current = false;
         return;
@@ -77,6 +89,33 @@ export default function FilterBar({ onFilterChange, isLoading }: FilterBarProps)
     }, 300);
     return () => clearTimeout(timer);
   }, [filters.ciclo, filters.tipo]);
+
+  // Fetch Suggestions Logic - Centro
+  useEffect(() => {
+    if (skipFetchCentroRef.current) {
+        skipFetchCentroRef.current = false;
+        return;
+    }
+
+    const timer = setTimeout(async () => {
+      if (filters.q && filters.q.length >= 2) {
+          setIsSearchingCentro(true);
+          try {
+              const results = await fetchCentroSuggestions(filters.q);
+              setCentroSuggestions(results);
+              setShowCentroSuggestions(true);
+          } catch (error) {
+              console.error("Error fetching centro suggestions", error);
+          } finally {
+              setIsSearchingCentro(false);
+          }
+      } else {
+          setCentroSuggestions([]);
+          setShowCentroSuggestions(false);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [filters.q]);
 
   // Recuperar estado geo si hay coordenadas en URL
   useEffect(() => {
@@ -196,15 +235,66 @@ export default function FilterBar({ onFilterChange, isLoading }: FilterBarProps)
         
         {/* Top Row: Search & Location */}
         <div className="flex flex-col md:flex-row gap-4 items-stretch">
-          <div className="flex-grow relative group">
+          <div className="flex-grow relative group" ref={wrapperCentroRef}>
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400 group-focus-within:text-[#223945] transition-colors" />
             <input 
               type="text"
-              placeholder="Buscar por nombre, localidad..." 
-              className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-neutral-50 border border-neutral-200 focus:bg-white focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 transition-all outline-none font-medium placeholder:text-neutral-400 text-neutral-800 hover:border-[#223945]/50"
+              placeholder="Buscar por nombre del centro..." 
+              className="w-full pl-12 pr-12 py-3.5 rounded-xl bg-neutral-50 border border-neutral-200 focus:bg-white focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 transition-all outline-none font-medium placeholder:text-neutral-400 text-neutral-800 hover:border-[#223945]/50"
               value={filters.q || ''}
               onChange={(e) => handleChange('q', e.target.value)}
+              onFocus={() => { if(centroSuggestions.length > 0) setShowCentroSuggestions(true); }}
             />
+
+            {/* Spinner / Clear Button */}
+            {isSearchingCentro ? (
+                <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                    <div className="w-5 h-5 border-2 border-[#223945]/30 border-t-[#223945] rounded-full animate-spin"></div>
+                </div>
+            ) : filters.q ? (
+                <button
+                    onClick={() => {
+                        handleChange('q', '');
+                        setCentroSuggestions([]);
+                        setShowCentroSuggestions(false);
+                    }}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 rounded-full text-neutral-400 hover:text-red-500 hover:bg-neutral-100 transition-all"
+                    title="Borrar búsqueda"
+                >
+                    <X className="w-4 h-4" />
+                </button>
+            ) : null}
+
+            {/* Premium Dropdown - Centro */}
+            {showCentroSuggestions && centroSuggestions.length > 0 && (
+                <div className="absolute z-[60] left-0 mt-2 w-[90vw] sm:w-[500px] bg-white rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] border border-neutral-100 ring-1 ring-black/5 max-h-[320px] overflow-y-auto animate-in fade-in zoom-in-95 duration-200 custom-scrollbar">
+                    <div className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-neutral-50 px-4 py-2 text-[10px] font-bold text-neutral-400 uppercase tracking-wider z-10">
+                        Centros encontrados
+                    </div>
+                    <ul className="py-2">
+                        {centroSuggestions.map((sug, i) => (
+                            <li 
+                                key={i}
+                                onClick={() => {
+                                    skipFetchCentroRef.current = true;
+                                    handleChange('q', sug);
+                                    setShowCentroSuggestions(false);
+                                }}
+                                className="px-4 py-3 cursor-pointer hover:bg-gradient-to-r hover:from-neutral-50 hover:to-white transition-all flex items-start gap-3 group/item border-l-2 border-transparent hover:border-[#223945]"
+                            >
+                                <div className="mt-0.5 w-6 h-6 shrink-0 rounded-full bg-neutral-100 flex items-center justify-center group-hover/item:bg-[#223945] group-hover/item:text-white transition-all duration-300">
+                                    <Building2 className="w-3 h-3 text-neutral-400 group-hover/item:text-white transition-colors" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <span className="text-sm font-medium text-neutral-700 group-hover/item:text-[#223945] leading-snug block break-words whitespace-normal">
+                                        {sug}
+                                    </span>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
           </div>
           
           <div className="flex-shrink-0 flex gap-2">

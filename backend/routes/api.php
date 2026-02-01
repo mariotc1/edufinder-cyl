@@ -15,6 +15,7 @@ Route::get('/auth/{provider}/callback', [App\Http\Controllers\SocialAuthControll
 Route::post('/forgot-password', [AuthController::class, 'sendResetLinkEmail']);
 Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
+Route::get('/centros/sugerencias', [CentroController::class, 'suggestions']);
 Route::get('/centros', [CentroController::class, 'index']);
 Route::get('/centros/{id}', [CentroController::class, 'show']);
 Route::get('/centros/{id}/ciclos', [CentroController::class, 'ciclos']);
