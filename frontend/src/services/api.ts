@@ -33,3 +33,13 @@ export const removeFavorite = async (centroId: number) => {
   const response = await axios.delete(`/favoritos/${centroId}`);
   return response.data;
 };
+
+export const fetchCycleSuggestions = async (q: string) => {
+  const response = await axios.get(`/ciclos/sugerencias?q=${encodeURIComponent(q)}`);
+  return response.data;
+};
+
+export const fetchCentroSuggestions = async (q: string) => {
+  const response = await axios.get(`/centros/sugerencias?q=${encodeURIComponent(q)}`);
+  return response.data;
+};

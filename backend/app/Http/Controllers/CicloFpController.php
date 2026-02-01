@@ -35,4 +35,24 @@ class CicloFpController extends Controller
 
         return CicloFpResource::collection($query->paginate(20));
     }
+
+    public function suggestions(Request $request)
+    {
+        $request->validate([
+            'q' => 'nullable|string|min:2',
+        ]);
+
+        if (!$request->q) {
+            return response()->json([]);
+        }
+
+        $suggestions = CicloFp::query()
+            ->select('ciclo_formativo')
+            ->where('ciclo_formativo', 'ilike', '%' . $request->q . '%')
+            ->distinct()
+            ->limit(10)
+            ->pluck('ciclo_formativo');
+
+        return response()->json($suggestions);
+    }
 }

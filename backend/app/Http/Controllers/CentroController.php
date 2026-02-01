@@ -145,4 +145,24 @@ class CentroController extends Controller
         $centro = Centro::findOrFail($id);
         return CicloFpResource::collection($centro->ciclos);
     }
+
+    public function suggestions(Request $request)
+    {
+        $request->validate([
+            'q' => 'nullable|string|min:2',
+        ]);
+
+        if (!$request->q) {
+            return response()->json([]);
+        }
+
+        $suggestions = Centro::query()
+            ->select('nombre')
+            ->where('nombre', 'ilike', '%' . $request->q . '%')
+            ->distinct()
+            ->limit(10)
+            ->pluck('nombre');
+
+        return response()->json($suggestions);
+    }
 }
