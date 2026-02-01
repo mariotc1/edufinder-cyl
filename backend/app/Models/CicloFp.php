@@ -20,6 +20,7 @@ class CicloFp extends Model
         'ciclo_formativo',
         'modalidad',
         'tipo_ensenanza',
+        'data_hash',
     ];
 
     public function centro()
