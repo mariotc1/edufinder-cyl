@@ -57,7 +57,13 @@ export default function RegisterContent() {
             login(res.data.user, res.data.access_token);
             router.push('/');
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Error al registrar usuario');
+            console.error('Registration error:', err);
+            const msg = err.response?.data?.message 
+                || err.response?.data?.error 
+                || JSON.stringify(err.response?.data)
+                || err.message 
+                || 'Error al registrar usuario';
+            setError(msg);
             setIsLoading(false);
         }
     };
