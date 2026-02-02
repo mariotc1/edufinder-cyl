@@ -3,6 +3,7 @@
 import { Suspense, useState, useCallback } from 'react';
 import useSWR from 'swr';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Heart, School, ArrowRight, Loader2, ChevronLeft } from 'lucide-react';
 import CentroCard from '@/components/CentroCard';
 import CentroCardSkeleton from '@/components/ui/CentroCardSkeleton';
@@ -43,13 +44,19 @@ export default function FavoritosContent() {
         }, 500);
     };
 
+    const router = useRouter();
+    // ... (inside component)
+
     return (
         <div className="min-h-screen bg-brand-gradient pt-20 pb-12 px-4 sm:px-6">
              <div className="max-w-7xl mx-auto">
-                <Link href="/" className="inline-flex items-center gap-2 text-neutral-500 hover:text-[#223945] mb-8 font-bold transition-colors text-sm uppercase tracking-wide group">
+                <button 
+                    onClick={() => router.back()} 
+                    className="inline-flex items-center gap-2 text-neutral-500 hover:text-[#223945] mb-8 font-bold transition-colors text-sm uppercase tracking-wide group"
+                >
                     <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-                    Volver al inicio
-                </Link>
+                    Volver
+                </button>
 
                 <div className="mb-8">
                      <h1 className="text-2xl md:text-3xl font-bold text-[#223945] mb-2 flex items-center gap-3">

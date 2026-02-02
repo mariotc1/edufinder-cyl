@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import api from '@/lib/axios';
 import { ChevronLeft, Info, MapPin, Phone, Mail, Globe, Check, X, Loader2, AlertTriangle, GraduationCap, Scale } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 
 interface CentroDetail {
@@ -33,6 +34,7 @@ interface Ciclo {
 }
 
 export default function ComparadorPage() {
+    const router = useRouter();
     const { selectedCentros, removeFromCompare } = useComparison();
     const [details, setDetails] = useState<CentroDetail[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -159,10 +161,13 @@ export default function ComparadorPage() {
     return (
         <div className="min-h-screen bg-brand-gradient pt-20 pb-12 px-4 sm:px-6">
             <div className="max-w-7xl mx-auto"> 
-                <Link href="/" className="inline-flex items-center gap-2 text-neutral-500 hover:text-[#223945] mb-8 font-bold transition-colors text-sm uppercase tracking-wide group">
+                <button 
+                    onClick={() => router.back()} 
+                    className="inline-flex items-center gap-2 text-neutral-500 hover:text-[#223945] mb-8 font-bold transition-colors text-sm uppercase tracking-wide group"
+                >
                     <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
                     Volver
-                </Link>
+                </button>
 
                 <div className="mb-0">
                     <h1 className="text-2xl md:text-3xl font-bold text-[#223945] mb-2 flex items-center gap-3">
