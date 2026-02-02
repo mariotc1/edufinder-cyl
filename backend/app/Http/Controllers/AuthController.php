@@ -29,12 +29,12 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        // try {
-        //    Mail::to($user)->send(new WelcomeEmail($user));
-        // } catch (\Throwable $e) {
-        //    // Log error but don't fail registration
-        //    \Illuminate\Support\Facades\Log::error('Error sending welcome email: ' . $e->getMessage());
-        // }
+        try {
+            Mail::to($user)->send(new WelcomeEmail($user));
+        } catch (\Throwable $e) {
+            // Log error but don't fail registration
+            \Illuminate\Support\Facades\Log::error('Error sending welcome email: ' . $e->getMessage());
+        }
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
