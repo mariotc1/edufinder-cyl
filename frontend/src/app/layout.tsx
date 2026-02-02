@@ -16,8 +16,14 @@ export const metadata: Metadata = {
   description: 'Plataforma oficial para buscar centros educativos de primaria, secundaria, bachillerato y ciclos de Formación Profesional en Castilla y León. Información actualizada y completa.',
   keywords: 'educación, Castilla y León, centros educativos, formación profesional, FP, colegios, institutos',
   authors: [{ name: 'Junta de Castilla y León' }],
-  viewport: 'width=device-width, initial-scale=1',
-  themeColor: '#3b82f6',
+};
+
+export const generateViewport = () => {
+  return {
+    width: 'device-width',
+    initialScale: 1,
+    themeColor: '#3b82f6',
+  };
 };
 
 import ComparisonTray from '@/components/ComparisonTray';

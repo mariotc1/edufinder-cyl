@@ -1,5 +1,7 @@
 'use client';
 
+import React, { Suspense } from 'react';
+
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
@@ -12,6 +14,14 @@ import { useFavoritesAnimation } from '@/context/FavoritesAnimationContext';
 import { motion } from 'framer-motion';
 
 export default function Navbar() {
+  return (
+    <Suspense fallback={<nav className="fixed top-0 left-0 w-full z-[100] bg-white/95 h-20 border-b border-neutral-200" />}>
+      <NavbarContent />
+    </Suspense>
+  );
+}
+
+function NavbarContent() {
   /* Refactored to use AuthContext */
   const { user, logout, openLoginModal } = useAuth();
   const { favoritesPulse } = useFavoritesAnimation();

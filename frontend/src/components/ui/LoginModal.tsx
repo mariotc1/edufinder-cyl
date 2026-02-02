@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment } from 'react';
+import { Fragment, Suspense } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { X, LogIn, UserPlus } from 'lucide-react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
@@ -10,7 +10,15 @@ interface LoginModalProps {
   onClose: () => void;
 }
 
-export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
+export default function LoginModal(props: LoginModalProps) {
+  return (
+    <Suspense fallback={null}>
+      <LoginModalContent {...props} />
+    </Suspense>
+  );
+}
+
+function LoginModalContent({ isOpen, onClose }: LoginModalProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
