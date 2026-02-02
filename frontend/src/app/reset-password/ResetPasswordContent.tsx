@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import api from '@/lib/axios';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { KeyRound, Lock, Eye, EyeOff, ChevronLeft, Loader2 } from 'lucide-react';
+import { KeyRound, Lock, Eye, EyeOff, ChevronLeft, Loader2, CheckCircle } from 'lucide-react';
 
 export default function ResetPasswordContent() {
     const [password, setPassword] = useState('');
@@ -20,12 +20,24 @@ export default function ResetPasswordContent() {
     const token = searchParams.get('token');
     const email = searchParams.get('email');
 
+    // Live Password Validation
+    const passwordRequirements = useMemo(() => {
+        return [
+            { text: "Mínimo 8 caracteres", met: password.length >= 8 },
+            { text: "Al menos una mayúscula", met: /[A-Z]/.test(password) },
+            { text: "Al menos un número", met: /[0-9]/.test(password) },
+            { text: "Coinciden", met: password && password === passwordConfirmation },
+        ];
+    }, [password, passwordConfirmation]);
+
+    const isPasswordValid = passwordRequirements.every(req => req.met) && password.length > 0;
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setMessage(null);
 
-        if (password !== passwordConfirmation) {
-            setMessage({ text: 'Las contraseñas no coinciden', type: 'error' });
+        if (!isPasswordValid) {
+            setMessage({ text: 'Por favor cumple todos los requisitos de la contraseña', type: 'error' });
             return;
         }
 
@@ -157,6 +169,16 @@ export default function ResetPasswordContent() {
                                     {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                 </button>
                             </div>
+                        </div>
+
+                        {/* Password Requirements Indicator */}
+                        <div className="bg-neutral-50 p-4 rounded-xl border border-neutral-100 grid grid-cols-2 gap-x-4 gap-y-2">
+                            {passwordRequirements.map((req, idx) => (
+                                <div key={idx} className={`flex items-center gap-2 text-xs font-bold transition-colors ${req.met ? 'text-green-600' : 'text-neutral-400'}`}>
+                                    {req.met ? <CheckCircle className="w-3.5 h-3.5" /> : <div className="w-3.5 h-3.5 rounded-full border-2 border-neutral-300" />}
+                                    {req.text}
+                                </div>
+                            ))}
                         </div>
 
                         <button

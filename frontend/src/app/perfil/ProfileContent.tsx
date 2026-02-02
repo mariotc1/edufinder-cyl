@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import api from '@/lib/axios';
-import { User, MapPin, Heart, Lock, Camera, LogOut, Eye, EyeOff, ChevronLeft, Trash, AlertCircle } from 'lucide-react';
+import { User, MapPin, Heart, Lock, Camera, LogOut, Eye, EyeOff, ChevronLeft, Trash, AlertCircle, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -45,6 +45,18 @@ export default function ProfileContent() {
     const [sendingRecovery, setSendingRecovery] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Live Password Validation
+    const passwordRequirements = useMemo(() => {
+        return [
+            { text: "Mínimo 8 caracteres", met: passwordData.new.length >= 8 },
+            { text: "Al menos una mayúscula", met: /[A-Z]/.test(passwordData.new) },
+            { text: "Al menos un número", met: /[0-9]/.test(passwordData.new) },
+            { text: "Coinciden", met: passwordData.new && passwordData.new === passwordData.confirm },
+        ];
+    }, [passwordData.new, passwordData.confirm]);
+
+    const isPasswordValid = passwordRequirements.every(req => req.met) && passwordData.new.length > 0;
 
     useEffect(() => {
         fetchData();
@@ -93,8 +105,9 @@ export default function ProfileContent() {
     const handleUpdatePassword = async (e: React.FormEvent) => {
         e.preventDefault();
         setMessage(null);
-        if (passwordData.new !== passwordData.confirm) {
-            setMessage({ text: 'Las contraseñas no coinciden', type: 'error' });
+        
+        if (!isPasswordValid) {
+            setMessage({ text: 'Por favor cumple todos los requisitos de la contraseña', type: 'error' });
             return;
         }
 
@@ -517,18 +530,28 @@ export default function ProfileContent() {
                                             </div>
                                         </div>
 
+
+
+                                        {/* Password Requirements Indicator */}
+                                        <div className="bg-neutral-50 p-4 rounded-xl border border-neutral-100 grid grid-cols-2 gap-x-4 gap-y-2">
+                                            {passwordRequirements.map((req, idx) => (
+                                                <div key={idx} className={`flex items-center gap-2 text-xs font-bold transition-colors ${req.met ? 'text-green-600' : 'text-neutral-400'}`}>
+                                                    {req.met ? <CheckCircle className="w-3.5 h-3.5" /> : <div className="w-3.5 h-3.5 rounded-full border-2 border-neutral-300" />}
+                                                    {req.text}
+                                                </div>
+                                            ))}
+                                        </div>
+
                                         <div className="pt-4">
                                             <button
                                                 type="submit"
                                                 disabled={
-                                                    !passwordData.current || 
-                                                    !passwordData.new || 
-                                                    !passwordData.confirm || 
-                                                    passwordData.new !== passwordData.confirm ||
-                                                    updatingPassword
-                                                }
+                                                !passwordData.current || 
+                                                !isPasswordValid ||
+                                                updatingPassword
+                                            }
                                                 className={`bg-[#223945] text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-[#223945]/20 hover:shadow-[#223945]/40 hover:-translate-y-0.5 transition-all text-sm uppercase tracking-wide flex items-center gap-2 ${
-                                                    (!passwordData.current || !passwordData.new || !passwordData.confirm || passwordData.new !== passwordData.confirm || updatingPassword)
+                                                (!passwordData.current || !isPasswordValid || updatingPassword)
                                                     ? 'opacity-50 cursor-not-allowed transform-none hover:shadow-none hover:translate-y-0'
                                                     : ''
                                                 }`}
