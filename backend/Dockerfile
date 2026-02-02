@@ -44,4 +44,8 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 EXPOSE 8000
 
 # Start Supervisor
-CMD ["/usr/bin/supervisord"]
+# Make start script executable
+RUN chmod +x /var/www/html/docker-start.sh
+
+# Start with script
+CMD ["/var/www/html/docker-start.sh"]
