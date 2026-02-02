@@ -64,7 +64,12 @@ class User extends Authenticatable
      */
     public function sendPasswordResetNotification($token)
     {
-        $this->notify(new \App\Notifications\ResetPasswordNotification($token));
+        // Direct HTTP sending (Bypass SMTP/Queue issues)
+        try {
+            (new \App\Services\ResendService())->sendPasswordReset($this->email, $token);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Password Reset Error: ' . $e->getMessage());
+        }
     }
     /**
      * Get the user's profile photo URL.

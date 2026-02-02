@@ -30,10 +30,10 @@ class AuthController extends Controller
         ]);
 
         try {
-            Mail::to($user)->send(new WelcomeEmail($user));
+            // Direct HTTP sending (Bypass SMTP/Queue issues)
+            (new \App\Services\ResendService())->sendWelcomeEmail($user->name, $user->email);
         } catch (\Throwable $e) {
-            // Log error but don't fail registration
-            \Illuminate\Support\Facades\Log::error('Error sending welcome email: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('Welcome Email Error: ' . $e->getMessage());
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;
