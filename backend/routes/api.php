@@ -21,7 +21,14 @@ Route::get('/debug-queue', function () {
         $pending = \Illuminate\Support\Facades\DB::table('jobs')->count();
         return response()->json([
             'pending_jobs_count' => $pending,
-            'recent_failed_jobs' => $failed
+            'recent_failed_jobs' => $failed,
+            'mail_config' => [
+                'default' => config('mail.default'), // Should be 'smtp'
+                'smtp_host' => config('mail.mailers.smtp.host'), // Should be smtp.resend.com
+                'smtp_port' => config('mail.mailers.smtp.port'), // Should be 465 or 587
+                'smtp_username' => config('mail.mailers.smtp.username'), // Should be 'resend'
+                'from_address' => config('mail.from.address'),
+            ]
         ]);
     } catch (\Throwable $e) {
         return response()->json(['error' => $e->getMessage()], 500);
