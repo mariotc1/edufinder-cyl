@@ -15,6 +15,19 @@ Route::get('/auth/{provider}/callback', [App\Http\Controllers\SocialAuthControll
 Route::post('/forgot-password', [AuthController::class, 'sendResetLinkEmail']);
 Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
+Route::get('/debug-queue', function () {
+    try {
+        $failed = \Illuminate\Support\Facades\DB::table('failed_jobs')->orderByDesc('id')->limit(5)->get();
+        $pending = \Illuminate\Support\Facades\DB::table('jobs')->count();
+        return response()->json([
+            'pending_jobs_count' => $pending,
+            'recent_failed_jobs' => $failed
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
+});
+
 Route::get('/centros/sugerencias', [CentroController::class, 'suggestions']);
 Route::get('/centros', [CentroController::class, 'index']);
 Route::get('/centros/{id}', [CentroController::class, 'show']);
