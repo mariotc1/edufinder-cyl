@@ -59,9 +59,41 @@ git push origin main
    - `APP_URL`: La URL de tu backend en Render (https://edufinder-backend.onrender.com)
    - `FRONTEND_URL`: La URL de tu frontend en Vercel (https://edufinder-frontend.vercel.app)
    - `SANCTUM_STATEFUL_DOMAINS`: Tu dominio de Vercel (edufinder-frontend.vercel.app)
+   - `FRONTEND_URL`: La URL de tu frontend en Vercel (https://edufinder-frontend.vercel.app)
+   - `SANCTUM_STATEFUL_DOMAINS`: Tu dominio de Vercel (edufinder-frontend.vercel.app)
    - `DB_CONNECTION`: `pgsql`
    - `DATABASE_URL`: Pega el **Internal Database URL** que copiaste en el paso 2.1.
+
+   **Variables para Emails (Gmail/SMTP):**
+   - `MAIL_MAILER`: `smtp`
+   - `MAIL_HOST`: `smtp.gmail.com`
+   - `MAIL_PORT`: `587`
+   - `MAIL_USERNAME`: tu@email.com
+   - `MAIL_PASSWORD`: tu_contraseña_de_aplicación
+   - `MAIL_ENCRYPTION`: `tls`
+   - `MAIL_FROM_ADDRESS`: tu@email.com
+   - `MAIL_FROM_NAME`: "EduFinder CyL"
+
+   **Variables para Login Social (Google/GitHub):**
+   - `GOOGLE_CLIENT_ID`: Tu Client ID de Google
+   - `GOOGLE_CLIENT_SECRET`: Tu Client Secret de Google
+   - `GOOGLE_REDIRECT`: `https://edufinder-backend.onrender.com/api/auth/google/callback` (¡Cambia esto en la consola de Google también!)
+   - `GITHUB_CLIENT_ID`: Tu Client ID de GitHub
+   - `GITHUB_CLIENT_SECRET`: Tu Client Secret de GitHub
+   - `GITHUB_REDIRECT`: `https://edufinder-backend.onrender.com/auth/github/callback` (¡Cambia esto en la configuración de la App de GitHub!)
+
 10. Click **Create Web Service**.
+
+### Paso 2.3: Sincronización de Datos (Inicial)
+
+Una vez desplegado el backend, necesitarás cargar los datos iniciales. Render ofrece una terminal ("Shell") en el dashboard de tu servicio.
+
+1. Ve a la pestaña **Shell**.
+2. Ejecuta el comando de sincronización:
+   ```bash
+   php artisan opendata:sync
+   ```
+   _Esto descargará y procesará los datos de la Junta de CyL. Puede tardar unos minutos._
 
 El despliegue comenzará. Render construirá la imagen Docker, ejecutará las migraciones (gracias a `docker-start.sh`) y arrancará el servidor.
 _Espera a que termine y aparezca "Live"._
