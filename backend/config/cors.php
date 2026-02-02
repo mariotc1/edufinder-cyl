@@ -8,6 +8,7 @@ return [
 
     'allowed_origins' => [
         'https://edufinder-cyl.vercel.app',
+        'http://localhost:3000',
     ],
 
     'allowed_origins_patterns' => [],

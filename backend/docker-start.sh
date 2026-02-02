@@ -5,9 +5,13 @@ set -e
 echo "Running migrations..."
 php artisan migrate --force
 
-# Sync OpenData (Temporary for first deploy)
-echo "Syncing OpenData..."
-php artisan opendata:sync
+# Sync OpenData (Only in non-local environments)
+if [ "$APP_ENV" != "local" ]; then
+    echo "Syncing OpenData..."
+    php artisan opendata:sync
+else
+    echo "Skipping OpenData sync in local environment..."
+fi
 
 # Clear caches
 echo "Clearing caches..."
