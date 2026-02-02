@@ -15,6 +15,29 @@ Route::get('/auth/{provider}/callback', [App\Http\Controllers\SocialAuthControll
 Route::post('/forgot-password', [AuthController::class, 'sendResetLinkEmail']);
 Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
+Route::get('/test-email', function () {
+    try {
+        Illuminate\Support\Facades\Mail::raw('Test email from Render', function ($message) {
+            $message->to('mariotomecore@gmail.com')
+                ->subject('Test SMTP Connection');
+        });
+        return response()->json(['status' => 'success', 'message' => 'Email sent successfully via ' . config('mail.default')]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => $e->getMessage(),
+            'config' => [
+                'mailer' => config('mail.default'),
+                'host' => config('mail.mailers.smtp.host'),
+                'port' => config('mail.mailers.smtp.port'),
+                'username' => config('mail.mailers.smtp.username'),
+                'encryption' => config('mail.mailers.smtp.encryption'),
+                'from_address' => config('mail.from.address'),
+            ]
+        ], 500);
+    }
+});
+
 Route::get('/centros/sugerencias', [CentroController::class, 'suggestions']);
 Route::get('/centros', [CentroController::class, 'index']);
 Route::get('/centros/{id}', [CentroController::class, 'show']);
