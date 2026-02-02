@@ -5,6 +5,10 @@ set -e
 echo "Running migrations..."
 php artisan migrate --force
 
+# Sync OpenData (Temporary for first deploy)
+echo "Syncing OpenData..."
+php artisan opendata:sync
+
 # Clear caches
 echo "Clearing caches..."
 php artisan optimize:clear
