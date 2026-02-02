@@ -9,9 +9,10 @@ import { FilterOptions } from '@/types';
 interface FilterBarProps {
   onFilterChange: (filters: FilterOptions) => void;
   isLoading: boolean;
+  page?: number;
 }
 
-export default function FilterBar({ onFilterChange, isLoading }: FilterBarProps) {
+export default function FilterBar({ onFilterChange, isLoading, page = 1 }: FilterBarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -45,6 +46,7 @@ export default function FilterBar({ onFilterChange, isLoading }: FilterBarProps)
   const [isSearchingCentro, setIsSearchingCentro] = useState(false);
   const wrapperCentroRef = useRef<HTMLDivElement>(null);
   const skipFetchCentroRef = useRef(false);
+  const prevFiltersRef = useRef(filters);
 
   // Click Outside
   useEffect(() => {
@@ -142,12 +144,23 @@ export default function FilterBar({ onFilterChange, isLoading }: FilterBarProps)
         params.set('radio', (filters.radio || 10).toString());
       }
 
+      // Check for filter changes
+      const filtersChanged = JSON.stringify(filters) !== JSON.stringify(prevFiltersRef.current);
+      
+      // Determine page: if filters changed, reset to 1 (implicit in URL). Else use current page.
+      const pageInUrl = filtersChanged ? 1 : page;
+      if (pageInUrl > 1) params.set('page', pageInUrl.toString());
+
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-      onFilterChange(filters);
+      
+      if (filtersChanged) {
+        onFilterChange(filters);
+        prevFiltersRef.current = filters;
+      }
     }, 400);
 
     return () => clearTimeout(timer);
-  }, [filters, pathname, router, onFilterChange]);
+  }, [filters, pathname, router, onFilterChange, page]);
 
   const handleChange = (key: keyof FilterOptions, value: any) => {
     if (key === 'tipo' && value !== 'FP') {
