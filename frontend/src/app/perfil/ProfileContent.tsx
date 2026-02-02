@@ -216,7 +216,7 @@ export default function ProfileContent() {
                     className="inline-flex items-center gap-2 text-neutral-500 hover:text-[#223945] font-bold mb-8 transition-colors text-sm uppercase tracking-wide cursor-pointer"
                 >
                     <ChevronLeft className="w-4 h-4" />
-                    Volver a resultados
+                    Volver
                 </button>
 
                 {/* Main Profile Card */}

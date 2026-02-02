@@ -129,7 +129,7 @@ export default function CentroDetailContent() {
                     className="inline-flex items-center gap-2 text-neutral-500 hover:text-[#223945] font-bold mb-8 transition-colors text-sm uppercase tracking-wide cursor-pointer"
                 >
                     <ChevronLeft className="w-4 h-4" />
-                    Volver a resultados
+                    Volver
                 </button>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
