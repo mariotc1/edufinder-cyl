@@ -44,7 +44,7 @@ function SearchContent() {
     lng: searchParams.get('lng') ? Number(searchParams.get('lng')) : undefined,
   });
 
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(searchParams.get('page') ? Number(searchParams.get('page')) : 1);
 
   // SWR key changes when filters or page change
   const swrKey = JSON.stringify({ ...filters, page });
@@ -102,7 +102,7 @@ function SearchContent() {
 
           {/* Filter Bar Component */}
           <div className="max-w-5xl mx-auto">
-            <FilterBar onFilterChange={handleFilterChange} isLoading={isLoading} />
+            <FilterBar onFilterChange={handleFilterChange} isLoading={isLoading} page={page} />
           </div>
         </div>
       </section>
