@@ -21,7 +21,12 @@ export default function ForgotPassword() {
             setMessage(res.data.message || 'Te hemos enviado un enlace de recuperación a tu correo.');
         } catch (err: any) {
             setStatus('error');
-            setMessage(err.response?.data?.message || 'No pudimos enviar el correo. Verifica que tu email sea correcto.');
+            console.error('Forgot password error:', err);
+            const msg = err.response?.data?.message 
+                || err.response?.data?.email?.[0] 
+                || err.message 
+                || 'No pudimos enviar el correo. Verifica que tu email sea correcto.';
+            setMessage(msg);
         }
     };
 
