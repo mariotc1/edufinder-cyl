@@ -10,10 +10,17 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->string('github_id')->nullable()->unique()->after('google_id');
-            $table->string('microsoft_id')->nullable()->unique()->after('github_id');
-        });
+        if (!Schema::hasColumn('users', 'github_id')) {
+            Schema::table('users', function (Blueprint $table) {
+                $table->string('github_id')->nullable()->unique()->after('google_id');
+            });
+        }
+
+        if (!Schema::hasColumn('users', 'microsoft_id')) {
+            Schema::table('users', function (Blueprint $table) {
+                $table->string('microsoft_id')->nullable()->unique()->after('github_id');
+            });
+        }
     }
 
     /**
