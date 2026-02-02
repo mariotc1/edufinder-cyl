@@ -2,7 +2,11 @@
 set -e
 
 # Run migrations
+# Run migrations
 echo "Running migrations..."
+echo "Linking storage..."
+rm -rf public/storage
+php artisan storage:link
 php artisan migrate --force
 
 # Sync OpenData (Only in non-local environments)
