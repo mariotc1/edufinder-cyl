@@ -158,7 +158,7 @@ export default function LoginContent() {
  
                         <div className="grid grid-cols-2 gap-3">
                             <a 
-                                href={`${process.env.NEXT_PUBLIC_API_URL}/auth/google/redirect`}
+                                href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/auth/google/redirect`}
                                 className="flex items-center justify-center gap-2 bg-white border border-neutral-200 text-neutral-700 py-2.5 rounded-xl hover:bg-neutral-50 hover:border-neutral-300 transition-all font-bold text-sm shadow-sm"
                             >
                                 {/* Colored Google G */}
@@ -172,7 +172,7 @@ export default function LoginContent() {
                             </a>
 
                             <a 
-                                href={`${process.env.NEXT_PUBLIC_API_URL}/auth/github/redirect`}
+                                href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/auth/github/redirect`}
                                 className="flex items-center justify-center gap-2 bg-[#24292e] text-white py-2.5 rounded-xl hover:bg-[#000000] transition-all font-bold text-sm shadow-sm"
                             >
                                 <svg className="w-5 h-5 fill-current" viewBox="0 0 16 16">

@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import api from '@/lib/axios';
 import { Loader2 } from 'lucide-react';
 
 export default function CallbackContent() {
@@ -15,29 +16,38 @@ export default function CallbackContent() {
         if (processed.current) return;
         
         const token = searchParams.get('token');
-        const userStr = searchParams.get('user');
         const error = searchParams.get('error');
 
-        if (token && userStr) {
+        if (token) {
             processed.current = true;
-            try {
-                const user = JSON.parse(decodeURIComponent(userStr));
+            
+            // Fetch user data using the token
+            api.get('/me', {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+            .then(res => {
+                const user = res.data;
                 login(user, token);
-                
-                // Clear URL params without refresh
+                // Clear URL params without refresh and redirect
                 window.history.replaceState({}, document.title, '/');
-                
-                // Redirect home
                 router.push('/');
-            } catch (e) {
-                console.error('Error parsing user data', e);
+            })
+            .catch(err => {
+                console.error('Error fetching user data', err);
                 router.push('/login?error=auth_error');
-            }
+            });
+
         } else if (error) {
             router.push(`/login?error=${error}`);
         } else {
-            // No valid params, just redirect
-             router.push('/login');
+             // Avoid redirecting immediately if we are just verifying search params could be empty on initial render sometimes?
+             // But valid OAuth flow should have params.
+             const hasParams = Array.from(searchParams.keys()).length > 0;
+             if (!hasParams) {
+                 router.push('/login');
+             }
         }
     }, [searchParams, login, router]);
 
