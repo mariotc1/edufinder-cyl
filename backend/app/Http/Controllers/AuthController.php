@@ -201,25 +201,37 @@ class AuthController extends Controller
         $user = $request->user();
 
         if ($request->hasFile('photo')) {
-            $path = $request->file('photo')->store('profile-photos', 'public');
+            // Upload to Cloudinary
+            $result = $request->file('photo')->storeOnCloudinary('top_tutors_avatars');
+            $path = $result->getSecurePath();
 
-            // Store relative path (Accessor in User model handles the full URL)
+            // Delete old photo if it exists and is a Cloudinary URL
+            if ($user->foto_perfil && str_contains($user->foto_perfil, 'cloudinary')) {
+                // Ideally delete from Cloudinary using Public ID, but for now just replacing standard path
+                // to extract public ID: basename($user->foto_perfil, '.jpg') etc. 
+                // $publicId = pathinfo($user->foto_perfil, PATHINFO_FILENAME);
+                // Cloudinary::destroy($publicId);
+            }
+
+            // Update user profile with full Cloudinary URL
             $user->update(['foto_perfil' => $path]);
 
             return response()->json([
-                'message' => 'Foto de perfil actualizada successfully',
+                'message' => 'Foto de perfil actualizada correctamente',
                 'user' => $user
             ]);
         }
 
         return response()->json(['message' => 'No se ha subido ninguna foto'], 400);
     }
+
     public function deleteProfilePhoto(Request $request)
     {
         try {
             $user = $request->user();
 
-            // Optional: Delete file from storage checks could be added here
+            // Optional: Delete file from Cloudinary 
+            // if ($user->foto_perfil) { ... }
 
             $user->update(['foto_perfil' => null]);
 

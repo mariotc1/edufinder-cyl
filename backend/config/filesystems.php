@@ -41,10 +41,16 @@ return [
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
-            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
+            'url' => rtrim(env('APP_URL', 'http://localhost'), '/') . '/storage',
             'visibility' => 'public',
             'throw' => false,
             'report' => false,
+        ],
+
+        'cloudinary' => [
+            'driver' => 'cloudinary',
+            'folder' => env('CLOUDINARY_FOLDER', 'edufinder_avatars'),
+            'upload_preset' => env('CLOUDINARY_UPLOAD_PRESET'),
         ],
 
         's3' => [

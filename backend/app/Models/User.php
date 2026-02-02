@@ -78,12 +78,12 @@ class User extends Authenticatable
             return null;
         }
 
-        // If it's already an absolute URL (e.g. Google Auth), return it
-        if (filter_var($value, FILTER_VALIDATE_URL)) {
+        // If it's already an absolute URL (e.g. Google Auth or Cloudinary), return it
+        if (filter_var($value, FILTER_VALIDATE_URL) || str_contains($value, 'http')) {
             return $value;
         }
 
-        // Otherwise return the full URL to the storage
+        // Otherwise return the full URL to the storage (legacy support)
         return asset('storage/' . $value);
     }
 }
