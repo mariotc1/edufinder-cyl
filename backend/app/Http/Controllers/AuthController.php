@@ -201,25 +201,29 @@ class AuthController extends Controller
         $user = $request->user();
 
         if ($request->hasFile('photo')) {
-            // Upload to Cloudinary
-            $result = $request->file('photo')->storeOnCloudinary('top_tutors_avatars');
-            $path = $result->getSecurePath();
+            try {
+                // Upload to Cloudinary
+                $result = $request->file('photo')->storeOnCloudinary('top_tutors_avatars');
+                $path = $result->getSecurePath();
 
-            // Delete old photo if it exists and is a Cloudinary URL
-            if ($user->foto_perfil && str_contains($user->foto_perfil, 'cloudinary')) {
-                // Ideally delete from Cloudinary using Public ID, but for now just replacing standard path
-                // to extract public ID: basename($user->foto_perfil, '.jpg') etc. 
-                // $publicId = pathinfo($user->foto_perfil, PATHINFO_FILENAME);
-                // Cloudinary::destroy($publicId);
+                // Delete old photo if it exists and is a Cloudinary URL
+                if ($user->foto_perfil && str_contains($user->foto_perfil, 'cloudinary')) {
+                    // Ideally delete from Cloudinary using Public ID
+                }
+
+                // Update user profile with full Cloudinary URL
+                $user->update(['foto_perfil' => $path]);
+
+                return response()->json([
+                    'message' => 'Foto de perfil actualizada correctamente',
+                    'user' => $user
+                ]);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'message' => 'Error al subir la imagen: ' . $e->getMessage(),
+                    'error_details' => $e->getTraceAsString()
+                ], 500);
             }
-
-            // Update user profile with full Cloudinary URL
-            $user->update(['foto_perfil' => $path]);
-
-            return response()->json([
-                'message' => 'Foto de perfil actualizada correctamente',
-                'user' => $user
-            ]);
         }
 
         return response()->json(['message' => 'No se ha subido ninguna foto'], 400);
