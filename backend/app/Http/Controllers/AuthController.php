@@ -31,7 +31,7 @@ class AuthController extends Controller
 
         try {
             Mail::to($user)->send(new WelcomeEmail($user));
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             // Log error but don't fail registration
             \Illuminate\Support\Facades\Log::error('Error sending welcome email: ' . $e->getMessage());
         }
