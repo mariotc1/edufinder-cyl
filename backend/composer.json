@@ -14,6 +14,7 @@
         "laravel/sanctum": "^4.2",
         "laravel/socialite": "^5.24",
         "cloudinary-labs/cloudinary-laravel": "^2.0",
+        "resend/resend-laravel": "^0.15.0",
         "laravel/tinker": "^2.10.1"
     },
     "require-dev": {
