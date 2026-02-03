@@ -32,12 +32,10 @@ export function useFavorite({ centro, initialIsFavorite = false, onToggle }: Use
 
         if (loading) return;
 
-        // Optimistic update
         const newStatus = !isFavorite;
         setIsFavorite(newStatus);
         if (onToggle) onToggle(newStatus);
 
-        // Trigger Animation
         if (newStatus && elementRef) {
             const rect = elementRef.getBoundingClientRect();
             triggerAnimation(rect, {
@@ -53,11 +51,12 @@ export function useFavorite({ centro, initialIsFavorite = false, onToggle }: Use
             } else {
                 await removeFavorite(centro.id);
             }
-            mutate('/favoritos'); // Revalidate global favorites cache
+            mutate('/favoritos');
+
         } catch (error) {
-            // Revert
             setIsFavorite(!newStatus);
             if (onToggle) onToggle(!newStatus);
+
         } finally {
             setLoading(false);
         }

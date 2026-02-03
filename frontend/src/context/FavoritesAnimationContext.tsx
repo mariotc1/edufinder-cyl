@@ -12,7 +12,7 @@ interface CardData {
 interface AnimationItem {
   id: string;
   startRect: DOMRect;
-  targetId: string; // ID of the navbar icon
+  targetId: string;
   data: CardData;
 }
 
@@ -29,23 +29,17 @@ export function FavoritesAnimationProvider({ children }: { children: React.React
   
   const triggerAnimation = (startRect: DOMRect, data: CardData) => {
     const id = Math.random().toString(36).substring(7);
-    // Determine target based on viewport width (mobile vs desktop)
     const targetId = window.innerWidth >= 768 ? 'nav-favorites-icon-desktop' : 'nav-mobile-menu-button';
     
     setItems(prev => [...prev, { id, startRect, targetId, data }]);
-
-    // Trigger pulse right when the animation is expected to end (1.2s duration)
-    // We trigger it slightly before the end (1.0s) for better visual overlap
     setTimeout(() => {
         setFavoritesPulse(true);
-        // Turn off pulse shortly after
         setTimeout(() => setFavoritesPulse(false), 300);
     }, 1000);
 
-    // Clean up animation item
     setTimeout(() => {
       setItems(prev => prev.filter(item => item.id !== id));
-    }, 1400); // 1.2s animation + buffer
+    }, 1400);
   };
 
   return (
@@ -76,7 +70,6 @@ function FlyingCard({ item }: { item: AnimationItem }) {
 
   if (!targetRect) return null;
 
-  // Helper for badge color - same as CentroCard logic
   const getNaturalezaBadge = (naturaleza: string) => {
     switch (naturaleza?.toUpperCase()) {
       case "PÚBLICO": return "bg-blue-50 text-blue-700 border-blue-200";
@@ -96,7 +89,7 @@ function FlyingCard({ item }: { item: AnimationItem }) {
         height: item.startRect.height,
         opacity: 1,
         scale: 1,
-        borderRadius: "0.75rem", // rounded-xl
+        borderRadius: "0.75rem",
         zIndex: 100 
       }}
       animate={{ 
@@ -104,11 +97,11 @@ function FlyingCard({ item }: { item: AnimationItem }) {
         top: targetRect.top + (targetRect.height / 2) - (item.startRect.height / 2),
         scale: 0.1,
         opacity: 0,
-        borderRadius: "50%" // Morph into circle as it enters
+        borderRadius: "50%"
       }}
       transition={{ 
-        duration: 1.2,  // Slower duration
-        ease: [0.2, 0.8, 0.2, 1], // More emphasis on start accel
+        duration: 1.2,  
+        ease: [0.2, 0.8, 0.2, 1],
       }}
       className="bg-white border border-neutral-200 shadow-2xl overflow-hidden flex flex-col pointer-events-none"
     >
