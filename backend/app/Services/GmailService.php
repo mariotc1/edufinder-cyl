@@ -51,8 +51,8 @@ class GmailService
             $mail->SMTPAuth = true;
             $mail->Username = env('MAIL_USERNAME'); // mariotomecore@gmail.com
             $mail->Password = env('MAIL_PASSWORD'); // Google App Password
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS; // Enable implicit TLS encryption (Port 465)
-            $mail->Port = env('MAIL_PORT', 465);
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // Use STARTTLS
+            $mail->Port = env('MAIL_PORT', 587); // Use Port 587
 
             // Recipients
             $mail->setFrom(env('MAIL_FROM_ADDRESS', 'mariotomecore@gmail.com'), 'EduFinder CYL');

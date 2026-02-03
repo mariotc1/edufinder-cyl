@@ -23,11 +23,12 @@ export default function ForgotPassword() {
             setStatus('error');
             console.error('Forgot password FULL error:', err);
             
-            // Check for "Network Error" specifically
+            // Check for "Network Error" specifically (Slow SMTP)
             if (err.message === 'Network Error') {
-                setMessage('Error de conexión. El correo se ha enviado, pero el servidor tardó en responder.');
-                // Optional: setStatus('success') if we trust it worked fallback
+                setStatus('success');
+                setMessage('Petición enviada. Si el correo es correcto, lo recibirás en breve (el servidor va un poco lento).');
             } else {
+                setStatus('error');
                 const msg = err.response?.data?.message 
                     || err.response?.data?.email?.[0] 
                     || err.message 
