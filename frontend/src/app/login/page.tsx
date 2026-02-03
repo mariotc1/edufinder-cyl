@@ -1,4 +1,3 @@
-
 import { Suspense } from 'react';
 import LoginContent from './LoginContent';
 import { Loader2 } from 'lucide-react';

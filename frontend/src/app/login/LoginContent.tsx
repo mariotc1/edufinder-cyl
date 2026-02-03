@@ -22,17 +22,19 @@ export default function LoginContent() {
         if (isLoading) return;
         setError('');
         setIsLoading(true);
+        
         try {
             const res = await api.post('/login', { email, password });
             login(res.data.user, res.data.access_token);
 
-            // Check for redirect param
             const redirectUrl = searchParams.get('redirect');
+
             if (redirectUrl) {
                 router.push(redirectUrl);
             } else {
                 router.push('/');
             }
+
         } catch (err: any) {
             setError(err.response?.data?.message || 'Error al iniciar sesión');
             setIsLoading(false);
