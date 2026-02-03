@@ -26,14 +26,14 @@ export interface Centro {
   direccion: string;
   latitud: string;
   longitud: string;
-  distancia?: number; // Calculado por backend si hay coords
+  distancia?: number;
   ciclos?: CicloFP[];
 }
 
 export interface FilterOptions {
   q?: string;
   provincia?: string;
-  tipo?: string; // FP, ESO, BACHILLERATO, PRIMARIA
+  tipo?: string; 
   familia?: string;
   ciclo?: string;
   nivel?: string;
