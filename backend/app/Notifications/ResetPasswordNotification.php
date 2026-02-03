@@ -6,8 +6,7 @@
     use Illuminate\Notifications\Messages\MailMessage;
     use Illuminate\Auth\Notifications\ResetPassword;
 
-    class ResetPasswordNotification extends ResetPassword implements ShouldQueue
-    {
+    class ResetPasswordNotification extends ResetPassword implements ShouldQueue {
         use Queueable;
 
         public function toMail($notifiable): MailMessage {
