@@ -64,12 +64,7 @@ class User extends Authenticatable
      */
     public function sendPasswordResetNotification($token)
     {
-        // Direct PHPMailer sending (Bypass Laravel Notification System)
-        try {
-            (new \App\Services\GmailService())->sendPasswordReset($this->email, $token);
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Password Reset Error: ' . $e->getMessage());
-        }
+        $this->notify(new \App\Notifications\ResetPasswordNotification($token));
     }
     /**
      * Get the user's profile photo URL.
