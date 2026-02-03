@@ -1,4 +1,3 @@
-
 import { Suspense } from 'react';
 import ResetPasswordContent from './ResetPasswordContent';
 import { Loader2 } from 'lucide-react';

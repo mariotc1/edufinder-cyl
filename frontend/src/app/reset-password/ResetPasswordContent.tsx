@@ -20,7 +20,6 @@ export default function ResetPasswordContent() {
     const token = searchParams.get('token');
     const email = searchParams.get('email');
 
-    // Live Password Validation
     const passwordRequirements = useMemo(() => {
         return [
             { text: "Mínimo 8 caracteres", met: password.length >= 8 },
@@ -42,6 +41,7 @@ export default function ResetPasswordContent() {
         }
 
         setIsLoading(true);
+
         try {
             await api.post('/reset-password', {
                 email,
@@ -53,6 +53,7 @@ export default function ResetPasswordContent() {
             setTimeout(() => {
                 router.push('/login');
             }, 2000);
+
         } catch (error: any) {
              setMessage({ 
                 text: error.response?.data?.message || 'Error al restablecer contraseña', 
