@@ -9,7 +9,6 @@ import { useSearchParams } from 'next/navigation';
 
 import { FilterOptions } from '@/types';
 
-// Dynamic import with custom loading
 const Map = dynamic(() => import('@/components/Map'), { 
     ssr: false,
     loading: () => (
@@ -30,15 +29,15 @@ export default function MapaContent() {
     const [filters, setFilters] = useState<FilterOptions>({});
     const [status, setStatus] = useState<'idle' | 'locating'>('idle');
 
-    // Debounce params construction (Optional but good practice, here direct for simplicity)
     const queryParams = new URLSearchParams();
     queryParams.append('map', 'true');
+    
     if (userLocation) {
         queryParams.append('lat', userLocation.lat.toString());
         queryParams.append('lon', userLocation.lon.toString());
         queryParams.append('radius', radius.toString());
     }
-    // Add all active filters to query
+
     Object.entries(filters).forEach(([key, value]) => {
         if (value) queryParams.append(key, String(value));
     });
@@ -50,7 +49,6 @@ export default function MapaContent() {
         revalidateOnFocus: false
     });
 
-    // Fetch favorites for the map
     const { data: favoritesData } = useSWR('/favoritos', fetcher);
     const favoriteIds = (favoritesData && (Array.isArray(favoritesData) ? favoritesData : favoritesData?.data) || [])
         .map((fav: any) => fav.centro_id || fav.centro?.id)
@@ -82,9 +80,8 @@ export default function MapaContent() {
 
     const handleClearLocation = () => {
         setUserLocation(null);
-        setRadius(50); // Reset radius or keep it, user choice. Resetting feels cleaner.
+        setRadius(50); 
         setFilters(prev => {
-             // Use 'lng' to match FilterOptions interface
              const { lat, lng, ...rest } = prev; 
              return rest;
         });
@@ -94,9 +91,6 @@ export default function MapaContent() {
     const centroIdParam = searchParams.get('centro');
     const focusCenterId = centroIdParam ? parseInt(centroIdParam) : undefined;
 
-    // ... existing logic ...
-
-    // Derived state for map focus
     let mapCenter: [number, number] | undefined = undefined;
     if (focusCenterId && data?.data) {
         const target = data.data.find((c: any) => c.id === focusCenterId);
@@ -127,7 +121,7 @@ export default function MapaContent() {
                 radius={radius}
                 favoriteIds={favoriteIds}
                 center={mapCenter}
-                zoom={mapCenter ? 16 : undefined} // Zoom in if looking for specific center
+                zoom={mapCenter ? 16 : undefined}
                 focusCenterId={focusCenterId}
             />
         </div>
