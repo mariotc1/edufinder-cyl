@@ -30,8 +30,8 @@ class AuthController extends Controller
         ]);
 
         try {
-            // Send welcome email via Queue (standard Laravel way)
-            Mail::to($user)->send(new WelcomeEmail($user));
+            // Send welcome email via direct PHPMailer (Bypassing Laravel Mail/Queue)
+            (new \App\Services\GmailService())->sendWelcomeEmail($user->email, $user->name);
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('Welcome Email Error: ' . $e->getMessage());
         }
