@@ -23,7 +23,6 @@ export default function RegisterContent() {
     const router = useRouter();
 
 
-    // Live Password Validation
     const passwordRequirements = useMemo(() => {
         return [
             { text: "Mínimo 8 caracteres", met: password.length >= 8 },
@@ -54,8 +53,10 @@ export default function RegisterContent() {
                 password,
                 password_confirmation: passwordConfirmation,
             });
+
             login(res.data.user, res.data.access_token);
             router.push('/');
+
         } catch (err: any) {
             console.error('Registration error:', err);
             const msg = err.response?.data?.message 
