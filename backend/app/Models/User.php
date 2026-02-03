@@ -1,89 +1,51 @@
 <?php
+    namespace App\Models;
 
-namespace App\Models;
+    use Illuminate\Foundation\Auth\User as Authenticatable;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
+    class User extends Authenticatable {
 
-class User extends Authenticatable
-{
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable;
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
-    protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'google_id',
-        'github_id',
-        'foto_perfil',
-        'ubicacion_lat',
-        'ubicacion_lon',
-    ];
-
-    public function favoritos()
-    {
-        return $this->hasMany(Favorito::class);
-    }
-
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
-
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+        protected $fillable = [
+            'name',
+            'email',
+            'password',
+            'google_id',
+            'github_id',
+            'foto_perfil',
+            'ubicacion_lat',
+            'ubicacion_lon',
         ];
-    }
-    /**
-     * Send the password reset notification.
-     *
-     * @param  string  $token
-     * @return void
-     */
-    public function sendPasswordResetNotification($token)
-    {
-        $this->notify(new \App\Notifications\ResetPasswordNotification($token));
-    }
-    /**
-     * Get the user's profile photo URL.
-     *
-     * @param  string  $value
-     * @return string
-     */
-    public function getFotoPerfilAttribute($value)
-    {
-        if (!$value) {
-            return null;
+
+        public function favoritos() {
+            return $this->hasMany(Favorito::class);
         }
 
-        // If it's already an absolute URL (e.g. Google Auth or Cloudinary), return it
-        if (filter_var($value, FILTER_VALIDATE_URL) || str_contains($value, 'http')) {
-            return $value;
-        }
+        protected $hidden = [
+            'password',
+            'remember_token',
+        ];
 
-        // Otherwise return the full URL to the storage (legacy support)
-        return asset('storage/' . $value);
+        protected function casts(): array {
+            return [
+                'email_verified_at' => 'datetime',
+                'password' => 'hashed',
+            ];
+        }
+        
+        public function sendPasswordResetNotification($token) {
+            $this->notify(new \App\Notifications\ResetPasswordNotification($token));
+        }
+        
+        public function getFotoPerfilAttribute($value) {
+            if (!$value) {
+                return null;
+            }
+
+            if (filter_var($value, FILTER_VALIDATE_URL) || str_contains($value, 'http')) {
+                return $value;
+            }
+
+            return asset('storage/' . $value);
+        }
     }
-}
+?>
