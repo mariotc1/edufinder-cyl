@@ -2,7 +2,6 @@
 set -e
 
 # Run migrations
-# Run migrations
 echo "Running migrations..."
 echo "Linking storage..."
 rm -rf public/storage
