@@ -48,14 +48,15 @@ export default function ComparadorPage() {
 
             setIsLoading(true);
             try {
-                // Fetch details for all selected centers in parallel
                 const promises = selectedCentros.map(c => 
                     api.get(`/centros/${c.id}`).then(res => res.data.data)
                 );
                 const results = await Promise.all(promises);
                 setDetails(results);
+
             } catch (error) {
                 console.error("Error fetching comparison details", error);
+
             } finally {
                 setIsLoading(false);
             }
@@ -64,7 +65,6 @@ export default function ComparadorPage() {
         fetchDetails();
     }, [selectedCentros]);
 
-    // State for Mobile Carousel
     const [activeIndex, setActiveIndex] = useState(0);
 
     const scrollToCard = (index: number) => {
@@ -76,19 +76,20 @@ export default function ComparadorPage() {
         }
     };
 
-    // Handle scroll snap updates
     const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
         const container = e.currentTarget;
         const index = Math.round(container.scrollLeft / container.clientWidth);
         setActiveIndex(index);
     };
 
-    // Helper functions for styling (matched to CentroCard)
     const getNaturalezaBadge = (naturaleza: string) => {
         switch (naturaleza?.toUpperCase()) {
             case "PÚBLICO": return "bg-blue-50/50 text-blue-700 border-blue-200/60 ring-1 ring-blue-100/50 backdrop-blur-sm";
+            
             case "PRIVADO": return "bg-amber-50/50 text-amber-700 border-amber-200/60 ring-1 ring-amber-100/50 backdrop-blur-sm";
+            
             case "CONCERTADO": return "bg-emerald-50/50 text-emerald-700 border-emerald-200/60 ring-1 ring-emerald-100/50 backdrop-blur-sm";
+            
             default: return "bg-gray-50/50 text-gray-700 border-gray-200/60 backdrop-blur-sm";
         }
     };
