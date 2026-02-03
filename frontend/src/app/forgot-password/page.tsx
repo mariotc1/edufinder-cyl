@@ -19,14 +19,15 @@ export default function ForgotPassword() {
             const res = await api.post('/forgot-password', { email });
             setStatus('success');
             setMessage(res.data.message || 'Te hemos enviado un enlace de recuperación a tu correo.');
+
         } catch (err: any) {
             setStatus('error');
             console.error('Forgot password FULL error:', err);
             
-            // Check for "Network Error" specifically (Slow SMTP)
             if (err.message === 'Network Error') {
                 setStatus('success');
-                setMessage('Petición enviada. Si el correo es correcto, lo recibirás en breve (el servidor va un poco lento).');
+                setMessage('Petición enviada. Si el correo es correcto, lo recibirás en breve');
+
             } else {
                 setStatus('error');
                 const msg = err.response?.data?.message 
