@@ -3,7 +3,7 @@ import { MapPin, Building2, BookOpen, ArrowRight, Heart } from "lucide-react";
 import { Centro } from "@/types";
 import { useRef } from "react";
 import { motion, Variants } from "framer-motion";
-import { useFavorite } from "@/hooks/useFavorite"; // Import Hook
+import { useFavorite } from "@/hooks/useFavorite";
 import AddToCompareButton from "./ui/AddToCompareButton";
 
 interface CentroCardProps {
@@ -46,25 +46,27 @@ export default function CentroCard({
   index,
   initialIsFavorite = false,
   onToggle,
+
 }: CentroCardProps) {
-  // Use Custom Hook
   const { isFavorite, toggleFavorite, loading } = useFavorite({
     centro,
     initialIsFavorite,
     onToggle
   });
   
-  // Ref for the entire card (needed for animation source)
   const cardRef = useRef<HTMLDivElement>(null); 
 
   const getNaturalezaBadge = (naturaleza: string) => {
     switch (naturaleza?.toUpperCase()) {
       case "PÚBLICO":
         return "bg-blue-50 text-blue-700 border-blue-200 ring-1 ring-blue-100";
+
       case "PRIVADO":
         return "bg-amber-50 text-amber-700 border-amber-200 ring-1 ring-amber-100";
+
       case "CONCERTADO":
         return "bg-emerald-50 text-emerald-700 border-emerald-200 ring-1 ring-emerald-100";
+
       default:
         return "bg-gray-50 text-gray-700 border-gray-200";
     }
@@ -74,10 +76,13 @@ export default function CentroCard({
     switch (nivel?.toUpperCase()) {
       case "GRADO SUPERIOR":
         return "bg-purple-600 text-white border-purple-600 shadow-sm";
+
       case "GRADO MEDIO":
         return "bg-amber-500 text-white border-amber-500 shadow-sm";
+
       case "FP BÁSICA":
         return "bg-blue-600 text-white border-blue-600 shadow-sm";
+
       default:
         return "bg-neutral-600 text-white border-neutral-600";
     }
@@ -87,10 +92,13 @@ export default function CentroCard({
     switch (nivel?.toUpperCase()) {
       case "GRADO SUPERIOR":
         return "bg-purple-50 border-purple-100 group-hover:border-purple-200";
+
       case "GRADO MEDIO":
         return "bg-amber-50 border-amber-100 group-hover:border-amber-200";
+
       case "FP BÁSICA":
         return "bg-blue-50 border-blue-100 group-hover:border-blue-200";
+
       default:
         return "bg-neutral-50 border-neutral-100";
     }
@@ -100,10 +108,13 @@ export default function CentroCard({
     switch (nivel?.toUpperCase()) {
       case "GRADO SUPERIOR":
         return "bg-white/80";
+
       case "GRADO MEDIO":
         return "bg-white/80";
+
       case "FP BÁSICA":
         return "bg-white/80";
+
       default:
         return "bg-neutral-400";
     }

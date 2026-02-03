@@ -134,7 +134,6 @@ export default function Footer() {
   );
 }
 
-// Micro Component - Updated for slightly larger icons hit area
 function SocialIconTiny({ href, icon }: { href: string; icon: React.ReactNode }) {
   return (
     <a
