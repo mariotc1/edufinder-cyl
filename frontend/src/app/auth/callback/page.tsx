@@ -1,4 +1,3 @@
-
 import { Suspense } from 'react';
 import CallbackContent from './CallbackContent';
 import { Loader2 } from 'lucide-react';

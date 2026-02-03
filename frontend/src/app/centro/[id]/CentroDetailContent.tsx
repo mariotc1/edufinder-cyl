@@ -11,7 +11,6 @@ import { useFavorite } from '@/hooks/useFavorite';
 import { motion } from 'framer-motion';
 
 
-// Dynamic import map to avoid SSR issues
 const Map = dynamic(() => import('@/components/Map'), {
     ssr: false,
     loading: () => <div className="h-64 md:h-full bg-neutral-100 animate-pulse rounded-xl flex items-center justify-center text-neutral-500">Cargando mapa...</div>
@@ -26,30 +25,17 @@ export default function CentroDetailContent() {
     const { data: centro, error } = useSWR(id ? `/centros/${id}` : null, fetcher);
     const { data: ciclos } = useSWR(id ? `/centros/${id}/ciclos` : null, fetcher);
 
-    // Auth & Favorites logic
     const { user } = useAuth();
-    // Use unified hook
     const { isFavorite, toggleFavorite, loading: loadingFav } = useFavorite({
-        centro: centro?.data, // Pass the data object when available
-        initialIsFavorite: false, // Will be updated by effect
-        onToggle: () => {} // Optional callback if needed
+        centro: centro?.data,
+        initialIsFavorite: false,
+        onToggle: () => {}
     });
     
-    // Header Ref for Animation Source
     const headerRef = useRef<HTMLDivElement>(null);
-
-    // Initial check - Sync with Hook
-    // Note: The hook takes initialIsFavorite, but we load async.
-    // We need to sync the hook's internal state when data arrives.
-    // However, the hook uses standard state. Let's rely on the hook's effect if we pass the prop, 
-    // OR we can just let the hook handle it if we move the check logic inside?
-    // Actually, the hook expects 'initialIsFavorite'. 
-    // Let's keep the check logic here for now and pass it, or better:
-    // The current hook implementation allows prop update via useEffect.
-    // So we calculate 'initialIsFavorite' here and pass it.
     
     const { data: favoritesData } = useSWR('/favoritos', fetcher);
-    // Calculated State
+
     const [calculatedIsFavorite, setCalculatedIsFavorite] = useState(false);
 
     useEffect(() => {
@@ -60,7 +46,6 @@ export default function CentroDetailContent() {
         }
     }, [favoritesData, centro]);
 
-    // Re-bind hook with correct initial value when loaded
     const favoriteLogic = useFavorite({
         centro: centro?.data,
         initialIsFavorite: calculatedIsFavorite
@@ -86,7 +71,6 @@ export default function CentroDetailContent() {
 
     const c = centro.data;
 
-    // Badge Logic (Synced with CentroCard)
     const getNaturalezaBadge = (naturaleza: string) => {
         switch (naturaleza?.toUpperCase()) {
             case 'PÚBLICO': return 'bg-blue-50 text-blue-700 border-blue-200 ring-1 ring-blue-100';
