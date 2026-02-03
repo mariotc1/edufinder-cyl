@@ -20,7 +20,6 @@ interface Favorito {
         id: number;
         nombre: string;
         direccion?: string;
-        // Add other properties as needed
     };
 }
 
@@ -33,7 +32,6 @@ export default function ProfileContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    // Form states
     const [name, setName] = useState('');
     const [passwordData, setPasswordData] = useState({ current: '', new: '', confirm: '' });
     const [showCurrentPass, setShowCurrentPass] = useState(false);
@@ -46,7 +44,6 @@ export default function ProfileContent() {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Live Password Validation
     const passwordRequirements = useMemo(() => {
         return [
             { text: "Mínimo 8 caracteres", met: passwordData.new.length >= 8 },
@@ -61,11 +58,11 @@ export default function ProfileContent() {
     useEffect(() => {
         fetchData();
         
-        // Handle URL params for tab navigation
         const tab = searchParams.get('tab');
         if (tab === 'favorites') setActiveTab('favorites');
         if (tab === 'security') setActiveTab('security');
         if (tab === 'profile') setActiveTab('profile');
+
     }, [searchParams]);
 
     const fetchData = async () => {
@@ -77,8 +74,10 @@ export default function ProfileContent() {
             setUser(userRes.data);
             setName(userRes.data.name);
             setFavoritos(favRes.data);
+
         } catch (error) {
             router.push('/login');
+
         } finally {
             setLoading(false);
         }
@@ -91,12 +90,12 @@ export default function ProfileContent() {
             const res = await api.put('/me', { name });
 
             setUser(res.data.user);
-            // Update local storage if needed
+
             const stored = JSON.parse(localStorage.getItem('user') || '{}');
             localStorage.setItem('user', JSON.stringify({ ...stored, ...res.data.user }));
 
             setMessage({ text: 'Perfil actualizado correctamente', type: 'success' });
-            // window.location.reload(); // Optional, to refresh navbar
+
         } catch (error) {
             setMessage({ text: 'Error al actualizar perfil', type: 'error' });
         }
@@ -120,8 +119,10 @@ export default function ProfileContent() {
             });
             setMessage({ text: 'Contraseña actualizada', type: 'success' });
             setPasswordData({ current: '', new: '', confirm: '' });
+
         } catch (error: any) {
             setMessage({ text: error.response?.data?.message || 'Error al cambiar contraseña', type: 'error' });
+
         } finally {
             setUpdatingPassword(false);
         }
@@ -131,7 +132,6 @@ export default function ProfileContent() {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // Validation (max 2MB)
         if (file.size > 2 * 1024 * 1024) {
             setMessage({ text: 'La imagen no debe superar los 2MB', type: 'error' });
             return;
@@ -145,14 +145,16 @@ export default function ProfileContent() {
             const res = await api.post('/me/photo', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
+
             setUser(prev => prev ? { ...prev, foto_perfil: res.data.user.foto_perfil } : null);
             setMessage({ text: 'Foto actualizada correctamente', type: 'success' });
 
-            // Update local storage
             const stored = JSON.parse(localStorage.getItem('user') || '{}');
             localStorage.setItem('user', JSON.stringify({ ...stored, foto_perfil: res.data.user.foto_perfil }));
+
         } catch (error) {
             setMessage({ text: 'Error al subir la imagen', type: 'error' });
+
         } finally {
             setUploading(false);
             if (fileInputRef.current) fileInputRef.current.value = '';
@@ -165,12 +167,13 @@ export default function ProfileContent() {
             setUser(prev => prev ? { ...prev, foto_perfil: undefined } : null);
             setMessage({ text: 'Foto eliminada correctamente', type: 'success' });
 
-            // Update local storage
             const stored = JSON.parse(localStorage.getItem('user') || '{}');
             localStorage.setItem('user', JSON.stringify({ ...stored, foto_perfil: null }));
+
         } catch (error: any) {
             const errorMsg = error.response?.data?.message || 'Error al eliminar la foto';
             setMessage({ text: errorMsg, type: 'error' });
+
         } finally {
             setShowDeleteConfirm(false);
         }
@@ -178,7 +181,6 @@ export default function ProfileContent() {
 
     const handleLocation = () => {
         if (user?.ubicacion_lat) {
-            // Deactivate location
             api.put('/me', {
                 name,
                 ubicacion_lat: null,
@@ -426,15 +428,7 @@ export default function ProfileContent() {
                                                         e.preventDefault();
                                                         if (!user?.ubicacion_lat) handleLocation();
                                                         else {
-                                                            // Logic to force update if already active?
-                                                            // For now we treat 'handleLocation' as 'toggle' based on state, 
-                                                            // but here we might want separate actions.
-                                                            // If we want a separate 'Update' button we can add it.
-                                                            // But reusing 'handleLocation' logic above handles toggle.
-                                                            // Let's rely on the separate 'Desactivar' button I just added,
-                                                            // and make this button only for 'Update' if present, or 'Activate' if not.
                                                             if (user?.ubicacion_lat) {
-                                                                // Re-run geolocation to update
                                                                 if (navigator.geolocation) {
                                                                     navigator.geolocation.getCurrentPosition(async (position) => {
                                                                         try {
