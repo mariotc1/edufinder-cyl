@@ -10,10 +10,8 @@ import CentroCardSkeleton from '@/components/ui/CentroCardSkeleton';
 import { Centro } from '@/types';
 import axios from '@/lib/axios';
 
-// Fetcher function using the configured axios instance
 const fetchFavorites = async (url: string) => {
   const response = await axios.get(url);
-  // Backend returns array of favorites, where each item has nested 'centro' object
   return response.data;
 };
 
@@ -23,29 +21,22 @@ export default function FavoritosContent() {
         shouldRetryOnError: false 
     });
 
-    // Helper to extract centros from favorite response structure
     const getCentros = useCallback(() => {
         if (!data) return [];
-        // Handle different possible response structures
         const rawList = Array.isArray(data) ? data : (data.data || []);
         
-        // Map favorited item to centro object
-        // The endpoint usually returns a Pivot structure: [ { id, user_id, centro_id, centro: {...} }, ... ]
         return rawList.map((item: any) => item.centro).filter(Boolean);
     }, [data]);
 
     const centros = getCentros();
 
-    // When a favorite is toggled (removed), we revalidate the list
     const handleToggle = async () => {
-        // slight delay to allow the animation to finish before list updates
         setTimeout(() => {
             mutate();
         }, 500);
     };
 
     const router = useRouter();
-    // ... (inside component)
 
     return (
         <div className="min-h-screen bg-brand-gradient pt-20 pb-12 px-4 sm:px-6">
