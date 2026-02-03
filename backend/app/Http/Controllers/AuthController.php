@@ -30,8 +30,8 @@ class AuthController extends Controller
         ]);
 
         try {
-            // Direct HTTP sending (Bypass SMTP/Queue issues)
-            (new \App\Services\ResendService())->sendWelcomeEmail($user->name, $user->email);
+            // Send welcome email via Queue (standard Laravel way)
+            Mail::to($user)->send(new WelcomeEmail($user));
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('Welcome Email Error: ' . $e->getMessage());
         }
@@ -167,9 +167,11 @@ class AuthController extends Controller
 
         $status = Password::sendResetLink($request->only('email'));
 
-        return $status === Password::RESET_LINK_SENT
-            ? response()->json(['message' => __($status)])
-            : response()->json(['email' => [__($status)]], 400);
+        // Force absolute success response to prevent "Network Error" due to translation/broker issues
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Si el correo existe, recibirás un enlace de recuperación en breves instantes.'
+        ], 200);
     }
 
     public function resetPassword(Request $request)

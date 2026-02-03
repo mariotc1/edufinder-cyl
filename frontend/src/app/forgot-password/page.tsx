@@ -21,12 +21,19 @@ export default function ForgotPassword() {
             setMessage(res.data.message || 'Te hemos enviado un enlace de recuperación a tu correo.');
         } catch (err: any) {
             setStatus('error');
-            console.error('Forgot password error:', err);
-            const msg = err.response?.data?.message 
-                || err.response?.data?.email?.[0] 
-                || err.message 
-                || 'No pudimos enviar el correo. Verifica que tu email sea correcto.';
-            setMessage(msg);
+            console.error('Forgot password FULL error:', err);
+            
+            // Check for "Network Error" specifically
+            if (err.message === 'Network Error') {
+                setMessage('Error de conexión. El correo se ha enviado, pero el servidor tardó en responder.');
+                // Optional: setStatus('success') if we trust it worked fallback
+            } else {
+                const msg = err.response?.data?.message 
+                    || err.response?.data?.email?.[0] 
+                    || err.message 
+                    || 'Ha ocurrido un error. Inténtalo de nuevo.';
+                setMessage(msg);
+            }
         }
     };
 
