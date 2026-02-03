@@ -23,10 +23,8 @@ function LoginModalContent({ isOpen, onClose }: LoginModalProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // Construct the redirect URL for modal
   const getRedirectUrl = () => {
     const currentPath = `${pathname}${searchParams.toString() ? '?' + searchParams.toString() : ''}`;
-    // Avoid double redirect if we somehow opened this on login page
     if (currentPath.startsWith('/login') || currentPath.startsWith('/registro')) return '';
     return `?redirect=${encodeURIComponent(currentPath)}`;
   };
