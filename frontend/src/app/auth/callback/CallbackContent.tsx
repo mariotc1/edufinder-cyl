@@ -21,7 +21,6 @@ export default function CallbackContent() {
         if (token) {
             processed.current = true;
             
-            // Fetch user data using the token
             api.get('/me', {
                 headers: {
                     Authorization: `Bearer ${token}`
@@ -30,7 +29,6 @@ export default function CallbackContent() {
             .then(res => {
                 const user = res.data;
                 login(user, token);
-                // Clear URL params without refresh and redirect
                 window.history.replaceState({}, document.title, '/');
                 router.push('/');
             })
@@ -41,14 +39,14 @@ export default function CallbackContent() {
 
         } else if (error) {
             router.push(`/login?error=${error}`);
+
         } else {
-             // Avoid redirecting immediately if we are just verifying search params could be empty on initial render sometimes?
-             // But valid OAuth flow should have params.
              const hasParams = Array.from(searchParams.keys()).length > 0;
              if (!hasParams) {
                  router.push('/login');
              }
         }
+
     }, [searchParams, login, router]);
 
     return (
