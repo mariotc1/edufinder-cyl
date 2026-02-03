@@ -1,58 +1,55 @@
 <?php
+    namespace App\Http\Controllers;
 
-namespace App\Http\Controllers;
+    use App\Models\CicloFp;
+    use App\Http\Resources\CicloFpResource;
+    use Illuminate\Http\Request;
 
-use App\Models\CicloFp;
-use App\Http\Resources\CicloFpResource;
-use Illuminate\Http\Request;
+    class CicloFpController extends Controller{
+        public function index(Request $request) {
+            $query = CicloFp::with('centro');
 
-class CicloFpController extends Controller
-{
-    public function index(Request $request)
-    {
-        $query = CicloFp::with('centro');
+            if ($request->has('familia_profesional')) {
+                $query->where('familia_profesional', 'ilike', '%' . $request->familia_profesional . '%');
+            }
 
-        if ($request->has('familia_profesional')) {
-            $query->where('familia_profesional', 'ilike', '%' . $request->familia_profesional . '%');
+            if ($request->has('nivel_educativo')) {
+                $query->where('nivel_educativo', 'ilike', '%' . $request->nivel_educativo . '%');
+            }
+
+            if ($request->has('modalidad')) {
+                $query->where('modalidad', 'ilike', '%' . $request->modalidad . '%');
+            }
+
+            if ($request->has('tipo_ensenanza')) {
+                $query->where('tipo_ensenanza', 'ilike', '%' . $request->tipo_ensenanza . '%');
+            }
+
+            if ($request->has('q')) {
+                $search = $request->q;
+                $query->where('ciclo_formativo', 'ilike', "%{$search}%");
+            }
+
+            return CicloFpResource::collection($query->paginate(20));
         }
 
-        if ($request->has('nivel_educativo')) {
-            $query->where('nivel_educativo', 'ilike', '%' . $request->nivel_educativo . '%');
-        }
+        public function suggestions(Request $request) {
+            $request->validate([
+                'q' => 'nullable|string|min:2',
+            ]);
 
-        if ($request->has('modalidad')) {
-            $query->where('modalidad', 'ilike', '%' . $request->modalidad . '%');
-        }
+            if (!$request->q) {
+                return response()->json([]);
+            }
 
-        if ($request->has('tipo_ensenanza')) {
-            $query->where('tipo_ensenanza', 'ilike', '%' . $request->tipo_ensenanza . '%');
-        }
+            $suggestions = CicloFp::query()
+                ->select('ciclo_formativo')
+                ->where('ciclo_formativo', 'ilike', '%' . $request->q . '%')
+                ->distinct()
+                ->limit(10)
+                ->pluck('ciclo_formativo');
 
-        if ($request->has('q')) {
-            $search = $request->q;
-            $query->where('ciclo_formativo', 'ilike', "%{$search}%");
+            return response()->json($suggestions);
         }
-
-        return CicloFpResource::collection($query->paginate(20));
     }
-
-    public function suggestions(Request $request)
-    {
-        $request->validate([
-            'q' => 'nullable|string|min:2',
-        ]);
-
-        if (!$request->q) {
-            return response()->json([]);
-        }
-
-        $suggestions = CicloFp::query()
-            ->select('ciclo_formativo')
-            ->where('ciclo_formativo', 'ilike', '%' . $request->q . '%')
-            ->distinct()
-            ->limit(10)
-            ->pluck('ciclo_formativo');
-
-        return response()->json($suggestions);
-    }
-}
+?>
