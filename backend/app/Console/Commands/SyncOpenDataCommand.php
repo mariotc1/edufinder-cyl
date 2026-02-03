@@ -5,35 +5,20 @@ namespace App\Console\Commands;
 use App\Services\OpenDataSyncService;
 use Illuminate\Console\Command;
 
-class SyncOpenDataCommand extends Command
-{
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
+class SyncOpenDataCommand extends Command {
+
     protected $signature = 'opendata:sync';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
     protected $description = 'Synchronize data from OpenData JCyL';
 
     protected $service;
 
-    public function __construct(OpenDataSyncService $service)
-    {
+    public function __construct(OpenDataSyncService $service) {
         parent::__construct();
         $this->service = $service;
     }
 
-    /**
-     * Execute the console command.
-     */
-    public function handle()
-    {
+    public function handle() {
         $this->info('Starting OpenData synchronization...');
 
         try {
