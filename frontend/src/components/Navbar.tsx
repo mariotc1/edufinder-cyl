@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Menu, X, MapPin, Heart, LogIn, UserPlus, User as UserMenuIcon, LogOut as LogOutIcon } from 'lucide-react';
-// Remove local api import as it's used via context
 import Logo from './Logo';
 import UserMenu from './UserMenu';
 import { useAuth } from '@/context/AuthContext';
@@ -22,7 +21,6 @@ export default function Navbar() {
 }
 
 function NavbarContent() {
-  /* Refactored to use AuthContext */
   const { user, logout, openLoginModal } = useAuth();
   const { favoritesPulse } = useFavoritesAnimation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -35,10 +33,8 @@ function NavbarContent() {
       router.push('/login');
   };
 
-  // Construct the redirect URL
   const getRedirectUrl = () => {
       const currentPath = `${pathname}${searchParams.toString() ? '?' + searchParams.toString() : ''}`;
-      // Avoid redirect loops if already on auth pages
       if (currentPath.startsWith('/login') || currentPath.startsWith('/registro')) return '';
       return `?redirect=${encodeURIComponent(currentPath)}`;
   };

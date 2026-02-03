@@ -10,7 +10,6 @@ export default function ComparisonTray() {
     const { selectedCentros, removeFromCompare, clearComparison, isOpen, setIsOpen } = useComparison();
     const pathname = usePathname();
 
-    // Hide on comparison page itself or if empty
     if (selectedCentros.length === 0 || pathname === '/comparador') return null;
 
     return (

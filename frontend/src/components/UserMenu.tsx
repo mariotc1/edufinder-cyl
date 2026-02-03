@@ -11,13 +11,13 @@ export default function UserMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Close when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
@@ -111,7 +111,6 @@ export default function UserMenu() {
                         onClick={() => {
                             logout();
                             setIsOpen(false);
-                            // Optional: Redirect handled by wrapper or logic
                             window.location.href = '/login';
                         }}
                         className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-red-50 transition-colors group text-left"

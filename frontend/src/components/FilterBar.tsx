@@ -17,7 +17,6 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // Inicializar estado desde URL
   const [filters, setFilters] = useState<FilterOptions>({
     q: searchParams.get('q') || '',
     provincia: searchParams.get('provincia') || '',
@@ -33,14 +32,12 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
 
   const [geolocationStatus, setGeolocationStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   
-  // Autocomplete States - Cycle
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const skipFetchRef = useRef(false);
 
-  // Autocomplete States - Centro (Main Search)
   const [centroSuggestions, setCentroSuggestions] = useState<string[]>([]);
   const [showCentroSuggestions, setShowCentroSuggestions] = useState(false);
   const [isSearchingCentro, setIsSearchingCentro] = useState(false);
@@ -48,14 +45,12 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
   const skipFetchCentroRef = useRef(false);
   const prevFiltersRef = useRef(filters);
 
-  // Click Outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      // Cycle Suggestions
       if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
         setShowSuggestions(false);
       }
-      // Centro Suggestions
+
       if (wrapperCentroRef.current && !wrapperCentroRef.current.contains(event.target as Node)) {
         setShowCentroSuggestions(false);
       }
@@ -64,9 +59,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Fetch Suggestions Logic - Cycle
   useEffect(() => {
-    // If we just selected an item, skip the fetch
     if (skipFetchRef.current) {
         skipFetchRef.current = false;
         return;
@@ -79,11 +72,14 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
               const results = await fetchCycleSuggestions(filters.ciclo);
               setSuggestions(results);
               setShowSuggestions(true);
+
           } catch (error) {
               console.error("Error fetching suggestions", error);
+
           } finally {
               setIsSearching(false);
           }
+
       } else {
           setSuggestions([]);
           setShowSuggestions(false);
@@ -92,7 +88,6 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
     return () => clearTimeout(timer);
   }, [filters.ciclo, filters.tipo]);
 
-  // Fetch Suggestions Logic - Centro
   useEffect(() => {
     if (skipFetchCentroRef.current) {
         skipFetchCentroRef.current = false;
@@ -102,15 +97,19 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
     const timer = setTimeout(async () => {
       if (filters.q && filters.q.length >= 2) {
           setIsSearchingCentro(true);
+
           try {
               const results = await fetchCentroSuggestions(filters.q);
               setCentroSuggestions(results);
               setShowCentroSuggestions(true);
+
           } catch (error) {
               console.error("Error fetching centro suggestions", error);
+
           } finally {
               setIsSearchingCentro(false);
           }
+
       } else {
           setCentroSuggestions([]);
           setShowCentroSuggestions(false);
@@ -119,14 +118,12 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
     return () => clearTimeout(timer);
   }, [filters.q]);
 
-  // Recuperar estado geo si hay coordenadas en URL
   useEffect(() => {
     if (searchParams.get('lat') && searchParams.get('lng')) {
       setGeolocationStatus('success');
     }
   }, [searchParams]);
 
-  // Sincronizar URL cuando cambian los filtros (con debounce)
   useEffect(() => {
     const timer = setTimeout(() => {
       const params = new URLSearchParams();
@@ -144,10 +141,8 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
         params.set('radio', (filters.radio || 10).toString());
       }
 
-      // Check for filter changes
       const filtersChanged = JSON.stringify(filters) !== JSON.stringify(prevFiltersRef.current);
       
-      // Determine page: if filters changed, reset to 1 (implicit in URL). Else use current page.
       const pageInUrl = filtersChanged ? 1 : page;
       if (pageInUrl > 1) params.set('page', pageInUrl.toString());
 
@@ -218,7 +213,6 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
       setGeolocationStatus('idle');
   };
 
-  // Data Selectors
   const provincias = ['AVILA', 'BURGOS', 'LEON', 'PALENCIA', 'SALAMANCA', 'SEGOVIA', 'SORIA', 'VALLADOLID', 'ZAMORA'];
   const tiposEnsenanza = [
     { value: 'FP', label: 'Formación Profesional' },
@@ -235,7 +229,6 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
 
   const hasActiveFilters = Object.values(filters).some(val => val !== undefined && val !== '' && val !== 10) || geolocationStatus === 'success';
   
-  // Clases comunes para inputs y selects
   const inputClasses = "w-full appearance-none bg-neutral-50 border border-neutral-200 text-neutral-700 py-3 px-4 pr-8 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#223945]/20 focus:border-[#223945] transition-all font-medium text-sm hover:border-[#223945]/50 placeholder:text-neutral-400";
   const labelClasses = "text-[11px] font-bold text-[#223945] ml-1 uppercase tracking-wider mb-1 block opacity-80";
 
@@ -470,7 +463,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
                                      <li 
                                          key={i}
                                          onClick={() => {
-                                             skipFetchRef.current = true; // Prevent re-open
+                                             skipFetchRef.current = true; 
                                              handleChange('ciclo', sug);
                                              setShowSuggestions(false);
                                          }}
@@ -554,7 +547,6 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
   );
 }
 
-// Added simplified ChevronDown component since it was missing in imports but used in replacement
 function ChevronDown({ className }: { className?: string }) {
   return (
     <svg 
