@@ -14,7 +14,6 @@ import { motion } from 'framer-motion';
 export default function SearchContent() {
   const searchParams = useSearchParams();
 
-  // Initialize state from URL params to avoid double-fetch on load
   const [filters, setFilters] = useState<FilterOptions>({
     q: searchParams.get('q') || '',
     provincia: searchParams.get('provincia') || '',
@@ -29,7 +28,6 @@ export default function SearchContent() {
 
   const [page, setPage] = useState(searchParams.get('page') ? Number(searchParams.get('page')) : 1);
 
-  // SWR key changes when filters or page change
   const swrKey = JSON.stringify({ ...filters, page });
 
   const { data, error, isLoading } = useSWR(swrKey, () => searchCentros({ ...filters, page }), {
@@ -37,11 +35,10 @@ export default function SearchContent() {
     revalidateOnFocus: false
   });
 
-  // Fetch Favorites to check status
   const { data: favoritesData } = useSWR('/favoritos', async (url) => {
     return (await import('@/lib/axios')).default.get(url).then(res => res.data);
   }, {
-    shouldRetryOnError: false, // If 401 (not logged in), don't retry loop
+    shouldRetryOnError: false, 
     errorRetryCount: 0
   });
 
@@ -56,13 +53,12 @@ export default function SearchContent() {
     setPage(1);
   }, []);
 
-  // Animation Variants for the Container
   const containerVariants = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.05 // Delay between each child animation
+        staggerChildren: 0.05 
       }
     }
   };

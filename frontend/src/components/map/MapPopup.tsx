@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { MapPin, ArrowRight } from 'lucide-react'; // Removed Building2 for minimalism
+import { MapPin, ArrowRight } from 'lucide-react';
 import { Centro } from '@/types';
 import { useFavorite } from '@/hooks/useFavorite';
 import { useRef } from 'react';

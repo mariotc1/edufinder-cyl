@@ -16,11 +16,10 @@ export default function AddToCompareButton({ centro, className, showLabel = fals
     const { selectedCentros, addToCompare, removeFromCompare } = useComparison();
     const { user, openLoginModal } = useAuth();
     
-    // Check if this specific centro is already selected
     const isSelected = selectedCentros.some(c => c.id === centro.id);
 
     const handleClick = (e: React.MouseEvent) => {
-        e.preventDefault(); // Prevent navigating if inside a Link
+        e.preventDefault(); 
         e.stopPropagation();
         
         if (!user) {

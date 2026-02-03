@@ -25,16 +25,13 @@ export default function MapSidebar({ radius, setRadius, filters, setFilters, onL
         setSections(prev => ({ ...prev, [section]: !prev[section] }));
     };
 
-    // Data Selectors
     const provincias = ['AVILA', 'BURGOS', 'LEON', 'PALENCIA', 'SALAMANCA', 'SEGOVIA', 'SORIA', 'VALLADOLID', 'ZAMORA'];
 
-    // Handle Filter Changes
     const handleChange = (key: keyof FilterOptions, value: any) => {
         const newValue = value === "" ? undefined : value;
         setFilters({ ...filters, [key]: newValue });
     };
 
-    // Shared Styles
     const selectContainerClass = "relative";
     const selectClass = "w-full appearance-none bg-neutral-50 border border-neutral-200 text-neutral-700 py-2.5 px-3 pr-8 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#223945]/20 focus:border-[#223945] text-sm font-medium transition-all hover:border-[#223945]/50 cursor-pointer";
     const iconClass = "pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-neutral-500";
