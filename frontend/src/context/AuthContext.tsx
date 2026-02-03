@@ -35,15 +35,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             
             if (token && userData) {
               setUser(JSON.parse(userData));
+
             } else {
-              // Validar si el token es válido o ha expirado si se desea
               setUser(null);
             }
+
         } catch (error) {
             console.error("Error parsing user data", error);
             localStorage.removeItem('user');
             localStorage.removeItem('token');
             setUser(null);
+
         } finally {
             setLoading(false);
         }
@@ -61,8 +63,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     try {
       await api.post('/logout');
+
     } catch (error) {
       console.error('Logout failed', error);
+
     } finally {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
