@@ -12,10 +12,8 @@ import { MapPin, Building2, Star } from 'lucide-react';
 import MapPopup from '@/components/map/MapPopup';
 import { Centro } from '@/types';
 
-// Cache para iconos memoizados
 const iconCache: Record<string, L.DivIcon> = {};
 
-// Helper para obtener icono memoizado
 const getCachedIcon = (type: string) => {
     if (!iconCache[type]) {
         iconCache[type] = createCustomIcon(type);
@@ -23,16 +21,9 @@ const getCachedIcon = (type: string) => {
     return iconCache[type];
 };
 
-
-
-
-// Function to generate Custom Icons (Google Maps Pointed Style)
 const createCustomIcon = (type: string) => {
-    // Determine color based on nature (public vs private/concertado)
-    // User requested UNIFIED Dark Blue (#223945) for all icons to match the app theme.
     const colorHex = '#223945'; 
 
-    // A nicer, sharper "Teardrop/Pin" SVG shape
     const iconMarkup = renderToStaticMarkup(
         <div className="relative group" style={{ width: '40px', height: '40px' }}>
             {/* Shadow Effect at bottom */}
@@ -65,9 +56,9 @@ const createCustomIcon = (type: string) => {
     return L.divIcon({
         html: iconMarkup,
         className: 'custom-pin-marker',
-        iconSize: [40, 48], // Match SVG aspect ratio roughly 
-        iconAnchor: [20, 48], // Tip of the pin is at bottom center
-        popupAnchor: [0, -50] // Popup should open well above the pin
+        iconSize: [40, 48], 
+        iconAnchor: [20, 48], 
+        popupAnchor: [0, -50] 
     });
 };
 
@@ -93,26 +84,21 @@ interface MapControllerProps {
 function MapController({ userLocation, radius, center, zoom }: MapControllerProps) {
   const map = useMap();
 
-  // Initial FlyTo when location is found
   useEffect(() => {
     if (userLocation) {
-        map.flyTo([userLocation.lat, userLocation.lon], 14, { // Increased zoom from 10 to 14 for better visibility
+        map.flyTo([userLocation.lat, userLocation.lon], 14, { 
             duration: 2.0
         });
+
     } else if (center) {
-        // If no user location but center is provided (Detail Mode), fly to center
-        // We use setView for instant transition if it's initial load, but flyTo is fine too.
-        // Actually, for detail page, we might want it to be static or grounded.
         map.flyTo(center, zoom || 15, { duration: 1.5 });
     }
   }, [userLocation, map, center, zoom]);
 
-  // Adjust Zoom/Bounds when Radius changes
   useEffect(() => {
     if (userLocation && radius) {
-       // Manual bounds calculation to avoid L.circle 'layerPointToLatLng' errors (layer not on map)
        const latRadian = userLocation.lat * (Math.PI / 180);
-       const metersPerDegreeLat = 111000; // Approx
+       const metersPerDegreeLat = 111000; 
        const metersPerDegreeLon = 111000 * Math.cos(latRadian);
        
        const rMeters = radius * 1000;
@@ -145,7 +131,6 @@ interface MapProps {
 export default function Map({ centros, userLocation, radius, center, zoom, favoriteIds = [], focusCenterId }: MapProps) {
     const defaultCenter: [number, number] = [41.652, -4.728]; // Valladolid center
 
-    // Use passed center if available, otherwise default
     const effectiveCenter = center || defaultCenter;
     const effectiveZoom = zoom || 8;
 
@@ -154,13 +139,12 @@ export default function Map({ centros, userLocation, radius, center, zoom, favor
             center={effectiveCenter} 
             zoom={effectiveZoom} 
             scrollWheelZoom={true} 
-            className="h-full w-full z-0 outline-none bg-neutral-100" // Added bg color
+            className="h-full w-full z-0 outline-none bg-neutral-100" 
             zoomControl={false}
         >
             <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
                 url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-                // Voyager usually has good local labels. If English persists, we can try OSM DE or specialized tiles, but Voyager is generally best for UI.
             />
             
             <MapController userLocation={userLocation} radius={radius} center={center} zoom={zoom} />
@@ -169,7 +153,7 @@ export default function Map({ centros, userLocation, radius, center, zoom, favor
             {userLocation && radius && (
                 <Circle 
                     center={[userLocation.lat, userLocation.lon]}
-                    radius={radius * 1000} // Convert km to meters
+                    radius={radius * 1000}
                     pathOptions={{ color: '#3b82f6', fillColor: '#3b82f6', fillOpacity: 0.1, weight: 1, dashArray: '5, 5' }}
                 />
             )}
@@ -199,7 +183,7 @@ export default function Map({ centros, userLocation, radius, center, zoom, favor
                          icon={getCachedIcon(centro.naturaleza || 'default')}
                          ref={(ref) => {
                              if (ref && focusCenterId === centro.id) {
-                                 setTimeout(() => ref.openPopup(), 500); // Small delay to ensure map animation finishes
+                                 setTimeout(() => ref.openPopup(), 500);
                              }
                          }}
                      >
