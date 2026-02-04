@@ -2,191 +2,179 @@
 
 <div align="center">
 
-![Next.js](https://img.shields.io/badge/next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)
-![Laravel](https://img.shields.io/badge/laravel-%23FF2D20.svg?style=for-the-badge&logo=laravel&logoColor=white)
-![Postgres](https://img.shields.io/badge/postgres-%23316192.svg?style=for-the-badge&logo=postgresql&logoColor=white)
-![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
-![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white)
+<img src="assets/edufinder.png" alt="EduFinder CyL Logo" width="100%" style="border-radius: 10px; margin-bottom: 20px;">
 
-**La plataforma definitiva para la búsqueda de centros educativos y Formación Profesional en Castilla y León.**
+<!-- Badges de Tecnologías - Estilo Limpio -->
+<div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+  <img src="https://img.shields.io/badge/NEXT.JS_14-black?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js" />
+  <img src="https://img.shields.io/badge/LARAVEL_11-FF2D20?style=for-the-badge&logo=laravel&logoColor=white" alt="Laravel" />
+  <img src="https://img.shields.io/badge/POSTGRESQL-316192?style=for-the-badge&logo=postgresql&logoColor=white" alt="Postgres" />
+  <img src="https://img.shields.io/badge/TAILWIND_4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind" />
+  <img src="https://img.shields.io/badge/DOCKER-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
+</div>
 
-[🚀 Ver Demo Online](https://edufinder-cyl.vercel.app) • [📹 Ver Video Demo](https://drive.google.com/file/d/1ljQkEfAiii0pDApF5E8khZnMtEd4Ei9_/view?usp=sharing) • [⚙️ API Backend](https://edufinder-cyl.onrender.com)
+<h3 align="center">La plataforma definitiva para la búsqueda de centros educativos y FP en Castilla y León.</h3>
+
+<!-- Botones de Enlaces Principales - Diseño Pro -->
+<p align="center">
+  <a href="https://edufinder-cyl.vercel.app">
+    <img src="https://img.shields.io/badge/🚀_DEMO_ONLINE-Ver_Aplicación-blue?style=for-the-badge&labelColor=233945" alt="Demo Online" height="35">
+  </a>
+  <a href="https://drive.google.com/file/d/1ljQkEfAiii0pDApF5E8khZnMtEd4Ei9_/view?usp=sharing">
+    <img src="https://img.shields.io/badge/📹_VIDEO_DEMO-Ver_Presentación-red?style=for-the-badge&labelColor=233945" alt="Video Demo" height="35">
+  </a>
+  <a href="https://edufinder-cyl.onrender.com">
+    <img src="https://img.shields.io/badge/⚙️_API_BACKEND-Documentación-emerald?style=for-the-badge&labelColor=233945" alt="API Backend" height="35">
+  </a>
+</p>
 
 </div>
 
 ---
 
-## 📋 Sobre el Proyecto
+## 📋 Información y Misión
 
-**EduFinder CyL** es una aplicación web moderna diseñada para facilitar el acceso a la información educativa en la comunidad de Castilla y León. Utilizando datos abiertos de la Junta, ofrecemos una experiencia de usuario premium para buscar, filtrar y comparar centros educativos.
+**EduFinder CyL** nace como respuesta a la necesidad de centralizar, visualizar y comparar la oferta educativa de **Castilla y León**. Transformamos datos públicos en una experiencia digital de primer nivel, permitiendo a estudiantes y familias tomar decisiones informadas sobre su futuro académico.
 
-### ✨ Funcionalidades Clave
+Utilizando **Open Data** de la Junta de Castilla y León, hemos creado una herramienta que no solo lista centros, sino que permite:
 
-- **🔍 Búsqueda Inteligente**: Encuentra centros por nombre, localidad o tipo de oferta.
-- **🗺️ Mapa Interactivo**: Visualización geoespacial de centros con clustering y filtros de radio dinámicos.
-- **⚖️ Comparador de Centros**: Compara lado a lado hasta 3 centros para analizar su oferta educativa.
-- **❤️ Favoritos y Listas**: Guarda tus centros de interés (requiere registro).
-- **📱 Diseño Responsive**: Experiencia fluida en móvil, tablet y escritorio.
+- Visualizarlos en un **mapa interactivo** con geolocalización.
+- **Comparar** hasta 3 centros simultáneamente (oferta, titularidad, servicios).
+- Guardar **favoritos** y gestionar preferencias personales.
 
 ---
 
-## 🛠️ Stack Tecnológico
+## 📊 Fuentes de Datos (Open Data JCyL)
 
-Este proyecto utiliza una arquitectura moderna separada en frontend y backend:
+Este proyecto se nutre de los datasets oficiales proporcionados por el Portal de Datos Abiertos de la Junta de Castilla y León. Agradecemos su compromiso con la transparencia.
 
-### **Frontend (Cliente)**
-
-- **Framework**: Next.js 14 (App Router)
-- **Estilos**: Tailwind CSS 4 + Framer Motion (Animaciones)
-- **Mapas**: React Leaflet
-- **Estado**: Context API + SWR
-- **Deploy**: Vercel
-
-### **Backend (Servidor)**
-
-- **Framework**: Laravel 11 API
-- **Base de Datos**: PostgreSQL
-- **Autenticación**: Laravel Sanctum
-- **Despliegue**: Docker & Render
+| Dataset                   | Enlace Oficial                                                                                                                                                                                                                                                                                                                                    | Descripción                                                  |
+| :------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :----------------------------------------------------------- |
+| **Directorio de Centros** | [🔗 Acceder al Dataset](https://analisis.datosabiertos.jcyl.es/explore/dataset/directorio-de-centros-docentes/export/?disjunctive.denominacion_generica)                                                                                                                                                                                          | Información base, ubicación y contacto de todos los centros. |
+| **Oferta de FP**          | [🔗 Acceder al Dataset](https://analisis.datosabiertos.jcyl.es/explore/dataset/oferta-de-formacion-profesional/export/?disjunctive.provincia&disjunctive.centro_educativo&disjunctive.titularidad_centro&disjunctive.familia_profesional&disjunctive.codigo_familia&disjunctive.nivel_educativo&disjunctive.modalidad&disjunctive.tipo_ensenanza) | Catálogo completo de ciclos formativos y su distribución.    |
 
 ---
 
-## 🚀 Guía de Instalación (Paso a Paso)
+## 🚀 Guía de Despliegue Local (Paso a Paso)
 
-Sigue estos pasos para levantar el proyecto completo en tu máquina local.
+Hemos preparado el proyecto para que **cualquier persona** pueda ejecutarlo en minutos usando **Docker**, sin necesidad de configurar servidores complejos ni instalar PHP/Node.js en su sistema base.
 
-### 1️⃣ Prerrequisitos
+### 1️⃣ Requisitos Previos
 
-Lo único que necesitas instalar obligatoriamente es **Docker Desktop**.
+- **Docker Desktop**: [Instalar aquí](https://www.docker.com/products/docker-desktop/).
+- **Git**: [Instalar aquí](https://git-scm.com/).
 
-- [Descargar Docker Desktop](https://www.docker.com/products/docker-desktop/) (Asegúrate de que esté abierto y funcionando).
+### 2️⃣ Instalación
 
-### 2️⃣ Clonar el Repositorio
+Copia y pega los siguientes comandos en tu terminal.
 
-Abre tu terminal y descarga el código:
+**A. Descargar Código:**
 
 ```bash
 git clone https://github.com/mariotc1/edufinder-cyl.git
 cd edufinder-cyl
 ```
 
-### 3️⃣ Configuración del Entorno
-
-Necesitamos configurar las "variables de entorno" para que el proyecto sepa cómo conectarse. Hemos preparado archivos de ejemplo listos para usar.
-
-**Configurar Backend:**
-Copia el archivo de ejemplo a `.env`.
+**B. Configurar Entorno (Automático):**
 
 ```bash
-cd backend
-cp .env.example .env
-cd ..
+# Configurar Backend
+cp backend/.env.example backend/.env
+
+# Configurar Frontend
+cp frontend/.env.example frontend/.env.local
 ```
 
-**Configurar Frontend:**
-Copia el archivo de ejemplo a `.env.local`.
-
-```bash
-cd frontend
-cp .env.example .env.local
-cd ..
-```
-
-_(No necesitas editar nada en estos archivos para que funcione en local, ya vienen preconfigurados para Docker)._
-
-### 4️⃣ Encender los Servidores (Docker)
-
-Desde la raíz del proyecto (donde está el archivo `docker-compose.yml`), ejecuta:
+**C. Encender Motores (Docker):**
 
 ```bash
 docker compose up -d --build
 ```
 
-⏳ **Espera unos minutos**. Esto descargará las imágenes, construirá el frontend y levantará la base de datos.
-Puedes ver si ha terminado cuando `docker compose ps` muestre todos los contenedores en estado `Running`.
+> _⏳ Espera a que termine. Puede tardar unos minutos en descargar las imágenes y compilar._
 
-### 5️⃣ Instalación de Dependencias y Base de Datos
-
-Una vez que los contenedores están arriba, necesitamos instalar las librerías dentro de ellos y alimentar la base de datos. Ejecuta estos comandos **en orden**:
-
-**A. Instalar librerías PHP (Backend):**
+**D. Inicializar Datos (¡Importante!):**
+Ejecuta estos comandos **en orden** para preparar la base de datos e importar los datasets de la Junta:
 
 ```bash
+# 1. Instalar dependencias del backend dentro del contenedor
 docker compose exec backend composer install
-```
 
-**B. Instalar librerías Node (Frontend):**
-
-```bash
+# 2. Instalar dependencias del frontend
 docker compose exec frontend npm install
-```
 
-**C. Generar clave de seguridad:**
-
-```bash
+# 3. Generar clave de encriptación
 docker compose exec backend php artisan key:generate
-```
 
-**D. Crear Base de Datos y Datos de Prueba (Seeders):**
-
-```bash
+# 4. Migrar base de datos y SEEDERS (Importa los JSON automáticamente)
 docker compose exec backend php artisan migrate:refresh --seed
-```
 
-_> Este paso importará automáticamente los centros y ciclos desde los archivos JSON._
-
-**E. Enlazar almacenamiento de imágenes:**
-
-```bash
+# 5. Enlazar almacenamiento público
 docker compose exec backend php artisan storage:link
 ```
 
----
+### 3️⃣ ¡Proyecto en Marcha!
 
-## ✅ ¡Todo Listo!
+Abre tu navegador y disfruta:
 
-Accede a la aplicación en tu navegador:
-
-| Aplicación               | URL Local                                      | Credenciales por defecto                             |
-| ------------------------ | ---------------------------------------------- | ---------------------------------------------------- |
-| **Frontend**             | [http://localhost:3000](http://localhost:3000) | -                                                    |
-| **Backend API**          | [http://localhost:8000](http://localhost:8000) | -                                                    |
-| **Gestión DB (PgAdmin)** | [http://localhost:5050](http://localhost:5050) | **User**: admin@edufinder.com<br>**Pass**: edufinder |
-
-### Usuarios de Prueba
-
-Puedes iniciar sesión con:
-
-- **Email**: `test@example.com`
-- **Contraseña**: `password`
+| Servicio    | Enlace                                         | Credenciales (Admin DB)                              |
+| :---------- | :--------------------------------------------- | :--------------------------------------------------- |
+| **Web App** | [http://localhost:3000](http://localhost:3000) | -                                                    |
+| **API**     | [http://localhost:8000](http://localhost:8000) | -                                                    |
+| **PgAdmin** | [http://localhost:5050](http://localhost:5050) | **User:** admin@edufinder.com<br>**Pass:** edufinder |
 
 ---
 
-## 📂 Estructura del Proyecto
+## 🛠️ Arquitectura Técnica
 
-```bash
-edufinder-cyl/
-├── backend/            # API Laravel
-│   ├── app/            # Controladores y Modelos
-│   ├── database/       # Migraciones y Seeders
-│   └── routes/         # Definición de API (api.php)
-├── frontend/           # Next.js App
-│   ├── src/app/        # Páginas y Rutas
-│   ├── src/components/ # Componentes Reutilizables (UI)
-│   └── src/lib/        # Utilidades y configuración Axios
-├── data/               # Archivos JSON originales (Open Data)
-└── docker-compose.yml  # Orquestación de contenedores
+El proyecto sigue una arquitectura **monorepo** desacoplada:
+
+```mermaid
+graph LR
+  A[Cliente Next.js] -- "API REST / Sanctum" --> B[Backend Laravel]
+  B -- "Query" --> C[(PostgreSQL)]
+  B -- "Importación" --> D[JCyL Open Data]
 ```
 
----
-
-## 👥 Autores
-
-Proyecto desarrollado por:
-
-- **Mario Tomé** - [GitHub](https://github.com/mariotc1) • [LinkedIn](https://www.linkedin.com/in/mario-tome-core/)
-- **Raúl Ortega** - [GitHub](https://github.com/Raul9097)
+- **Frontend**: Next.js 14, React Server Components, TailwindCSS v4, Framer Motion.
+- **Backend**: Laravel 11, Arquitectura API-First, Jobs para importación masiva de datos.
+- **DevOps**: Docker Compose para orquestación local y producción.
 
 ---
 
-> **Open Data Contest 2026** - _Datos facilitados por la Junta de Castilla y León._
+## � Autores del Proyecto
+
+Desarrollado con pasión y dedicación por estudiantes de DAW.
+
+<div align="center">
+  <table style="border: none;">
+    <tr>
+      <td align="center" width="200px">
+        <a href="https://github.com/mariotc1">
+          <img src="https://github.com/mariotc1.png" width="80px;" alt="" style="border-radius: 50%;">
+        </a><br>
+        <b>Mario Tomé</b><br>
+        <a href="https://github.com/mariotc1">GitHub</a> • <a href="https://www.linkedin.com/in/mario-tome-core/">LinkedIn</a>
+      </td>
+      <td align="center" width="200px">
+        <a href="https://github.com/Raul9097">
+          <img src="https://github.com/Raul9097.png" width="80px;" alt="" style="border-radius: 50%;">
+        </a><br>
+        <b>Raúl Ortega</b><br>
+        <a href="https://github.com/Raul9097">GitHub</a> • <a href="https://www.linkedin.com/in/raúl-ortega-frutos-140485332/">LinkedIn</a>
+      </td>
+    </tr>
+  </table>
+</div>
+
+---
+
+## ⚖️ Licencia y Derechos de Uso
+
+**© 2026 EduFinder CyL. Todos los derechos reservados.**
+
+Este software es propiedad intelectual de **Mario Tomé** y **Raúl Ortega**.
+
+Queda **estrictamente prohibida** la reproducción, distribución, comunicación pública, transformación o cualquier otra forma de explotación, ya sea con fines comerciales o no, de la totalidad o parte de los contenidos y código fuente de este repositorio sin la autorización expresa y por escrito de los autores.
+
+El uso de este código está restringido exclusivamente a fines de evaluación en el contexto del **"Concurso de Datos Abiertos de la Junta de Castilla y León 2026"**. Cualquier intento de plagio, copia no autorizada o uso indebido será perseguido conforme a la legislación vigente en materia de Propiedad Intelectual.
