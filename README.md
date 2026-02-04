@@ -142,7 +142,7 @@ graph LR
 
 ---
 
-## � Autores del Proyecto
+## 👥 Autores del Proyecto
 
 Desarrollado con pasión y dedicación por estudiantes de DAW.
 
