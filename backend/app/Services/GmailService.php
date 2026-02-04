@@ -5,38 +5,44 @@
     use PHPMailer\PHPMailer\Exception;
     use Illuminate\Support\Facades\Log;
 
+    // SERVICIO DE CORREO ELECTRONICO (SMTP/GMAIL)
+    // Utiliza PHPMailer para enviar correos transaccionales
     class GmailService {
 
+        // ENVIAR EMAIL DE BIENVENIDA
         public function sendWelcomeEmail($toEmail, $toName) {
             $subject = 'Bienvenido a EduFinder CYL';
             $body = "
-                <h1>¡Bienvenido a EduFinder CYL, {$toName}!</h1>
-                <p>Gracias por registrarte en la plataforma líder para encontrar Formación Profesional en Castilla y León.</p>
-                <p>Ya puedes explorar centros, guardar favoritos y planificar tu futuro.</p>
-                <br>
-                <p>Atentamente,<br>El equipo de EduFinder</p>
-            ";
+                    <h1>¡Bienvenido a EduFinder CYL, {$toName}!</h1>
+                    <p>Gracias por registrarte en la plataforma líder para encontrar Formación Profesional en Castilla y León.</p>
+                    <p>Ya puedes explorar centros, guardar favoritos y planificar tu futuro.</p>
+                    <br>
+                    <p>Atentamente,<br>El equipo de EduFinder</p>
+                ";
 
             return $this->send($toEmail, $toName, $subject, $body);
         }
 
+        // ENVIAR EMAIL DE RESETEO DE CONTRASEÑA
         public function sendPasswordReset($toEmail, $token) {
             $frontendUrl = config('services.frontend_url', env('FRONTEND_URL', 'http://localhost:3000'));
             $url = "{$frontendUrl}/reset-password?token={$token}&email={$toEmail}";
 
             $subject = 'Restablecer contraseña - EduFinder CYL';
             $body = "
-                <h1>Recuperación de Contraseña</h1>
-                <p>Has solicitado restablecer tu contraseña.</p>
-                <p>Haz clic en el siguiente enlace para continuar:</p>
-                <a href='{$url}' style='padding: 10px 20px; background-color: #223945; color: white; text-decoration: none; border-radius: 5px;'>Restablecer Contraseña</a>
-                <p>Si no has sido tú, ignora este mensaje.</p>
-                <p>Este enlace caduca en 60 minutos.</p>
-            ";
+                    <h1>Recuperación de Contraseña</h1>
+                    <p>Has solicitado restablecer tu contraseña.</p>
+                    <p>Haz clic en el siguiente enlace para continuar:</p>
+                    <a href='{$url}' style='padding: 10px 20px; background-color: #223945; color: white; text-decoration: none; border-radius: 5px;'>Restablecer Contraseña</a>
+                    <p>Si no has sido tú, ignora este mensaje.</p>
+                    <p>Este enlace caduca en 60 minutos.</p>
+                ";
 
             return $this->send($toEmail, '', $subject, $body);
         }
 
+        // MÉTODO PRIVADO DE ENVÍO
+        // Configura PHPMailer con las credenciales del entorno y realiza el envío
         protected function send($toEmail, $toName, $subject, $body) {
             $mail = new PHPMailer(true);
 
@@ -44,10 +50,10 @@
                 $mail->isSMTP();
                 $mail->Host = env('MAIL_HOST', 'smtp.gmail.com');
                 $mail->SMTPAuth = true;
-                $mail->Username = env('MAIL_USERNAME'); 
-                $mail->Password = env('MAIL_PASSWORD'); 
-                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; 
-                $mail->Port = env('MAIL_PORT', 587); 
+                $mail->Username = env('MAIL_USERNAME');
+                $mail->Password = env('MAIL_PASSWORD');
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                $mail->Port = env('MAIL_PORT', 587);
 
                 $mail->setFrom(env('MAIL_FROM_ADDRESS', 'mariotomecore@gmail.com'), 'EduFinder CYL');
                 $mail->addAddress($toEmail, $toName);

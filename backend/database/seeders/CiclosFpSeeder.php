@@ -7,6 +7,8 @@
     use Illuminate\Support\Facades\File;
     use Illuminate\Support\Facades\Log;
 
+    // SEEDER DE CICLOS FORMATIVOS
+    // Carga la oferta educativa desde JSON y la vincula a centros existentes
     class CiclosFpSeeder extends Seeder {
 
         public function run(): void {
@@ -26,10 +28,12 @@
             }
 
             foreach ($data as $item) {
+                // Verificar código de centro
                 $codigoCentro = $item['codigo_centro'] ?? null;
                 if (!$codigoCentro)
                     continue;
 
+                // Buscar centro padre
                 $centro = Centro::where('codigo', $codigoCentro)->first();
 
                 if ($centro) {

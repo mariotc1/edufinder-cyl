@@ -4,10 +4,12 @@
     use Illuminate\Database\Console\Seeds\WithoutModelEvents;
     use Illuminate\Database\Seeder;
 
+    // SEEDER PRINCIPAL
+    // Ejecuta todos los seeders en el orden correcto
     class DatabaseSeeder extends Seeder {
         use WithoutModelEvents;
 
-        public function run(): void {
+        public function run(): void {   
             $this->call([
                 CentrosSeeder::class,
                 CiclosFpSeeder::class,

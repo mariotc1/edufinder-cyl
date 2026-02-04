@@ -4,11 +4,13 @@
     use Illuminate\Support\Facades\Schema;
 
     return new class extends Migration {
-        
+
         public function up(): void {
+            // TABLA: CENTROS
+            // Almacena la información principal de los centros educativos
             Schema::create('centros', function (Blueprint $table) {
                 $table->id();
-                $table->string('codigo')->unique();
+                $table->string('codigo')->unique(); // código único del centro (JCyL)
                 $table->string('nombre');
                 $table->string('naturaleza')->nullable();
                 $table->string('denominacion_generica')->nullable();

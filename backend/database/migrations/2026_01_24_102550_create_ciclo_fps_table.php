@@ -6,8 +6,11 @@
     return new class extends Migration {
 
         public function up(): void {
+            // TABLA: CICLOS_FP
+            // Almacena la oferta educativa de FP por centro
             Schema::create('ciclos_fp', function (Blueprint $table) {
-                $table->id();
+                $table->id();            
+                // FK: Borrado en cascada si se elimina el centro
                 $table->foreignId('centro_id')->constrained('centros')->onDelete('cascade');
                 $table->string('familia_profesional')->nullable();
                 $table->string('codigo_familia')->nullable();

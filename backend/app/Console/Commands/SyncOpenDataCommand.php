@@ -4,6 +4,8 @@
     use App\Services\OpenDataSyncService;
     use Illuminate\Console\Command;
 
+    // COMANDO DE SINCRONIZACIÓN
+    // Ejecuta el proceso de actualización de datos desde el portal de OpenData de la JCyL
     class SyncOpenDataCommand extends Command {
 
         protected $signature = 'opendata:sync';
@@ -17,6 +19,8 @@
             $this->service = $service;
         }
 
+        // EJECUCIÓN DEL COMANDO
+        // Orquesta la sincronización secuencial de Centros y Ciclos
         public function handle() {
             $this->info('Starting OpenData synchronization...');
 

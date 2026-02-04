@@ -6,6 +6,8 @@
     return new class extends Migration {
 
         public function up(): void {
+            // TABLA: FAVORITOS
+            // Relación N:M entre usuarios y centros
             Schema::create('favoritos', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('user_id')->constrained()->onDelete('cascade');

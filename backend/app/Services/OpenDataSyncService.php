@@ -8,14 +8,17 @@
     use Illuminate\Support\Facades\Log;
     use Exception;
 
+    // SERVICIO DE SINCRONIZACIÓN OPEN DATA
+    // Gestiona la lógica de descarga, procesamiento y guardado de datos externos
     class OpenDataSyncService {
 
-        protected $timeout = 120; 
+        protected $timeout = 120;
 
         protected $urlCentros = 'https://analisis.datosabiertos.jcyl.es/api/v2/catalog/datasets/directorio-de-centros-docentes/exports/json';
 
         protected $urlFp = 'https://analisis.datosabiertos.jcyl.es/api/v2/catalog/datasets/oferta-de-formacion-profesional/exports/json';
 
+        // Wrappers públicos para iniciar la sincronización de cada dataset
         public function syncCentros() {
             $this->syncDataset('centros', $this->urlCentros, function ($record) {
                 return $this->processCentro($record);
@@ -28,6 +31,8 @@
             });
         }
 
+        // MÉTODO GENÉRICO DE SINCRONIZACIÓN
+        // Maneja el ciclo de vida de la sync: descarga, transacción DB, estadísticas y manejo de errores
         protected function syncDataset($datasetName, $url, $processCallback) {
             $startTime = microtime(true);
             $syncState = $this->getOrCreateSyncState($datasetName);
@@ -69,10 +74,8 @@
                     $stats['processed']++;
                     if ($result === 'created')
                         $stats['created']++;
-
                     elseif ($result === 'updated')
                         $stats['updated']++;
-
                     else
                         $stats['skipped']++;
                 }
@@ -100,6 +103,8 @@
             }
         }
 
+        // DESCARGA DE DATOS
+        // Realiza la petición HTTP con timeout configurado y valida la respuesta JSON
         protected function fetchData($url) {
             $response = Http::timeout($this->timeout)->get($url);
 
@@ -116,11 +121,14 @@
             return $json;
         }
 
+        // PROCESAMIENTO DE CENTRO
+        // Mapea los campos del JSON a la estructura de la tabla 'centros'
+        // Utiliza hash para evitar actualizaciones innecesarias si los datos no han cambiado
         protected function processCentro($data) {
             $codigo = $data['codigo'] ?? null;
             if (!$codigo)
                 return 'skipped';
-            
+
             $hashData = [
                 'nombre' => $data['denominacion_especifica'] ?? $data['denominacion_generica'] ?? '',
                 'naturaleza' => $data['naturaleza'] ?? null,
@@ -154,6 +162,8 @@
             }
         }
 
+        // PROCESAMIENTO DE CICLO
+        // Asocia ciclos formativos a centros existentes y actualiza su información
         protected function processCiclo($data) {
             $codigoCentro = $data['codigo_centro'] ?? null;
             $cicloNombre = $data['ciclo_formativo_curso_de_especializacion'] ?? $data['ciclo_formativo'] ?? null;
@@ -208,10 +218,13 @@
             }
         }
 
+        // Genera un hash único basado en los datos para detectar cambios
         protected function computeHash($data) {
             return md5(json_encode($data));
         }
 
+        // GESTIÓN DE ESTADO
+        // Registra el progreso de la sincronización en base de datos para monitoreo
         protected function getOrCreateSyncState($dataset) {
             $state = DB::table('data_sync_states')->where('dataset', $dataset)->first();
 
@@ -228,8 +241,8 @@
             return new class ($dataset) {
                 private $dataset;
 
-                public function __construct($dataset){
-                    $this->dataset = $dataset; 
+                public function __construct($dataset) {
+                    $this->dataset = $dataset;
                 }
 
                 public function update($values) {
