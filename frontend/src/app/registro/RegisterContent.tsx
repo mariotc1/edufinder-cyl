@@ -116,7 +116,7 @@ export default function RegisterContent() {
                             <input
                                 type="text"
                                 required
-                                placeholder="Ej: Mario Tomé"
+                                placeholder="Ej: Hugo García"
                                 className="w-full px-4 py-3 rounded-xl bg-neutral-50 border-2 border-transparent focus:bg-white focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 outline-none transition-all font-medium text-neutral-700 placeholder:text-neutral-400"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
