@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import LoginContent from './LoginContent';
 import { Loader2 } from 'lucide-react';
 
+// PÁGINA DE LOGIN (WRAPPER)
 export default function Login() {
     return (
         <Suspense fallback={

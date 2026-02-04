@@ -2,6 +2,8 @@ import { Suspense } from 'react';
 import CallbackContent from './CallbackContent';
 import { Loader2 } from 'lucide-react';
 
+// PÁGINA DE CALLBACK DE OAUTH (WRAPPER)
+// Maneja la redirección tras el login social (Google)
 export default function AuthCallback() {
     return (
         <Suspense fallback={

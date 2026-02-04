@@ -21,6 +21,8 @@ const getCachedIcon = (type: string) => {
     return iconCache[type];
 };
 
+// GENERADOR DE ICONOS PERSONALIZADOS
+// Crea marcadores SVG renderizados dinámicamente para el mapa
 const createCustomIcon = (type: string) => {
     const colorHex = '#223945'; 
 
@@ -81,6 +83,8 @@ interface MapControllerProps {
     zoom?: number;
 }
 
+// COMPONENTE DE CONTROL DEL MAPA
+// Maneja movimientos de cámara (flyTo) y ajuste de bounds según ubicación/radio
 function MapController({ userLocation, radius, center, zoom }: MapControllerProps) {
   const map = useMap();
 
@@ -128,6 +132,8 @@ interface MapProps {
     focusCenterId?: number;
 }
 
+// COMPONENTE PRINCIPAL DE MAPA
+// Wrapper de React-Leaflet con marcadores, clusters y controles
 export default function Map({ centros, userLocation, radius, center, zoom, favoriteIds = [], focusCenterId }: MapProps) {
     const defaultCenter: [number, number] = [41.652, -4.728]; // Valladolid center
 

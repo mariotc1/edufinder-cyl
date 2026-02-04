@@ -12,11 +12,14 @@ interface FilterBarProps {
   page?: number;
 }
 
+// COMPONENTE DE BARRA DE FILTROS AVANZADA
+// Gestiona el estado de los filtros, autocompletado y geolocalización
 export default function FilterBar({ onFilterChange, isLoading, page = 1 }: FilterBarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  // Estado inicial de filtros: sincronizado con URL Params para persistencia
   const [filters, setFilters] = useState<FilterOptions>({
     q: searchParams.get('q') || '',
     provincia: searchParams.get('provincia') || '',
@@ -94,6 +97,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
         return;
     }
 
+    // Debounce para búsqueda de centros por nombre (Autocomplete)
     const timer = setTimeout(async () => {
       if (filters.q && filters.q.length >= 2) {
           setIsSearchingCentro(true);
@@ -125,6 +129,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
   }, [searchParams]);
 
   useEffect(() => {
+    // Efecto principal: Actualizar URL cuando cambian los filtros (con debounce de 400ms)
     const timer = setTimeout(() => {
       const params = new URLSearchParams();
       if (filters.q) params.set('q', filters.q);
@@ -172,6 +177,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
     }
   };
 
+  // Handler para obtener ubicación del usuario (API Geolocation del navegador)
   const handleGeolocation = () => {
     if (!navigator.geolocation) {
       alert('Tu navegador no soporta geolocalización');

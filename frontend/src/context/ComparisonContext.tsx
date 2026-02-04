@@ -22,12 +22,15 @@ interface ComparisonContextType {
 
 const ComparisonContext = createContext<ComparisonContextType | undefined>(undefined);
 
+// CONTEXTO DE COMPARADOR
+// Gestiona la lista de centros seleccionados para comparar (max 3)
 export function ComparisonProvider({ children }: { children: ReactNode }) {
     const [selectedCentros, setSelectedCentros] = useState<Centro[]>([]);
     const [isOpen, setIsOpen] = useState(false);
     const { user } = useAuth(); 
 
     useEffect(() => {
+        // Recuperar estado del comparador desde localStorage
         const saved = localStorage.getItem('edufinder_compare');
         if (saved) {
             try {
@@ -50,6 +53,7 @@ export function ComparisonProvider({ children }: { children: ReactNode }) {
         }
     }, [user]);
 
+    // Añadir centro al comparador
     const addToCompare = (centro: Centro) => {
         if (selectedCentros.length >= 3) {
             return;

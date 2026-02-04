@@ -2,6 +2,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Github, Linkedin, Database, Code2, Cpu, Heart } from 'lucide-react';
 
+// COMPONENTE PIE DE PÁGINA
+// Muestra enlaces a repositorios, equipo de desarrollo y créditos de datos abiertos
 export default function Footer() {
   const currentYear = new Date().getFullYear();
 

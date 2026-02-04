@@ -14,6 +14,8 @@ interface MapSidebarProps {
     loading: boolean;
 }
 
+// COMPONENTE BARRA LATERAL DEL MAPA
+// Contiene filtros, controles de radio y lista resumen de centros visibles
 export default function MapSidebar({ radius, setRadius, filters, setFilters, onLocateUser, onClearLocation, userLocation, centerCount, loading }: MapSidebarProps) {
     const [isExpanded, setIsExpanded] = useState(true);
     const [sections, setSections] = useState({
@@ -21,6 +23,7 @@ export default function MapSidebar({ radius, setRadius, filters, setFilters, onL
         config: false
     });
 
+    // Control de colapso/expansión de la barra lateral
     const toggleSection = (section: 'filters' | 'config') => {
         setSections(prev => ({ ...prev, [section]: !prev[section] }));
     };

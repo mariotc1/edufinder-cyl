@@ -33,12 +33,15 @@ interface Ciclo {
     clave_ciclo: string;
 }
 
+// PÁGINA DE COMPARADOR DE CENTROS
+// Muestra hasta 3 centros lado a lado para comparar su oferta y detalles
 export default function ComparadorPage() {
     const router = useRouter();
     const { selectedCentros, removeFromCompare } = useComparison();
     const [details, setDetails] = useState<CentroDetail[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
+    // Efecto para obtener detalles completos de los centros seleccionados (fetch paralelo)
     useEffect(() => {
         const fetchDetails = async () => {
             if (selectedCentros.length === 0) {

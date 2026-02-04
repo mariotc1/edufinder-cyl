@@ -12,6 +12,8 @@ import { useAuth } from '@/context/AuthContext';
 import { useFavoritesAnimation } from '@/context/FavoritesAnimationContext';
 import { motion } from 'framer-motion';
 
+// COMPONENTE LAYOUT: BARRA DE NAVEGACIÓN SUPERIOR
+// Utiliza Suspense para cargar contenido dependiente del cliente (useSearchParams)
 export default function Navbar() {
   return (
     <Suspense fallback={<nav className="fixed top-0 left-0 w-full z-[100] bg-white/95 h-20 border-b border-neutral-200" />}>
@@ -20,6 +22,7 @@ export default function Navbar() {
   );
 }
 
+// CONTENIDO DE LA BARRA DE NAVEGACIÓN
 function NavbarContent() {
   const { user, logout, openLoginModal } = useAuth();
   const { favoritesPulse } = useFavoritesAnimation();
@@ -33,6 +36,7 @@ function NavbarContent() {
       router.push('/login');
   };
 
+  // Lógica de redirección tras login: mantiene la página actual y filtros
   const getRedirectUrl = () => {
       const currentPath = `${pathname}${searchParams.toString() ? '?' + searchParams.toString() : ''}`;
       if (currentPath.startsWith('/login') || currentPath.startsWith('/registro')) return '';
@@ -118,7 +122,7 @@ function NavbarContent() {
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Menú Móvil Desplegable */}
       <motion.div 
           initial={{ height: 0, opacity: 0 }}
           animate={mobileMenuOpen ? { height: 'auto', opacity: 1 } : { height: 0, opacity: 0 }}

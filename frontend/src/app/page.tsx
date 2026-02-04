@@ -1,6 +1,8 @@
 import { Suspense } from 'react';
 import SearchContent from '@/components/home/SearchContent';
 
+// PAGINA DE INICIO (HOME)
+// Muestra el buscador principal con fondo de gradiente
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-brand-gradient">

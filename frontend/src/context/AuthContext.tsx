@@ -22,12 +22,15 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// CONTEXTO DE AUTENTICACIÓN
+// Gestiona el estado global del usuario, login, logout y persistencia
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   useEffect(() => {
+    // Verificar sesión al cargar: lee localStorage y restaura el usuario
     const checkAuth = () => {
         try {
             const token = localStorage.getItem('token');
@@ -53,6 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     checkAuth();
   }, []);
 
+  // Iniciar sesión y guardar credenciales
   const login = (userData: User, token: string) => {
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(userData));
@@ -60,6 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     closeLoginModal();
   };
 
+  // Cerrar sesión y limpiar almacenamiento
   const logout = async () => {
     try {
       await api.post('/logout');

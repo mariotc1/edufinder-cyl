@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import RegisterContent from './RegisterContent';
 import { Loader2 } from 'lucide-react';
 
+// PÁGINA DE REGISTRO (WRAPPER)
 export default function Register() {
     return (
         <Suspense fallback={

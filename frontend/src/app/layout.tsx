@@ -11,6 +11,8 @@ const inter = Inter({
   display: 'swap',
 });
 
+// METADATOS GLOBALES DE LA APLICACIÓN
+// Configuración SEO base para todas las páginas
 export const metadata: Metadata = {
   title: 'EduFinder CYL - Encuentra centros educativos y ciclos de FP en Castilla y León',
   description: 'Plataforma oficial para buscar centros educativos de primaria, secundaria, bachillerato y ciclos de Formación Profesional en Castilla y León. Información actualizada y completa.',
@@ -33,6 +35,9 @@ export const generateViewport = () => {
 import ComparisonTray from '@/components/ComparisonTray';
 import ScrollToTop from '@/components/ScrollToTop';
 
+// LAYOUT RAÍZ (ROOT LAYOUT)
+// Estructura base HTML/Body compartida por toda la aplicación
+// Incluye Navbar, Footer y Proveedores de Contexto
 export default function RootLayout({
   children,
 }: {

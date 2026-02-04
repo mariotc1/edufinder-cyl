@@ -1,6 +1,8 @@
 import { Suspense } from 'react';
 import MapaContent from './MapaContent';
 
+// PÁGINA DEL MAPA (WRAPPER)
+// Carga diferida del contenido del mapa para mostrar un loader inicial
 export default function MapaPage() {
     return (
         <Suspense fallback={

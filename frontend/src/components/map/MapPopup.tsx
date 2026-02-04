@@ -9,6 +9,8 @@ interface MapPopupProps {
     initialIsFavorite?: boolean;
 }
 
+// COMPONENTE POPUP DEL MAPA
+// Ventana emergente al hacer clic en un marcador del mapa
 export default function MapPopup({ centro, initialIsFavorite = false }: MapPopupProps) {
     const cardRef = useRef<HTMLDivElement>(null);
 

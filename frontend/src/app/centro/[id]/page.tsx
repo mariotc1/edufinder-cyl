@@ -2,6 +2,8 @@
 import { Suspense } from 'react';
 import CentroDetailContent from './CentroDetailContent';
 
+// PÁGINA DE DETALLE DE CENTRO (WRAPPER)
+// Carga diferida de los detalles del centro
 export default function CentroDetail() {
     return (
         <Suspense fallback={

@@ -6,6 +6,7 @@ import { motion, Variants } from "framer-motion";
 import { useFavorite } from "@/hooks/useFavorite";
 import AddToCompareButton from "./ui/AddToCompareButton";
 
+// PROPS DEL COMPONENTE TARJETA DE CENTRO
 interface CentroCardProps {
   centro: Centro;
   index: number;
@@ -13,6 +14,7 @@ interface CentroCardProps {
   onToggle?: (newStatus: boolean) => void;
 }
 
+// DEFINICIÓN DE ANIMACIONES FRAMER MOTION
 const cardVariants: Variants = {
   hidden: { 
     opacity: 0, 
@@ -41,6 +43,8 @@ const cardVariants: Variants = {
   }
 };
 
+// COMPONENTE PRINCIPAL: TARJETA DE CENTRO INDIVIDUAL
+// Muestra la información resumida de un centro y gestiona la acción de favoritos
 export default function CentroCard({
   centro,
   index,
@@ -56,6 +60,7 @@ export default function CentroCard({
   
   const cardRef = useRef<HTMLDivElement>(null); 
 
+  // LÓGICA VISUAL: COLORES POR NATURALEZA (PÚBLICO, PRIVADO, CONCERTADO)
   const getNaturalezaBadge = (naturaleza: string) => {
     switch (naturaleza?.toUpperCase()) {
       case "PÚBLICO":
@@ -129,10 +134,10 @@ export default function CentroCard({
       whileHover="hover"
       className="group relative bg-white rounded-xl overflow-hidden border border-neutral-200 shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-[#223945] transition-[box-shadow,background-color,border-color] duration-300 flex flex-col h-full"
     >
-      {/* Decorative top border/gradient */}
+      {/* Borde decorativo superior con gradiente corporativo */}
       <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-primary-500 to-primary-300"></div>
 
-      {/* Favorite Button - Absolute Position - Uses Framer internally */}
+      {/* Botón de Favorito - Posición absoluta y animado */}
       <motion.button
          onClick={(e) => toggleFavorite(e, cardRef.current!)}
         whileTap={{ scale: 0.8 }}
@@ -201,7 +206,7 @@ export default function CentroCard({
           </div>
         </div>
 
-        {/* Highlighted Offer (Ciclos) - enhanced visual hierarchy - STATIC HEIGHT SCROLLABLE */}
+        {/* Sección de Oferta Formativa (Ciclos) - Lista con scroll limitado */}
         {centro.ciclos && centro.ciclos.length > 0 ? (
           <div className="pt-3 border-t border-neutral-100">
             <div className="flex items-center gap-2 mb-2.5">

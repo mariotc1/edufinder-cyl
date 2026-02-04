@@ -11,6 +11,8 @@ interface UseFavoriteProps {
     onToggle?: (newStatus: boolean) => void;
 }
 
+// HOOK PERSONALIZADO: GESTIÓN DE FAVORITOS
+// Maneja la lógica de añadir/quitar favoritos, animación y estado de carga
 export function useFavorite({ centro, initialIsFavorite = false, onToggle }: UseFavoriteProps) {
     const { user, openLoginModal } = useAuth();
     const { triggerAnimation } = useFavoritesAnimation();
@@ -21,6 +23,7 @@ export function useFavorite({ centro, initialIsFavorite = false, onToggle }: Use
         setIsFavorite(initialIsFavorite);
     }, [initialIsFavorite]);
 
+    // Acción de alternar favorito (toggle)
     const toggleFavorite = async (e: React.MouseEvent, elementRef?: HTMLElement) => {
         e.preventDefault();
         e.stopPropagation();
@@ -36,6 +39,7 @@ export function useFavorite({ centro, initialIsFavorite = false, onToggle }: Use
         setIsFavorite(newStatus);
         if (onToggle) onToggle(newStatus);
 
+        // Dispara la animación de "vuelo" hacia el icono de favoritos si se añade
         if (newStatus && elementRef) {
             const rect = elementRef.getBoundingClientRect();
             triggerAnimation(rect, {
@@ -54,6 +58,7 @@ export function useFavorite({ centro, initialIsFavorite = false, onToggle }: Use
             mutate('/favoritos');
 
         } catch (error) {
+            // Revertir estado optimista en caso de error
             setIsFavorite(!newStatus);
             if (onToggle) onToggle(!newStatus);
 

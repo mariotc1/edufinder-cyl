@@ -6,10 +6,13 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 
+// COMPONENTE BANDEJA DE COMPARACIÓN
+// Muestra una barra flotante en la parte inferior cuando hay centros seleccionados para comparar
 export default function ComparisonTray() {
     const { selectedCentros, removeFromCompare, clearComparison, isOpen, setIsOpen } = useComparison();
     const pathname = usePathname();
 
+    // No renderizar si no hay seleccionados o estamos en la página de comparación
     if (selectedCentros.length === 0 || pathname === '/comparador') return null;
 
     return (

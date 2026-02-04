@@ -23,10 +23,13 @@ interface FavoritesAnimationContextType {
 
 const FavoritesAnimationContext = createContext<FavoritesAnimationContextType | undefined>(undefined);
 
+// CONTEXTO DE ANIMACIÓN DE FAVORITOS
+// Gestiona las animaciones de "partículas" que vuelan hacia el icono de favoritos
 export function FavoritesAnimationProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<AnimationItem[]>([]);
   const [favoritesPulse, setFavoritesPulse] = useState(false);
   
+  // Disparar animación desde una posición inicial (botón) hacia el destino (navbar)
   const triggerAnimation = (startRect: DOMRect, data: CardData) => {
     const id = Math.random().toString(36).substring(7);
     const targetId = window.innerWidth >= 768 ? 'nav-favorites-icon-desktop' : 'nav-mobile-menu-button';
@@ -58,6 +61,7 @@ export function FavoritesAnimationProvider({ children }: { children: React.React
   );
 }
 
+// Componente visual de la tarjeta "voladora"
 function FlyingCard({ item }: { item: AnimationItem }) {
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
 

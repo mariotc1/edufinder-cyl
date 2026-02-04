@@ -10,6 +10,8 @@ interface LoginModalProps {
   onClose: () => void;
 }
 
+// COMPONENTE MODAL DE LOGIN (WRAPPER)
+// Carga diferida del contenido modal para optimizar rendimiento inicial
 export default function LoginModal(props: LoginModalProps) {
   return (
     <Suspense fallback={null}>
@@ -18,11 +20,13 @@ export default function LoginModal(props: LoginModalProps) {
   );
 }
 
+// CONTENIDO DEL MODAL DE LOGIN
 function LoginModalContent({ isOpen, onClose }: LoginModalProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  // Preservar la URL de retorno tras autenticarse
   const getRedirectUrl = () => {
     const currentPath = `${pathname}${searchParams.toString() ? '?' + searchParams.toString() : ''}`;
     if (currentPath.startsWith('/login') || currentPath.startsWith('/registro')) return '';
