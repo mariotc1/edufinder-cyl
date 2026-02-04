@@ -17,7 +17,8 @@ export const metadata: Metadata = {
   keywords: 'educación, Castilla y León, centros educativos, formación profesional, FP, colegios, institutos',
   authors: [{ name: 'Junta de Castilla y León' }],
   icons: {
-    icon: '/logo.ico',
+    icon: '/logo.ico?v=2',
+    apple: '/logo.ico?v=2',
   },
 };
 
