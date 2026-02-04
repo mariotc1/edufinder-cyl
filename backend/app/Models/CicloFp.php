@@ -4,6 +4,8 @@
     use Illuminate\Database\Eloquent\Factories\HasFactory;
     use Illuminate\Database\Eloquent\Model;
 
+    // MODELO DE CICLO FORMATIVO
+    // Representa un estudio de FP (grado medio, superior etc.) impartido en un centro
     class CicloFp extends Model {
         use HasFactory;
 
@@ -21,6 +23,8 @@
             'data_hash',
         ];
 
+        // RELACIÓN: CENTRO
+        // Cada ciclo pertenece a un único centro educativo
         public function centro() {
             return $this->belongsTo(Centro::class);
         }
