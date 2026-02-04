@@ -30,6 +30,7 @@ export const generateViewport = () => {
 };
 
 import ComparisonTray from '@/components/ComparisonTray';
+import ScrollToTop from '@/components/ScrollToTop';
 
 export default function RootLayout({
   children,
@@ -46,6 +47,7 @@ export default function RootLayout({
           </main>
           <ConditionalFooter />
           <ComparisonTray />
+          <ScrollToTop />
         </Providers>
       </body>
     </html>
