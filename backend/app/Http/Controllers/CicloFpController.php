@@ -5,7 +5,12 @@
     use App\Http\Resources\CicloFpResource;
     use Illuminate\Http\Request;
 
-    class CicloFpController extends Controller{
+    // CONTROLADOR DE CICLOS FORMATIVOS
+    // Gestiona la búsqueda exhaustiva de ciclos (independiente del centro)
+    class CicloFpController extends Controller {
+
+        // LISTADO FILTRADO DE CICLOS
+        // Permite buscar ciclos por familia, nivel, modalidad y otros criterios
         public function index(Request $request) {
             $query = CicloFp::with('centro');
 
@@ -33,6 +38,8 @@
             return CicloFpResource::collection($query->paginate(20));
         }
 
+        // SUGERENCIAS DE CICLOS
+        // Autocompletado para la barra de búsqueda de ciclos
         public function suggestions(Request $request) {
             $request->validate([
                 'q' => 'nullable|string|min:2',

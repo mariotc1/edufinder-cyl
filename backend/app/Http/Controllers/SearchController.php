@@ -5,6 +5,8 @@
     use Illuminate\Http\Request;
     use Illuminate\Http\JsonResponse;
 
+    // CONTROLADOR DE BÚSQUEDA GENERAL
+    // Punto de entrada centralizado para búsquedas complejas delegando en un servicio
     class SearchController extends Controller {
         protected $searchService;
 
@@ -12,18 +14,20 @@
             $this->searchService = $searchService;
         }
 
+        // EJECUTAR BÚSQUEDA
+        // Valida los parámetros y utiliza SearchService para construir la consulta
         public function index(Request $request): JsonResponse {
             $validated = $request->validate([
                 'lat' => 'nullable|numeric|between:-90,90',
                 'lng' => 'nullable|numeric|between:-180,180',
-                'radio' => 'nullable|numeric|min:0|max:500', 
+                'radio' => 'nullable|numeric|min:0|max:500',
                 'q' => 'nullable|string|max:255',
                 'provincia' => 'nullable|string|max:100',
                 'municipio' => 'nullable|string|max:100',
-                'tipo' => 'nullable|string|max:50', 
-                'familia' => 'nullable|string|max:100', 
-                'nivel' => 'nullable|string|max:50', 
-                'modalidad' => 'nullable|string|max:50', 
+                'tipo' => 'nullable|string|max:50',
+                'familia' => 'nullable|string|max:100',
+                'nivel' => 'nullable|string|max:50',
+                'modalidad' => 'nullable|string|max:50',
                 'ciclo' => 'nullable|string|max:150',
                 'titularidad' => 'nullable|string|max:50',
             ]);

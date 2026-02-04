@@ -7,8 +7,12 @@
     use Illuminate\Support\Facades\Log;
     use Laravel\Socialite\Two\AbstractProvider;
 
+    // CONTROLADOR DE AUTENTICACIÓN SOCIAL
+    // Maneja la lógica común para proveedores OAuth (Google y GitHub) usando Socialite
     class SocialAuthController extends Controller {
- 
+
+        // REDIRIGIR AL PROVEEDOR
+        // Inicia el flujo OAuth redirigiendo al usuario a la página de login del proveedor
         public function redirectToProvider($provider) {
             $driver = Socialite::driver($provider);
 
@@ -19,6 +23,8 @@
             return $driver->redirect();
         }
 
+        // CALLBACK DEL PROVEEDOR
+        // Recibe la respuesta del proveedor, busca o crea el usuario y genera el token
         public function handleProviderCallback($provider) {
             try {
                 $driver = Socialite::driver($provider);
@@ -28,6 +34,7 @@
                 }
 
                 $socialUser = $driver->user();
+                
             } catch (\Exception $e) {
                 Log::error("Social Login Error ($provider): " . $e->getMessage());
                 return redirect(env('FRONTEND_URL') . '/login?error=social_login_failed');
