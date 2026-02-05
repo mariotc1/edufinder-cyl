@@ -9,7 +9,7 @@
     // CONTROLADOR DE CENTROS EDUCATIVOS
     // Gestiona la búsqueda, filtrado y recuperación de datos de los centros
     class CentroController extends Controller {
-        
+
         // LISTADO Y BÚSQUEDA DE CENTROS
         // Aplica los filtros y devuelve resultados paginados o para mapa
         public function index(Request $request) {
@@ -76,7 +76,7 @@
                 $query->selectRaw("*, ( 6371 * acos( cos( radians(?) ) * cos( radians( latitud ) ) * cos( radians( longitud ) - radians(?) ) + sin( radians(?) ) * sin( radians( latitud ) ) ) ) AS distance", [$lat, $lon, $lat])
                     ->havingRaw("distance < ?", [$radius])
                     ->orderBy("distance");
-                    
+
             } else {
                 $query->orderBy('nombre');
             }
@@ -92,9 +92,9 @@
                     if ($request->has(['lat', 'lon', 'radius'])) {
                         $lat = $request->lat;
                         $lon = $request->lon;
-                        
+
                         // Re-aplicamos el selectRaw pero restringiendo columnas base
-                        $query->selectRaw("id, nombre, latitud, longitud, naturaleza, provincia, municipio, denominacion_generica, ( 6371 * acos( cos( radians(?) ) * cos( radians( latitud ) ) * cos( radians( longitud ) - radians(?) ) + sin( radians(?) ) * sin( radians( latitud ) ) ) ) AS distance", [$lat, $lon, $lat]);
+                        $query->selectRaw("id, nombre, latitud, longitud, naturaleza, provincia, municipio, localidad, direccion, denominacion_generica, ( 6371 * acos( cos( radians(?) ) * cos( radians( latitud ) ) * cos( radians( longitud ) - radians(?) ) + sin( radians(?) ) * sin( radians( latitud ) ) ) ) AS distance", [$lat, $lon, $lat]);
 
                     } else {
                         $query->select([
@@ -105,6 +105,8 @@
                             'naturaleza',
                             'provincia',
                             'municipio',
+                            'localidad',
+                            'direccion',
                             'denominacion_generica'
                         ]);
                     }
@@ -120,6 +122,8 @@
                             'naturaleza' => $centro->naturaleza,
                             'provincia' => $centro->provincia,
                             'municipio' => $centro->municipio,
+                            'localidad' => $centro->localidad,
+                            'direccion' => $centro->direccion,
                             'denominacion_generica' => $centro->denominacion_generica,
                             'distance' => isset($centro->distance) ? round($centro->distance, 2) : null,
                         ];
