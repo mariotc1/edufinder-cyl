@@ -90,12 +90,12 @@ export default function SearchContent() {
       <section className="flex-grow px-4 sm:px-6 lg:px-8 py-12">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-bold text-neutral-900 flex items-center gap-2">
+            <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 flex items-center gap-2">
               <School className="text-primary-600 w-7 h-7" />
               Resultados
             </h2>
             {data && (
-              <span className="text-xs sm:text-sm font-bold text-white bg-[#223945] px-3 py-1 rounded-full shadow-sm">
+              <span className="text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-[#223945] to-[#345165] border border-white/10 px-3.5 py-1 rounded-full shadow-md whitespace-nowrap animate-in fade-in zoom-in-95 duration-300">
                 {data.total} Centros encontrados
               </span>
             )}
