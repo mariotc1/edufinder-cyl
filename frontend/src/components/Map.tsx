@@ -12,22 +12,16 @@ import { MapPin, Building2, Star } from 'lucide-react';
 import MapPopup from '@/components/map/MapPopup';
 import { Centro } from '@/types';
 
-const iconCache: Record<string, L.DivIcon> = {};
-
-const getCachedIcon = (type: string) => {
-    if (!iconCache[type]) {
-        iconCache[type] = createCustomIcon(type);
-    }
-    return iconCache[type];
-};
-
 // GENERADOR DE ICONOS PERSONALIZADOS
 // Crea marcadores SVG renderizados dinámicamente para el mapa
-const createCustomIcon = (type: string) => {
+const createCustomIcon = (type: string, title?: string) => {
     const colorHex = '#223945'; 
 
     const iconMarkup = renderToStaticMarkup(
         <div className="relative group" style={{ width: '40px', height: '40px' }}>
+            {/* ACCESSIBILITY: Hidden Label for Screen Readers */}
+            <span className="sr-only">{title || 'Marcador de mapa'}</span>
+
             {/* Shadow Effect at bottom */}
             <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-1.5 bg-black/30 rounded-[50%] blur-[2px] transition-all group-hover:w-6 group-hover:blur-[3px]"></div>
             
@@ -37,6 +31,7 @@ const createCustomIcon = (type: string) => {
                 fill="none" 
                 xmlns="http://www.w3.org/2000/svg"
                 className="w-10 h-10 drop-shadow-md transform origin-bottom transition-all duration-300 group-hover:-translate-y-2 group-hover:scale-110"
+                aria-hidden="true"
             >
                 <path 
                     d="M16 0C7.16344 0 0 7.16344 0 16C0 24.8366 16 43 16 43C16 43 32 24.8366 32 16C32 7.16344 24.8366 0 16 0Z" 
@@ -67,6 +62,7 @@ const createCustomIcon = (type: string) => {
 const UserIcon = L.divIcon({
     html: renderToStaticMarkup(
         <div className="relative flex items-center justify-center w-8 h-8">
+            <span className="sr-only">Tu ubicación actual</span>
             <div className="absolute inset-0 bg-blue-500 rounded-full opacity-30 animate-ping"></div>
             <div className="relative w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-md"></div>
         </div>
@@ -166,7 +162,7 @@ export default function Map({ centros, userLocation, radius, center, zoom, favor
 
             {/* User Location Marker */}
             {userLocation && (
-                 <Marker position={[userLocation.lat, userLocation.lon]} icon={UserIcon}>
+                 <Marker position={[userLocation.lat, userLocation.lon]} icon={UserIcon} title="Tu Ubicación">
                      <Popup>
                          <div className="text-center p-1">
                              <span className="font-bold text-neutral-700">Tu Ubicación</span>
@@ -186,7 +182,9 @@ export default function Map({ centros, userLocation, radius, center, zoom, favor
                      <Marker 
                          key={centro.id} 
                          position={[lat, lon]}
-                         icon={getCachedIcon(centro.naturaleza || 'default')}
+                         icon={createCustomIcon(centro.naturaleza || 'default', centro.nombre)}
+                         title={centro.nombre}
+                         alt={`Marcador de ${centro.nombre}`}
                          ref={(ref) => {
                              if (ref && focusCenterId === centro.id) {
                                  setTimeout(() => ref.openPopup(), 500);

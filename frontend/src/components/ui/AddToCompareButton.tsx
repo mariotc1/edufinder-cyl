@@ -45,6 +45,7 @@ export default function AddToCompareButton({ centro, className, showLabel = fals
                 className
             )}
             title={isSelected ? "Quitar del comparador" : "Comparar este centro"}
+            aria-label={isSelected ? "Quitar del comparador" : "Comparar este centro"}
         >
              <motion.div
                 whileTap={{ scale: 0.9 }}

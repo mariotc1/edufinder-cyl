@@ -143,6 +143,7 @@ export default function CentroCard({
         whileTap={{ scale: 0.8 }}
         className="absolute top-4 right-4 z-20 p-1.5 rounded-full bg-white/90 backdrop-blur-sm shadow-sm border border-neutral-100 hover:bg-red-50 active:bg-red-100 transition-colors group/heart"
         disabled={loading}
+        aria-label={isFavorite ? "Eliminar de favoritos" : "Añadir a favoritos"}
       >
         <Heart
           className={`w-4 h-4 transition-colors ${isFavorite ? "fill-red-500 text-red-500" : "text-neutral-400 group-hover/heart:text-red-500"}`}

@@ -58,8 +58,8 @@ export default function Footer() {
                 <span className="text-xs font-bold text-white">Mario Tomé</span>
                 <div className="flex gap-2 border-l border-white/20 pl-2">
                   {/* Larger Icons (w-4 h-4 or w-5 h-5) */}
-                  <SocialIconTiny href="https://github.com/mariotc1" icon={<Github className="w-4 h-4" />} />
-                  <SocialIconTiny href="https://www.linkedin.com/in/mario-tome-core/" icon={<Linkedin className="w-4 h-4" />} />
+                  <SocialIconTiny href="https://github.com/mariotc1" icon={<Github className="w-4 h-4" />} ariaLabel="GitHub de Mario Tomé" />
+                  <SocialIconTiny href="https://www.linkedin.com/in/mario-tome-core/" icon={<Linkedin className="w-4 h-4" />} ariaLabel="LinkedIn de Mario Tomé" />
                 </div>
               </div>
 
@@ -68,8 +68,8 @@ export default function Footer() {
                 <span className="text-xs font-bold text-white">Raúl Ortega</span>
                 <div className="flex gap-2 border-l border-white/20 pl-2">
                   {/* Larger Icons */}
-                  <SocialIconTiny href="https://github.com/Raul9097" icon={<Github className="w-4 h-4" />} />
-                  <SocialIconTiny href="https://www.linkedin.com/in/raúl-ortega-frutos-140485332/" icon={<Linkedin className="w-4 h-4" />} />
+                  <SocialIconTiny href="https://github.com/Raul9097" icon={<Github className="w-4 h-4" />} ariaLabel="GitHub de Raúl Ortega" />
+                  <SocialIconTiny href="https://www.linkedin.com/in/raúl-ortega-frutos-140485332/" icon={<Linkedin className="w-4 h-4" />} ariaLabel="LinkedIn de Raúl Ortega" />
                 </div>
               </div>
             </div>
@@ -136,13 +136,14 @@ export default function Footer() {
   );
 }
 
-function SocialIconTiny({ href, icon }: { href: string; icon: React.ReactNode }) {
+function SocialIconTiny({ href, icon, ariaLabel }: { href: string; icon: React.ReactNode; ariaLabel: string }) {
   return (
     <a
       href={href}
       target="_blank"
       rel="noopener noreferrer"
       className="text-neutral-400 hover:text-white transition-colors hover:scale-110 transform duration-200"
+      aria-label={ariaLabel}
     >
       {icon}
     </a>

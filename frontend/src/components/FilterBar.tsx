@@ -392,6 +392,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
                 className={inputClasses}
                 value={filters.provincia || ''}
                 onChange={(e) => handleChange('provincia', e.target.value)}
+                aria-label="Seleccionar provincia"
                 >
                 <option value="">Todas las provincias</option>
                 {provincias.map(p => <option key={p} value={p}>{p}</option>)}
@@ -409,6 +410,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
                 className={inputClasses}
                 value={filters.tipo || ''}
                 onChange={(e) => handleChange('tipo', e.target.value)}
+                aria-label="Seleccionar tipo de enseñanza"
                 >
                 <option value="">Todos los tipos</option>
                 {tiposEnsenanza.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
@@ -498,6 +500,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
                     className={inputClasses}
                     value={filters.familia || ''}
                     onChange={(e) => handleChange('familia', e.target.value)}
+                    aria-label="Seleccionar familia profesional"
                     >
                     <option value="">Todas</option>
                     {familiasFP.map(f => <option key={f} value={f}>{f}</option>)}
@@ -515,6 +518,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
                     className={inputClasses}
                     value={filters.nivel || ''}
                     onChange={(e) => handleChange('nivel', e.target.value)}
+                    aria-label="Seleccionar nivel educativo"
                     >
                     <option value="">Todos</option>
                     <option value="BASICA">FP Básica</option>
@@ -535,6 +539,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
                     className={inputClasses}
                     value={filters.modalidad || ''}
                     onChange={(e) => handleChange('modalidad', e.target.value)}
+                    aria-label="Seleccionar modalidad"
                     >
                     <option value="">Todas</option>
                     <option value="PRESENCIAL">Presencial</option>

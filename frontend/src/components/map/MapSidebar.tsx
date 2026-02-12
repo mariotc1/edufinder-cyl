@@ -150,6 +150,7 @@ export default function MapSidebar({ radius, setRadius, filters, setFilters, onL
                                         className={selectClass}
                                         value={filters.provincia || ''}
                                         onChange={(e) => handleChange('provincia', e.target.value)}
+                                        aria-label="Seleccionar provincia"
                                     >
                                         <option value="">Todas</option>
                                         {provincias.map(p => <option key={p} value={p}>{p}</option>)}
