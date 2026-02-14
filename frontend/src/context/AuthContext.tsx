@@ -5,9 +5,11 @@ import api from '@/lib/axios';
 import LoginModal from '@/components/ui/LoginModal';
 
 interface User {
+  id: number;
   name: string;
   foto_perfil?: string;
   email?: string;
+  role?: string; 
 }
 
 interface AuthContextType {

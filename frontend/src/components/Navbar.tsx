@@ -5,7 +5,7 @@ import React, { Suspense } from 'react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { Menu, X, MapPin, Heart, LogIn, UserPlus, User as UserMenuIcon, LogOut as LogOutIcon } from 'lucide-react';
+import { Menu, X, MapPin, Heart, LogIn, UserPlus, User as UserMenuIcon, LogOut as LogOutIcon, LayoutDashboard } from 'lucide-react';
 import Logo from './Logo';
 import UserMenu from './UserMenu';
 import { useAuth } from '@/context/AuthContext';
@@ -84,6 +84,16 @@ function NavbarContent() {
                   </motion.div>
                   Favoritos
                 </Link>
+
+                {user.role === 'admin' && (
+                  <Link 
+                    href="/admin" 
+                    className="group flex items-center gap-2 px-4 py-2 rounded-full text-[#223945] font-bold text-sm uppercase tracking-wide border border-transparent hover:border-neutral-200 hover:bg-white hover:shadow-sm transition-all duration-300"
+                  >
+                    <LayoutDashboard className="w-4 h-4 text-neutral-400 group-hover:text-blue-600 transition-colors" />
+                    Panel Admin
+                  </Link>
+                )}
                 
                 {/* New Modern User Menu */}
                 <UserMenu />
@@ -174,6 +184,19 @@ function NavbarContent() {
                   </div>
                   Favoritos
                 </Link>
+
+                {user.role === 'admin' && (
+                  <Link 
+                    href="/admin" 
+                    className="flex items-center gap-4 px-4 py-3 rounded-xl bg-neutral-50 text-neutral-700 font-bold hover:bg-blue-50 hover:text-blue-600 transition-all"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <div className="w-8 h-8 rounded-full bg-white text-blue-500 shadow-sm flex items-center justify-center">
+                        <LayoutDashboard className="w-4 h-4" />
+                    </div>
+                    Panel Admin
+                  </Link>
+                )}
 
                 <div className="h-px bg-neutral-100 my-2"></div>
                   

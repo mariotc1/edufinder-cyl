@@ -1,11 +1,13 @@
 <?php
-    use Illuminate\Database\Migrations\Migration;
-    use Illuminate\Database\Schema\Blueprint;
-    use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-    return new class extends Migration {
+return new class extends Migration {
 
-        public function up(): void {
+    public function up(): void
+    {
+        if (!Schema::hasTable('personal_access_tokens')) {
             Schema::create('personal_access_tokens', function (Blueprint $table) {
                 $table->id();
                 $table->morphs('tokenable');
@@ -17,9 +19,11 @@
                 $table->timestamps();
             });
         }
+    }
 
-        public function down(): void {
-            Schema::dropIfExists('personal_access_tokens');
-        }
-    };
+    public function down(): void
+    {
+        Schema::dropIfExists('personal_access_tokens');
+    }
+};
 ?>
