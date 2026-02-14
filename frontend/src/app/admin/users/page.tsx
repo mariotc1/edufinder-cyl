@@ -3,15 +3,121 @@
 import { useState } from 'react';
 import api from '@/lib/axios';
 import useSWR, { mutate } from 'swr';
-import { Search, Trash2, ChevronLeft, ChevronRight, Shield, User as UserIcon } from 'lucide-react';
+import { Search, Trash2, ChevronLeft, ChevronRight, Shield, User as UserIcon, Eye, X, Calendar, Mail, Hash } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const fetcher = (url: string) => api.get(url).then((res) => res.data);
+
+// User Details Modal Component
+function UserDetailsModal({ user, onClose }: { user: any; onClose: () => void }) {
+    if (!user) return null;
+
+    return (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose}></div>
+            <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-white rounded-2xl shadow-2xl w-full max-w-md relative overflow-hidden z-10"
+            >
+                {/* Header Background */}
+                <div className="h-24 bg-gradient-to-r from-[#223945] via-blue-600 to-blue-400 relative">
+                    <button onClick={onClose} className="absolute top-4 right-4 text-white/80 hover:text-white bg-black/20 hover:bg-black/40 rounded-full p-1 transition-colors">
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+
+                {/* Avatar & Main Info */}
+                <div className="px-6 relative">
+                    <div className="absolute -top-12 left-6 p-1 bg-white rounded-full">
+                        {user.foto_perfil ? (
+                            <img src={user.foto_perfil} className="w-24 h-24 rounded-full object-cover border-2 border-slate-100" alt="" />
+                        ) : (
+                            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 text-[#223945] flex items-center justify-center font-bold text-3xl border-2 border-slate-100">
+                                {user.name.charAt(0)}
+                            </div>
+                        )}
+                    </div>
+                    
+                    <div className="mt-14 mb-6">
+                        <h2 className="text-2xl font-bold text-[#223945]">{user.name}</h2>
+                        <div className="flex items-center gap-2 mt-1">
+                             <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold border uppercase tracking-wide ${
+                                user.role === 'admin' 
+                                    ? 'bg-[#223945] text-white border-[#223945]' 
+                                    : 'bg-green-50 text-green-700 border-green-200'
+                             }`}>
+                                {user.role === 'admin' && <Shield className="w-3 h-3" />}
+                                {user.role === 'admin' ? 'Administrador' : 'Usuario'}
+                            </span>
+                            <span className="text-xs text-slate-400 font-medium">#{user.id}</span>
+                        </div>
+                    </div>
+
+                    {/* Generic Details Grid */}
+                    <div className="space-y-4 mb-8">
+                        <div className="flex items-start gap-4 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                            <div className="p-2 bg-white rounded-lg text-blue-600 shadow-sm border border-slate-100">
+                                <Mail className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">Correo Electrónico</p>
+                                <p className="text-sm font-semibold text-slate-700">{user.email}</p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-start gap-4 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                            <div className="p-2 bg-white rounded-lg text-blue-600 shadow-sm border border-slate-100">
+                                <Calendar className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">Fecha de Registro</p>
+                                <p className="text-sm font-semibold text-slate-700">
+                                    {new Date(user.created_at).toLocaleDateString('es-ES', { 
+                                        weekday: 'long', 
+                                        year: 'numeric', 
+                                        month: 'long', 
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    })}
+                                </p>
+                            </div>
+                        </div>
+
+                         <div className="flex items-start gap-4 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                            <div className="p-2 bg-white rounded-lg text-blue-600 shadow-sm border border-slate-100">
+                                <Hash className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">Identificador del Sistema</p>
+                                <p className="text-sm font-semibold text-slate-700 font-mono">{user.id}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                 {/* Footer Actions */}
+                 <div className="bg-slate-50 p-4 border-t border-slate-200 flex justify-end">
+                    <button 
+                        onClick={onClose}
+                        className="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-bold rounded-lg hover:bg-slate-50 hover:text-slate-900 transition-colors text-sm"
+                    >
+                        Cerrar
+                    </button>
+                 </div>
+            </motion.div>
+        </div>
+    );
+}
 
 export default function UsersPage() {
   const { user: currentUser } = useAuth();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
   const { data, error, isLoading } = useSWR(`/admin/users?page=${page}&search=${search}`, fetcher);
 
   const handleDelete = async (userId: number, userName: string) => {
@@ -19,7 +125,7 @@ export default function UsersPage() {
 
       try {
           await api.delete(`/admin/users/${userId}`);
-          mutate(`/admin/users?page=${page}&search=${search}`); // Refresh data
+          mutate(`/admin/users?page=${page}&search=${search}`);
           alert('Usuario eliminado');
       } catch (e: any) {
           alert(e.response?.data?.message || 'Error al eliminar');
@@ -44,6 +150,10 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-6">
+      <AnimatePresence>
+        {selectedUser && <UserDetailsModal user={selectedUser} onClose={() => setSelectedUser(null)} />}
+      </AnimatePresence>
+
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
            <h1 className="text-3xl font-bold text-[#223945] tracking-tight">Gestión de Usuarios</h1>
@@ -63,7 +173,6 @@ export default function UsersPage() {
 
       {/* Desktop View - Table */}
       <div className="hidden md:block bg-white rounded-xl shadow-sm border border-neutral-200 overflow-hidden relative group hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-[#223945] transition-[box-shadow,border-color] duration-300">
-        {/* Decorative Top Gradient */}
         <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300"></div>
 
         <div className="overflow-x-auto pt-2">
@@ -140,7 +249,14 @@ export default function UsersPage() {
                                 </div>
                             </td>
                             <td className="px-6 py-4 text-right">
-                                <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="flex items-center justify-end gap-2">
+                                    <button 
+                                        onClick={() => setSelectedUser(user)}
+                                        className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                        title="Ver detalles"
+                                    >
+                                        <Eye className="w-4 h-4" />
+                                    </button>
                                     <button 
                                         onClick={() => handleDelete(user.id, user.name)}
                                         disabled={user.role === 'admin'}
@@ -224,7 +340,7 @@ export default function UsersPage() {
                  </div>
 
                  <div className="flex items-center justify-between pt-4 border-t border-slate-100 mt-2">
-                     <div className="flex-1">
+                     <div className="flex-1 mr-4">
                           {user.id === currentUser?.id ? (
                                 <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded-md">Admin (Tú)</span>
                             ) : (
@@ -243,14 +359,22 @@ export default function UsersPage() {
                             )}
                      </div>
                      
-                     {user.id !== currentUser?.id && user.role !== 'admin' && (
-                         <button 
-                            onClick={() => handleDelete(user.id, user.name)}
-                            className="ml-3 p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                         >
-                             <Trash2 className="w-5 h-5" />
-                         </button>
-                     )}
+                     <div className="flex items-center gap-2">
+                        <button 
+                             onClick={() => setSelectedUser(user)}
+                             className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all border border-transparent hover:border-blue-100"
+                          >
+                              <Eye className="w-5 h-5" />
+                          </button>
+                         {user.id !== currentUser?.id && user.role !== 'admin' && (
+                             <button 
+                                onClick={() => handleDelete(user.id, user.name)}
+                                className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"
+                             >
+                                 <Trash2 className="w-5 h-5" />
+                             </button>
+                         )}
+                     </div>
                  </div>
              </div>
         ))}

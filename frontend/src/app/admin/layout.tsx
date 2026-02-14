@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, ArrowLeft, LogOut, Menu, X, Landmark } from 'lucide-react';
+import { LayoutDashboard, Users, ArrowLeft, LogOut, Menu, X, School } from 'lucide-react';
 import AdminGuard from '@/components/auth/AdminGuard';
 import Logo from '@/components/Logo';
 import { useAuth } from '@/context/AuthContext';
@@ -17,7 +17,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const navItems = [
     { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
     { name: 'Usuarios', href: '/admin/users', icon: Users },
-    { name: 'Centros', href: '/admin/centros', icon: Landmark },
+    { name: 'Centros', href: '/admin/centros', icon: School },
   ];
 
   return (

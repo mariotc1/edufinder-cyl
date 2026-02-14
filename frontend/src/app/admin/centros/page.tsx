@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import api from '@/lib/axios';
 import useSWR, { mutate } from 'swr';
-import { Search, Trash2, ChevronLeft, ChevronRight, Landmark, MapPin } from 'lucide-react';
+import { Search, Trash2, ChevronLeft, ChevronRight, School, MapPin } from 'lucide-react';
 
 const fetcher = (url: string) => api.get(url).then((res) => res.data);
 
@@ -70,7 +70,7 @@ export default function CentrosPage() {
                             <td className="px-6 py-4">
                                 <div className="flex items-center gap-4">
                                     <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-                                        <Landmark className="w-5 h-5" />
+                                        <School className="w-5 h-5" />
                                     </div>
                                     <div>
                                         <span className="font-bold text-[#223945] block text-sm line-clamp-1" title={centro.nombre}>{centro.nombre}</span>
@@ -90,7 +90,7 @@ export default function CentrosPage() {
                                 </span>
                             </td>
                             <td className="px-6 py-4 text-right">
-                                <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="flex items-center justify-end gap-2 transition-opacity">
                                     <button 
                                         onClick={() => handleDelete(centro.id, centro.nombre)}
                                         className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
@@ -106,7 +106,7 @@ export default function CentrosPage() {
                         <tr>
                             <td colSpan={4} className="px-6 py-12 text-center text-slate-500">
                                 <div className="flex flex-col items-center gap-2">
-                                    <Landmark className="w-8 h-8 text-slate-300" />
+                                    <School className="w-8 h-8 text-slate-300" />
                                     <p className="font-medium">No se encontraron centros.</p>
                                 </div>
                             </td>
@@ -149,7 +149,7 @@ export default function CentrosPage() {
                  <div className="flex items-start justify-between mb-2">
                      <div className="flex items-center gap-3 w-full pr-8">
                         <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-                            <Landmark className="w-5 h-5" />
+                            <School className="w-5 h-5" />
                         </div>
                         <div className="min-w-0 flex-1">
                             <p className="font-bold text-[#223945] text-sm leading-tight line-clamp-2">{centro.nombre}</p>
