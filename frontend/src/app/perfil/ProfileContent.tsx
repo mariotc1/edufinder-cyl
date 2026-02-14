@@ -5,6 +5,8 @@ import api from '@/lib/axios';
 import { User, MapPin, Heart, Lock, Camera, LogOut, Eye, EyeOff, ChevronLeft, Trash, AlertCircle, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import LogoutConfirmationModal from '@/components/auth/LogoutConfirmationModal';
+import { AnimatePresence } from 'framer-motion';
 
 interface UserData {
     name: string;
@@ -43,6 +45,11 @@ export default function ProfileContent() {
     const [sendingRecovery, setSendingRecovery] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    
+    // Custom Logout Modal State
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
+
 
     const passwordRequirements = useMemo(() => {
         return [
@@ -213,10 +220,17 @@ export default function ProfileContent() {
         }
     };
 
-    const handleLogout = async () => {
+    const handleLogoutClick = () => {
+        setShowLogoutModal(true);
+    };
+
+    const handleLogoutConfirm = async () => {
+        setIsLoggingOut(true);
         await api.post('/logout');
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+        setIsLoggingOut(false);
+        setShowLogoutModal(false);
         router.push('/login');
     };
 
@@ -328,7 +342,7 @@ export default function ProfileContent() {
                                 </button>
 
                                 <div className="pt-8 mt-4 border-t border-neutral-100">
-                                    <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 transition-colors">
+                                    <button onClick={handleLogoutClick} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 transition-colors">
                                         <LogOut className="w-4 h-4" /> Cerrar Sesión
                                     </button>
                                 </div>
@@ -699,6 +713,14 @@ export default function ProfileContent() {
                     </div>
                 </div>
             )}
+
+            <LogoutConfirmationModal 
+                key="logout-modal-profile"
+                isOpen={showLogoutModal} 
+                onClose={() => setShowLogoutModal(false)}
+                onConfirm={handleLogoutConfirm}
+                isLoggingOut={isLoggingOut}
+            />
         </div>
     );
 }

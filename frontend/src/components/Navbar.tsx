@@ -5,12 +5,13 @@ import React, { Suspense } from 'react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { Menu, X, MapPin, Heart, LogIn, UserPlus, User as UserMenuIcon, LogOut as LogOutIcon } from 'lucide-react';
+import { Menu, X, MapPin, Heart, LogIn, UserPlus, User as UserMenuIcon, LogOut as LogOutIcon, LayoutDashboard } from 'lucide-react';
 import Logo from './Logo';
 import UserMenu from './UserMenu';
 import { useAuth } from '@/context/AuthContext';
 import { useFavoritesAnimation } from '@/context/FavoritesAnimationContext';
 import { motion } from 'framer-motion';
+import LogoutConfirmationModal from './auth/LogoutConfirmationModal';
 
 // COMPONENTE LAYOUT: BARRA DE NAVEGACIÓN SUPERIOR
 // Utiliza Suspense para cargar contenido dependiente del cliente (useSearchParams)
@@ -30,10 +31,18 @@ function NavbarContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  
+  // Logout Modal State
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const handleLogout = () => {
-      logout();
-      router.push('/login');
+  const handleLogoutConfirm = async () => {
+    setIsLoggingOut(true);
+    await logout();
+    setIsLoggingOut(false);
+    setShowLogoutModal(false);
+    setMobileMenuOpen(false); // Close mobile menu if open
+    window.location.href = '/login';
   };
 
   // Lógica de redirección tras login: mantiene la página actual y filtros
@@ -84,6 +93,16 @@ function NavbarContent() {
                   </motion.div>
                   Favoritos
                 </Link>
+
+                {user.role === 'admin' && (
+                  <Link 
+                    href="/admin" 
+                    className="group flex items-center gap-2 px-4 py-2 rounded-full text-[#223945] font-bold text-sm uppercase tracking-wide border border-transparent hover:border-neutral-200 hover:bg-white hover:shadow-sm transition-all duration-300"
+                  >
+                    <LayoutDashboard className="w-4 h-4 text-neutral-400 group-hover:text-blue-600 transition-colors" />
+                    Panel Admin
+                  </Link>
+                )}
                 
                 {/* New Modern User Menu */}
                 <UserMenu />
@@ -175,6 +194,19 @@ function NavbarContent() {
                   Favoritos
                 </Link>
 
+                {user.role === 'admin' && (
+                  <Link 
+                    href="/admin" 
+                    className="flex items-center gap-4 px-4 py-3 rounded-xl bg-neutral-50 text-neutral-700 font-bold hover:bg-blue-50 hover:text-blue-600 transition-all"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <div className="w-8 h-8 rounded-full bg-white text-blue-500 shadow-sm flex items-center justify-center">
+                        <LayoutDashboard className="w-4 h-4" />
+                    </div>
+                    Panel Admin
+                  </Link>
+                )}
+
                 <div className="h-px bg-neutral-100 my-2"></div>
                   
                 <Link 
@@ -189,10 +221,7 @@ function NavbarContent() {
                  </Link>
 
                 <button 
-                  onClick={() => {
-                    handleLogout();
-                    setMobileMenuOpen(false);
-                  }} 
+                  onClick={() => setShowLogoutModal(true)} 
                   className="w-full flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-red-50 text-red-600 font-bold transition-all text-left"
                 >
                   <div className="w-8 h-8 rounded-full bg-red-100 text-red-500 flex items-center justify-center">
@@ -223,6 +252,14 @@ function NavbarContent() {
             )}
           </div>
       </motion.div>
+
+      <LogoutConfirmationModal 
+            key="logout-modal-navbar-mobile"
+            isOpen={showLogoutModal} 
+            onClose={() => setShowLogoutModal(false)}
+            onConfirm={handleLogoutConfirm}
+            isLoggingOut={isLoggingOut}
+      />
     </nav>
   );
 }
