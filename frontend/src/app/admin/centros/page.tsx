@@ -1,18 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import api from '@/lib/axios';
 import useSWR, { mutate } from 'swr';
 import { Search, Trash2, ChevronLeft, ChevronRight, School, MapPin } from 'lucide-react';
 import DeleteConfirmationModal from '@/components/admin/DeleteConfirmationModal';
 import { AnimatePresence } from 'framer-motion';
+import { useDebounce } from '@/hooks/useDebounce';
 
 const fetcher = (url: string) => api.get(url).then((res) => res.data);
 
 export default function CentrosPage() {
-  const [search, setSearch] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch] = useDebounce(searchTerm, 500);
   const [page, setPage] = useState(1);
-  const { data, error, isLoading } = useSWR(`/admin/centros?page=${page}&search=${search}`, fetcher);
+  const { data, error, isLoading } = useSWR(`/admin/centros?page=${page}&search=${debouncedSearch}`, fetcher);
   
   // Custom Delete Modal State
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; centroId: number | null; nombre: string; isDeleting: boolean }>({
@@ -21,6 +23,11 @@ export default function CentrosPage() {
     nombre: '',
     isDeleting: false
   });
+
+  // Reset page when search changes
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
 
   const handleDeleteClick = (centroId: number, nombre: string) => {
     setDeleteModal({ isOpen: true, centroId, nombre, isDeleting: false });
@@ -32,7 +39,7 @@ export default function CentrosPage() {
     setDeleteModal(prev => ({ ...prev, isDeleting: true }));
     try {
         await api.delete(`/admin/centros/${deleteModal.centroId}`);
-        mutate(`/admin/centros?page=${page}&search=${search}`);
+        mutate(`/admin/centros?page=${page}&search=${debouncedSearch}`);
         setDeleteModal({ isOpen: false, centroId: null, nombre: '', isDeleting: false });
     } catch (e: any) {
         alert(e.response?.data?.message || 'Error al eliminar');
@@ -80,8 +87,8 @@ export default function CentrosPage() {
                 type="text" 
                 placeholder="Buscar por nombre, localidad..." 
                 className="pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#223945]/20 focus:border-[#223945] outline-none w-full sm:w-72 transition-all bg-white shadow-sm"
-                value={search}
-                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
             />
         </div>
       </div>

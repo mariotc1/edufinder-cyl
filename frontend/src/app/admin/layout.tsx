@@ -148,7 +148,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           
           {/* User Info Minimal */}
           <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center gap-3">
-             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-xs shadow-md">
+             <div className="w-8 h-8 rounded-full bg-[#223945] flex items-center justify-center text-white font-bold text-xs shadow-md border border-slate-200">
                  A
              </div>
              <div className="flex-1 min-w-0">

@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import api from '@/lib/axios';
 import useSWR, { mutate } from 'swr';
 import { Search, Trash2, ChevronLeft, ChevronRight, Shield, User as UserIcon, Eye, X, Calendar, Mail, Hash } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { AnimatePresence, motion } from 'framer-motion';
 import DeleteConfirmationModal from '@/components/admin/DeleteConfirmationModal';
+import { useDebounce } from '@/hooks/useDebounce';
 
 const fetcher = (url: string) => api.get(url).then((res) => res.data);
 
@@ -123,7 +124,8 @@ function UserDetailsModal({ user, onClose }: { user: any; onClose: () => void })
 
 export default function UsersPage() {
   const { user: currentUser } = useAuth();
-  const [search, setSearch] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch] = useDebounce(searchTerm, 500); // 500ms debounce
   const [page, setPage] = useState(1);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   
@@ -135,7 +137,12 @@ export default function UsersPage() {
     isDeleting: false
   });
 
-  const { data, error, isLoading } = useSWR(`/admin/users?page=${page}&search=${search}`, fetcher);
+  const { data, error, isLoading } = useSWR(`/admin/users?page=${page}&search=${debouncedSearch}`, fetcher);
+
+  // Reset page when search changes
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
 
   const handleDeleteClick = (userId: number, userName: string) => {
     setDeleteModal({ isOpen: true, userId, userName, isDeleting: false });
@@ -147,7 +154,7 @@ export default function UsersPage() {
     setDeleteModal(prev => ({ ...prev, isDeleting: true }));
     try {
         await api.delete(`/admin/users/${deleteModal.userId}`);
-        mutate(`/admin/users?page=${page}&search=${search}`);
+        mutate(`/admin/users?page=${page}&search=${debouncedSearch}`);
         setDeleteModal({ isOpen: false, userId: null, userName: '', isDeleting: false });
     } catch (e: any) {
         alert(e.response?.data?.message || 'Error al eliminar');
@@ -158,7 +165,7 @@ export default function UsersPage() {
   const handleRoleChange = async (userId: number, newRole: string) => {
       try {
           await api.put(`/admin/users/${userId}/role`, { role: newRole });
-          mutate(`/admin/users?page=${page}&search=${search}`);
+          mutate(`/admin/users?page=${page}&search=${debouncedSearch}`);
       } catch (e: any) {
            alert(e.response?.data?.message || 'Error al cambiar rol');
       }
@@ -205,8 +212,8 @@ export default function UsersPage() {
                 type="text" 
                 placeholder="Buscar usuarios..." 
                 className="pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#223945]/20 focus:border-[#223945] outline-none w-full sm:w-72 transition-all bg-white shadow-sm"
-                value={search}
-                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
             />
         </div>
       </div>
