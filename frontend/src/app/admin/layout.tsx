@@ -8,17 +8,28 @@ import AdminGuard from '@/components/auth/AdminGuard';
 import Logo from '@/components/Logo';
 import { useAuth } from '@/context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import LogoutConfirmationModal from '@/components/auth/LogoutConfirmationModal';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const [showLogoutModal, setShowLogoutModal] = React.useState(false);
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
 
   const navItems = [
     { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
     { name: 'Usuarios', href: '/admin/users', icon: Users },
     { name: 'Centros', href: '/admin/centros', icon: School },
   ];
+
+  const handleLogoutConfirm = async () => {
+    setIsLoggingOut(true);
+    await logout();
+    setIsLoggingOut(false);
+    setShowLogoutModal(false);
+    window.location.href = '/login';
+  };
 
   return (
     <AdminGuard>
@@ -127,7 +138,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               Volver a la App
             </Link>
              <button
-              onClick={logout}
+              onClick={() => setShowLogoutModal(true)}
               className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-red-600 hover:bg-red-50 transition-all text-sm font-medium"
             >
               <LogOut className="w-4 h-4" />
@@ -162,6 +173,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </motion.div>
             </AnimatePresence>
         </main>
+
+        <LogoutConfirmationModal 
+            key="logout-modal-admin"
+            isOpen={showLogoutModal} 
+            onClose={() => setShowLogoutModal(false)}
+            onConfirm={handleLogoutConfirm}
+            isLoggingOut={isLoggingOut}
+        />
       </div>
     </AdminGuard>
   );

@@ -5,10 +5,13 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, LogOut, Settings, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import LogoutConfirmationModal from './auth/LogoutConfirmationModal';
 
 export default function UserMenu() {
   const { user, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -22,10 +25,20 @@ export default function UserMenu() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const handleLogoutConfirm = async () => {
+    setIsLoggingOut(true);
+    await logout();
+    setIsLoggingOut(false);
+    setShowLogoutModal(false);
+    setIsOpen(false);
+    window.location.href = '/login';
+  };
+
   if (!user) return null;
 
   return (
-    <div className="relative" ref={menuRef}>
+    <>
+      <div className="relative" ref={menuRef}>
       {/* Trigger Button - Matches 'Pill' design of other links */}
       <button 
         onClick={() => setIsOpen(!isOpen)}
@@ -72,11 +85,9 @@ export default function UserMenu() {
                 className="absolute right-0 mt-4 w-72 z-50 filter drop-shadow-[0_20px_50px_rgba(0,0,0,0.15)]"
             >
                 {/* Speech Bubble Arrow */}
-                {/* Speech Bubble Arrow - Solid color matches the gradient end for seamless look */}
                 <div className="absolute -top-1.5 right-[22px] w-5 h-5 bg-blue-600 rotate-45 rounded-[1px] z-0 shadow-sm"></div>
 
                 <div className="bg-white rounded-2xl overflow-hidden relative z-10">
-                    {/* Header - Gradient & Stats */}
                     {/* Header - Gradient & Stats */}
                     <div className="bg-gradient-to-r from-[#223945] to-blue-600 p-5 text-white relative overflow-hidden">
                         {/* Abstract Shapes/Noise */}
@@ -109,9 +120,8 @@ export default function UserMenu() {
 
                     <button 
                         onClick={() => {
-                            logout();
                             setIsOpen(false);
-                            window.location.href = '/login';
+                            setShowLogoutModal(true);
                         }}
                         className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-red-50 transition-colors group text-left"
                     >
@@ -128,6 +138,15 @@ export default function UserMenu() {
             </motion.div>
         )}
       </AnimatePresence>
-    </div>
+      </div>
+
+      <LogoutConfirmationModal 
+            key="logout-modal-usermenu"
+            isOpen={showLogoutModal} 
+            onClose={() => setShowLogoutModal(false)}
+            onConfirm={handleLogoutConfirm}
+            isLoggingOut={isLoggingOut}
+      />
+    </>
   );
 }
