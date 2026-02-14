@@ -50,20 +50,23 @@ export default function CentrosPage() {
   return (
     <div className="space-y-6">
       <AnimatePresence>
-        <DeleteConfirmationModal 
-            isOpen={deleteModal.isOpen}
-            onClose={() => setDeleteModal(prev => ({ ...prev, isOpen: false }))}
-            onConfirm={handleConfirmDelete}
-            title="Eliminar Centro"
-            isDeleting={deleteModal.isDeleting}
-            description={
-                <span>
-                    Estás a punto de eliminar el centro <span className="font-bold text-slate-800">{deleteModal.nombre}</span>.
-                    <br /><br />
-                    Esta acción <strong>no se puede deshacer</strong>. Al eliminar este centro, desaparecerá de los listados y mapas, y se perderán todos las reseñas o datos asociados.
-                </span>
-            }
-        />
+        {deleteModal.isOpen && (
+            <DeleteConfirmationModal 
+                key="delete-modal"
+                isOpen={deleteModal.isOpen}
+                onClose={() => setDeleteModal(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={handleConfirmDelete}
+                title="Eliminar Centro"
+                isDeleting={deleteModal.isDeleting}
+                description={
+                    <span>
+                        Estás a punto de eliminar el centro <span className="font-bold text-slate-800">{deleteModal.nombre}</span>.
+                        <br /><br />
+                        Esta acción <strong>no se puede deshacer</strong>. Al eliminar este centro, desaparecerá de los listados y mapas, y se perderán todos las reseñas o datos asociados.
+                    </span>
+                }
+            />
+        )}
       </AnimatePresence>
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">

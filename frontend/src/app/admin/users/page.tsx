@@ -174,21 +174,24 @@ export default function UsersPage() {
   return (
     <div className="space-y-6">
       <AnimatePresence>
-        {selectedUser && <UserDetailsModal user={selectedUser} onClose={() => setSelectedUser(null)} />}
-        <DeleteConfirmationModal 
-            isOpen={deleteModal.isOpen}
-            onClose={() => setDeleteModal(prev => ({ ...prev, isOpen: false }))}
-            onConfirm={handleConfirmDelete}
-            title="Eliminar Usuario"
-            isDeleting={deleteModal.isDeleting}
-            description={
-                <span>
-                    Estás a punto de eliminar al usuario <span className="font-bold text-slate-800">{deleteModal.userName}</span>.
-                    <br /><br />
-                    Esta acción <strong>no se puede deshacer</strong>. Se eliminará permanentemente su cuenta, acceso y cualquier dato asociado en la plataforma.
-                </span>
-            }
-        />
+        {selectedUser && <UserDetailsModal key="user-details" user={selectedUser} onClose={() => setSelectedUser(null)} />}
+        {deleteModal.isOpen && (
+            <DeleteConfirmationModal 
+                key="delete-modal"
+                isOpen={deleteModal.isOpen}
+                onClose={() => setDeleteModal(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={handleConfirmDelete}
+                title="Eliminar Usuario"
+                isDeleting={deleteModal.isDeleting}
+                description={
+                    <span>
+                        Estás a punto de eliminar al usuario <span className="font-bold text-slate-800">{deleteModal.userName}</span>.
+                        <br /><br />
+                        Esta acción <strong>no se puede deshacer</strong>. Se eliminará permanentemente su cuenta, acceso y cualquier dato asociado en la plataforma.
+                    </span>
+                }
+            />
+        )}
       </AnimatePresence>
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
