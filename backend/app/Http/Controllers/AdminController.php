@@ -71,6 +71,7 @@ class AdminController extends Controller
             'total_centros' => Centro::count(),
             'total_ciclos' => CicloFp::count(),
             'new_users_today' => User::whereDate('created_at', today())->count(),
+            'recent_users' => User::orderBy('created_at', 'desc')->take(5)->get(['id', 'name', 'email', 'created_at', 'foto_perfil']),
         ]);
     }
 }
