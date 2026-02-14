@@ -15,104 +15,119 @@ function UserDetailsModal({ user, onClose }: { user: any; onClose: () => void })
 
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
+            {/* Backdrop with fix for edge blur artifacts */}
+            <motion.div 
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/40 backdrop-blur-md" // Increased blur and ensured fixed positioning
+                onClick={onClose}
+            />
+            
             <motion.div 
                 initial={{ opacity: 0, scale: 0.95, y: 10 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                className="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative overflow-hidden z-10 flex flex-col max-h-[90vh]"
+                className="relative w-full max-w-lg z-10 group"
             >
-                {/* Header - Clean & Professional */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white sticky top-0 z-20">
-                    <h3 className="text-lg font-bold text-[#223945]">Ficha de Usuario</h3>
-                    <button 
-                        onClick={onClose} 
-                        className="p-2 -mr-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full transition-all"
-                    >
-                        <X className="w-5 h-5" />
-                    </button>
-                </div>
-
-                <div className="p-6 overflow-y-auto custom-scrollbar">
-                    {/* Profile Header Section */}
-                    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-8">
-                        <div className="shrink-0 relative group">
-                            <div className="absolute inset-0 bg-brand-gradient rounded-full blur opacity-20 group-hover:opacity-30 transition-opacity"></div>
-                            {user.foto_perfil ? (
-                                <img src={user.foto_perfil} className="relative w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg" alt="" />
-                            ) : (
-                                <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 text-[#223945] flex items-center justify-center font-bold text-3xl border-4 border-white shadow-lg">
-                                    {user.name.charAt(0)}
-                                </div>
-                            )}
-                        </div>
-                        
-                        <div className="flex-1 text-center sm:text-left min-w-0">
-                            <h2 className="text-2xl font-bold text-[#223945] mb-2 leading-tight break-words">{user.name}</h2>
-                            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                                 <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border uppercase tracking-wide shadow-sm ${
-                                    user.role === 'admin' 
-                                        ? 'bg-[#223945] text-white border-[#223945]' 
-                                        : 'bg-green-50 text-green-700 border-green-200'
-                                 }`}>
-                                    {user.role === 'admin' && <Shield className="w-3 h-3" />}
-                                    {user.role === 'admin' ? 'Administrador' : 'Usuario'}
-                                </span>
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200">
-                                    ID: #{user.id}
-                                </span>
-                            </div>
-                        </div>
+                 {/* Gradient Border Element */}
+                 <div className="absolute -inset-[1px] bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 rounded-2xl opacity-70 blur-[1px] group-hover:opacity-100 transition-opacity duration-500"></div>
+                 
+                 {/* Main Card Content */}
+                 <div className="relative bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                     {/* Header - Clean & Professional */}
+                    <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white sticky top-0 z-20">
+                        <h3 className="text-lg font-bold text-[#223945]">Ficha de Usuario</h3>
+                        <button 
+                            onClick={onClose} 
+                            className="p-2 -mr-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all duration-300 md:hover:scale-110 active:scale-95"
+                            title="Cerrar"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
                     </div>
 
-                    {/* Information Grid */}
-                    <div className="grid gap-3">
-                        <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-start gap-4 hover:border-blue-100 transition-colors group">
-                            <div className="p-2.5 bg-white rounded-lg text-blue-600 shadow-sm border border-slate-100 group-hover:text-blue-700 group-hover:shadow-md transition-all">
-                                <Mail className="w-5 h-5" />
+                    <div className="p-6 overflow-y-auto custom-scrollbar">
+                        {/* Profile Header Section */}
+                        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-8">
+                            <div className="shrink-0 relative">
+                                <div className="absolute inset-0 bg-brand-gradient rounded-full blur-md opacity-30"></div>
+                                {user.foto_perfil ? (
+                                    <img src={user.foto_perfil} className="relative w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg" alt="" />
+                                ) : (
+                                    <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 text-[#223945] flex items-center justify-center font-bold text-3xl border-4 border-white shadow-lg">
+                                        {user.name.charAt(0)}
+                                    </div>
+                                )}
                             </div>
-                            <div className="min-w-0">
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Correo Electrónico</p>
-                                <p className="text-sm font-semibold text-slate-700 break-words">{user.email}</p>
-                            </div>
-                        </div>
-
-                        <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-start gap-4 hover:border-blue-100 transition-colors group">
-                            <div className="p-2.5 bg-white rounded-lg text-blue-600 shadow-sm border border-slate-100 group-hover:text-blue-700 group-hover:shadow-md transition-all">
-                                <Calendar className="w-5 h-5" />
-                            </div>
-                            <div>
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Fecha de Registro</p>
-                                <p className="text-sm font-semibold text-slate-700 capitalize">
-                                    {new Date(user.created_at).toLocaleDateString('es-ES', { 
-                                        weekday: 'long', 
-                                        year: 'numeric', 
-                                        month: 'long', 
-                                        day: 'numeric'
-                                    })}
-                                </p>
-                                <p className="text-xs text-slate-400 font-medium mt-0.5">
-                                    a las {new Date(user.created_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* System Metadata */}
-                        <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-start gap-4 hover:border-blue-100 transition-colors group">
-                             <div className="p-2.5 bg-white rounded-lg text-blue-600 shadow-sm border border-slate-100 group-hover:text-blue-700 group-hover:shadow-md transition-all">
-                                <Hash className="w-5 h-5" />
-                            </div>
-                            <div>
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Metadatos del Sistema</p>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xs font-mono bg-white px-2 py-1 rounded border border-slate-200 text-slate-600">
-                                        UUID: {user.id}
+                            
+                            <div className="flex-1 text-center sm:text-left min-w-0">
+                                <h2 className="text-2xl font-bold text-[#223945] mb-2 leading-tight break-words">{user.name}</h2>
+                                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                                     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border uppercase tracking-wide shadow-sm ${
+                                        user.role === 'admin' 
+                                            ? 'bg-[#223945] text-white border-[#223945]' 
+                                            : 'bg-green-50 text-green-700 border-green-200'
+                                     }`}>
+                                        {user.role === 'admin' && <Shield className="w-3 h-3" />}
+                                        {user.role === 'admin' ? 'Administrador' : 'Usuario'}
+                                    </span>
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200">
+                                        ID: #{user.id}
                                     </span>
                                 </div>
                             </div>
                         </div>
+
+                        {/* Information Grid */}
+                        <div className="grid gap-3">
+                            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-start gap-4 hover:border-blue-100 transition-colors group/item">
+                                <div className="p-2.5 bg-white rounded-lg text-blue-600 shadow-sm border border-slate-100 group-hover/item:text-blue-700 group-hover/item:shadow-md transition-all">
+                                    <Mail className="w-5 h-5" />
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Correo Electrónico</p>
+                                    <p className="text-sm font-semibold text-slate-700 break-words">{user.email}</p>
+                                </div>
+                            </div>
+
+                            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-start gap-4 hover:border-blue-100 transition-colors group/item">
+                                <div className="p-2.5 bg-white rounded-lg text-blue-600 shadow-sm border border-slate-100 group-hover/item:text-blue-700 group-hover/item:shadow-md transition-all">
+                                    <Calendar className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Fecha de Registro</p>
+                                    <p className="text-sm font-semibold text-slate-700 capitalize">
+                                        {new Date(user.created_at).toLocaleDateString('es-ES', { 
+                                            weekday: 'long', 
+                                            year: 'numeric', 
+                                            month: 'long', 
+                                            day: 'numeric'
+                                        })}
+                                    </p>
+                                    <p className="text-xs text-slate-400 font-medium mt-0.5">
+                                        a las {new Date(user.created_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* System Metadata */}
+                            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-start gap-4 hover:border-blue-100 transition-colors group/item">
+                                 <div className="p-2.5 bg-white rounded-lg text-blue-600 shadow-sm border border-slate-100 group-hover/item:text-blue-700 group-hover/item:shadow-md transition-all">
+                                    <Hash className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Metadatos del Sistema</p>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs font-mono bg-white px-2 py-1 rounded border border-slate-200 text-slate-600">
+                                            UUID: {user.id}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
+                 </div>
             </motion.div>
         </div>
     );
