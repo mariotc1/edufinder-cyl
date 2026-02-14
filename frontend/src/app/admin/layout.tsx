@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, ArrowLeft, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, ArrowLeft, LogOut, Menu, X, Landmark } from 'lucide-react';
 import AdminGuard from '@/components/auth/AdminGuard';
 import Logo from '@/components/Logo';
 import { useAuth } from '@/context/AuthContext';
@@ -12,23 +12,57 @@ import { motion, AnimatePresence } from 'framer-motion';
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { logout } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   const navItems = [
     { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
     { name: 'Usuarios', href: '/admin/users', icon: Users },
+    { name: 'Centros', href: '/admin/centros', icon: Landmark },
   ];
 
   return (
     <AdminGuard>
-      <div className="min-h-screen bg-brand-gradient flex font-sans text-slate-800 relative">
-        {/* Decorative top gradient - matching Navbar */}
+      <div className="min-h-screen bg-brand-gradient flex flex-col md:flex-row font-sans text-slate-800 relative">
+        {/* Decorative top gradient */}
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300 z-[60]"></div>
         
-        {/* Modern Sidebar - Glass & Light */}
-        <aside className="w-72 bg-white/60 backdrop-blur-xl border-r border-white/50 flex flex-col fixed h-full z-50 shadow-sm pt-1">
+        {/* Mobile Header */}
+        <div className="md:hidden flex items-center justify-between p-4 bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-40">
+             <div className="flex items-center gap-2">
+                <img src="/img/logo-edufinderCYL.png" alt="Logo" className="w-8 h-8 object-contain" />
+                <span className="font-bold text-[#223945] text-sm">Panel Admin</span>
+             </div>
+             <button 
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg"
+             >
+                 {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+             </button>
+        </div>
+
+        {/* Mobile Overlay */}
+        <AnimatePresence>
+            {mobileMenuOpen && (
+                <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 md:hidden"
+                />
+            )}
+        </AnimatePresence>
+
+        {/* Sidebar - Responsive */}
+        <motion.aside 
+            className={`
+                fixed inset-y-0 left-0 z-50 w-72 bg-white/80 backdrop-blur-xl border-r border-white/50 flex flex-col shadow-2xl md:shadow-sm pt-1 transition-transform duration-300 ease-in-out
+                ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+            `}
+        >
           
           {/* Brand Header */}
-          <div className="p-6 pb-2">
+          <div className="p-6 pb-2 flex justify-between items-center">
              <Link href="/" className="flex items-center gap-3 group">
                 <div className="relative w-10 h-10 flex items-center justify-center shrink-0 group-hover:rotate-3 transition-transform duration-500">
                     <img
@@ -46,6 +80,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     </span>
                 </div>
              </Link>
+             <button onClick={() => setMobileMenuOpen(false)} className="md:hidden p-1 text-slate-400 hover:text-slate-600">
+                 <X className="w-5 h-5" />
+             </button>
           </div>
 
           {/* Navigation */}
@@ -57,6 +94,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <Link
                   key={item.name}
                   href={item.href}
+                  onClick={() => setMobileMenuOpen(false)}
                   className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 font-medium text-sm group relative ${
                     isActive
                       ? 'text-blue-600 bg-blue-50'
@@ -107,10 +145,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                  <p className="text-xs text-slate-400 truncate">EduFinder CYL</p>
              </div>
           </div>
-        </aside>
+        </motion.aside>
 
         {/* Main Content Area */}
-        <main className="flex-1 ml-72">
+        <main className="flex-1 md:ml-72 min-h-screen">
             <AnimatePresence mode="wait">
                 <motion.div
                     key={pathname}
@@ -118,7 +156,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.2 }}
-                    className="p-8 max-w-7xl mx-auto"
+                    className="p-4 md:p-8 max-w-7xl mx-auto"
                 >
                     {children}
                 </motion.div>

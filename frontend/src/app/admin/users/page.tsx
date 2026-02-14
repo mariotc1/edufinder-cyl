@@ -61,8 +61,9 @@ export default function UsersPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-neutral-200 overflow-hidden relative group hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-[#223945] transition-[box-shadow,border-color] duration-300">
-        {/* Decorative Top Gradient - matching Dashboard styling */}
+      {/* Desktop View - Table */}
+      <div className="hidden md:block bg-white rounded-xl shadow-sm border border-neutral-200 overflow-hidden relative group hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-[#223945] transition-[box-shadow,border-color] duration-300">
+        {/* Decorative Top Gradient */}
         <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300"></div>
 
         <div className="overflow-x-auto pt-2">
@@ -187,6 +188,92 @@ export default function UsersPage() {
                     <ChevronRight className="w-4 h-4 text-slate-600" />
                 </button>
             </div>
+        </div>
+      </div>
+
+      {/* Mobile View - Cards */}
+      <div className="md:hidden space-y-4">
+        {data?.data?.map((user: any) => (
+             <div key={user.id} className="bg-white rounded-xl shadow-sm border border-neutral-200 overflow-hidden relative p-4">
+                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300"></div>
+                 
+                 <div className="flex items-start justify-between mb-4">
+                     <div className="flex items-center gap-3">
+                        <div className="relative">
+                            {user.foto_perfil ? (
+                                <img src={user.foto_perfil} className="w-12 h-12 rounded-full object-cover border border-slate-200" alt="" />
+                            ) : (
+                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 text-[#223945] flex items-center justify-center font-bold text-lg">
+                                    {user.name.charAt(0)}
+                                </div>
+                            )}
+                             {user.role === 'admin' && (
+                                <div className="absolute -bottom-1 -right-1 bg-[#223945] text-white p-0.5 rounded-full border-2 border-white" title="Administrador">
+                                    <Shield className="w-3 h-3" />
+                                </div>
+                            )}
+                        </div>
+                        <div>
+                            <p className="font-bold text-[#223945]">{user.name}</p>
+                            <p className="text-xs text-slate-500">{user.email}</p>
+                        </div>
+                     </div>
+                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-200 uppercase tracking-wide">
+                        <span className="w-1 h-1 rounded-full bg-green-500"></span> Activo
+                     </span>
+                 </div>
+
+                 <div className="flex items-center justify-between pt-4 border-t border-slate-100 mt-2">
+                     <div className="flex-1">
+                          {user.id === currentUser?.id ? (
+                                <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded-md">Admin (Tú)</span>
+                            ) : (
+                                <select 
+                                    className={`w-full appearance-none pl-3 pr-8 py-2 rounded-lg text-xs font-bold border-0 ring-1 ring-inset focus:ring-2 focus:ring-[#223945] outline-none transition-all ${
+                                        user.role === 'admin' 
+                                            ? 'bg-[#223945]/5 text-[#223945] ring-[#223945]/20' 
+                                            : 'bg-slate-50 text-slate-600 ring-slate-200'
+                                    }`}
+                                    value={user.role}
+                                    onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                                >
+                                    <option value="user">Usuario</option>
+                                    <option value="admin">Administrador</option>
+                                </select>
+                            )}
+                     </div>
+                     
+                     {user.id !== currentUser?.id && user.role !== 'admin' && (
+                         <button 
+                            onClick={() => handleDelete(user.id, user.name)}
+                            className="ml-3 p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                         >
+                             <Trash2 className="w-5 h-5" />
+                         </button>
+                     )}
+                 </div>
+             </div>
+        ))}
+
+        {/* Mobile Pagination */}
+        <div className="flex items-center justify-between pt-4">
+             <button 
+                disabled={!data?.prev_page_url} 
+                onClick={() => setPage(p => p - 1)}
+                className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 disabled:opacity-50"
+            >
+                Anterior
+            </button>
+             <span className="text-xs font-bold text-slate-500">
+                Pág. {page}
+            </span>
+            <button 
+                disabled={!data?.next_page_url} 
+                onClick={() => setPage(p => p + 1)}
+                className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 disabled:opacity-50"
+            >
+                Siguiente
+            </button>
         </div>
       </div>
     </div>

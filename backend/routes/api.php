@@ -93,5 +93,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::get('/users', [App\Http\Controllers\AdminController::class, 'index']);
     Route::put('/users/{id}/role', [App\Http\Controllers\AdminController::class, 'updateRole']);
     Route::delete('/users/{id}', [App\Http\Controllers\AdminController::class, 'destroy']);
+    Route::get('/centros', [App\Http\Controllers\AdminController::class, 'getCentros']);
+    Route::delete('/centros/{id}', [App\Http\Controllers\AdminController::class, 'destroyCentro']);
 });
 ?>

@@ -74,4 +74,27 @@ class AdminController extends Controller
             'recent_users' => User::orderBy('created_at', 'desc')->take(5)->get(['id', 'name', 'email', 'created_at', 'foto_perfil']),
         ]);
     }
+    // Listar centros con paginación y búsqueda
+    public function getCentros(Request $request)
+    {
+        $query = Centro::query();
+
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where('nombre', 'like', "%{$search}%")
+                ->orWhere('localidad', 'like', "%{$search}%")
+                ->orWhere('codigo', 'like', "%{$search}%");
+        }
+
+        $centros = $query->orderBy('created_at', 'desc')->paginate(10);
+        return response()->json($centros);
+    }
+
+    // Eliminar centro
+    public function destroyCentro($id)
+    {
+        $centro = Centro::findOrFail($id);
+        $centro->delete();
+        return response()->json(['message' => 'Centro eliminado correctamente']);
+    }
 }
