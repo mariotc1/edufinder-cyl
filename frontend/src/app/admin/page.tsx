@@ -75,7 +75,7 @@ export default function AdminDashboard() {
       {/* Header */}
       <div className="flex justify-between items-end">
         <div>
-            <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Dashboard Overview</h1>
+            <h1 className="text-3xl font-bold text-[#223945] tracking-tight">Panel de Control</h1>
             <p className="text-slate-500 mt-1">Bienvenido de nuevo, {user?.name}</p>
         </div>
         <div className="text-sm text-slate-400 bg-white px-3 py-1 rounded-full border border-slate-200 shadow-sm flex items-center gap-2">

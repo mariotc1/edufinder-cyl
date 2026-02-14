@@ -20,26 +20,37 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <AdminGuard>
-      <div className="min-h-screen bg-slate-50 flex font-sans text-slate-800">
+      <div className="min-h-screen bg-brand-gradient flex font-sans text-slate-800 relative">
+        {/* Decorative top gradient - matching Navbar */}
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300 z-[60]"></div>
         
         {/* Modern Sidebar - Glass & Light */}
-        <aside className="w-72 bg-white/80 backdrop-blur-xl border-r border-slate-200 flex flex-col fixed h-full z-50 shadow-sm">
+        <aside className="w-72 bg-white/60 backdrop-blur-xl border-r border-white/50 flex flex-col fixed h-full z-50 shadow-sm pt-1">
           
           {/* Brand Header */}
-          <div className="p-8 pb-4">
-             <div className="flex items-center gap-2 mb-1">
-                <Logo />
-             </div>
-             <div className="px-1">
-                <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase bg-slate-100 px-2 py-1 rounded-md">
-                    Admin Portal
-                </span>
-             </div>
+          <div className="p-6 pb-2">
+             <Link href="/" className="flex items-center gap-3 group">
+                <div className="relative w-10 h-10 flex items-center justify-center shrink-0 group-hover:rotate-3 transition-transform duration-500">
+                    <img
+                        src="/img/logo-edufinderCYL.png"
+                        alt="EduFinder CYL"
+                        className="object-contain w-full h-full"
+                    />
+                </div>
+                <div className="flex flex-col">
+                    <span className="font-bold text-[#223945] leading-tight group-hover:text-blue-600 transition-colors">
+                        EduFinder CYL
+                    </span>
+                    <span className="text-[10px] uppercase tracking-wider font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-md self-start mt-0.5 border border-blue-100">
+                        Panel Admin
+                    </span>
+                </div>
+             </Link>
           </div>
 
           {/* Navigation */}
           <nav className="flex-1 px-4 space-y-1 mt-6">
-            <p className="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Principal</p>
+            <p className="px-4 text-xs font-bold text-[#223945]/60 uppercase tracking-wider mb-2">Principal</p>
             {navItems.map((item) => {
               const isActive = pathname === item.href;
               return (

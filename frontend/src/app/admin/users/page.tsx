@@ -47,7 +47,7 @@ export default function UsersPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-           <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Gestión de Usuarios</h1>
+           <h1 className="text-2xl font-bold text-[#223945] tracking-tight">Gestión de Usuarios</h1>
            <p className="text-slate-500 text-sm">Administra los roles y el acceso a la plataforma.</p>
         </div>
         <div className="relative group">
