@@ -71,6 +71,11 @@ class AdminController extends Controller
             'total_centros' => Centro::count(),
             'total_ciclos' => CicloFp::count(),
             'new_users_today' => User::whereDate('created_at', today())->count(),
+            'registrations_per_day' => User::selectRaw('DATE(created_at) as date, COUNT(*) as count')
+                ->where('created_at', '>=', now()->subDays(6))
+                ->groupBy('date')
+                ->orderBy('date', 'ASC')
+                ->get(),
             'recent_users' => User::orderBy('created_at', 'desc')->take(5)->get(['id', 'name', 'email', 'created_at', 'foto_perfil']),
         ]);
     }
