@@ -15,99 +15,104 @@ function UserDetailsModal({ user, onClose }: { user: any; onClose: () => void })
 
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose}></div>
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
             <motion.div 
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-white rounded-2xl shadow-2xl w-full max-w-md relative overflow-hidden z-10"
+                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                className="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative overflow-hidden z-10 flex flex-col max-h-[90vh]"
             >
-                {/* Header Background */}
-                <div className="h-24 bg-gradient-to-r from-[#223945] via-blue-600 to-blue-400 relative">
-                    <button onClick={onClose} className="absolute top-4 right-4 text-white/80 hover:text-white bg-black/20 hover:bg-black/40 rounded-full p-1 transition-colors">
+                {/* Header - Clean & Professional */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white sticky top-0 z-20">
+                    <h3 className="text-lg font-bold text-[#223945]">Ficha de Usuario</h3>
+                    <button 
+                        onClick={onClose} 
+                        className="p-2 -mr-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full transition-all"
+                    >
                         <X className="w-5 h-5" />
                     </button>
                 </div>
 
-                {/* Avatar & Main Info */}
-                <div className="px-6 relative">
-                    <div className="absolute -top-12 left-6 p-1 bg-white rounded-full">
-                        {user.foto_perfil ? (
-                            <img src={user.foto_perfil} className="w-24 h-24 rounded-full object-cover border-2 border-slate-100" alt="" />
-                        ) : (
-                            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 text-[#223945] flex items-center justify-center font-bold text-3xl border-2 border-slate-100">
-                                {user.name.charAt(0)}
+                <div className="p-6 overflow-y-auto custom-scrollbar">
+                    {/* Profile Header Section */}
+                    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-8">
+                        <div className="shrink-0 relative group">
+                            <div className="absolute inset-0 bg-brand-gradient rounded-full blur opacity-20 group-hover:opacity-30 transition-opacity"></div>
+                            {user.foto_perfil ? (
+                                <img src={user.foto_perfil} className="relative w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg" alt="" />
+                            ) : (
+                                <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 text-[#223945] flex items-center justify-center font-bold text-3xl border-4 border-white shadow-lg">
+                                    {user.name.charAt(0)}
+                                </div>
+                            )}
+                        </div>
+                        
+                        <div className="flex-1 text-center sm:text-left min-w-0">
+                            <h2 className="text-2xl font-bold text-[#223945] mb-2 leading-tight break-words">{user.name}</h2>
+                            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                                 <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border uppercase tracking-wide shadow-sm ${
+                                    user.role === 'admin' 
+                                        ? 'bg-[#223945] text-white border-[#223945]' 
+                                        : 'bg-green-50 text-green-700 border-green-200'
+                                 }`}>
+                                    {user.role === 'admin' && <Shield className="w-3 h-3" />}
+                                    {user.role === 'admin' ? 'Administrador' : 'Usuario'}
+                                </span>
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200">
+                                    ID: #{user.id}
+                                </span>
                             </div>
-                        )}
-                    </div>
-                    
-                    <div className="mt-14 mb-6">
-                        <h2 className="text-2xl font-bold text-[#223945]">{user.name}</h2>
-                        <div className="flex items-center gap-2 mt-1">
-                             <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold border uppercase tracking-wide ${
-                                user.role === 'admin' 
-                                    ? 'bg-[#223945] text-white border-[#223945]' 
-                                    : 'bg-green-50 text-green-700 border-green-200'
-                             }`}>
-                                {user.role === 'admin' && <Shield className="w-3 h-3" />}
-                                {user.role === 'admin' ? 'Administrador' : 'Usuario'}
-                            </span>
-                            <span className="text-xs text-slate-400 font-medium">#{user.id}</span>
                         </div>
                     </div>
 
-                    {/* Generic Details Grid */}
-                    <div className="space-y-4 mb-8">
-                        <div className="flex items-start gap-4 p-3 bg-slate-50 rounded-xl border border-slate-100">
-                            <div className="p-2 bg-white rounded-lg text-blue-600 shadow-sm border border-slate-100">
+                    {/* Information Grid */}
+                    <div className="grid gap-3">
+                        <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-start gap-4 hover:border-blue-100 transition-colors group">
+                            <div className="p-2.5 bg-white rounded-lg text-blue-600 shadow-sm border border-slate-100 group-hover:text-blue-700 group-hover:shadow-md transition-all">
                                 <Mail className="w-5 h-5" />
                             </div>
-                            <div>
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">Correo Electrónico</p>
-                                <p className="text-sm font-semibold text-slate-700">{user.email}</p>
+                            <div className="min-w-0">
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Correo Electrónico</p>
+                                <p className="text-sm font-semibold text-slate-700 break-words">{user.email}</p>
                             </div>
                         </div>
 
-                        <div className="flex items-start gap-4 p-3 bg-slate-50 rounded-xl border border-slate-100">
-                            <div className="p-2 bg-white rounded-lg text-blue-600 shadow-sm border border-slate-100">
+                        <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-start gap-4 hover:border-blue-100 transition-colors group">
+                            <div className="p-2.5 bg-white rounded-lg text-blue-600 shadow-sm border border-slate-100 group-hover:text-blue-700 group-hover:shadow-md transition-all">
                                 <Calendar className="w-5 h-5" />
                             </div>
                             <div>
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">Fecha de Registro</p>
-                                <p className="text-sm font-semibold text-slate-700">
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Fecha de Registro</p>
+                                <p className="text-sm font-semibold text-slate-700 capitalize">
                                     {new Date(user.created_at).toLocaleDateString('es-ES', { 
                                         weekday: 'long', 
                                         year: 'numeric', 
                                         month: 'long', 
-                                        day: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit'
+                                        day: 'numeric'
                                     })}
+                                </p>
+                                <p className="text-xs text-slate-400 font-medium mt-0.5">
+                                    a las {new Date(user.created_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
                                 </p>
                             </div>
                         </div>
 
-                         <div className="flex items-start gap-4 p-3 bg-slate-50 rounded-xl border border-slate-100">
-                            <div className="p-2 bg-white rounded-lg text-blue-600 shadow-sm border border-slate-100">
+                        {/* System Metadata */}
+                        <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-start gap-4 hover:border-blue-100 transition-colors group">
+                             <div className="p-2.5 bg-white rounded-lg text-blue-600 shadow-sm border border-slate-100 group-hover:text-blue-700 group-hover:shadow-md transition-all">
                                 <Hash className="w-5 h-5" />
                             </div>
                             <div>
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">Identificador del Sistema</p>
-                                <p className="text-sm font-semibold text-slate-700 font-mono">{user.id}</p>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Metadatos del Sistema</p>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs font-mono bg-white px-2 py-1 rounded border border-slate-200 text-slate-600">
+                                        UUID: {user.id}
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-
-                 {/* Footer Actions */}
-                 <div className="bg-slate-50 p-4 border-t border-slate-200 flex justify-end">
-                    <button 
-                        onClick={onClose}
-                        className="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-bold rounded-lg hover:bg-slate-50 hover:text-slate-900 transition-colors text-sm"
-                    >
-                        Cerrar
-                    </button>
-                 </div>
             </motion.div>
         </div>
     );
