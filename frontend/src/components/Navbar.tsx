@@ -11,6 +11,7 @@ import UserMenu from './UserMenu';
 import { useAuth } from '@/context/AuthContext';
 import { useFavoritesAnimation } from '@/context/FavoritesAnimationContext';
 import { motion } from 'framer-motion';
+import LogoutConfirmationModal from './auth/LogoutConfirmationModal';
 
 // COMPONENTE LAYOUT: BARRA DE NAVEGACIÓN SUPERIOR
 // Utiliza Suspense para cargar contenido dependiente del cliente (useSearchParams)
@@ -30,10 +31,18 @@ function NavbarContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  
+  // Logout Modal State
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const handleLogout = () => {
-      logout();
-      router.push('/login');
+  const handleLogoutConfirm = async () => {
+    setIsLoggingOut(true);
+    await logout();
+    setIsLoggingOut(false);
+    setShowLogoutModal(false);
+    setMobileMenuOpen(false); // Close mobile menu if open
+    window.location.href = '/login';
   };
 
   // Lógica de redirección tras login: mantiene la página actual y filtros
@@ -212,10 +221,7 @@ function NavbarContent() {
                  </Link>
 
                 <button 
-                  onClick={() => {
-                    handleLogout();
-                    setMobileMenuOpen(false);
-                  }} 
+                  onClick={() => setShowLogoutModal(true)} 
                   className="w-full flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-red-50 text-red-600 font-bold transition-all text-left"
                 >
                   <div className="w-8 h-8 rounded-full bg-red-100 text-red-500 flex items-center justify-center">
@@ -246,6 +252,14 @@ function NavbarContent() {
             )}
           </div>
       </motion.div>
+
+      <LogoutConfirmationModal 
+            key="logout-modal-navbar-mobile"
+            isOpen={showLogoutModal} 
+            onClose={() => setShowLogoutModal(false)}
+            onConfirm={handleLogoutConfirm}
+            isLoggingOut={isLoggingOut}
+      />
     </nav>
   );
 }
