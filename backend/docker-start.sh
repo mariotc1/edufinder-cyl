@@ -8,6 +8,10 @@ rm -rf public/storage
 php artisan storage:link
 php artisan migrate --force
 
+# Seed Admin User (Idempotent)
+echo "Seeding Admin User..."
+php artisan db:seed --class=UserSeeder --force
+
 # Sync OpenData (Only in non-local environments)
 if [ "$APP_ENV" != "local" ]; then
     echo "Syncing OpenData..."
