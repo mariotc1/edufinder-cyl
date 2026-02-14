@@ -1,9 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import Navbar from '@/components/Navbar';
-import ConditionalFooter from '@/components/ConditionalFooter';
 import { Providers } from './providers';
+import AppShell from '@/components/AppShell';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -32,12 +31,9 @@ export const generateViewport = () => {
   };
 };
 
-import ComparisonTray from '@/components/ComparisonTray';
-import ScrollToTop from '@/components/ScrollToTop';
-
 // LAYOUT RAÍZ (ROOT LAYOUT)
 // Estructura base HTML/Body compartida por toda la aplicación
-// Incluye Navbar, Footer y Proveedores de Contexto
+// Incluye AppShell (Navbar/Footer condicionales) y Proveedores de Contexto
 export default function RootLayout({
   children,
 }: {
@@ -47,13 +43,9 @@ export default function RootLayout({
     <html lang="es">
       <body className={`${inter.variable} font-sans min-h-screen bg-neutral-50 text-neutral-900 antialiased`}>
         <Providers>
-          <Navbar />
-          <main className="pt-20 min-h-screen">
+          <AppShell>
             {children}
-          </main>
-          <ConditionalFooter />
-          <ComparisonTray />
-          <ScrollToTop />
+          </AppShell>
         </Providers>
       </body>
     </html>
