@@ -4,6 +4,8 @@ import { useState } from 'react';
 import api from '@/lib/axios';
 import useSWR, { mutate } from 'swr';
 import { Search, Trash2, ChevronLeft, ChevronRight, School, MapPin } from 'lucide-react';
+import DeleteConfirmationModal from '@/components/admin/DeleteConfirmationModal';
+import { AnimatePresence } from 'framer-motion';
 
 const fetcher = (url: string) => api.get(url).then((res) => res.data);
 
@@ -11,17 +13,31 @@ export default function CentrosPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const { data, error, isLoading } = useSWR(`/admin/centros?page=${page}&search=${search}`, fetcher);
+  
+  // Custom Delete Modal State
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; centroId: number | null; nombre: string; isDeleting: boolean }>({
+    isOpen: false,
+    centroId: null,
+    nombre: '',
+    isDeleting: false
+  });
 
-  const handleDelete = async (centroId: number, nombre: string) => {
-      if(!confirm(`¿Estás seguro de que quieres eliminar el centro ${nombre}? Esta acción no se puede deshacer.`)) return;
+  const handleDeleteClick = (centroId: number, nombre: string) => {
+    setDeleteModal({ isOpen: true, centroId, nombre, isDeleting: false });
+  };
 
-      try {
-          await api.delete(`/admin/centros/${centroId}`);
-          mutate(`/admin/centros?page=${page}&search=${search}`);
-          alert('Centro eliminado');
-      } catch (e: any) {
-          alert(e.response?.data?.message || 'Error al eliminar');
-      }
+  const handleConfirmDelete = async () => {
+    if (!deleteModal.centroId) return;
+
+    setDeleteModal(prev => ({ ...prev, isDeleting: true }));
+    try {
+        await api.delete(`/admin/centros/${deleteModal.centroId}`);
+        mutate(`/admin/centros?page=${page}&search=${search}`);
+        setDeleteModal({ isOpen: false, centroId: null, nombre: '', isDeleting: false });
+    } catch (e: any) {
+        alert(e.response?.data?.message || 'Error al eliminar');
+        setDeleteModal(prev => ({ ...prev, isDeleting: false }));
+    }
   };
 
   if (isLoading) return (
@@ -33,6 +49,23 @@ export default function CentrosPage() {
 
   return (
     <div className="space-y-6">
+      <AnimatePresence>
+        <DeleteConfirmationModal 
+            isOpen={deleteModal.isOpen}
+            onClose={() => setDeleteModal(prev => ({ ...prev, isOpen: false }))}
+            onConfirm={handleConfirmDelete}
+            title="Eliminar Centro"
+            isDeleting={deleteModal.isDeleting}
+            description={
+                <span>
+                    Estás a punto de eliminar el centro <span className="font-bold text-slate-800">{deleteModal.nombre}</span>.
+                    <br /><br />
+                    Esta acción <strong>no se puede deshacer</strong>. Al eliminar este centro, desaparecerá de los listados y mapas, y se perderán todos las reseñas o datos asociados.
+                </span>
+            }
+        />
+      </AnimatePresence>
+
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
            <h1 className="text-3xl font-bold text-[#223945] tracking-tight">Gestión de Centros</h1>
@@ -92,7 +125,7 @@ export default function CentrosPage() {
                             <td className="px-6 py-4 text-right">
                                 <div className="flex items-center justify-end gap-2 transition-opacity">
                                     <button 
-                                        onClick={() => handleDelete(centro.id, centro.nombre)}
+                                        onClick={() => handleDeleteClick(centro.id, centro.nombre)}
                                         className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                                         title="Eliminar centro"
                                     >
@@ -172,7 +205,7 @@ export default function CentrosPage() {
 
                  <div className="flex items-center justify-end pt-3 border-t border-slate-100 mt-3">
                      <button 
-                        onClick={() => handleDelete(centro.id, centro.nombre)}
+                        onClick={() => handleDeleteClick(centro.id, centro.nombre)}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-all border border-red-100"
                      >
                          <Trash2 className="w-3.5 h-3.5" />

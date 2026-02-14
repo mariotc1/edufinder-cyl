@@ -6,10 +6,10 @@ import useSWR, { mutate } from 'swr';
 import { Search, Trash2, ChevronLeft, ChevronRight, Shield, User as UserIcon, Eye, X, Calendar, Mail, Hash } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { AnimatePresence, motion } from 'framer-motion';
+import DeleteConfirmationModal from '@/components/admin/DeleteConfirmationModal';
 
 const fetcher = (url: string) => api.get(url).then((res) => res.data);
 
-// User Details Modal Component
 // User Details Modal Component
 function UserDetailsModal({ user, onClose }: { user: any; onClose: () => void }) {
     if (!user) return null;
@@ -126,18 +126,33 @@ export default function UsersPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [selectedUser, setSelectedUser] = useState<any>(null);
+  
+  // Custom Delete Modal State
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; userId: number | null; userName: string; isDeleting: boolean }>({
+    isOpen: false,
+    userId: null,
+    userName: '',
+    isDeleting: false
+  });
+
   const { data, error, isLoading } = useSWR(`/admin/users?page=${page}&search=${search}`, fetcher);
 
-  const handleDelete = async (userId: number, userName: string) => {
-      if(!confirm(`¿Estás seguro de que quieres eliminar al usuario ${userName}? Esta acción no se puede deshacer.`)) return;
+  const handleDeleteClick = (userId: number, userName: string) => {
+    setDeleteModal({ isOpen: true, userId, userName, isDeleting: false });
+  };
 
-      try {
-          await api.delete(`/admin/users/${userId}`);
-          mutate(`/admin/users?page=${page}&search=${search}`);
-          alert('Usuario eliminado');
-      } catch (e: any) {
-          alert(e.response?.data?.message || 'Error al eliminar');
-      }
+  const handleConfirmDelete = async () => {
+    if (!deleteModal.userId) return;
+
+    setDeleteModal(prev => ({ ...prev, isDeleting: true }));
+    try {
+        await api.delete(`/admin/users/${deleteModal.userId}`);
+        mutate(`/admin/users?page=${page}&search=${search}`);
+        setDeleteModal({ isOpen: false, userId: null, userName: '', isDeleting: false });
+    } catch (e: any) {
+        alert(e.response?.data?.message || 'Error al eliminar');
+        setDeleteModal(prev => ({ ...prev, isDeleting: false }));
+    }
   };
 
   const handleRoleChange = async (userId: number, newRole: string) => {
@@ -160,6 +175,20 @@ export default function UsersPage() {
     <div className="space-y-6">
       <AnimatePresence>
         {selectedUser && <UserDetailsModal user={selectedUser} onClose={() => setSelectedUser(null)} />}
+        <DeleteConfirmationModal 
+            isOpen={deleteModal.isOpen}
+            onClose={() => setDeleteModal(prev => ({ ...prev, isOpen: false }))}
+            onConfirm={handleConfirmDelete}
+            title="Eliminar Usuario"
+            isDeleting={deleteModal.isDeleting}
+            description={
+                <span>
+                    Estás a punto de eliminar al usuario <span className="font-bold text-slate-800">{deleteModal.userName}</span>.
+                    <br /><br />
+                    Esta acción <strong>no se puede deshacer</strong>. Se eliminará permanentemente su cuenta, acceso y cualquier dato asociado en la plataforma.
+                </span>
+            }
+        />
       </AnimatePresence>
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -266,7 +295,7 @@ export default function UsersPage() {
                                         <Eye className="w-4 h-4" />
                                     </button>
                                     <button 
-                                        onClick={() => handleDelete(user.id, user.name)}
+                                        onClick={() => handleDeleteClick(user.id, user.name)}
                                         disabled={user.role === 'admin'}
                                         className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all disabled:opacity-30 disabled:pointer-events-none"
                                         title="Eliminar usuario"
@@ -321,72 +350,57 @@ export default function UsersPage() {
              <div key={user.id} className="bg-white rounded-xl shadow-sm border border-neutral-200 overflow-hidden relative p-4">
                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300"></div>
                  
-                 <div className="flex items-start justify-between mb-4">
-                     <div className="flex items-center gap-3">
-                        <div className="relative">
+                 <div className="flex items-start justify-between mb-2">
+                     <div className="flex items-center gap-3 w-full pr-8">
+                        <div className="relative shrink-0">
                             {user.foto_perfil ? (
-                                <img src={user.foto_perfil} className="w-12 h-12 rounded-full object-cover border border-slate-200" alt="" />
+                                <img src={user.foto_perfil} className="w-10 h-10 rounded-full object-cover border border-slate-200" alt="" />
                             ) : (
-                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 text-[#223945] flex items-center justify-center font-bold text-lg">
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 text-[#223945] flex items-center justify-center font-bold text-sm">
                                     {user.name.charAt(0)}
                                 </div>
                             )}
-                             {user.role === 'admin' && (
-                                <div className="absolute -bottom-1 -right-1 bg-[#223945] text-white p-0.5 rounded-full border-2 border-white" title="Administrador">
+                            {user.role === 'admin' && (
+                                <div className="absolute -bottom-1 -right-1 bg-[#223945] text-white p-0.5 rounded-full border-2 border-white">
                                     <Shield className="w-3 h-3" />
                                 </div>
                             )}
                         </div>
-                        <div>
-                            <p className="font-bold text-[#223945]">{user.name}</p>
-                            <p className="text-xs text-slate-500">{user.email}</p>
+                        <div className="min-w-0 flex-1">
+                            <p className="font-bold text-[#223945] text-sm leading-tight line-clamp-1">{user.name}</p>
+                            <p className="text-[10px] text-slate-400 font-medium mt-0.5 break-all">{user.email}</p>
                         </div>
                      </div>
-                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-200 uppercase tracking-wide">
-                        <span className="w-1 h-1 rounded-full bg-green-500"></span> Activo
-                     </span>
                  </div>
 
                  <div className="flex items-center justify-between pt-4 border-t border-slate-100 mt-2">
-                     <div className="flex-1 mr-4">
-                          {user.id === currentUser?.id ? (
-                                <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded-md">Admin (Tú)</span>
-                            ) : (
-                                <select 
-                                    className={`w-full appearance-none pl-3 pr-8 py-2 rounded-lg text-xs font-bold border-0 ring-1 ring-inset focus:ring-2 focus:ring-[#223945] outline-none transition-all ${
-                                        user.role === 'admin' 
-                                            ? 'bg-[#223945]/5 text-[#223945] ring-[#223945]/20' 
-                                            : 'bg-slate-50 text-slate-600 ring-slate-200'
-                                    }`}
-                                    value={user.role}
-                                    onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                                >
-                                    <option value="user">Usuario</option>
-                                    <option value="admin">Administrador</option>
-                                </select>
-                            )}
-                     </div>
-                     
+                     <select 
+                        className={`appearance-none pl-3 pr-8 py-1.5 rounded-lg text-xs font-bold border-0 ring-1 ring-inset outline-none cursor-pointer transition-all ${
+                            user.role === 'admin' 
+                                ? 'bg-[#223945]/5 text-[#223945] ring-[#223945]/20' 
+                                : 'bg-slate-50 text-slate-600 ring-slate-200 hover:ring-slate-300'
+                        }`}
+                        value={user.role}
+                        onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                        disabled={user.id === currentUser?.id}
+                    >
+                        <option value="user">Usuario</option>
+                        <option value="admin">Admin</option>
+                    </select>
+
                      <div className="flex items-center gap-2">
-                        <button 
-                             onClick={() => setSelectedUser(user)}
-                             className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all border border-transparent hover:border-blue-100"
-                          >
-                              <Eye className="w-5 h-5" />
-                          </button>
-                         {user.id !== currentUser?.id && user.role !== 'admin' && (
-                             <button 
-                                onClick={() => handleDelete(user.id, user.name)}
-                                className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"
-                             >
-                                 <Trash2 className="w-5 h-5" />
-                             </button>
-                         )}
+                        <button onClick={() => setSelectedUser(user)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all border border-transparent hover:border-blue-100">
+                            <Eye className="w-5 h-5" />
+                        </button>
+                        {user.id !== currentUser?.id && user.role !== 'admin' && (
+                            <button onClick={() => handleDeleteClick(user.id, user.name)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100">
+                                <Trash2 className="w-5 h-5" />
+                            </button>
+                        )}
                      </div>
                  </div>
              </div>
         ))}
-
         {/* Mobile Pagination */}
         <div className="flex items-center justify-between pt-4">
              <button 
