@@ -7,6 +7,7 @@ import { Search, Trash2, ChevronLeft, ChevronRight, Shield, User as UserIcon, Ey
 import { useAuth } from '@/context/AuthContext';
 import { AnimatePresence, motion } from 'framer-motion';
 import DeleteConfirmationModal from '@/components/admin/DeleteConfirmationModal';
+import ChangePasswordModal from '@/components/admin/ChangePasswordModal';
 import { useDebounce } from '@/hooks/useDebounce';
 
 const fetcher = (url: string) => api.get(url).then((res) => res.data);
@@ -132,6 +133,13 @@ export default function UsersPage() {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [processingId, setProcessingId] = useState<number | null>(null);
   
+  // Custom Password Modal State
+  const [passwordModal, setPasswordModal] = useState<{ isOpen: boolean; userId: number | null; userName: string }>({
+      isOpen: false,
+      userId: null,
+      userName: ''
+  });
+
   // Custom Delete Modal State
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; userId: number | null; userName: string; isDeleting: boolean }>({
     isOpen: false,
@@ -190,34 +198,8 @@ export default function UsersPage() {
       }
   };
 
-  const handleResetPassword = async (userId: number) => {
-      // For simplicity, we'll suggest a random password or prompt user.
-      // Ideally, we open a prompt.
-      const newPassword = prompt("Introduce la nueva contraseña provisional (mínimo 8 caracteres):");
-      if (!newPassword) return;
-      if (newPassword.length < 8) {
-          alert("La contraseña debe tener al menos 8 caracteres.");
-          return;
-      }
-      
-      const confirmPassword = prompt("Confirma la nueva contraseña:");
-      if (newPassword !== confirmPassword) {
-            alert("Las contraseñas no coinciden.");
-            return;
-      }
-
-      setProcessingId(userId);
-      try {
-          await api.post(`/admin/users/${userId}/reset-password`, { 
-              password: newPassword,
-              password_confirmation: confirmPassword
-          });
-          alert("Contraseña actualizada correctamente.");
-      } catch (e: any) {
-          alert(e.response?.data?.message || 'Error al resetear contraseña');
-      } finally {
-          setProcessingId(null);
-      }
+  const handleResetPassword = (userId: number, userName: string) => {
+      setPasswordModal({ isOpen: true, userId, userName });
   };
 
   if (isLoading) return (
@@ -231,6 +213,17 @@ export default function UsersPage() {
     <div className="space-y-6">
       <AnimatePresence>
         {selectedUser && <UserDetailsModal key="user-details" user={selectedUser} onClose={() => setSelectedUser(null)} />}
+        
+        {passwordModal.isOpen && (
+            <ChangePasswordModal 
+                key="password-modal"
+                isOpen={passwordModal.isOpen}
+                onClose={() => setPasswordModal(prev => ({ ...prev, isOpen: false }))}
+                userId={passwordModal.userId}
+                userName={passwordModal.userName}
+            />
+        )}
+
         {deleteModal.isOpen && (
             <DeleteConfirmationModal 
                 key="delete-modal"
@@ -364,7 +357,7 @@ export default function UsersPage() {
                                     {user.id !== currentUser?.id && user.role !== 'admin' && (
                                         <>
                                             <button 
-                                                onClick={() => handleResetPassword(user.id)}
+                                                onClick={() => handleResetPassword(user.id, user.name)}
                                                 className="p-1.5 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all"
                                                 title="Resetear Contraseña"
                                             >
@@ -482,7 +475,7 @@ export default function UsersPage() {
                         </button>
                         {user.id !== currentUser?.id && user.role !== 'admin' && (
                             <>
-                                <button onClick={() => handleResetPassword(user.id)} className="p-2 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all border border-transparent hover:border-orange-100">
+                                <button onClick={() => handleResetPassword(user.id, user.name)} className="p-2 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all border border-transparent hover:border-orange-100">
                                     <Key className="w-5 h-5" />
                                 </button>
                                 <button onClick={() => handleBlockToggle(user.id)} className={`p-2 rounded-lg transition-all border border-transparent ${user.is_blocked ? 'text-red-600 bg-red-50 border-red-100' : 'text-slate-400 hover:text-red-600 hover:bg-red-50 hover:border-red-100'}`}>
