@@ -86,14 +86,14 @@ export default function AdminDashboard() {
             <p className="text-slate-500 mt-1 font-medium">Bienvenido de nuevo, {user?.name}</p>
         </div>
         <div className="flex items-center gap-3">
-            <div className="text-xs font-bold text-slate-500 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm flex items-center gap-2">
-                <Clock className="w-3.5 h-3.5" />
+            <div className="text-xs font-bold text-slate-600 bg-slate-50 px-4 py-2 rounded-full border border-slate-200 flex items-center gap-2">
+                <Clock className="w-4 h-4 text-slate-400" />
                 {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
             </div>
-            <div className="text-xs font-bold text-slate-500 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm flex items-center gap-2">
-                <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+            <div className="text-xs font-bold text-emerald-700 bg-emerald-50 px-4 py-2 rounded-full border border-emerald-100 flex items-center gap-2">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                 </span>
                 Sistema Online
             </div>
@@ -101,16 +101,10 @@ export default function AdminDashboard() {
       </div>
 
       {/* Stats Grid */}
-      <motion.div 
-        variants={container}
-        initial="hidden"
-        animate="show"
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
-      >
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {statCards.map((stat) => (
-          <motion.div 
+          <div 
             key={stat.name} 
-            variants={item}
             className="group relative bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-blue-100 transition-all duration-300 p-6 flex flex-col justify-between min-h-[160px]"
           >
             {/* Permanent Top Gradient */}
@@ -134,9 +128,9 @@ export default function AdminDashboard() {
                     <h3 className="text-4xl font-black text-[#223945] tracking-tight">{stat.value}</h3>
                 </div>
             </div>
-          </motion.div>
+          </div>
         ))}
-      </motion.div>
+      </div>
       
       {/* Main Dashboard Layout */}
       <div className="flex flex-col lg:flex-row gap-8 items-stretch">
