@@ -28,7 +28,7 @@ export default function PopularCycles({ data }: PopularCyclesProps) {
           <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300"></div>
 
           <div className="p-6 pb-2 shrink-0">
-            <h3 className="text-lg font-bold text-[#223945]">Ciclos Más Buscados</h3>
+            <h3 className="text-lg font-bold text-[#223945]">Ciclos más Buscados</h3>
             <p className="text-xs text-slate-500 font-medium">Tendencias de búsqueda</p>
           </div>
 
