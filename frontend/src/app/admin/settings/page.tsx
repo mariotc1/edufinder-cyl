@@ -34,12 +34,18 @@ export default function SettingsPage() {
 
   /* Modal Logic */
   const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
+  const [showCacheModal, setShowCacheModal] = useState(false);
 
-  const handleClearCache = async () => {
+  const handleClearCache = () => {
+      setShowCacheModal(true);
+  };
+
+  const confirmClearCache = async () => {
+    setShowCacheModal(false);
     setClearingCache(true);
     try {
       await api.post('/admin/system/clear-cache');
-      alert('Caché del sistema limpiada correctamente.');
+      // alert('Caché del sistema limpiada correctamente.'); // Removed in favor of UI feedback if needed, or keep for now
       mutate();
     } catch (error) {
       alert('Error al limpiar la caché.');
@@ -100,6 +106,39 @@ export default function SettingsPage() {
                                 className={`flex-1 py-3 rounded-xl font-bold text-sm text-white shadow-lg transition-all hover:scale-105 ${isMaintenanceMode ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200' : 'bg-[#223945] hover:bg-[#1a2c36] shadow-slate-300'}`}
                             >
                                 {isMaintenanceMode ? 'Sí, Reactivar' : 'Sí, Activar'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {/* Custom Modal for Cache */}
+        {showCacheModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100 scale-100 animate-in zoom-in-95 duration-200">
+                    <div className="p-6 text-center">
+                        <div className="mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-orange-50 text-orange-500">
+                            <RefreshCw className="w-8 h-8" />
+                        </div>
+                        <h3 className="text-xl font-black text-[#223945] mb-2">
+                            ¿Limpiar Caché del Sistema?
+                        </h3>
+                        <p className="text-sm text-slate-500 mb-6">
+                            Esta acción eliminará la caché de configuración, rutas y vistas compiladas. Puede ralentizar ligeramente la primera carga posterior.
+                        </p>
+                        <div className="flex gap-3">
+                            <button 
+                                onClick={() => setShowCacheModal(false)}
+                                className="flex-1 py-3 rounded-xl font-bold text-sm text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button 
+                                onClick={confirmClearCache}
+                                className="flex-1 py-3 rounded-xl font-bold text-sm text-white shadow-lg transition-all hover:scale-105 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-orange-200"
+                            >
+                                Sí, Limpiar
                             </button>
                         </div>
                     </div>
@@ -177,7 +216,13 @@ export default function SettingsPage() {
                            <Power className="w-6 h-6" />
                         </div>
                         {isMaintenanceMode ? (
-                            <span className="bg-amber-100 text-amber-700 px-2 py-1 rounded-full text-[10px] font-bold border border-amber-200">ACTIVO</span>
+                            <div className="flex items-center gap-2">
+                                <span className="relative flex h-3 w-3">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+                                </span>
+                                <span className="bg-amber-100 text-amber-700 px-2 py-1 rounded-full text-[10px] font-bold border border-amber-200">ACTIVO</span>
+                            </div>
                         ) : (
                             <span className="bg-emerald-50 text-emerald-700 px-2 py-1 rounded-full text-[10px] font-bold border border-emerald-100">INACTIVO</span>
                         )}
@@ -185,9 +230,20 @@ export default function SettingsPage() {
                     <h3 className={`text-lg font-bold mb-2 ${isMaintenanceMode ? 'text-amber-900' : 'text-[#223945]'}`}>
                         Mantenimiento
                     </h3>
-                    <p className={`text-xs mb-6 ${isMaintenanceMode ? 'text-amber-700' : 'text-slate-500'}`}>
-                        {isMaintenanceMode ? 'Sitio cerrado al público.' : 'Sitio activo y visible.'}
+                    <p className={`text-xs mb-4 ${isMaintenanceMode ? 'text-amber-700' : 'text-slate-500'}`}>
+                        {isMaintenanceMode ? 'El sitio está actualmente cerrado al público.' : 'El sitio es totalmente visible.'}
                     </p>
+                    
+                    <ul className="space-y-2 mb-6">
+                        <li className={`flex items-center gap-2 text-[10px] font-medium ${isMaintenanceMode ? 'text-amber-800' : 'text-slate-500'}`}>
+                            <div className={`w-1.5 h-1.5 rounded-full ${isMaintenanceMode ? 'bg-amber-500' : 'bg-green-500'}`}></div>
+                            {isMaintenanceMode ? 'Solo administradores pueden acceder' : 'Acceso público habilitado'}
+                        </li>
+                        <li className={`flex items-center gap-2 text-[10px] font-medium ${isMaintenanceMode ? 'text-amber-800' : 'text-slate-500'}`}>
+                            <div className={`w-1.5 h-1.5 rounded-full ${isMaintenanceMode ? 'bg-amber-500' : 'bg-slate-300'}`}></div>
+                            {isMaintenanceMode ? 'Mensaje de "Volvemos pronto"' : 'Todas las funciones activas'}
+                        </li>
+                    </ul>
                 </div>
 
                 <button
@@ -200,7 +256,7 @@ export default function SettingsPage() {
                     }`}
                 >
                     {togglingMaintenance ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Power className="w-3 h-3" />}
-                    {isMaintenanceMode ? 'Desactivar' : 'Activar'}
+                    {isMaintenanceMode ? 'Desactivar Modo Mantenimiento' : 'Activar Modo Mantenimiento'}
                 </button>
             </div>
         </div>
@@ -214,11 +270,27 @@ export default function SettingsPage() {
                          <div className="p-2 rounded-lg bg-orange-50 text-orange-600">
                             <RefreshCw className="w-6 h-6" />
                          </div>
+                         <span className="bg-slate-100 text-slate-500 px-2 py-1 rounded-full text-[10px] font-bold border border-slate-200">OPTIMIZACIÓN</span>
                      </div>
                      <h3 className="text-lg font-bold text-[#223945] mb-2">Limpiar Caché</h3>
-                     <p className="text-xs text-slate-500 mb-6">
-                        Resuelve problemas de visualización y configuración.
+                     <p className="text-xs text-slate-500 mb-4">
+                        Elimina archivos temporales para aplicar cambios.
                      </p>
+                     
+                      <ul className="space-y-2 mb-6">
+                        <li className="flex items-center gap-2 text-[10px] font-medium text-slate-500">
+                            <CheckCircle className="w-3 h-3 text-orange-500" />
+                            Configuración del Sistema
+                        </li>
+                        <li className="flex items-center gap-2 text-[10px] font-medium text-slate-500">
+                            <CheckCircle className="w-3 h-3 text-orange-500" />
+                            Caché de Rutas y Vistas
+                        </li>
+                        <li className="flex items-center gap-2 text-[10px] font-medium text-slate-500">
+                            <CheckCircle className="w-3 h-3 text-orange-500" />
+                            Eventos y Listeners
+                        </li>
+                    </ul>
                 </div>
                 <button
                     onClick={handleClearCache}
