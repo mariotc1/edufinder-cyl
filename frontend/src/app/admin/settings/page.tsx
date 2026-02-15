@@ -80,8 +80,9 @@ export default function SettingsPage() {
     <div className="space-y-8 pb-10 relative">
         {/* Custom Modal for Maintenance */}
         {showMaintenanceModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100 scale-100 animate-in zoom-in-95 duration-200">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setShowMaintenanceModal(false)} />
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100 scale-100 animate-in zoom-in-95 duration-200 relative z-10">
                     <div className="p-6 text-center">
                         <div className={`mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4 ${isMaintenanceMode ? 'bg-emerald-50 text-emerald-500' : 'bg-amber-50 text-amber-500'}`}>
                             <Power className="w-8 h-8" />
@@ -115,8 +116,9 @@ export default function SettingsPage() {
 
         {/* Custom Modal for Cache */}
         {showCacheModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100 scale-100 animate-in zoom-in-95 duration-200">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setShowCacheModal(false)} />
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100 scale-100 animate-in zoom-in-95 duration-200 relative z-10">
                     <div className="p-6 text-center">
                         <div className="mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-orange-50 text-orange-500">
                             <RefreshCw className="w-8 h-8" />
