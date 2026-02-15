@@ -146,7 +146,7 @@ export default function AdminDashboard() {
                  </div>
             </div>
             
-            <div className="flex-1 min-h-[320px]">
+            <div className="h-[400px] lg:h-[656px] min-h-0">
                  <RecentActivityFeed />
             </div>
         </div>
