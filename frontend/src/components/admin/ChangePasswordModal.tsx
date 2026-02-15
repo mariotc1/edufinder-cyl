@@ -65,7 +65,7 @@ export default function ChangePasswordModal({ isOpen, onClose, userId, userName 
         className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100 relative"
       >
         {/* Header Gradient */}
-        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-400"></div>
+        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300"></div>
 
         <button 
             onClick={onClose}
@@ -76,7 +76,7 @@ export default function ChangePasswordModal({ isOpen, onClose, userId, userName 
 
         <div className="p-8">
             <div className="flex flex-col items-center text-center mb-6">
-                <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 transition-colors ${success ? 'bg-green-50 text-green-500' : 'bg-orange-50 text-orange-500'}`}>
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 transition-colors ${success ? 'bg-green-50 text-green-500' : 'bg-[#223945]/5 text-[#223945]'}`}>
                     {success ? <Check className="w-8 h-8" /> : <Key className="w-8 h-8" />}
                 </div>
                 <h3 className="text-xl font-black text-[#223945]">
@@ -95,12 +95,12 @@ export default function ChangePasswordModal({ isOpen, onClose, userId, userName 
                     <div className="space-y-1">
                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Nueva Contraseña</label>
                         <div className="relative group">
-                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 group-focus-within:text-orange-500 transition-colors" />
+                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 group-focus-within:text-[#223945] transition-colors" />
                             <input
                                 type={showPassword ? 'text' : 'password'}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition-all font-medium text-[#223945]"
+                                className="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#223945]/20 focus:border-[#223945] outline-none transition-all font-medium text-[#223945]"
                                 placeholder="Mínimo 8 caracteres"
                                 required
                             />
@@ -117,12 +117,12 @@ export default function ChangePasswordModal({ isOpen, onClose, userId, userName 
                     <div className="space-y-1">
                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Confirmar Contraseña</label>
                         <div className="relative group">
-                            <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 group-focus-within:text-orange-500 transition-colors" />
+                            <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 group-focus-within:text-[#223945] transition-colors" />
                             <input
                                 type={showPassword ? 'text' : 'password'}
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
-                                className="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition-all font-medium text-[#223945]"
+                                className="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#223945]/20 focus:border-[#223945] outline-none transition-all font-medium text-[#223945]"
                                 placeholder="Repite la contraseña"
                                 required
                             />
