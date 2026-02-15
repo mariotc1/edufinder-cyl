@@ -47,7 +47,7 @@ class AdminSystemController extends Controller
         ActivityLog::create([
             'user_id' => auth()->id(),
             'action' => 'CLEAR_CACHE',
-            'description' => 'System cache cleared manually by admin.',
+            'description' => 'Caché del sistema limpiada manualmente por el administrador.',
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent()
         ]);
@@ -74,7 +74,7 @@ class AdminSystemController extends Controller
         ActivityLog::create([
             'user_id' => auth()->id(),
             'action' => 'MAINTENANCE_MODE',
-            'description' => "Maintenance mode {$action}.",
+            'description' => "Modo de mantenimiento " . ($enable ? 'activado' : 'desactivado') . ".",
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent()
         ]);

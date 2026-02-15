@@ -39,7 +39,7 @@ class AuthController extends Controller
         ActivityLog::create([
             'user_id' => $user->id,
             'action' => 'REGISTER',
-            'description' => 'User registered via email',
+            'description' => 'Usuario registrado por correo electrónico',
             'ip_address' => $request->ip(),
         ]);
 
@@ -81,7 +81,7 @@ class AuthController extends Controller
             ActivityLog::create([
                 'user_id' => $user->id,
                 'action' => 'LOGIN_FAILED_BLOCKED',
-                'description' => 'Blocked user attempted to login',
+                'description' => 'Usuario bloqueado intentó iniciar sesión',
                 'ip_address' => $request->ip(),
             ]);
 
@@ -98,7 +98,7 @@ class AuthController extends Controller
         ActivityLog::create([
             'user_id' => $user->id,
             'action' => 'LOGIN',
-            'description' => 'User logged in',
+            'description' => 'Usuario inició sesión',
             'ip_address' => $request->ip(),
         ]);
 

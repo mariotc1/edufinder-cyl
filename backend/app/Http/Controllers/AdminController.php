@@ -51,7 +51,7 @@ class AdminController extends Controller
         ActivityLog::create([
             'user_id' => $request->user()->id,
             'action' => 'UPDATE_ROLE',
-            'description' => "Updated role for user {$user->email} to {$request->role}",
+            'description' => "Rol actualizado para el usuario {$user->email} a {$request->role}",
             'ip_address' => $request->ip(),
         ]);
 
@@ -72,7 +72,7 @@ class AdminController extends Controller
         ActivityLog::create([
             'user_id' => $request->user()->id,
             'action' => 'DELETE_USER',
-            'description' => "Deleted user {$user->email}",
+            'description' => "Usuario eliminado: {$user->email}",
             'ip_address' => $request->ip(),
         ]);
 
@@ -120,7 +120,7 @@ class AdminController extends Controller
         ActivityLog::create([
             'user_id' => $request->user()->id,
             'action' => 'DELETE_CENTRO',
-            'description' => "Deleted centro {$centro->nombre}",
+            'description' => "Centro eliminado: {$centro->nombre}",
             'ip_address' => $request->ip(),
         ]);
 
@@ -143,10 +143,12 @@ class AdminController extends Controller
 
         $status = $user->is_blocked ? 'blocked' : 'unblocked';
 
+        $status_desc = $user->is_blocked ? 'bloqueado' : 'desbloqueado';
+
         ActivityLog::create([
             'user_id' => $request->user()->id,
             'action' => 'TOGGLE_BLOCK',
-            'description' => "User {$user->email} was {$status}",
+            'description' => "El usuario {$user->email} fue {$status_desc}",
             'ip_address' => $request->ip(),
         ]);
 
@@ -187,7 +189,7 @@ class AdminController extends Controller
         ActivityLog::create([
             'user_id' => $request->user()->id,
             'action' => 'RESET_PASSWORD',
-            'description' => "Reset password for user {$user->email}",
+            'description' => "Contraseña restablecida para el usuario {$user->email}",
             'ip_address' => $request->ip(),
         ]);
 

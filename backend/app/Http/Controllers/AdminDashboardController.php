@@ -115,7 +115,7 @@ class AdminDashboardController extends Controller
         ActivityLog::create([
             'user_id' => auth()->id(),
             'action' => 'force_sync',
-            'description' => 'Manually triggered OpenData synchronization.',
+            'description' => 'Sincronización de OpenData iniciada manualmente.',
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent()
         ]);

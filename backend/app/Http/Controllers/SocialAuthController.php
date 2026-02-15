@@ -72,7 +72,7 @@ class SocialAuthController extends Controller
                 ActivityLog::create([
                     'user_id' => $user->id,
                     'action' => 'REGISTER_SOCIAL',
-                    'description' => "User registered via {$provider}",
+                    'description' => "Usuario registrado vía {$provider}",
                     'ip_address' => request()->ip(),
                 ]);
             }
@@ -83,7 +83,7 @@ class SocialAuthController extends Controller
             ActivityLog::create([
                 'user_id' => $user->id,
                 'action' => 'LOGIN_FAILED_BLOCKED',
-                'description' => "Blocked user attempted to login via {$provider}",
+                'description' => "Usuario bloqueado intentó iniciar sesión vía {$provider}",
                 'ip_address' => request()->ip(),
             ]);
 
@@ -97,7 +97,7 @@ class SocialAuthController extends Controller
         ActivityLog::create([
             'user_id' => $user->id,
             'action' => 'LOGIN_SOCIAL',
-            'description' => "User logged in via {$provider}",
+            'description' => "Usuario inició sesión vía {$provider}",
             'ip_address' => request()->ip(),
         ]);
 
