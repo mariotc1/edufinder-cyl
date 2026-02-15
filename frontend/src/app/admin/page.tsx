@@ -111,22 +111,28 @@ export default function AdminDashboard() {
           <motion.div 
             key={stat.name} 
             variants={item}
-            className="group relative bg-white rounded-xl overflow-hidden border border-neutral-200 shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-[#223945] transition-[box-shadow,transform,border-color] duration-300 p-6"
+            className="group relative bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-blue-100 transition-all duration-300 p-6 flex flex-col justify-between min-h-[160px]"
           >
-            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300 transform origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500"></div>
+            {/* Permanent Top Gradient */}
+            <div className={`absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r ${stat.gradient}`}></div>
             
-            <div className="flex items-start justify-between mb-4">
-                <div className={`p-3 rounded-xl ${stat.bgIcon} shadow-sm group-hover:scale-110 transition-transform duration-300`}>
-                    <stat.icon className="w-6 h-6" />
+            {/* Decorative Faded Icon */}
+            <stat.icon className={`absolute -bottom-6 -right-6 w-32 h-32 opacity-[0.03] ${stat.bgIcon.replace('bg-', 'text-').split(' ')[1]} transition-transform group-hover:scale-110 duration-500 pointer-events-none`} />
+
+            <div className="flex items-start justify-between relative z-10">
+                <div className={`p-3.5 rounded-2xl ${stat.bgIcon} shadow-sm ring-4 ring-slate-50/50 group-hover:scale-110 transition-transform duration-300`}>
+                    <stat.icon className="w-7 h-7" />
                 </div>
-                <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border border-slate-100 bg-slate-50 text-slate-500`}>
+                <span className={`text-[10px] font-bold px-3 py-1.5 rounded-full border border-slate-200 bg-white/80 backdrop-blur-sm text-slate-500 shadow-sm`}>
                     {stat.trend}
                 </span>
             </div>
             
-            <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">{stat.name}</p>
-                <h3 className="text-3xl font-black text-[#223945]">{stat.value}</h3>
+            <div className="relative z-10 mt-4">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{stat.name}</p>
+                <div className="flex items-baseline gap-1">
+                    <h3 className="text-4xl font-black text-[#223945] tracking-tight">{stat.value}</h3>
+                </div>
             </div>
           </motion.div>
         ))}
