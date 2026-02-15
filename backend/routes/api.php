@@ -89,11 +89,31 @@ Route::middleware('auth:sanctum')->group(function () {
 // PANEL DE ADMINISTRACIÓN
 // Rutas protegidas exclusivamente para administradores
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
-    Route::get('/stats', [App\Http\Controllers\AdminController::class, 'stats']);
+    // Basic CRUD (Legacy/Existing)
     Route::get('/users', [App\Http\Controllers\AdminController::class, 'index']);
     Route::put('/users/{id}/role', [App\Http\Controllers\AdminController::class, 'updateRole']);
     Route::delete('/users/{id}', [App\Http\Controllers\AdminController::class, 'destroy']);
     Route::get('/centros', [App\Http\Controllers\AdminController::class, 'getCentros']);
     Route::delete('/centros/{id}', [App\Http\Controllers\AdminController::class, 'destroyCentro']);
+
+    // User Management Extended
+    Route::put('/users/{id}/block', [App\Http\Controllers\AdminController::class, 'toggleBlock']);
+    Route::post('/users/{id}/reset-password', [App\Http\Controllers\AdminController::class, 'resetUserPassword']);
+    Route::get('/users/{id}/details', [App\Http\Controllers\AdminController::class, 'getUserDetails']);
+
+    // Dashboard & Stats
+    Route::get('/dashboard/stats', [App\Http\Controllers\AdminDashboardController::class, 'getStats']); // Enhanced stats
+    Route::get('/dashboard/activity', [App\Http\Controllers\AdminDashboardController::class, 'getRecentActivity']);
+    Route::get('/dashboard/sync-status', [App\Http\Controllers\AdminDashboardController::class, 'getSyncStatus']);
+    Route::post('/dashboard/force-sync', [App\Http\Controllers\AdminDashboardController::class, 'forceSync']);
+
+    // System Configuration
+    Route::get('/system/status', [App\Http\Controllers\AdminSystemController::class, 'getSystemStatus']);
+    Route::post('/system/clear-cache', [App\Http\Controllers\AdminSystemController::class, 'clearCache']);
+    Route::post('/system/maintenance', [App\Http\Controllers\AdminSystemController::class, 'toggleMaintenance']);
+    Route::get('/system/logs', [App\Http\Controllers\AdminSystemController::class, 'getLogs']);
+
+    // Legacy route kept for backward compatibility if needed, but overridden by enhanced stats above if called specifically
+    Route::get('/stats', [App\Http\Controllers\AdminController::class, 'stats']);
 });
 ?>

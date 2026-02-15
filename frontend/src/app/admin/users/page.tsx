@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import api from '@/lib/axios';
 import useSWR, { mutate } from 'swr';
-import { Search, Trash2, ChevronLeft, ChevronRight, Shield, User as UserIcon, Eye, X, Calendar, Mail, Hash } from 'lucide-react';
+import { Search, Trash2, ChevronLeft, ChevronRight, Shield, User as UserIcon, Eye, X, Calendar, Mail, Hash, Lock, Unlock, Key, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { AnimatePresence, motion } from 'framer-motion';
 import DeleteConfirmationModal from '@/components/admin/DeleteConfirmationModal';
@@ -33,7 +33,7 @@ function UserDetailsModal({ user, onClose }: { user: any; onClose: () => void })
                 className="relative w-full max-w-lg z-10 flex flex-col max-h-[90vh] bg-white rounded-xl shadow-2xl overflow-hidden"
             >
                 {/* Top Gradient Border */}
-                <div className="h-1.5 w-full bg-gradient-to-r from-blue-600 via-indigo-500 to-blue-400"></div>
+                <div className={`h-1.5 w-full bg-gradient-to-r ${user.is_blocked ? 'from-red-500 via-orange-500 to-red-400' : 'from-blue-600 via-indigo-500 to-blue-400'}`}></div>
 
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white">
@@ -52,16 +52,23 @@ function UserDetailsModal({ user, onClose }: { user: any; onClose: () => void })
                     <div className="flex flex-col items-center text-center mb-8">
                         <div className="relative mb-4">
                              {user.foto_perfil ? (
-                                <img src={user.foto_perfil} className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg shadow-blue-500/20" alt="" />
+                                <img src={user.foto_perfil} className={`w-24 h-24 rounded-full object-cover border-4 shadow-lg ${user.is_blocked ? 'border-red-100 shadow-red-500/20 grayscale' : 'border-white shadow-blue-500/20'}`} alt="" />
                             ) : (
-                                <div className="w-24 h-24 rounded-full bg-slate-100 text-[#223945] flex items-center justify-center font-bold text-3xl border-4 border-white shadow-lg shadow-blue-500/20">
+                                <div className={`w-24 h-24 rounded-full text-[#223945] flex items-center justify-center font-bold text-3xl border-4 shadow-lg ${user.is_blocked ? 'bg-red-50 border-red-100 shadow-red-500/20' : 'bg-slate-100 border-white shadow-blue-500/20'}`}>
                                     {user.name.charAt(0)}
                                 </div>
                             )}
-                            <div className={`absolute bottom-1 right-1 w-5 h-5 rounded-full border-2 border-white ${user.role === 'admin' ? 'bg-amber-400' : 'bg-emerald-400'}`}></div>
+                            <div className={`absolute bottom-1 right-1 w-5 h-5 rounded-full border-2 border-white ${
+                                user.is_blocked ? 'bg-red-500' : (user.role === 'admin' ? 'bg-amber-400' : 'bg-emerald-400')
+                            }`}>
+                                {user.is_blocked && <Lock className="w-3 h-3 text-white absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />}
+                            </div>
                         </div>
                         
-                        <h2 className="text-2xl font-bold text-[#223945] mb-1">{user.name}</h2>
+                        <h2 className="text-2xl font-bold text-[#223945] mb-1 flex items-center gap-2 justify-center">
+                            {user.name}
+                            {user.is_blocked && <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full border border-red-200">Bloqueado</span>}
+                        </h2>
                         <div className="flex items-center justify-center gap-2">
                             <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border uppercase tracking-wide ${
                                 user.role === 'admin' 
@@ -92,14 +99,9 @@ function UserDetailsModal({ user, onClose }: { user: any; onClose: () => void })
                                 <Calendar className="w-5 h-5" />
                             </div>
                             <div>
-                                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-0.5">Fecha de Registro</p>
+                                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-0.5">Última Conexión</p>
                                 <p className="text-sm font-semibold text-slate-700 capitalize">
-                                    {new Date(user.created_at).toLocaleDateString('es-ES', { 
-                                        dateStyle: 'full'
-                                    })}
-                                </p>
-                                <p className="text-xs text-slate-400 mt-0.5">
-                                    a las {new Date(user.created_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                                    {user.last_login_at ? new Date(user.last_login_at).toLocaleString('es-ES') : 'Nunca / Desconocido'}
                                 </p>
                             </div>
                         </div>
@@ -109,10 +111,10 @@ function UserDetailsModal({ user, onClose }: { user: any; onClose: () => void })
                                 <Hash className="w-5 h-5" />
                             </div>
                             <div>
-                                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-0.5">Identificador Sistema</p>
-                                <code className="text-xs font-mono bg-white px-2 py-1 rounded border border-slate-200 block text-slate-600">
-                                    {user.id}
-                                </code>
+                                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-0.5">Fecha de Registro</p>
+                                <p className="text-sm font-semibold text-slate-700">
+                                    {new Date(user.created_at).toLocaleDateString()}
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -128,6 +130,7 @@ export default function UsersPage() {
   const [debouncedSearch] = useDebounce(searchTerm, 500); // 500ms debounce
   const [page, setPage] = useState(1);
   const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [processingId, setProcessingId] = useState<number | null>(null);
   
   // Custom Delete Modal State
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; userId: number | null; userName: string; isDeleting: boolean }>({
@@ -171,6 +174,52 @@ export default function UsersPage() {
       }
   };
 
+  const handleBlockToggle = async (userId: number) => {
+      setProcessingId(userId);
+      try {
+          await api.put(`/admin/users/${userId}/block`);
+          mutate(`/admin/users?page=${page}&search=${debouncedSearch}`);
+          if (selectedUser?.id === userId) {
+             const updated = data?.data?.find((u:any) => u.id === userId);
+             if(updated) setSelectedUser({...updated, is_blocked: !selectedUser.is_blocked}); 
+          }
+      } catch (e: any) {
+          alert(e.response?.data?.message || 'Error al actualizar estado');
+      } finally {
+          setProcessingId(null);
+      }
+  };
+
+  const handleResetPassword = async (userId: number) => {
+      // For simplicity, we'll suggest a random password or prompt user.
+      // Ideally, we open a prompt.
+      const newPassword = prompt("Introduce la nueva contraseña provisional (mínimo 8 caracteres):");
+      if (!newPassword) return;
+      if (newPassword.length < 8) {
+          alert("La contraseña debe tener al menos 8 caracteres.");
+          return;
+      }
+      
+      const confirmPassword = prompt("Confirma la nueva contraseña:");
+      if (newPassword !== confirmPassword) {
+            alert("Las contraseñas no coinciden.");
+            return;
+      }
+
+      setProcessingId(userId);
+      try {
+          await api.post(`/admin/users/${userId}/reset-password`, { 
+              password: newPassword,
+              password_confirmation: confirmPassword
+          });
+          alert("Contraseña actualizada correctamente.");
+      } catch (e: any) {
+          alert(e.response?.data?.message || 'Error al resetear contraseña');
+      } finally {
+          setProcessingId(null);
+      }
+  };
+
   if (isLoading) return (
     <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#223945]"></div>
@@ -204,7 +253,7 @@ export default function UsersPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
            <h1 className="text-3xl font-bold text-[#223945] tracking-tight">Gestión de Usuarios</h1>
-           <p className="text-slate-500 text-sm mt-1">Administra los roles y el acceso a la plataforma.</p>
+           <p className="text-slate-500 text-sm mt-1">Administra los roles, accesos y seguridad de la plataforma.</p>
         </div>
         <div className="relative group w-full sm:w-auto">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 group-focus-within:text-blue-500 transition-colors" />
@@ -227,39 +276,46 @@ export default function UsersPage() {
                 <thead className="bg-slate-50/50 border-b border-slate-100/80">
                     <tr>
                         <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Usuario</th>
-                        <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Detalles de Contacto</th>
-                        <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Rol de Sistema</th>
+                        <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Detalles</th>
+                        <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Rol</th>
                         <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Estado</th>
                         <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Acciones</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                     {data?.data?.map((user: any) => (
-                        <tr key={user.id} className="hover:bg-slate-50/80 transition-colors group">
+                        <tr key={user.id} className={`hover:bg-slate-50/80 transition-colors group ${user.is_blocked ? 'bg-red-50/30' : ''}`}>
                             <td className="px-6 py-4">
                                 <div className="flex items-center gap-4">
                                     <div className="relative">
                                         {user.foto_perfil ? (
-                                            <img src={user.foto_perfil} className="w-10 h-10 rounded-full object-cover border border-slate-200" alt="" />
+                                            <img src={user.foto_perfil} className={`w-10 h-10 rounded-full object-cover border ${user.is_blocked ? 'border-red-200 grayscale' : 'border-slate-200'}`} alt="" />
                                         ) : (
-                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 text-[#223945] flex items-center justify-center font-bold text-sm">
+                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${user.is_blocked ? 'bg-red-100 text-red-700' : 'bg-gradient-to-br from-slate-100 to-slate-200 text-[#223945]'}`}>
                                                 {user.name.charAt(0)}
                                             </div>
                                         )}
-                                        {user.role === 'admin' && (
-                                            <div className="absolute -bottom-1 -right-1 bg-[#223945] text-white p-0.5 rounded-full border-2 border-white" title="Administrador">
+                                        {user.is_blocked ? (
+                                            <div className="absolute -bottom-1 -right-1 bg-red-500 text-white p-0.5 rounded-full border-2 border-white">
+                                                <Lock className="w-3 h-3" />
+                                            </div>
+                                        ) : user.role === 'admin' ? (
+                                            <div className="absolute -bottom-1 -right-1 bg-[#223945] text-white p-0.5 rounded-full border-2 border-white">
                                                 <Shield className="w-3 h-3" />
                                             </div>
-                                        )}
+                                        ) : null}
                                     </div>
-                                    <div>
-                                        <span className="font-bold text-[#223945] block text-sm">{user.name}</span>
+                                    <div className={user.is_blocked ? 'opacity-60' : ''}>
+                                        <span className={`font-bold block text-sm ${user.is_blocked ? 'text-red-700' : 'text-[#223945]'}`}>{user.name}</span>
                                         <span className="text-[10px] text-slate-400 font-medium">ID: #{user.id}</span>
                                     </div>
                                 </div>
                             </td>
                             <td className="px-6 py-4">
-                                <span className="text-slate-600 text-sm font-medium">{user.email}</span>
+                                <div className="flex flex-col">
+                                    <span className="text-slate-600 text-sm font-medium">{user.email}</span>
+                                    <span className="text-[10px] text-slate-400">Reg: {new Date(user.created_at).toLocaleDateString()}</span>
+                                </div>
                             </td>
                             <td className="px-6 py-4">
                                 {user.id === currentUser?.id ? (
@@ -267,51 +323,69 @@ export default function UsersPage() {
                                         Admin (Tú)
                                     </span>
                                 ) : (
-                                    <div className="relative">
-                                        <select 
-                                            className={`appearance-none pl-3 pr-8 py-1.5 rounded-lg text-xs font-bold border-0 ring-1 ring-inset focus:ring-2 focus:ring-[#223945] outline-none cursor-pointer transition-all ${
-                                                user.role === 'admin' 
-                                                    ? 'bg-[#223945]/5 text-[#223945] ring-[#223945]/20' 
-                                                    : 'bg-slate-50 text-slate-600 ring-slate-200 hover:ring-slate-300'
-                                            }`}
-                                            value={user.role}
-                                            onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                                        >
-                                            <option value="user">Usuario</option>
-                                            <option value="admin">Administrador</option>
-                                        </select>
-                                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
-                                            <ChevronLeft className="h-3 w-3 -rotate-90" />
-                                        </div>
-                                    </div>
+                                    <select 
+                                        className={`appearance-none pl-3 pr-8 py-1.5 rounded-lg text-xs font-bold border-0 ring-1 ring-inset focus:ring-2 focus:ring-[#223945] outline-none cursor-pointer transition-all ${
+                                            user.role === 'admin' 
+                                                ? 'bg-[#223945]/5 text-[#223945] ring-[#223945]/20' 
+                                                : 'bg-slate-50 text-slate-600 ring-slate-200 hover:ring-slate-300'
+                                        }`}
+                                        value={user.role}
+                                        onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                                        disabled={user.is_blocked}
+                                    >
+                                        <option value="user">Usuario</option>
+                                        <option value="admin">Administrador</option>
+                                    </select>
                                 )}
                             </td>
                             <td className="px-6 py-4">
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-200 uppercase tracking-wide">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-                                    Activo
-                                </span>
-                                <div className="text-[10px] text-slate-400 mt-1 pl-1 font-medium">
-                                    {new Date(user.created_at).toLocaleDateString()}
-                                </div>
+                                {user.is_blocked ? (
+                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-200 uppercase tracking-wide">
+                                        <Lock className="w-3 h-3" />
+                                        Bloqueado
+                                    </span>
+                                ) : (
+                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-200 uppercase tracking-wide">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                        Activo
+                                    </span>
+                                )}
                             </td>
                             <td className="px-6 py-4 text-right">
-                                <div className="flex items-center justify-end gap-2">
+                                <div className="flex items-center justify-end gap-1">
                                     <button 
                                         onClick={() => setSelectedUser(user)}
-                                        className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                        className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
                                         title="Ver detalles"
                                     >
                                         <Eye className="w-4 h-4" />
                                     </button>
-                                    <button 
-                                        onClick={() => handleDeleteClick(user.id, user.name)}
-                                        disabled={user.role === 'admin'}
-                                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all disabled:opacity-30 disabled:pointer-events-none"
-                                        title="Eliminar usuario"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
+                                    
+                                    {user.id !== currentUser?.id && user.role !== 'admin' && (
+                                        <>
+                                            <button 
+                                                onClick={() => handleResetPassword(user.id)}
+                                                className="p-1.5 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all"
+                                                title="Resetear Contraseña"
+                                            >
+                                                {processingId === user.id ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Key className="w-4 h-4" />}
+                                            </button>
+                                            <button 
+                                                onClick={() => handleBlockToggle(user.id)}
+                                                className={`p-1.5 rounded-lg transition-all ${user.is_blocked ? 'text-red-600 bg-red-50 hover:bg-red-100' : 'text-slate-400 hover:text-red-600 hover:bg-red-50'}`}
+                                                title={user.is_blocked ? "Desbloquear" : "Bloquear"}
+                                            >
+                                                {user.is_blocked ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                                            </button>
+                                            <button 
+                                                onClick={() => handleDeleteClick(user.id, user.name)}
+                                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                                title="Eliminar usuario"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </>
+                                    )}
                                 </div>
                             </td>
                         </tr>
@@ -358,26 +432,30 @@ export default function UsersPage() {
       <div className="md:hidden space-y-4">
         {data?.data?.map((user: any) => (
              <div key={user.id} className="bg-white rounded-xl shadow-sm border border-neutral-200 overflow-hidden relative p-4">
-                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300"></div>
+                 <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${user.is_blocked ? 'from-red-500 to-red-300' : 'from-[#223945] via-blue-500 to-blue-300'}`}></div>
                  
                  <div className="flex items-start justify-between mb-2">
                      <div className="flex items-center gap-3 w-full pr-8">
                         <div className="relative shrink-0">
                             {user.foto_perfil ? (
-                                <img src={user.foto_perfil} className="w-10 h-10 rounded-full object-cover border border-slate-200" alt="" />
+                                <img src={user.foto_perfil} className={`w-10 h-10 rounded-full object-cover border ${user.is_blocked ? 'border-red-200 grayscale' : 'border-slate-200'}`} alt="" />
                             ) : (
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 text-[#223945] flex items-center justify-center font-bold text-sm">
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${user.is_blocked ? 'bg-red-50 text-red-700' : 'bg-gradient-to-br from-slate-100 to-slate-200 text-[#223945]'}`}>
                                     {user.name.charAt(0)}
                                 </div>
                             )}
-                            {user.role === 'admin' && (
+                            {user.is_blocked ? (
+                                <div className="absolute -bottom-1 -right-1 bg-red-500 text-white p-0.5 rounded-full border-2 border-white">
+                                    <Lock className="w-3 h-3" />
+                                </div>
+                            ) : user.role === 'admin' ? (
                                 <div className="absolute -bottom-1 -right-1 bg-[#223945] text-white p-0.5 rounded-full border-2 border-white">
                                     <Shield className="w-3 h-3" />
                                 </div>
-                            )}
+                            ) : null}
                         </div>
                         <div className="min-w-0 flex-1">
-                            <p className="font-bold text-[#223945] text-sm leading-tight line-clamp-1">{user.name}</p>
+                            <p className={`font-bold text-sm leading-tight line-clamp-1 ${user.is_blocked ? 'text-red-700' : 'text-[#223945]'}`}>{user.name}</p>
                             <p className="text-[10px] text-slate-400 font-medium mt-0.5 break-all">{user.email}</p>
                         </div>
                      </div>
@@ -392,20 +470,28 @@ export default function UsersPage() {
                         }`}
                         value={user.role}
                         onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                        disabled={user.id === currentUser?.id}
+                        disabled={user.id === currentUser?.id || user.is_blocked}
                     >
                         <option value="user">Usuario</option>
                         <option value="admin">Admin</option>
                     </select>
 
-                     <div className="flex items-center gap-2">
+                     <div className="flex items-center gap-1">
                         <button onClick={() => setSelectedUser(user)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all border border-transparent hover:border-blue-100">
                             <Eye className="w-5 h-5" />
                         </button>
                         {user.id !== currentUser?.id && user.role !== 'admin' && (
-                            <button onClick={() => handleDeleteClick(user.id, user.name)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100">
-                                <Trash2 className="w-5 h-5" />
-                            </button>
+                            <>
+                                <button onClick={() => handleResetPassword(user.id)} className="p-2 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all border border-transparent hover:border-orange-100">
+                                    <Key className="w-5 h-5" />
+                                </button>
+                                <button onClick={() => handleBlockToggle(user.id)} className={`p-2 rounded-lg transition-all border border-transparent ${user.is_blocked ? 'text-red-600 bg-red-50 border-red-100' : 'text-slate-400 hover:text-red-600 hover:bg-red-50 hover:border-red-100'}`}>
+                                    {user.is_blocked ? <Unlock className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
+                                </button>
+                                <button onClick={() => handleDeleteClick(user.id, user.name)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100">
+                                    <Trash2 className="w-5 h-5" />
+                                </button>
+                            </>
                         )}
                      </div>
                  </div>

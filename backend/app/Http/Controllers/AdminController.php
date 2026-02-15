@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Centro;
 use App\Models\CicloFp;
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 
 class AdminController extends Controller
@@ -47,11 +48,18 @@ class AdminController extends Controller
         $user->role = $request->role;
         $user->save();
 
+        ActivityLog::create([
+            'user_id' => $request->user()->id,
+            'action' => 'UPDATE_ROLE',
+            'description' => "Updated role for user {$user->email} to {$request->role}",
+            'ip_address' => $request->ip(),
+        ]);
+
         return response()->json(['message' => 'Rol actualizado correctamente', 'user' => $user]);
     }
 
     // Eliminar usuario
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         $user = User::findOrFail($id);
 
@@ -60,6 +68,14 @@ class AdminController extends Controller
         }
 
         $user->delete();
+
+        ActivityLog::create([
+            'user_id' => $request->user()->id,
+            'action' => 'DELETE_USER',
+            'description' => "Deleted user {$user->email}",
+            'ip_address' => $request->ip(),
+        ]);
+
         return response()->json(['message' => 'Usuario eliminado correctamente']);
     }
 
@@ -96,10 +112,85 @@ class AdminController extends Controller
     }
 
     // Eliminar centro
-    public function destroyCentro($id)
+    public function destroyCentro(Request $request, $id)
     {
         $centro = Centro::findOrFail($id);
         $centro->delete();
+
+        ActivityLog::create([
+            'user_id' => $request->user()->id,
+            'action' => 'DELETE_CENTRO',
+            'description' => "Deleted centro {$centro->nombre}",
+            'ip_address' => $request->ip(),
+        ]);
+
         return response()->json(['message' => 'Centro eliminado correctamente']);
+    }
+
+    // Bloquear/Desbloquear usuario
+    public function toggleBlock(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        // No bloquear a otros admins por seguridad (o al menos comprobar)
+        if ($user->role === 'admin' && $user->id !== auth()->id()) {
+            // Permitir si soy superadmin? Por ahora restringimos bloquear admins.
+            return response()->json(['message' => 'No se puede bloquear a un administrador.'], 403);
+        }
+
+        $user->is_blocked = !$user->is_blocked;
+        $user->save();
+
+        $status = $user->is_blocked ? 'blocked' : 'unblocked';
+
+        ActivityLog::create([
+            'user_id' => $request->user()->id,
+            'action' => 'TOGGLE_BLOCK',
+            'description' => "User {$user->email} was {$status}",
+            'ip_address' => $request->ip(),
+        ]);
+
+        return response()->json([
+            'message' => "User {$status} successfully",
+            'is_blocked' => $user->is_blocked
+        ]);
+    }
+
+    // Obtener detalles extendidos de usuario
+    public function getUserDetails($id)
+    {
+        $user = User::with(['favoritos.centro'])->findOrFail($id);
+
+        // Aquí podríamos añadir historial de login si tuviéramos tabla separada,
+        // pero usamos last_login_at del modelo User
+
+        return response()->json([
+            'user' => $user,
+            'stats' => [
+                'favorites_count' => $user->favoritos()->count(),
+                // 'search_history_count' => ...
+            ]
+        ]);
+    }
+
+    // Resetear contraseña manualmente
+    public function resetUserPassword(Request $request, $id)
+    {
+        $request->validate([
+            'password' => 'required|min:8|confirmed'
+        ]);
+
+        $user = User::findOrFail($id);
+        $user->password = \Illuminate\Support\Facades\Hash::make($request->password);
+        $user->save();
+
+        ActivityLog::create([
+            'user_id' => $request->user()->id,
+            'action' => 'RESET_PASSWORD',
+            'description' => "Reset password for user {$user->email}",
+            'ip_address' => $request->ip(),
+        ]);
+
+        return response()->json(['message' => 'Password reset successfully']);
     }
 }

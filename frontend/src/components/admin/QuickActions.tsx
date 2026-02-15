@@ -58,25 +58,29 @@ export default function QuickActions() {
 
       <h3 className="text-lg font-bold text-[#223945] mb-6">Acciones Rápidas</h3>
 
-      <div className="grid grid-cols-2 gap-4">
-        {actions.map((action) => (
-          <motion.button
-            key={action.name}
-            onClick={action.action}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className={`p-4 rounded-xl border flex flex-col items-center justify-center gap-3 transition-all ${action.bg} ${action.border} ${action.hover}`}
-          >
-            <div className={`p-2 bg-white rounded-full shadow-sm ${action.color}`}>
-              {loading === action.id ? (
-                <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-              ) : (
-                <action.icon className="w-5 h-5" />
-              )}
-            </div>
-            <span className="text-xs font-bold text-slate-700">{action.name}</span>
-          </motion.button>
-        ))}
+      <div className="flex-1 flex flex-col justify-center min-h-0">
+        <div className="grid grid-cols-2 gap-4">
+            {actions.map((action) => (
+            <motion.button
+                key={action.name}
+                onClick={action.action}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className={`h-24 w-full rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all shadow-sm ${action.bg} ${action.border} ${action.hover}`}
+            >
+                <div className={`p-2 bg-white rounded-full shadow-sm ${action.color}`}>
+                {loading === action.id ? (
+                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                    <action.icon className="w-5 h-5" />
+                )}
+                </div>
+                <span className="text-[10px] uppercase font-bold text-slate-700 tracking-wide text-center leading-tight w-full px-2 truncate">
+                    {action.name}
+                </span>
+            </motion.button>
+            ))}
+        </div>
       </div>
     </div>
   );

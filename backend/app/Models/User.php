@@ -23,6 +23,8 @@ class User extends Authenticatable
         'ubicacion_lat',
         'ubicacion_lon',
         'role',
+        'is_blocked',
+        'last_login_at',
     ];
 
     // RELACIÓN: FAVORITOS
@@ -42,6 +44,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_blocked' => 'boolean',
+            'last_login_at' => 'datetime',
         ];
     }
 
