@@ -19,12 +19,20 @@ class AdminSystemController extends Controller
             $dbConnection = false;
         }
 
+        $failedJobs = 0;
+        try {
+            $failedJobs = \Illuminate\Support\Facades\DB::table('failed_jobs')->count();
+        } catch (\Exception $e) {
+            $failedJobs = 0;
+        }
+
         return response()->json([
             'php_version' => phpversion(),
             'laravel_version' => app()->version(),
             'database_connection' => config('database.default'),
             'database_connected' => $dbConnection,
             'cache_driver' => config('cache.default'),
+            'failed_jobs_count' => $failedJobs,
             'debug_mode' => config('app.debug'),
             'maintenance_mode' => app()->isDownForMaintenance(),
             'environment' => app()->environment(),

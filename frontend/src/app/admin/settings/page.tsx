@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import useSWR from 'swr';
 import api from '@/lib/axios';
-import { Settings, Server, Database, Activity, RefreshCw, Power, AlertTriangle, FileText, CheckCircle, Terminal, Cpu, Shield, Clock } from 'lucide-react';
+import { Settings, Server, Database, Activity, RefreshCw, Power, AlertTriangle, FileText, CheckCircle, Terminal, Cpu, Shield, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const fetcher = (url: string) => api.get(url).then((res) => res.data);
@@ -15,6 +15,25 @@ export default function SettingsPage() {
 
   const [clearingCache, setClearingCache] = useState(false);
   const [togglingMaintenance, setTogglingMaintenance] = useState(false);
+
+  /* Pagination Logic */
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
+  const totalPages = Math.ceil(logs.length / ITEMS_PER_PAGE);
+  
+  const paginatedLogs = logs.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  /* Modal Logic */
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
 
   const handleClearCache = async () => {
     setClearingCache(true);
@@ -29,19 +48,17 @@ export default function SettingsPage() {
     }
   };
 
-  const handleToggleMaintenance = async () => {
-    const isMaintenance = systemStatus?.maintenance_mode;
-    const action = isMaintenance ? 'desactivar' : 'activar';
-    if (!confirm(`¿Estás seguro de ${action} el modo de mantenimiento?`)) return;
-    
+  const confirmToggleMaintenance = async () => {
+    setShowMaintenanceModal(false);
     setTogglingMaintenance(true);
     try {
-      await api.post('/admin/system/maintenance', { enable: !isMaintenance });
-      mutate();
+        const isMaintenance = systemStatus?.maintenance_mode;
+        await api.post('/admin/system/maintenance', { enable: !isMaintenance });
+        mutate();
     } catch (error) {
-      alert('Error al cambiar el modo de mantenimiento.');
+        alert('Error al cambiar el modo de mantenimiento.');
     } finally {
-      setTogglingMaintenance(false);
+        setTogglingMaintenance(false);
     }
   };
 
@@ -53,9 +70,43 @@ export default function SettingsPage() {
 
   const isMaintenanceMode = systemStatus?.maintenance_mode;
 
-
   return (
-    <div className="space-y-8 pb-10">
+    <div className="space-y-8 pb-10 relative">
+        {/* Custom Modal for Maintenance */}
+        {showMaintenanceModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100 scale-100 animate-in zoom-in-95 duration-200">
+                    <div className="p-6 text-center">
+                        <div className={`mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4 ${isMaintenanceMode ? 'bg-emerald-50 text-emerald-500' : 'bg-amber-50 text-amber-500'}`}>
+                            <Power className="w-8 h-8" />
+                        </div>
+                        <h3 className="text-xl font-black text-[#223945] mb-2">
+                            {isMaintenanceMode ? '¿Reactivar el Sitio?' : '¿Activar Modo Mantenimiento?'}
+                        </h3>
+                        <p className="text-sm text-slate-500 mb-6">
+                            {isMaintenanceMode 
+                                ? 'El sitio volverá a ser visible para todos los usuarios. ¿Estás seguro?' 
+                                : 'El sitio no será accesible para los usuarios hasta que lo desactives. Solo los administradores podrán acceder.'}
+                        </p>
+                        <div className="flex gap-3">
+                            <button 
+                                onClick={() => setShowMaintenanceModal(false)}
+                                className="flex-1 py-3 rounded-xl font-bold text-sm text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button 
+                                onClick={confirmToggleMaintenance}
+                                className={`flex-1 py-3 rounded-xl font-bold text-sm text-white shadow-lg transition-all hover:scale-105 ${isMaintenanceMode ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200' : 'bg-[#223945] hover:bg-[#1a2c36] shadow-slate-300'}`}
+                            >
+                                {isMaintenanceMode ? 'Sí, Reactivar' : 'Sí, Activar'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
+
       <div>
         <h1 className="text-3xl font-black text-[#223945] tracking-tight">Configuración del Sistema</h1>
         <p className="text-slate-500 mt-1 font-medium">Estado del sistema, auditoría y herramientas de mantenimiento.</p>
@@ -99,6 +150,19 @@ export default function SettingsPage() {
                             </div>
                         </div>
                     </div>
+                     <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                         <div className="flex items-center gap-3">
+                            <div className="p-2 bg-white rounded-lg border border-slate-200 text-amber-500 shadow-sm">
+                                <AlertTriangle className="w-4 h-4" />
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cola de Trabajos</p>
+                                <p className={`font-bold text-xs ${systemStatus?.failed_jobs_count > 0 ? 'text-red-500' : 'text-[#223945]'}`}>
+                                    {systemStatus?.failed_jobs_count || 0} Fallidos
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -127,7 +191,7 @@ export default function SettingsPage() {
                 </div>
 
                 <button
-                    onClick={handleToggleMaintenance}
+                    onClick={() => setShowMaintenanceModal(true)}
                     disabled={togglingMaintenance}
                     className={`w-full py-3 px-4 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 ${
                         isMaintenanceMode 
@@ -178,13 +242,13 @@ export default function SettingsPage() {
                 </h3>
             </div>
             <div className="text-[10px] font-mono text-slate-400 bg-white border border-slate-200 px-2 py-1 rounded-lg">
-                {logs.length} registros
+                Mostrando {paginatedLogs.length} de {logs.length} registros
             </div>
         </div>
         
         {/* Mobile View (Cards) */}
         <div className="block md:hidden">
-            {logs.map((log: any) => (
+            {paginatedLogs.map((log: any) => (
                 <div key={log.id} className="p-4 border-b border-slate-100 hover:bg-slate-50 transition-colors">
                     <div className="flex justify-between items-start mb-2">
                         <div className="flex items-center gap-2">
@@ -218,7 +282,7 @@ export default function SettingsPage() {
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                    {logs.map((log: any) => (
+                    {paginatedLogs.map((log: any) => (
                         <tr key={log.id} className="hover:bg-slate-50/80 transition-colors group">
                             <td className="px-6 py-3">
                                 <div className="flex items-center gap-3">
@@ -249,7 +313,7 @@ export default function SettingsPage() {
                             </td>
                         </tr>
                     ))}
-                    {logs.length === 0 && (
+                    {paginatedLogs.length === 0 && (
                         <tr>
                             <td colSpan={4} className="px-6 py-12 text-center text-slate-400 italic">
                                 No hay registros de auditoría disponibles.
@@ -259,6 +323,29 @@ export default function SettingsPage() {
                 </tbody>
             </table>
         </div>
+        
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+            <div className="p-4 border-t border-slate-100 flex items-center justify-between">
+                <button
+                    onClick={() => goToPage(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    <ChevronLeft className="w-4 h-4" />
+                </button>
+                <div className="text-xs font-bold text-slate-500">
+                    Página {currentPage} de {totalPages}
+                </div>
+                <button
+                    onClick={() => goToPage(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    <ChevronRight className="w-4 h-4" />
+                </button>
+            </div>
+        )}
       </div>
     </div>
   );

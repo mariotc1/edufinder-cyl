@@ -49,6 +49,7 @@ Route::get('/debug-queue', function () {
     }
 });
 
+
 // GESTIÓN DE CENTROS EDUCATIVOS
 // Rutas públicas para consultar información sobre centros y sus ciclos formativos
 Route::get('/centros/sugerencias', [CentroController::class, 'suggestions']);
@@ -62,7 +63,6 @@ Route::get('/busqueda', [App\Http\Controllers\SearchController::class, 'index'])
 
 // GESTIÓN DE CICLOS FORMATIVOS
 // Rutas para listar y obtener sugerencias de ciclos de FP
-Route::get('/ciclos/sugerencias', [CicloFpController::class, 'suggestions']);
 Route::get('/ciclos', [CicloFpController::class, 'index']);
 
 // RUTAS PROTEGIDAS
