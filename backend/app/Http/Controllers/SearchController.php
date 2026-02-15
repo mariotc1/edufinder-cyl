@@ -47,7 +47,7 @@ class SearchController extends Controller
                 'results_count' => 0, // We can update this later or leave it as 0 if not critical for performance
                 'ip_address' => $request->ip()
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             // Fail silently to not block search
             \Illuminate\Support\Facades\Log::error('Search listing failed: ' . $e->getMessage());
         }

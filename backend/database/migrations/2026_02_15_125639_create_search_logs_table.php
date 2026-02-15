@@ -12,9 +12,11 @@ return new class extends Migration {
     {
         Schema::create('search_logs', function (Blueprint $table) {
             $table->id();
-            $table->string('query');
-            $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
+            $table->string('query')->nullable();
+            $table->json('filters')->nullable();
             $table->integer('results_count')->default(0);
+            $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
+            $table->string('ip_address', 45)->nullable();
             $table->timestamps();
         });
     }

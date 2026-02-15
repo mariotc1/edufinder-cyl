@@ -11,8 +11,14 @@ class SearchLog extends Model
 
     protected $fillable = [
         'query',
-        'user_id',
+        'filters',
         'results_count',
+        'user_id',
+        'ip_address',
+    ];
+
+    protected $casts = [
+        'filters' => 'array',
     ];
 
     public function user()
