@@ -15,6 +15,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
         ]);
+
+        $middleware->preventRequestsDuringMaintenance(except: [
+            '/api/admin/*',
+            '/admin/*', // Just in case
+            '/up', // Health check
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
