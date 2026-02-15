@@ -11,27 +11,35 @@ class AdminSystemController extends Controller
 {
     public function getSystemStatus()
     {
+        $dbConnection = false;
+        try {
+            \Illuminate\Support\Facades\DB::connection()->getPdo();
+            $dbConnection = true;
+        } catch (\Exception $e) {
+            $dbConnection = false;
+        }
+
         return response()->json([
             'php_version' => phpversion(),
             'laravel_version' => app()->version(),
             'database_connection' => config('database.default'),
+            'database_connected' => $dbConnection,
+            'cache_driver' => config('cache.default'),
             'debug_mode' => config('app.debug'),
             'maintenance_mode' => app()->isDownForMaintenance(),
             'environment' => app()->environment(),
+            'server_time' => now()->toDateTimeString(),
         ]);
     }
 
     public function clearCache()
     {
-        Artisan::call('cache:clear');
-        Artisan::call('config:clear');
-        Artisan::call('route:clear');
-        Artisan::call('view:clear');
+        Artisan::call('optimize:clear'); // Clear all cache (config, route, view, event)
 
         ActivityLog::create([
             'user_id' => auth()->id(),
-            'action' => 'clear_cache',
-            'description' => 'System cache cleared manually.',
+            'action' => 'CLEAR_CACHE',
+            'description' => 'System cache cleared manually by admin.',
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent()
         ]);
@@ -42,10 +50,12 @@ class AdminSystemController extends Controller
     public function toggleMaintenance(Request $request)
     {
         $enable = $request->input('enable');
+        // secret key for bypassing maintenance mode
+        $secret = 'admin-bypass-secret'; // hardcoded for simplicity, could be env
 
         if ($enable) {
             Artisan::call('down', [
-                '--secret' => 'admin-bypass-secret' // Optional: bypass key
+                '--secret' => $secret
             ]);
             $action = 'enabled';
         } else {
@@ -55,37 +65,38 @@ class AdminSystemController extends Controller
 
         ActivityLog::create([
             'user_id' => auth()->id(),
-            'action' => 'maintenance_mode',
+            'action' => 'MAINTENANCE_MODE',
             'description' => "Maintenance mode {$action}.",
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent()
         ]);
 
-        return response()->json(['message' => "Maintenance mode {$action}."]);
+        return response()->json([
+            'message' => "Maintenance mode {$action}.",
+            'bypass_url' => $enable ? url("/{$secret}") : null
+        ]);
     }
 
     public function getLogs()
     {
-        $logFile = storage_path('logs/laravel.log');
+        // Return structured Activity Logs from DB instead of raw file
+        $logs = ActivityLog::with('user:id,name,email')
+            ->latest()
+            ->take(100)
+            ->get()
+            ->map(function ($log) {
+                return [
+                    'id' => $log->id,
+                    'user' => $log->user ? $log->user->name : 'System',
+                    'email' => $log->user ? $log->user->email : null,
+                    'action' => $log->action,
+                    'description' => $log->description,
+                    'ip' => $log->ip_address,
+                    'date' => $log->created_at->format('Y-m-d H:i:s'),
+                    'relative_time' => $log->created_at->diffForHumans()
+                ];
+            });
 
-        if (!File::exists($logFile)) {
-            return response()->json(['logs' => 'No logs found.']);
-        }
-
-        // Read last 1000 lines efficiently?
-        // simple file_get_contents might be too big.
-        // Let's just get the last 20KB for now.
-
-        $size = File::size($logFile);
-        $readSize = 20000; // 20KB
-
-        $content = '';
-        if ($size > $readSize) {
-            $content = file_get_contents($logFile, false, null, $size - $readSize, $readSize);
-        } else {
-            $content = File::get($logFile);
-        }
-
-        return response()->json(['logs' => $content]);
+        return response()->json(['logs' => $logs]);
     }
 }
