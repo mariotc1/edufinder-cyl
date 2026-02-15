@@ -58,7 +58,7 @@ export default function RecentActivityFeed() {
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-neutral-200 overflow-hidden relative h-full flex flex-col">
-       <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 to-blue-600"></div>
+       <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300"></div>
        
        <div className="p-6 pb-2 mb-2 flex justify-between items-center shrink-0">
            <h3 className="text-lg font-bold text-[#223945] flex items-center gap-2">
