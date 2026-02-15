@@ -3,6 +3,12 @@ set -e
 
 # Run migrations
 echo "Running migrations..."
+
+# Fix Permissions (Runtime)
+echo "Fixing permissions..."
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
 echo "Linking storage..."
 rm -rf public/storage
 php artisan storage:link

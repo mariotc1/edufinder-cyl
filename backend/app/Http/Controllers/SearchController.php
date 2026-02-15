@@ -48,8 +48,13 @@ class SearchController extends Controller
                 'ip_address' => $request->ip()
             ]);
         } catch (\Throwable $e) {
-            // Fail silently to not block search
-            \Illuminate\Support\Facades\Log::error('Search listing failed: ' . $e->getMessage());
+            // Fail silently to not block search.
+            // Wrap log in try-catch because if permissions are broken, Log::error itself causes a 500.
+            try {
+                \Illuminate\Support\Facades\Log::error('Search listing failed: ' . $e->getMessage());
+            } catch (\Throwable $logError) {
+                // Absolutely nothing we can do here if logging fails.
+            }
         }
 
         $query = $this->searchService->buildQuery($validated);
