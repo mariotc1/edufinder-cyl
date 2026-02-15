@@ -16,7 +16,6 @@ export default function RecentActivityFeed() {
   if (error) return <div className="text-red-500">Error cargando actividad.</div>;
 
     const getIcon = (action: string) => {
-      // Monochromatic Blue/Slate theme as requested
       if (action.includes('login') || action.includes('LOGIN')) return <User className="w-4 h-4 text-blue-600" />;
       if (action.includes('block') || action.includes('fail')) return <Shield className="w-4 h-4 text-blue-800" />;
       if (action.includes('delete')) return <Trash2 className="w-4 h-4 text-slate-500" />;
@@ -37,13 +36,15 @@ export default function RecentActivityFeed() {
         if (action === 'LOGIN_FAILED_BLOCKED') return 'Acceso bloqueado';
         if (action === 'LOGOUT') return 'Cierre de sesión';
         
-        // Translate Descriptions partially
-        if (desc.includes('User logged in')) return 'Usuario inició sesión';
-        if (desc.includes('blocked')) return 'Usuario bloqueado';
+        // Translate Descriptions
+        if (desc.includes('via google')) return 'Usuario accedió con Google';
+        if (desc.includes('via github')) return 'Usuario accedió con GitHub';
+        if (desc.includes('User logged in')) return 'Usuario inició sesión exitosamente';
+        if (desc.includes('blocked')) return 'Usuario bloqueado por seguridad';
         if (desc.includes('unblocked')) return 'Usuario desbloqueado';
-        if (desc.includes('Deleted user')) return 'Usuario eliminado';
+        if (desc.includes('Deleted user')) return 'Usuario eliminado del sistema';
         
-        return desc; // Fallback
+        return desc; 
     };
 
     const filteredData = data?.data?.filter((log: any) => {
@@ -57,7 +58,6 @@ export default function RecentActivityFeed() {
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-neutral-200 overflow-hidden relative h-full flex flex-col">
-       {/* Blue Gradient matching other cards */}
        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 to-blue-600"></div>
        
        <div className="p-6 pb-2 mb-2 flex justify-between items-center shrink-0">
@@ -66,35 +66,48 @@ export default function RecentActivityFeed() {
                Actividad del Sistema
            </h3>
            
-           <select 
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-                className="text-xs font-semibold text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 outline-none focus:border-blue-500 transition-colors"
-           >
-               <option value="all">Todo</option>
-               <option value="login">Accesos</option>
-               <option value="security">Seguridad</option>
-               <option value="system">Sistema</option>
-           </select>
+           <div className="relative">
+               <select 
+                    value={filter}
+                    onChange={(e) => setFilter(e.target.value)}
+                    className="appearance-none pl-3 pr-8 py-1.5 text-xs font-bold text-slate-600 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-blue-500 transition-all cursor-pointer hover:bg-slate-100"
+               >
+                   <option value="all">Todo</option>
+                   <option value="login">Accesos</option>
+                   <option value="security">Seguridad</option>
+                   <option value="system">Sistema</option>
+               </select>
+               <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                   <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                       <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                   </svg>
+               </div>
+           </div>
        </div>
        
        <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-4 min-h-0 scrollbar-thin scrollbar-thumb-slate-200">
            {filteredData?.map((log: any) => (
                <div key={log.id} className="flex gap-3 group">
-                   <div className="mt-1 min-w-[32px] h-8 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center shrink-0 shadow-sm group-hover:border-blue-200 transition-colors">
+                   <div className="mt-1.5 min-w-[32px] h-8 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center shrink-0 shadow-sm group-hover:border-blue-200 transition-colors">
                        {getIcon(log.action)}
                    </div>
                    <div className="flex-1 min-w-0">
-                       <p className="text-sm font-medium text-[#223945]">
-                           <span className="font-bold">{log.user?.name || 'Sistema'}</span>{' '}
-                           <span className="text-slate-600 font-normal">{getSpanishText(log)}</span>
-                       </p>
-                       <div className="flex items-center gap-2 mt-1">
-                           <span className="text-[10px] text-slate-400 font-mono">
-                               {new Date(log.created_at).toLocaleString()}
+                       <div className="flex flex-col">
+                           <p className="text-sm font-medium text-[#223945] flex items-center flex-wrap gap-x-2">
+                               <span className="font-bold">{log.user?.name || 'Sistema'}</span>
+                               {log.user?.email && (
+                                   <span className="text-xs font-normal text-slate-400">({log.user.email})</span>
+                               )}
+                           </p>
+                           <p className="text-xs text-slate-500 mt-0.5">{getSpanishText(log)}</p>
+                       </div>
+                       
+                       <div className="flex items-center gap-2 mt-1.5">
+                           <span className="text-[10px] font-semibold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full border border-slate-100 group-hover:bg-blue-50 group-hover:text-blue-500 group-hover:border-blue-100 transition-colors">
+                               {new Date(log.created_at).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
                            </span>
                            {log.ip_address && (
-                               <span className="text-[10px] text-slate-300 bg-slate-50 px-1 rounded border border-slate-100">
+                               <span className="text-[10px] text-slate-300 font-mono opacity-60">
                                    {log.ip_address}
                                </span>
                            )}
