@@ -38,4 +38,9 @@ php artisan view:cache
 
 # Start Supervisor
 echo "Starting Supervisor..."
+# Ensure log files exist and have correct permissions before starting workers
+touch /var/www/html/storage/logs/laravel.log
+touch /var/www/html/storage/logs/worker.log
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
