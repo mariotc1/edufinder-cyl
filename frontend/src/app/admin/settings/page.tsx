@@ -198,9 +198,24 @@ export default function SettingsPage() {
                             </div>
                             <div>
                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cola de Trabajos</p>
-                                <p className={`font-bold text-xs ${systemStatus?.failed_jobs_count > 0 ? 'text-red-500' : 'text-[#223945]'}`}>
-                                    {systemStatus?.failed_jobs_count || 0} Fallidos
-                                </p>
+                                <div className="flex items-center gap-2">
+                                    <p className={`font-bold text-xs ${systemStatus?.failed_jobs_count > 0 ? 'text-red-500' : 'text-[#223945]'}`}>
+                                        {systemStatus?.failed_jobs_count || 0} Fallidos
+                                    </p>
+                                    {systemStatus?.failed_jobs_count > 0 && (
+                                        <button 
+                                            onClick={async () => {
+                                                if(confirm('¿Borrar historial de fallos?')) {
+                                                    await api.post('/admin/system/clear-failed-jobs');
+                                                    mutate();
+                                                }
+                                            }}
+                                            className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded hover:bg-red-200 transition-colors"
+                                        >
+                                            Limpiar
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>

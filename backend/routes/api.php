@@ -111,6 +111,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::get('/system/status', [App\Http\Controllers\AdminSystemController::class, 'getSystemStatus']);
     Route::post('/system/clear-cache', [App\Http\Controllers\AdminSystemController::class, 'clearCache']);
     Route::post('/system/maintenance', [App\Http\Controllers\AdminSystemController::class, 'toggleMaintenance']);
+    Route::post('/system/clear-failed-jobs', [App\Http\Controllers\AdminSystemController::class, 'clearFailedJobs']);
     Route::get('/system/logs', [App\Http\Controllers\AdminSystemController::class, 'getLogs']);
 
     // Legacy route kept for backward compatibility if needed, but overridden by enhanced stats above if called specifically

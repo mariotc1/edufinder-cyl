@@ -107,4 +107,22 @@ class AdminSystemController extends Controller
 
         return response()->json(['logs' => $logs]);
     }
+    public function clearFailedJobs()
+    {
+        try {
+            \Illuminate\Support\Facades\DB::table('failed_jobs')->delete();
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to clear jobs: ' . $e->getMessage()], 500);
+        }
+
+        ActivityLog::create([
+            'user_id' => auth()->id(),
+            'action' => 'CLEAR_FAILED_JOBS',
+            'description' => 'Historial de trabajos fallidos limpiado manualmente.',
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent()
+        ]);
+
+        return response()->json(['message' => 'Failed jobs cleared successfully.']);
+    }
 }
