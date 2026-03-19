@@ -75,7 +75,7 @@ export default function SearchContent() {
               </span>
             </h1>
             <p className="text-lg sm:text-xl text-neutral-600 max-w-2xl mx-auto leading-relaxed">
-              Encuentra el centro ideal en <span className="font-semibold text-[#223945]">Castilla y León</span> con nuestra búsqueda inteligente.
+              Encuentra tu centro ideal en <span className="font-semibold text-[#223945]">Castilla y León</span> con nuestra búsqueda inteligente.
             </p>
           </div>
 
