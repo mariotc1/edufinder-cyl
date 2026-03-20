@@ -436,7 +436,6 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
                 <option value="">Todos</option>
                 <option value="PÚBLICO">Público</option>
                 <option value="PRIVADO">Privado</option>
-                <option value="CONCERTADO">Concertado</option>
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#223945]">
                     <ChevronDown className="w-4 h-4" />

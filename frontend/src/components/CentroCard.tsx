@@ -60,7 +60,7 @@ export default function CentroCard({
   
   const cardRef = useRef<HTMLDivElement>(null); 
 
-  // LÓGICA VISUAL: COLORES POR NATURALEZA (PÚBLICO, PRIVADO, CONCERTADO)
+  // LÓGICA VISUAL: COLORES POR NATURALEZA (PÚBLICO, PRIVADO)
   const getNaturalezaBadge = (naturaleza: string) => {
     switch (naturaleza?.toUpperCase()) {
       case "PÚBLICO":
@@ -68,9 +68,6 @@ export default function CentroCard({
 
       case "PRIVADO":
         return "bg-amber-50 text-amber-700 border-amber-200 ring-1 ring-amber-100";
-
-      case "CONCERTADO":
-        return "bg-emerald-50 text-emerald-700 border-emerald-200 ring-1 ring-emerald-100";
 
       default:
         return "bg-gray-50 text-gray-700 border-gray-200";
