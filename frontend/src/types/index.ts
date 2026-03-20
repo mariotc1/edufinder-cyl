@@ -44,3 +44,10 @@ export interface FilterOptions {
   radio?: number;
   page?: number;
 }
+
+export interface SavedSearch {
+  id: number;
+  name: string;
+  filters: FilterOptions;
+  created_at: string;
+}

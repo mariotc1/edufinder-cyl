@@ -5,7 +5,7 @@ import useSWR from 'swr';
 import api from '@/lib/axios';
 import { useRef, useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { Mail, Phone, MapPin, Globe, Star, BookOpen, Building2, ChevronLeft, Heart } from 'lucide-react';
+import { Mail, Phone, MapPin, Globe, Star, BookOpen, Building2, ChevronLeft, Heart, Link2, Check } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useFavorite } from '@/hooks/useFavorite';
 import { motion } from 'framer-motion';
@@ -37,6 +37,17 @@ export default function CentroDetailContent() {
     const { data: favoritesData } = useSWR('/favoritos', fetcher);
 
     const [calculatedIsFavorite, setCalculatedIsFavorite] = useState(false);
+    const [copied, setCopied] = useState(false);
+
+    const handleShare = async () => {
+        try {
+            await navigator.clipboard.writeText(window.location.href);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch (err) {
+            console.error('Error al copiar:', err);
+        }
+    };
 
     useEffect(() => {
         if (favoritesData && centro) {
@@ -138,15 +149,36 @@ export default function CentroDetailContent() {
                                     </h1>
                                     <p className="text-lg text-neutral-500 font-medium">{c.denominacion_generica}</p>
                                 </div>
-                                <motion.button
-                                    onClick={(e) => favoriteLogic.toggleFavorite(e, headerRef.current!)}
-                                    whileTap={{ scale: 0.8 }}
-                                    className="shrink-0 p-3 rounded-full bg-white border border-neutral-200 shadow-sm hover:shadow-md hover:scale-105 active:scale-95 transition-all group"
-                                    title={favoriteLogic.isFavorite ? "Eliminar de favoritos" : "Añadir a favoritos"}
-                                    disabled={favoriteLogic.loading}
-                                >
-                                    <Heart className={`w-8 h-8 transition-colors ${favoriteLogic.isFavorite ? 'fill-red-500 text-red-500' : 'text-neutral-300 group-hover:text-red-400'}`} />
-                                </motion.button>
+                                <div className="flex items-center gap-2 shrink-0">
+                                    {/* Botón Compartir */}
+                                    <motion.button
+                                        onClick={handleShare}
+                                        whileTap={{ scale: 0.8 }}
+                                        className={`p-3 rounded-full border shadow-sm hover:shadow-md hover:scale-105 active:scale-95 transition-all group ${
+                                            copied
+                                                ? 'bg-green-50 border-green-200 text-green-600'
+                                                : 'bg-white border-neutral-200 text-neutral-300 hover:text-[#223945] hover:border-[#223945]/30'
+                                        }`}
+                                        title={copied ? "Enlace copiado" : "Copiar enlace del centro"}
+                                    >
+                                        {copied ? (
+                                            <Check className="w-6 h-6" />
+                                        ) : (
+                                            <Link2 className="w-6 h-6" />
+                                        )}
+                                    </motion.button>
+
+                                    {/* Botón Favoritos */}
+                                    <motion.button
+                                        onClick={(e) => favoriteLogic.toggleFavorite(e, headerRef.current!)}
+                                        whileTap={{ scale: 0.8 }}
+                                        className="p-3 rounded-full bg-white border border-neutral-200 shadow-sm hover:shadow-md hover:scale-105 active:scale-95 transition-all group"
+                                        title={favoriteLogic.isFavorite ? "Eliminar de favoritos" : "Añadir a favoritos"}
+                                        disabled={favoriteLogic.loading}
+                                    >
+                                        <Heart className={`w-6 h-6 transition-colors ${favoriteLogic.isFavorite ? 'fill-red-500 text-red-500' : 'text-neutral-300 group-hover:text-red-400'}`} />
+                                    </motion.button>
+                                </div>
                             </div>
                         </div>
 

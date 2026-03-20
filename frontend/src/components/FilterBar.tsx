@@ -1,10 +1,12 @@
 'use client';
 
-import { fetchCycleSuggestions, fetchCentroSuggestions } from '@/services/api';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { fetchCycleSuggestions, fetchCentroSuggestions, getSavedSearches, createSavedSearch, deleteSavedSearch } from '@/services/api';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { Search, MapPin, Building2, SlidersHorizontal, Trash2, X } from 'lucide-react';
-import { FilterOptions } from '@/types';
+import { Search, MapPin, Building2, SlidersHorizontal, Trash2, X, Link2, Check, Bookmark, BookmarkCheck, ChevronRight } from 'lucide-react';
+import { FilterOptions, SavedSearch } from '@/types';
+import { useAuth } from '@/context/AuthContext';
+import useSWR, { mutate } from 'swr';
 
 interface FilterBarProps {
   onFilterChange: (filters: FilterOptions) => void;
@@ -18,6 +20,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { user, openLoginModal } = useAuth();
 
   // Estado inicial de filtros: sincronizado con URL Params para persistencia
   const [filters, setFilters] = useState<FilterOptions>({
@@ -35,6 +38,20 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
   });
 
   const [geolocationStatus, setGeolocationStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [copied, setCopied] = useState(false);
+
+  // Estado para búsquedas guardadas
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showSavedDropdown, setShowSavedDropdown] = useState(false);
+  const [searchName, setSearchName] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const savedDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Cargar búsquedas guardadas solo si el usuario está autenticado
+  const { data: savedSearches } = useSWR<SavedSearch[]>(
+    user ? '/saved-searches' : null,
+    getSavedSearches
+  );
   
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -57,6 +74,10 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
 
       if (wrapperCentroRef.current && !wrapperCentroRef.current.contains(event.target as Node)) {
         setShowCentroSuggestions(false);
+      }
+
+      if (savedDropdownRef.current && !savedDropdownRef.current.contains(event.target as Node)) {
+        setShowSavedDropdown(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -222,6 +243,62 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
       setGeolocationStatus('idle');
   };
 
+  const handleShare = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Error al copiar:', err);
+    }
+  };
+
+  const handleSaveSearch = async () => {
+    if (!searchName.trim()) return;
+
+    setIsSaving(true);
+    try {
+      await createSavedSearch(searchName.trim(), filters);
+      mutate('/saved-searches');
+      setShowSaveModal(false);
+      setSearchName('');
+    } catch (err) {
+      console.error('Error al guardar búsqueda:', err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleApplySavedSearch = (savedFilters: FilterOptions) => {
+    setFilters({ ...savedFilters, radio: savedFilters.radio || 10 });
+    if (savedFilters.lat && savedFilters.lng) {
+      setGeolocationStatus('success');
+    }
+    setShowSavedDropdown(false);
+  };
+
+  const handleDeleteSavedSearch = async (id: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await deleteSavedSearch(id);
+      mutate('/saved-searches');
+    } catch (err) {
+      console.error('Error al eliminar búsqueda:', err);
+    }
+  };
+
+  const handleBookmarkClick = () => {
+    if (!user) {
+      openLoginModal();
+      return;
+    }
+    if (savedSearches && savedSearches.length > 0) {
+      setShowSavedDropdown(!showSavedDropdown);
+    } else if (hasActiveFilters) {
+      setShowSaveModal(true);
+    }
+  };
+
   const provincias = ['AVILA', 'BURGOS', 'LEON', 'PALENCIA', 'SALAMANCA', 'SEGOVIA', 'SORIA', 'VALLADOLID', 'ZAMORA'];
   const tiposEnsenanza = [
     { value: 'FP', label: 'Formación Profesional' },
@@ -343,15 +420,97 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
               </button>
             )}
 
-            {/* Clear All Button */}
+            {/* Saved Searches, Share & Clear Buttons */}
+            <div className="relative" ref={savedDropdownRef}>
+              <button
+                onClick={handleBookmarkClick}
+                className={`p-3.5 rounded-xl transition-all border border-transparent ${
+                  savedSearches && savedSearches.length > 0
+                    ? 'text-[#223945] bg-[#223945]/5 border-[#223945]/10'
+                    : 'text-neutral-400 hover:text-[#223945] hover:bg-[#223945]/5 hover:border-[#223945]/10'
+                }`}
+                title={savedSearches && savedSearches.length > 0 ? "Mis búsquedas guardadas" : "Guardar búsqueda"}
+              >
+                {savedSearches && savedSearches.length > 0 ? (
+                  <BookmarkCheck className="w-5 h-5" />
+                ) : (
+                  <Bookmark className="w-5 h-5" />
+                )}
+              </button>
+
+              {/* Dropdown de búsquedas guardadas */}
+              {showSavedDropdown && savedSearches && savedSearches.length > 0 && (
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] border border-neutral-100 ring-1 ring-black/5 z-[60] animate-in fade-in zoom-in-95 duration-200">
+                  <div className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-neutral-50 px-4 py-3 flex items-center justify-between rounded-t-2xl">
+                    <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider">Búsquedas guardadas</span>
+                    {hasActiveFilters && (
+                      <button
+                        onClick={() => { setShowSavedDropdown(false); setShowSaveModal(true); }}
+                        className="text-xs font-bold text-[#223945] hover:underline"
+                      >
+                        + Guardar actual
+                      </button>
+                    )}
+                  </div>
+                  <ul className="py-2 max-h-64 overflow-y-auto">
+                    {savedSearches.map((search) => (
+                      <li
+                        key={search.id}
+                        onClick={() => handleApplySavedSearch(search.filters)}
+                        className="px-4 py-3 cursor-pointer hover:bg-neutral-50 transition-all flex items-center justify-between group"
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <Bookmark className="w-4 h-4 text-[#223945] shrink-0" />
+                          <span className="text-sm font-medium text-neutral-700 truncate">{search.name}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={(e) => handleDeleteSavedSearch(search.id, e)}
+                            className="p-1 text-neutral-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                            title="Eliminar"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                          <ChevronRight className="w-4 h-4 text-neutral-300" />
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+
             {hasActiveFilters && (
-                <button 
+              <>
+                <button
+                    onClick={handleShare}
+                    className={`px-3 py-2 rounded-xl transition-all border flex items-center gap-2 text-sm font-bold ${
+                      copied
+                        ? 'text-green-600 bg-green-50 border-green-200'
+                        : 'text-neutral-500 bg-neutral-50 border-neutral-200 hover:text-[#223945] hover:bg-[#223945]/5 hover:border-[#223945]/20'
+                    }`}
+                    title={copied ? "Enlace copiado" : "Copiar enlace de búsqueda"}
+                >
+                    {copied ? (
+                      <>
+                        <Check className="w-4 h-4" />
+                        <span className="hidden sm:inline">Copiado</span>
+                      </>
+                    ) : (
+                      <>
+                        <Link2 className="w-4 h-4" />
+                        <span className="hidden sm:inline">Copiar enlace</span>
+                      </>
+                    )}
+                </button>
+                <button
                     onClick={clearAll}
                     className="p-3.5 text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all border border-transparent hover:border-red-100"
                     title="Limpiar filtros"
                 >
                     <Trash2 className="w-5 h-5" />
                 </button>
+              </>
             )}
           </div>
         </div>
@@ -576,6 +735,82 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
           )}
 
       </div>
+
+      {/* Modal para guardar búsqueda - Fullscreen con blur */}
+      {showSaveModal && (
+        <div className="fixed inset-0 z-[100]">
+          {/* Backdrop con blur */}
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-md transition-opacity"
+            onClick={() => setShowSaveModal(false)}
+          />
+
+          {/* Contenedor centrado */}
+          <div className="fixed inset-0 flex items-center justify-center p-4">
+            <div
+              className="relative bg-white rounded-3xl shadow-2xl w-full max-w-md transform transition-all animate-in zoom-in-95 fade-in duration-300 ring-1 ring-black/5"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Botón cerrar */}
+              <button
+                onClick={() => setShowSaveModal(false)}
+                className="absolute right-4 top-4 z-20 p-2 rounded-full bg-black/10 text-white/70 hover:text-white hover:bg-black/20 transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              {/* Header con color */}
+              <div className="bg-[#223945] px-6 pt-10 pb-6 rounded-t-3xl text-center">
+                <div className="mb-4 flex justify-center">
+                  <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center">
+                    <Bookmark className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+                <h3 className="text-xl font-bold text-white">Guardar búsqueda</h3>
+                <p className="text-sm text-white/80 mt-2">Dale un nombre para acceder rápidamente a estos filtros</p>
+              </div>
+
+              {/* Contenido */}
+              <div className="p-6">
+                <label className="text-xs font-bold text-[#223945] uppercase tracking-wider mb-2 block">
+                  Nombre de la búsqueda
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ej: FP Informática Valladolid"
+                  value={searchName}
+                  onChange={(e) => setSearchName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSaveSearch()}
+                  className="w-full px-4 py-3.5 rounded-xl bg-neutral-50 border-2 border-neutral-200 focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 outline-none transition-all text-sm font-medium"
+                  autoFocus
+                />
+              </div>
+
+              {/* Acciones */}
+              <div className="px-6 pb-6 flex gap-3">
+                <button
+                  onClick={() => setShowSaveModal(false)}
+                  className="flex-1 px-4 py-3 text-sm font-bold text-neutral-600 hover:text-neutral-800 hover:bg-neutral-50 rounded-xl transition-all border border-neutral-200"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleSaveSearch}
+                  disabled={!searchName.trim() || isSaving}
+                  className="flex-1 px-6 py-3 bg-[#223945] text-white rounded-xl text-sm font-bold hover:bg-[#1a2c35] disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#223945]/20 hover:shadow-[#223945]/30 hover:-translate-y-0.5"
+                >
+                  {isSaving ? (
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <Bookmark className="w-4 h-4" />
+                  )}
+                  Guardar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

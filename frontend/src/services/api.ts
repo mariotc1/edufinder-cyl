@@ -56,3 +56,22 @@ export const fetchCentroSuggestions = async (q: string) => {
   );
   return response.data;
 };
+
+// BÚSQUEDAS GUARDADAS
+// Obtener todas las búsquedas guardadas del usuario
+export const getSavedSearches = async () => {
+  const response = await axios.get('/saved-searches');
+  return response.data;
+};
+
+// Guardar una nueva búsqueda
+export const createSavedSearch = async (name: string, filters: FilterOptions) => {
+  const response = await axios.post('/saved-searches', { name, filters });
+  return response.data;
+};
+
+// Eliminar una búsqueda guardada
+export const deleteSavedSearch = async (id: number) => {
+  const response = await axios.delete(`/saved-searches/${id}`);
+  return response.data;
+};

@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { MapPin, Building2, BookOpen, ArrowRight, Heart } from "lucide-react";
+import { MapPin, Building2, BookOpen, ArrowRight, Heart, Link2, Check } from "lucide-react";
 import { Centro } from "@/types";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { motion, Variants } from "framer-motion";
 import { useFavorite } from "@/hooks/useFavorite";
 import AddToCompareButton from "./ui/AddToCompareButton";
@@ -57,8 +57,22 @@ export default function CentroCard({
     initialIsFavorite,
     onToggle
   });
-  
-  const cardRef = useRef<HTMLDivElement>(null); 
+
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const url = `${window.location.origin}/centro/${centro.id}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Error al copiar:', err);
+    }
+  }; 
 
   // LÓGICA VISUAL: COLORES POR NATURALEZA (PÚBLICO, PRIVADO)
   const getNaturalezaBadge = (naturaleza: string) => {
@@ -134,18 +148,36 @@ export default function CentroCard({
       {/* Borde decorativo superior con gradiente corporativo */}
       <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-primary-500 to-primary-300"></div>
 
-      {/* Botón de Favorito - Posición absoluta y animado */}
-      <motion.button
-         onClick={(e) => toggleFavorite(e, cardRef.current!)}
-        whileTap={{ scale: 0.8 }}
-        className="absolute top-4 right-4 z-20 p-1.5 rounded-full bg-white/90 backdrop-blur-sm shadow-sm border border-neutral-100 hover:bg-red-50 active:bg-red-100 transition-colors group/heart"
-        disabled={loading}
-        aria-label={isFavorite ? "Eliminar de favoritos" : "Añadir a favoritos"}
-      >
-        <Heart
-          className={`w-4 h-4 transition-colors ${isFavorite ? "fill-red-500 text-red-500" : "text-neutral-400 group-hover/heart:text-red-500"}`}
-        />
-      </motion.button>
+      {/* Botones de acciones - Esquina superior derecha */}
+      <div className="absolute top-4 right-4 z-20 flex flex-col gap-1.5">
+        {/* Botón Favorito */}
+        <motion.button
+          onClick={(e) => toggleFavorite(e, cardRef.current!)}
+          whileTap={{ scale: 0.8 }}
+          className="p-1.5 rounded-full bg-white/90 backdrop-blur-sm shadow-sm border border-neutral-100 hover:bg-red-50 active:bg-red-100 transition-colors group/heart"
+          disabled={loading}
+          aria-label={isFavorite ? "Eliminar de favoritos" : "Añadir a favoritos"}
+        >
+          <Heart
+            className={`w-4 h-4 transition-colors ${isFavorite ? "fill-red-500 text-red-500" : "text-neutral-400 group-hover/heart:text-red-500"}`}
+          />
+        </motion.button>
+
+        {/* Botón Compartir */}
+        <motion.button
+          onClick={handleShare}
+          whileTap={{ scale: 0.8 }}
+          className={`p-1.5 rounded-full backdrop-blur-sm shadow-sm border transition-all ${
+            copied
+              ? "bg-green-50 border-green-200 text-green-600"
+              : "bg-white/90 border-neutral-100 text-neutral-400 hover:bg-[#223945]/5 hover:text-[#223945] hover:border-[#223945]/20"
+          }`}
+          aria-label={copied ? "Enlace copiado" : "Copiar enlace del centro"}
+          title={copied ? "Enlace copiado" : "Copiar enlace"}
+        >
+          {copied ? <Check className="w-4 h-4" /> : <Link2 className="w-4 h-4" />}
+        </motion.button>
+      </div>
 
       <div className="p-5 flex-grow flex flex-col">
         <div className="flex justify-between items-start mb-3 pr-8 relative z-10">

@@ -34,6 +34,13 @@ class User extends Authenticatable
         return $this->hasMany(Favorito::class);
     }
 
+    // RELACIÓN: BÚSQUEDAS GUARDADAS
+    // Un usuario puede guardar múltiples búsquedas con filtros
+    public function savedSearches()
+    {
+        return $this->hasMany(SavedSearch::class);
+    }
+
     protected $hidden = [
         'password',
         'remember_token',
