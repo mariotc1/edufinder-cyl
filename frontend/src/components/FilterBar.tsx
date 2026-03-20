@@ -2,6 +2,7 @@
 
 import { fetchCycleSuggestions, fetchCentroSuggestions, getSavedSearches, createSavedSearch, deleteSavedSearch } from '@/services/api';
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Search, MapPin, Building2, SlidersHorizontal, Trash2, X, Link2, Check, Bookmark, BookmarkCheck, ChevronRight } from 'lucide-react';
 import { FilterOptions, SavedSearch } from '@/types';
@@ -319,6 +320,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
   const labelClasses = "text-[11px] font-bold text-[#223945] ml-1 uppercase tracking-wider mb-1 block opacity-80";
 
   return (
+    <>
     <div className="relative z-30 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/50 p-6 transition-all hover:shadow-2xl">
        {/* Decorative top border/gradient - matching cards */}
        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300"></div>
@@ -736,12 +738,14 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
 
       </div>
 
-      {/* Modal para guardar búsqueda - Fullscreen con blur */}
-      {showSaveModal && (
-        <div className="fixed inset-0 z-[100]">
-          {/* Backdrop con blur */}
+    </div>
+
+      {/* Modal para guardar búsqueda - Portal para fullscreen real */}
+      {showSaveModal && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[9999]">
+          {/* Backdrop con blur fullscreen */}
           <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-md transition-opacity"
+            className="fixed inset-0 bg-black/60 backdrop-blur-md"
             onClick={() => setShowSaveModal(false)}
           />
 
@@ -754,7 +758,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
               {/* Botón cerrar */}
               <button
                 onClick={() => setShowSaveModal(false)}
-                className="absolute right-4 top-4 z-20 p-2 rounded-full bg-black/10 text-white/70 hover:text-white hover:bg-black/20 transition-all"
+                className="absolute right-4 top-4 z-20 p-2 rounded-full bg-white/20 text-white hover:text-white hover:bg-white/30 transition-all"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -766,8 +770,8 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
                     <Bookmark className="w-8 h-8 text-white" />
                   </div>
                 </div>
-                <h3 className="text-xl font-bold text-white">Guardar búsqueda</h3>
-                <p className="text-sm text-white/80 mt-2">Dale un nombre para acceder rápidamente a estos filtros</p>
+                <h3 className="text-2xl font-bold !text-white">Guardar búsqueda</h3>
+                <p className="text-sm !text-white mt-2">Dale un nombre para acceder rápidamente a estos filtros</p>
               </div>
 
               {/* Contenido */}
@@ -809,9 +813,9 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
               </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        </div>,
+        document.body
+      )}</>
   );
 }
 

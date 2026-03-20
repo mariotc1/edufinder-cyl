@@ -148,8 +148,8 @@ export default function CentroCard({
       {/* Borde decorativo superior con gradiente corporativo */}
       <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-primary-500 to-primary-300"></div>
 
-      {/* Botones de acciones - Esquina superior derecha */}
-      <div className="absolute top-4 right-4 z-20 flex flex-col gap-1.5">
+      {/* Botones de acciones - Esquina superior derecha en fila */}
+      <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5">
         {/* Botón Favorito */}
         <motion.button
           onClick={(e) => toggleFavorite(e, cardRef.current!)}
@@ -177,11 +177,14 @@ export default function CentroCard({
         >
           {copied ? <Check className="w-4 h-4" /> : <Link2 className="w-4 h-4" />}
         </motion.button>
+
+        {/* Botón Comparador */}
+        <AddToCompareButton centro={centro} />
       </div>
 
       <div className="p-5 flex-grow flex flex-col">
-        <div className="flex justify-between items-start mb-3 pr-8 relative z-10">
-           <div className="flex items-center gap-2">
+        <div className="flex items-start mb-3 pr-20 relative z-10">
+           <div className="flex items-center gap-2 flex-wrap">
               <span
                 className={`px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase border ${getNaturalezaBadge(centro.naturaleza)}`}
               >
@@ -195,8 +198,6 @@ export default function CentroCard({
                 </span>
               )}
            </div>
-           
-           <AddToCompareButton centro={centro} className="-mt-1 -mr-1" />
         </div>
 
         {/* Title - polished typography with fixed height for alignment */}
