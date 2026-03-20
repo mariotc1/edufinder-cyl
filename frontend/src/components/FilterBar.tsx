@@ -24,6 +24,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
     q: searchParams.get('q') || '',
     provincia: searchParams.get('provincia') || '',
     tipo: searchParams.get('tipo') || '',
+    naturaleza: searchParams.get('naturaleza') || '',
     familia: searchParams.get('familia') || '',
     ciclo: searchParams.get('ciclo') || '',
     nivel: searchParams.get('nivel') || '',
@@ -135,6 +136,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
       if (filters.q) params.set('q', filters.q);
       if (filters.provincia) params.set('provincia', filters.provincia);
       if (filters.tipo) params.set('tipo', filters.tipo);
+      if (filters.naturaleza) params.set('naturaleza', filters.naturaleza);
       if (filters.familia) params.set('familia', filters.familia);
       if (filters.ciclo) params.set('ciclo', filters.ciclo);
       if (filters.nivel) params.set('nivel', filters.nivel);
@@ -214,7 +216,8 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
 
   const clearAll = () => {
       setFilters({
-        radio: 10
+        radio: 10,
+        naturaleza: ''
       });
       setGeolocationStatus('idle');
   };
@@ -383,7 +386,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
         )}
 
         {/* Filters Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           
           <div className="space-y-1">
             <label className={labelClasses}>Provincia</label>
@@ -406,7 +409,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
           <div className="space-y-1">
             <label className={labelClasses}>Tipo</label>
             <div className="relative">
-                <select 
+                <select
                 className={inputClasses}
                 value={filters.tipo || ''}
                 onChange={(e) => handleChange('tipo', e.target.value)}
@@ -414,6 +417,26 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
                 >
                 <option value="">Todos los tipos</option>
                 {tiposEnsenanza.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#223945]">
+                    <ChevronDown className="w-4 h-4" />
+                </div>
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className={labelClasses}>Titularidad</label>
+            <div className="relative">
+                <select
+                className={inputClasses}
+                value={filters.naturaleza || ''}
+                onChange={(e) => handleChange('naturaleza', e.target.value)}
+                aria-label="Seleccionar titularidad del centro"
+                >
+                <option value="">Todos</option>
+                <option value="PÚBLICO">Público</option>
+                <option value="PRIVADO">Privado</option>
+                <option value="CONCERTADO">Concertado</option>
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#223945]">
                     <ChevronDown className="w-4 h-4" />

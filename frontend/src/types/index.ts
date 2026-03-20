@@ -33,7 +33,8 @@ export interface Centro {
 export interface FilterOptions {
   q?: string;
   provincia?: string;
-  tipo?: string; 
+  tipo?: string;
+  naturaleza?: string;
   familia?: string;
   ciclo?: string;
   nivel?: string;

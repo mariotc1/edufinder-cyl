@@ -43,9 +43,9 @@
                 });
             }
 
-            // 5. Filtrado por titularidad (Público, Privado/Concertado)
-            if (!empty($filters['titularidad'])) {
-                $query->where('naturaleza', 'ILIKE', '%' . $filters['titularidad'] . '%');
+            // 5. Filtrado por titularidad (Público, Privado, Concertado)
+            if (!empty($filters['naturaleza'])) {
+                $query->where('naturaleza', 'ILIKE', '%' . $filters['naturaleza'] . '%');
             }
 
             return $query;
