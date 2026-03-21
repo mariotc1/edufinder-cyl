@@ -331,10 +331,10 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
         <div className="flex flex-col md:flex-row gap-4 items-stretch">
           <div className="flex-grow relative group" ref={wrapperCentroRef}>
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400 group-focus-within:text-[#223945] transition-colors" />
-            <input 
+            <input
               type="text"
-              placeholder="Buscar por nombre del centro..." 
-              className="w-full pl-12 pr-12 py-3.5 rounded-xl bg-neutral-50 border border-neutral-200 focus:bg-white focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 transition-all outline-none font-medium placeholder:text-neutral-400 text-neutral-800 hover:border-[#223945]/50"
+              placeholder="Buscar centro..."
+              className="w-full pl-12 pr-12 py-3.5 rounded-xl bg-neutral-50 border border-neutral-200 focus:bg-white focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 transition-all outline-none font-medium placeholder:text-neutral-400 text-neutral-800 hover:border-[#223945]/50 text-sm md:text-base md:placeholder:text-base"
               value={filters.q || ''}
               onChange={(e) => handleChange('q', e.target.value)}
               onFocus={() => { if(centroSuggestions.length > 0) setShowCentroSuggestions(true); }}
