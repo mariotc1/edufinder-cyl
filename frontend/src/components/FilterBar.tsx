@@ -391,45 +391,42 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
             )}
           </div>
           
-          <div className="flex-shrink-0 flex gap-2">
+          {/* Botones - Iconos en móvil, con texto en desktop */}
+          <div className="w-full md:w-auto md:flex-shrink-0 flex gap-2">
+            {/* Botón Cerca de mí */}
             {geolocationStatus === 'success' ? (
-               <div className="flex items-center gap-2 bg-[#223945]/10 text-[#223945] px-4 py-2 rounded-xl border border-[#223945]/20 animate-in fade-in slide-in-from-bottom-2">
-                 <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4" />
-                    <span className="text-sm font-bold">Cerca de mí</span>
-                 </div>
-                 <div className="h-4 w-px bg-[#223945]/20 mx-1"></div>
-                 <button 
-                   onClick={clearGeolocation} 
-                   className="p-1 hover:bg-white rounded-full transition-colors text-[#223945]/60 hover:text-red-500"
-                   title="Desactivar ubicación"
-                 >
-                   <X className="w-4 h-4" />
-                 </button>
-               </div>
+               <button
+                 onClick={clearGeolocation}
+                 className="flex-1 md:flex-initial flex items-center justify-center gap-2 bg-[#223945] text-white px-4 py-3 rounded-xl border border-[#223945] transition-all hover:bg-[#1a2c35]"
+                 title="Desactivar ubicación"
+               >
+                 <MapPin className="w-5 h-5" />
+                 <span className="hidden md:inline text-sm font-bold">Cerca de mí</span>
+                 <X className="w-4 h-4" />
+               </button>
             ) : (
-              <button 
+              <button
                 onClick={handleGeolocation}
                 disabled={geolocationStatus === 'loading'}
-                className="bg-[#223945] text-white px-6 py-3.5 rounded-xl shadow-lg shadow-[#223945]/20 hover:shadow-[#223945]/40 hover:-translate-y-0.5 transition-all active:translate-y-0 flex items-center gap-2 whitespace-nowrap font-bold text-sm"
+                className="flex-1 md:flex-initial bg-neutral-50 text-neutral-500 border border-neutral-200 hover:text-[#223945] hover:bg-[#223945]/5 hover:border-[#223945]/20 px-4 py-3 rounded-xl transition-all flex items-center justify-center gap-2 font-bold"
               >
                 {geolocationStatus === 'loading' ? (
-                  <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
+                  <span className="animate-spin rounded-full h-5 w-5 border-2 border-[#223945]/30 border-t-[#223945]"></span>
                 ) : (
-                  <MapPin className="w-4 h-4" />
+                  <MapPin className="w-5 h-5" />
                 )}
-                <span>Cerca de mí</span>
+                <span className="hidden md:inline text-sm">Cerca de mí</span>
               </button>
             )}
 
-            {/* Saved Searches, Share & Clear Buttons */}
-            <div className="relative" ref={savedDropdownRef}>
+            {/* Botón Búsquedas Guardadas */}
+            <div className="relative flex-1 md:flex-initial" ref={savedDropdownRef}>
               <button
                 onClick={handleBookmarkClick}
-                className={`p-3.5 rounded-xl transition-all border border-transparent ${
+                className={`w-full h-full px-4 py-3 rounded-xl transition-all border flex items-center justify-center gap-2 ${
                   savedSearches && savedSearches.length > 0
-                    ? 'text-[#223945] bg-[#223945]/5 border-[#223945]/10'
-                    : 'text-neutral-400 hover:text-[#223945] hover:bg-[#223945]/5 hover:border-[#223945]/10'
+                    ? 'text-[#223945] bg-[#223945]/10 border-[#223945]/20'
+                    : 'text-neutral-400 bg-neutral-50 border-neutral-200 hover:text-[#223945] hover:bg-[#223945]/5 hover:border-[#223945]/10'
                 }`}
                 title={savedSearches && savedSearches.length > 0 ? "Mis búsquedas guardadas" : "Guardar búsqueda"}
               >
@@ -440,40 +437,48 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
                 )}
               </button>
 
-              {/* Dropdown de búsquedas guardadas */}
+              {/* Dropdown de búsquedas guardadas - Fullscreen en móvil */}
               {showSavedDropdown && savedSearches && savedSearches.length > 0 && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] border border-neutral-100 ring-1 ring-black/5 z-[60] animate-in fade-in zoom-in-95 duration-200">
-                  <div className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-neutral-50 px-4 py-3 flex items-center justify-between rounded-t-2xl">
-                    <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider">Búsquedas guardadas</span>
-                    {hasActiveFilters && (
-                      <button
-                        onClick={() => { setShowSavedDropdown(false); setShowSaveModal(true); }}
-                        className="text-xs font-bold text-[#223945] hover:underline"
-                      >
-                        + Guardar actual
-                      </button>
-                    )}
+                <div className="fixed md:absolute inset-x-4 md:inset-x-auto md:right-0 md:left-auto top-auto mt-2 md:w-80 bg-white rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.25)] border border-neutral-100 ring-1 ring-black/5 z-[60] animate-in fade-in zoom-in-95 duration-200">
+                  <div className="bg-[#223945] px-4 py-4 flex items-center justify-between rounded-t-2xl">
+                    <span className="text-sm font-bold text-white">Búsquedas guardadas</span>
+                    <button
+                      onClick={() => setShowSavedDropdown(false)}
+                      className="p-1 rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-all md:hidden"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
                   </div>
-                  <ul className="py-2 max-h-64 overflow-y-auto">
+                  {hasActiveFilters && (
+                    <button
+                      onClick={() => { setShowSavedDropdown(false); setShowSaveModal(true); }}
+                      className="w-full px-4 py-3 text-sm font-bold text-[#223945] hover:bg-[#223945]/5 transition-all border-b border-neutral-100 flex items-center gap-2"
+                    >
+                      <Bookmark className="w-4 h-4" />
+                      Guardar búsqueda actual
+                    </button>
+                  )}
+                  <ul className="py-2 max-h-[50vh] md:max-h-64 overflow-y-auto">
                     {savedSearches.map((search) => (
                       <li
                         key={search.id}
                         onClick={() => handleApplySavedSearch(search.filters)}
-                        className="px-4 py-3 cursor-pointer hover:bg-neutral-50 transition-all flex items-center justify-between group"
+                        className="px-4 py-4 md:py-3 cursor-pointer hover:bg-neutral-50 active:bg-neutral-100 transition-all flex items-center justify-between group"
                       >
                         <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <Bookmark className="w-4 h-4 text-[#223945] shrink-0" />
-                          <span className="text-sm font-medium text-neutral-700 truncate">{search.name}</span>
+                          <div className="p-2 bg-[#223945]/5 rounded-lg">
+                            <Bookmark className="w-4 h-4 text-[#223945]" />
+                          </div>
+                          <span className="text-sm font-medium text-neutral-700">{search.name}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <button
                             onClick={(e) => handleDeleteSavedSearch(search.id, e)}
-                            className="p-1 text-neutral-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                            className="p-2 text-neutral-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
                             title="Eliminar"
                           >
                             <X className="w-4 h-4" />
                           </button>
-                          <ChevronRight className="w-4 h-4 text-neutral-300" />
                         </div>
                       </li>
                     ))}
@@ -482,32 +487,24 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
               )}
             </div>
 
+            {/* Botones condicionales: Compartir y Limpiar */}
             {hasActiveFilters && (
               <>
                 <button
                     onClick={handleShare}
-                    className={`px-3 py-2 rounded-xl transition-all border flex items-center gap-2 text-sm font-bold ${
+                    className={`flex-1 md:flex-initial px-4 py-3 rounded-xl transition-all border flex items-center justify-center gap-2 font-bold ${
                       copied
                         ? 'text-green-600 bg-green-50 border-green-200'
                         : 'text-neutral-500 bg-neutral-50 border-neutral-200 hover:text-[#223945] hover:bg-[#223945]/5 hover:border-[#223945]/20'
                     }`}
                     title={copied ? "Enlace copiado" : "Copiar enlace de búsqueda"}
                 >
-                    {copied ? (
-                      <>
-                        <Check className="w-4 h-4" />
-                        <span className="hidden sm:inline">Copiado</span>
-                      </>
-                    ) : (
-                      <>
-                        <Link2 className="w-4 h-4" />
-                        <span className="hidden sm:inline">Copiar enlace</span>
-                      </>
-                    )}
+                    {copied ? <Check className="w-5 h-5" /> : <Link2 className="w-5 h-5" />}
+                    <span className="hidden md:inline text-sm">{copied ? 'Copiado' : 'Copiar enlace'}</span>
                 </button>
                 <button
                     onClick={clearAll}
-                    className="p-3.5 text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all border border-transparent hover:border-red-100"
+                    className="flex-1 md:flex-initial px-4 py-3 text-neutral-400 bg-neutral-50 border border-neutral-200 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all hover:border-red-100 flex items-center justify-center gap-2"
                     title="Limpiar filtros"
                 >
                     <Trash2 className="w-5 h-5" />

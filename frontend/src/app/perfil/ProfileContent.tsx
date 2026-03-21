@@ -746,24 +746,30 @@ export default function ProfileContent() {
                                     {savedSearches.length > 0 ? (
                                         <div className="grid gap-4 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-neutral-200 hover:scrollbar-thumb-neutral-300">
                                             {savedSearches.map(search => (
-                                                <div key={search.id} className="group relative bg-white border border-neutral-100 rounded-2xl shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-[#223945] transition-all p-5 pr-14">
-                                                    <div className="flex items-start gap-4">
-                                                        <div className="bg-[#223945]/5 p-3 rounded-xl text-[#223945]">
-                                                            <Bookmark className="w-6 h-6" />
+                                                <div key={search.id} className="group relative bg-white border border-neutral-100 rounded-2xl shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-[#223945] transition-all p-4 sm:p-5 pr-12 sm:pr-14">
+                                                    <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
+                                                        <div className="bg-[#223945]/5 p-2.5 sm:p-3 rounded-xl text-[#223945] self-start">
+                                                            <Bookmark className="w-5 h-5 sm:w-6 sm:h-6" />
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <h4 className="font-bold text-neutral-900 text-lg group-hover:text-[#223945] transition-colors">{search.name}</h4>
-                                                            <p className="text-sm text-neutral-500 font-medium mt-1 truncate">{formatFilters(search.filters)}</p>
+                                                            <h4 className="font-bold text-neutral-900 text-base sm:text-lg group-hover:text-[#223945] transition-colors break-words">{search.name}</h4>
+                                                            <div className="flex flex-wrap gap-1.5 mt-2">
+                                                                {formatFilters(search.filters).split(' · ').map((filter, idx) => (
+                                                                    <span key={idx} className="inline-block text-xs bg-neutral-100 text-neutral-600 px-2 py-0.5 rounded-full font-medium">
+                                                                        {filter}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
                                                             {search.filters.q && (
-                                                                <p className="text-xs text-neutral-400 mt-1">Búsqueda: "{search.filters.q}"</p>
+                                                                <p className="text-xs text-neutral-400 mt-2 break-words">Búsqueda: "{search.filters.q}"</p>
                                                             )}
                                                         </div>
                                                     </div>
 
-                                                    <div className="mt-4 flex gap-2">
+                                                    <div className="mt-4">
                                                         <Link
                                                             href={buildSearchUrl(search.filters)}
-                                                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#223945] text-white rounded-lg text-sm font-bold shadow hover:shadow-lg hover:-translate-y-0.5 transition-all"
+                                                            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#223945] text-white rounded-lg text-sm font-bold shadow hover:shadow-lg hover:-translate-y-0.5 transition-all"
                                                         >
                                                             <Search className="w-4 h-4" />
                                                             Aplicar búsqueda
@@ -772,7 +778,7 @@ export default function ProfileContent() {
 
                                                     <button
                                                         onClick={() => handleDeleteSearch(search.id)}
-                                                        className="absolute top-4 right-4 p-1.5 rounded-full bg-white/90 backdrop-blur-sm shadow-sm border border-neutral-100 hover:bg-red-50 text-neutral-400 hover:text-red-500 transition-colors"
+                                                        className="absolute top-3 sm:top-4 right-3 sm:right-4 p-1.5 rounded-full bg-white/90 backdrop-blur-sm shadow-sm border border-neutral-100 hover:bg-red-50 text-neutral-400 hover:text-red-500 transition-colors"
                                                         title="Eliminar búsqueda"
                                                     >
                                                         <X className="w-4 h-4" />
