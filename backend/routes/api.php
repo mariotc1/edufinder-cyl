@@ -3,6 +3,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CentroController;
 use App\Http\Controllers\CicloFpController;
 use App\Http\Controllers\FavoritoController;
+use App\Http\Controllers\SavedSearchController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -84,6 +85,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/favoritos', [FavoritoController::class, 'index']);
     Route::post('/favoritos/{id}', [FavoritoController::class, 'store']);
     Route::delete('/favoritos/{id}', [FavoritoController::class, 'destroy']);
+
+    // BÚSQUEDAS GUARDADAS
+    // Gestión de combinaciones de filtros guardadas por el usuario
+    Route::get('/saved-searches', [SavedSearchController::class, 'index']);
+    Route::post('/saved-searches', [SavedSearchController::class, 'store']);
+    Route::delete('/saved-searches/{id}', [SavedSearchController::class, 'destroy']);
 });
 
 // PANEL DE ADMINISTRACIÓN

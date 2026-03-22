@@ -88,11 +88,7 @@ export default function ComparadorPage() {
     const getNaturalezaBadge = (naturaleza: string) => {
         switch (naturaleza?.toUpperCase()) {
             case "PÚBLICO": return "bg-blue-50/50 text-blue-700 border-blue-200/60 ring-1 ring-blue-100/50 backdrop-blur-sm";
-            
             case "PRIVADO": return "bg-amber-50/50 text-amber-700 border-amber-200/60 ring-1 ring-amber-100/50 backdrop-blur-sm";
-            
-            case "CONCERTADO": return "bg-emerald-50/50 text-emerald-700 border-emerald-200/60 ring-1 ring-emerald-100/50 backdrop-blur-sm";
-            
             default: return "bg-gray-50/50 text-gray-700 border-gray-200/60 backdrop-blur-sm";
         }
     };

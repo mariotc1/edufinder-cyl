@@ -33,7 +33,7 @@ class SearchController extends Controller
             'nivel' => 'nullable|string|max:50',
             'modalidad' => 'nullable|string|max:50',
             'ciclo' => 'nullable|string|max:150',
-            'titularidad' => 'nullable|string|max:50',
+            'naturaleza' => 'nullable|string|max:50',
         ]);
 
         // LOG SEARCH

@@ -9,6 +9,7 @@ export const searchCentros = async (filters: FilterOptions) => {
   if (filters.q) params.append("q", filters.q);
   if (filters.provincia) params.append("provincia", filters.provincia);
   if (filters.tipo) params.append("tipo", filters.tipo);
+  if (filters.naturaleza) params.append("naturaleza", filters.naturaleza);
   if (filters.familia) params.append("familia", filters.familia);
   if (filters.ciclo) params.append("ciclo", filters.ciclo);
   if (filters.nivel) params.append("nivel", filters.nivel);
@@ -53,5 +54,24 @@ export const fetchCentroSuggestions = async (q: string) => {
   const response = await axios.get(
     `/centros/sugerencias?q=${encodeURIComponent(q)}`,
   );
+  return response.data;
+};
+
+// BÚSQUEDAS GUARDADAS
+// Obtener todas las búsquedas guardadas del usuario
+export const getSavedSearches = async () => {
+  const response = await axios.get('/saved-searches');
+  return response.data;
+};
+
+// Guardar una nueva búsqueda
+export const createSavedSearch = async (name: string, filters: FilterOptions) => {
+  const response = await axios.post('/saved-searches', { name, filters });
+  return response.data;
+};
+
+// Eliminar una búsqueda guardada
+export const deleteSavedSearch = async (id: number) => {
+  const response = await axios.delete(`/saved-searches/${id}`);
   return response.data;
 };

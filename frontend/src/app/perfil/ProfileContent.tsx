@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react';
 import api from '@/lib/axios';
-import { User, MapPin, Heart, Lock, Camera, LogOut, Eye, EyeOff, ChevronLeft, Trash, AlertCircle, CheckCircle } from 'lucide-react';
+import { getSavedSearches, deleteSavedSearch } from '@/services/api';
+import { SavedSearch } from '@/types';
+import { User, MapPin, Heart, Lock, Camera, LogOut, Eye, EyeOff, ChevronLeft, Trash, AlertCircle, CheckCircle, Bookmark, Search, X } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import LogoutConfirmationModal from '@/components/auth/LogoutConfirmationModal';
@@ -28,7 +30,8 @@ interface Favorito {
 export default function ProfileContent() {
     const [user, setUser] = useState<UserData | null>(null);
     const [favoritos, setFavoritos] = useState<Favorito[]>([]);
-    const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'favorites'>('profile');
+    const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
+    const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'favorites' | 'searches'>('profile');
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
     const router = useRouter();
@@ -64,23 +67,26 @@ export default function ProfileContent() {
 
     useEffect(() => {
         fetchData();
-        
+
         const tab = searchParams.get('tab');
         if (tab === 'favorites') setActiveTab('favorites');
         if (tab === 'security') setActiveTab('security');
         if (tab === 'profile') setActiveTab('profile');
+        if (tab === 'searches') setActiveTab('searches');
 
     }, [searchParams]);
 
     const fetchData = async () => {
         try {
-            const [userRes, favRes] = await Promise.all([
+            const [userRes, favRes, searchesRes] = await Promise.all([
                 api.get('/me'),
-                api.get('/favoritos')
+                api.get('/favoritos'),
+                getSavedSearches()
             ]);
             setUser(userRes.data);
             setName(userRes.data.name);
             setFavoritos(favRes.data);
+            setSavedSearches(searchesRes);
 
         } catch (error) {
             router.push('/login');
@@ -224,6 +230,46 @@ export default function ProfileContent() {
         setShowLogoutModal(true);
     };
 
+    const handleDeleteSearch = async (id: number) => {
+        try {
+            await deleteSavedSearch(id);
+            setSavedSearches(prev => prev.filter(s => s.id !== id));
+            setMessage({ text: 'Búsqueda eliminada', type: 'success' });
+        } catch (error) {
+            setMessage({ text: 'Error al eliminar búsqueda', type: 'error' });
+        }
+    };
+
+    const buildSearchUrl = (filters: any) => {
+        const params = new URLSearchParams();
+        if (filters.q) params.set('q', filters.q);
+        if (filters.provincia) params.set('provincia', filters.provincia);
+        if (filters.tipo) params.set('tipo', filters.tipo);
+        if (filters.naturaleza) params.set('naturaleza', filters.naturaleza);
+        if (filters.familia) params.set('familia', filters.familia);
+        if (filters.ciclo) params.set('ciclo', filters.ciclo);
+        if (filters.nivel) params.set('nivel', filters.nivel);
+        if (filters.modalidad) params.set('modalidad', filters.modalidad);
+        if (filters.lat && filters.lng) {
+            params.set('lat', filters.lat.toString());
+            params.set('lng', filters.lng.toString());
+            params.set('radio', (filters.radio || 10).toString());
+        }
+        return `/?${params.toString()}`;
+    };
+
+    const formatFilters = (filters: any) => {
+        const parts: string[] = [];
+        if (filters.provincia) parts.push(filters.provincia);
+        if (filters.tipo) parts.push(filters.tipo);
+        if (filters.naturaleza) parts.push(filters.naturaleza);
+        if (filters.familia) parts.push(filters.familia);
+        if (filters.nivel) parts.push(filters.nivel);
+        if (filters.modalidad) parts.push(filters.modalidad);
+        if (filters.lat && filters.lng) parts.push(`${filters.radio || 10}km`);
+        return parts.length > 0 ? parts.join(' · ') : 'Sin filtros específicos';
+    };
+
     const handleLogoutConfirm = async () => {
         setIsLoggingOut(true);
         await api.post('/logout');
@@ -339,6 +385,16 @@ export default function ProfileContent() {
                                 >
                                     <Heart className="w-4 h-4" />
                                     <span>Mis Favoritos</span>
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('searches')}
+                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'searches'
+                                            ? 'bg-[#223945] text-white shadow-md shadow-[#223945]/20'
+                                            : 'text-neutral-500 hover:bg-neutral-50 hover:text-[#223945]'
+                                        }`}
+                                >
+                                    <Bookmark className="w-4 h-4" />
+                                    <span>Búsquedas Guardadas</span>
                                 </button>
 
                                 <div className="pt-8 mt-4 border-t border-neutral-100">
@@ -617,7 +673,7 @@ export default function ProfileContent() {
                                         <div className="grid gap-4 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-neutral-200 hover:scrollbar-thumb-neutral-300">
                                             {favoritos.map(fav => (
                                                 <div key={fav.id} className="group relative bg-white border border-neutral-100 rounded-2xl shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-[#223945] transition-all p-5 pr-14 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                                                    
+
                                                     {/* Content */}
                                                     <div className="flex items-center gap-4">
                                                         <div className="bg-[#223945]/5 p-3 rounded-xl text-[#223945]">
@@ -648,7 +704,7 @@ export default function ProfileContent() {
                                                     </div>
 
                                                     {/* Remove Button (Heart) - Floating like CentroCard */}
-                                                    <button 
+                                                    <button
                                                         onClick={async (e) => {
                                                             e.preventDefault();
                                                             try {
@@ -674,6 +730,69 @@ export default function ProfileContent() {
                                             <p className="text-neutral-500 text-sm mt-1">Explora el mapa para añadir centros a tu lista.</p>
                                             <a href="/mapa" className="inline-block mt-6 bg-[#223945] text-white px-6 py-2.5 rounded-full font-bold text-sm shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all">
                                                 Ir al Mapa
+                                            </a>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {activeTab === 'searches' && (
+                                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                    <div className="mb-6">
+                                        <h3 className="text-2xl font-bold text-[#223945]">Búsquedas Guardadas</h3>
+                                        <p className="text-neutral-500 text-sm mt-1">Accede rápidamente a tus combinaciones de filtros favoritas.</p>
+                                    </div>
+
+                                    {savedSearches.length > 0 ? (
+                                        <div className="grid gap-4 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-neutral-200 hover:scrollbar-thumb-neutral-300">
+                                            {savedSearches.map(search => (
+                                                <div key={search.id} className="group relative bg-white border border-neutral-100 rounded-2xl shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-[#223945] transition-all p-4 sm:p-5 pr-12 sm:pr-14">
+                                                    <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
+                                                        <div className="bg-[#223945]/5 p-2.5 sm:p-3 rounded-xl text-[#223945] self-start">
+                                                            <Bookmark className="w-5 h-5 sm:w-6 sm:h-6" />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <h4 className="font-bold text-neutral-900 text-base sm:text-lg group-hover:text-[#223945] transition-colors break-words">{search.name}</h4>
+                                                            <div className="flex flex-wrap gap-1.5 mt-2">
+                                                                {formatFilters(search.filters).split(' · ').map((filter, idx) => (
+                                                                    <span key={idx} className="inline-block text-xs bg-neutral-100 text-neutral-600 px-2 py-0.5 rounded-full font-medium">
+                                                                        {filter}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                            {search.filters.q && (
+                                                                <p className="text-xs text-neutral-400 mt-2 break-words">Búsqueda: "{search.filters.q}"</p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="mt-4">
+                                                        <Link
+                                                            href={buildSearchUrl(search.filters)}
+                                                            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#223945] text-white rounded-lg text-sm font-bold shadow hover:shadow-lg hover:-translate-y-0.5 transition-all"
+                                                        >
+                                                            <Search className="w-4 h-4" />
+                                                            Aplicar búsqueda
+                                                        </Link>
+                                                    </div>
+
+                                                    <button
+                                                        onClick={() => handleDeleteSearch(search.id)}
+                                                        className="absolute top-3 sm:top-4 right-3 sm:right-4 p-1.5 rounded-full bg-white/90 backdrop-blur-sm shadow-sm border border-neutral-100 hover:bg-red-50 text-neutral-400 hover:text-red-500 transition-colors"
+                                                        title="Eliminar búsqueda"
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-16 bg-neutral-50/50 rounded-2xl border border-dashed border-neutral-200">
+                                            <Bookmark className="w-16 h-16 mx-auto text-neutral-300 mb-4" />
+                                            <h4 className="text-lg font-bold text-neutral-900">No tienes búsquedas guardadas</h4>
+                                            <p className="text-neutral-500 text-sm mt-1 max-w-sm mx-auto">Aplica filtros en la búsqueda y guárdalos para acceder rápidamente.</p>
+                                            <a href="/" className="inline-block mt-6 bg-[#223945] text-white px-6 py-2.5 rounded-full font-bold text-sm shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all">
+                                                Ir a Buscar
                                             </a>
                                         </div>
                                     )}
