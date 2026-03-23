@@ -9,6 +9,7 @@ import { Mail, Phone, MapPin, Globe, Star, BookOpen, Building2, ChevronLeft, Hea
 import { useAuth } from '@/context/AuthContext';
 import { useFavorite } from '@/hooks/useFavorite';
 import { motion } from 'framer-motion';
+import CentroDetailSkeleton from '@/components/CentroDetailSkeleton';
 
 
 const Map = dynamic(() => import('@/components/Map'), {
@@ -71,14 +72,7 @@ export default function CentroDetailContent() {
         </div>
     );
 
-    if (!centro) return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-            <div className="flex flex-col items-center justify-center py-20">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-200 border-t-[#223945] mb-4"></div>
-                <p className="text-[#223945] font-bold">Cargando información...</p>
-            </div>
-        </div>
-    );
+    if (!centro) return <CentroDetailSkeleton />;
 
     const c = centro.data;
 

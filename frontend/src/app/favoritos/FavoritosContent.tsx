@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Heart, School, ArrowRight, Loader2, ChevronLeft } from 'lucide-react';
 import CentroCard from '@/components/CentroCard';
-import CentroCardSkeleton from '@/components/ui/CentroCardSkeleton';
+import CentroCardSkeleton from '@/components/CentroCardSkeleton';
 import { Centro } from '@/types';
 import axios from '@/lib/axios';
 
