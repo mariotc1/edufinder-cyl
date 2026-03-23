@@ -8,7 +8,7 @@ import { searchCentros } from '@/services/api';
 import { FilterOptions, Centro } from '@/types';
 import FilterBar from '@/components/FilterBar';
 import CentroCard from '@/components/CentroCard';
-import CentroCardSkeleton from '@/components/ui/CentroCardSkeleton';
+import CentroCardSkeleton from '@/components/CentroCardSkeleton';
 import { motion } from 'framer-motion';
 
 export default function SearchContent() {

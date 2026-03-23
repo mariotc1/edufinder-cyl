@@ -5,11 +5,12 @@ import React, { Suspense } from 'react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { Menu, X, MapPin, Heart, LogIn, UserPlus, User as UserMenuIcon, LogOut as LogOutIcon, LayoutDashboard } from 'lucide-react';
+import { Menu, X, MapPin, Heart, LogIn, UserPlus, User as UserMenuIcon, LogOut as LogOutIcon, LayoutDashboard, Download } from 'lucide-react';
 import Logo from './Logo';
 import UserMenu from './UserMenu';
 import { useAuth } from '@/context/AuthContext';
 import { useFavoritesAnimation } from '@/context/FavoritesAnimationContext';
+import { usePWA } from '@/components/PWAProvider';
 import { motion } from 'framer-motion';
 import LogoutConfirmationModal from './auth/LogoutConfirmationModal';
 
@@ -27,11 +28,12 @@ export default function Navbar() {
 function NavbarContent() {
   const { user, logout, openLoginModal } = useAuth();
   const { favoritesPulse } = useFavoritesAnimation();
+  const { isInstallable, isInstalled, installApp } = usePWA();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  
+
   // Logout Modal State
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -66,8 +68,19 @@ function NavbarContent() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-4">
-            <Link 
-              href="/mapa" 
+            {/* Botón Instalar PWA */}
+            {isInstallable && !isInstalled && (
+              <button
+                onClick={installApp}
+                className="group flex items-center gap-2 px-4 py-2 rounded-full text-[#223945] font-bold text-sm uppercase tracking-wide border border-[#223945]/20 bg-[#223945]/5 hover:bg-[#223945] hover:text-white hover:border-[#223945] transition-all duration-300"
+              >
+                <Download className="w-4 h-4" />
+                Instalar App
+              </button>
+            )}
+
+            <Link
+              href="/mapa"
               className="group flex items-center gap-2 px-4 py-2 rounded-full text-[#223945] font-bold text-sm uppercase tracking-wide border border-transparent hover:border-neutral-200 hover:bg-white hover:shadow-sm transition-all duration-300"
             >
               <MapPin className="w-4 h-4 text-neutral-400 group-hover:text-blue-600 transition-colors" />
@@ -170,8 +183,21 @@ function NavbarContent() {
                 </div>
             )}
 
-            <Link 
-              href="/mapa" 
+            {/* Botón Instalar PWA (móvil) */}
+            {isInstallable && !isInstalled && (
+              <button
+                onClick={() => { installApp(); setMobileMenuOpen(false); }}
+                className="w-full flex items-center gap-4 px-4 py-3 rounded-xl bg-gradient-to-r from-[#223945] to-blue-600 text-white font-bold shadow-lg transition-all"
+              >
+                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+                  <Download className="w-4 h-4" />
+                </div>
+                Instalar App
+              </button>
+            )}
+
+            <Link
+              href="/mapa"
               className="flex items-center gap-4 px-4 py-3 rounded-xl bg-neutral-50 text-neutral-700 font-bold hover:bg-blue-50 hover:text-blue-700 transition-all"
               onClick={() => setMobileMenuOpen(false)}
             >
