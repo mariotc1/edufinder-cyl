@@ -227,7 +227,7 @@ export default function PWAProvider({ children }: { children: React.ReactNode })
                   onClick={dismissBanner}
                   className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
                 >
-                  <X className="w-4 h-4 text-white/70" />
+                  <X className="w-4 h-4 text-white" />
                 </button>
               </div>
               <div className="p-4">
@@ -337,7 +337,7 @@ export default function PWAProvider({ children }: { children: React.ReactNode })
                   onClick={() => setShowIOSGuide(false)}
                   className="absolute top-4 right-4 p-1.5 hover:bg-white/10 rounded-lg transition-colors"
                 >
-                  <X className="w-5 h-5 text-white/70" />
+                  <X className="w-5 h-5 text-white" />
                 </button>
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
@@ -345,7 +345,7 @@ export default function PWAProvider({ children }: { children: React.ReactNode })
                   </div>
                   <div>
                     <h3 className="text-lg font-bold !text-white">Instalar en iPhone</h3>
-                    <p className="text-sm !text-white/80">Sigue estos pasos en Safari</p>
+                    <p className="text-sm !text-white">Sigue estos pasos en Safari</p>
                   </div>
                 </div>
               </div>

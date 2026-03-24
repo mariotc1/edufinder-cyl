@@ -10,13 +10,9 @@ const inter = Inter({
   display: 'swap',
 });
 
-// URL base del sitio
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://edufindercyl.es';
-
 // METADATOS GLOBALES DE LA APLICACIÓN
-// Configuración SEO, PWA y Open Graph base para todas las páginas
+// Configuración SEO y PWA para todas las páginas
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
   title: {
     default: 'EduFinder CYL - Encuentra centros educativos y ciclos de FP en Castilla y León',
     template: '%s | EduFinder CYL',
@@ -38,32 +34,6 @@ export const metadata: Metadata = {
       { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
     ],
   },
-  // Open Graph - Para compartir en redes sociales y WhatsApp
-  openGraph: {
-    type: 'website',
-    locale: 'es_ES',
-    url: siteUrl,
-    siteName: 'EduFinder CYL',
-    title: 'EduFinder CYL - Encuentra centros educativos en Castilla y León',
-    description: 'Busca y compara centros educativos, colegios, institutos y ciclos de Formación Profesional en todas las provincias de Castilla y León.',
-    images: [
-      {
-        url: '/img/og-default.png',
-        width: 1200,
-        height: 630,
-        alt: 'EduFinder CYL - Buscador de centros educativos',
-      },
-    ],
-  },
-  // Twitter Card
-  twitter: {
-    card: 'summary_large_image',
-    title: 'EduFinder CYL - Encuentra centros educativos en Castilla y León',
-    description: 'Busca y compara centros educativos, colegios, institutos y ciclos de FP en Castilla y León.',
-    images: ['/img/og-default.png'],
-    creator: '@edufindercyl',
-  },
-  // Robots
   robots: {
     index: true,
     follow: true,
@@ -75,7 +45,6 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
-  // PWA
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -89,10 +58,6 @@ export const metadata: Metadata = {
   other: {
     'mobile-web-app-capable': 'yes',
   },
-  // Verificación (añadir cuando tengas las claves)
-  // verification: {
-  //   google: 'tu-codigo-de-verificacion',
-  // },
 };
 
 export const viewport: Viewport = {
