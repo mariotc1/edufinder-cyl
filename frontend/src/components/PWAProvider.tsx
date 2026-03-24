@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, createContext, useContext, useCallback } from 'react';
-import { X, Download, Smartphone, CheckCircle } from 'lucide-react';
+import { X, Download, Smartphone, CheckCircle, Share, PlusSquare, MoreVertical } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface PWAContextType {
@@ -9,6 +9,8 @@ interface PWAContextType {
   isInstallable: boolean;
   isOnline: boolean;
   isPWASupported: boolean;
+  isIOS: boolean;
+  showIOSInstallGuide: () => void;
   installApp: () => Promise<void>;
 }
 
@@ -17,6 +19,8 @@ const PWAContext = createContext<PWAContextType>({
   isInstallable: false,
   isOnline: true,
   isPWASupported: false,
+  isIOS: false,
+  showIOSInstallGuide: () => {},
   installApp: async () => {},
 });
 
@@ -32,6 +36,8 @@ export default function PWAProvider({ children }: { children: React.ReactNode })
   const [isInstallable, setIsInstallable] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
   const [isPWASupported, setIsPWASupported] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+  const [showIOSGuide, setShowIOSGuide] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
   const [showUpdateBanner, setShowUpdateBanner] = useState(false);
@@ -43,9 +49,12 @@ export default function PWAProvider({ children }: { children: React.ReactNode })
       return;
     }
 
+    // Detectar iOS
+    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    setIsIOS(isIOSDevice);
+
     // Comprobar soporte PWA
     const hasSW = 'serviceWorker' in navigator;
-    const hasBeforeInstall = 'BeforeInstallPromptEvent' in window;
     setIsPWASupported(hasSW);
 
     if (!hasSW) {
@@ -181,6 +190,10 @@ export default function PWAProvider({ children }: { children: React.ReactNode })
     localStorage.setItem('pwa-banner-dismissed', Date.now().toString());
   };
 
+  const showIOSInstallGuide = useCallback(() => {
+    setShowIOSGuide(true);
+  }, []);
+
   const handleUpdate = () => {
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
       navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
@@ -189,7 +202,7 @@ export default function PWAProvider({ children }: { children: React.ReactNode })
   };
 
   return (
-    <PWAContext.Provider value={{ isInstalled, isInstallable, isOnline, isPWASupported, installApp }}>
+    <PWAContext.Provider value={{ isInstalled, isInstallable, isOnline, isPWASupported, isIOS, showIOSInstallGuide, installApp }}>
       {children}
 
       {/* Banner de instalación */}
@@ -297,6 +310,98 @@ export default function PWAProvider({ children }: { children: React.ReactNode })
             className="fixed top-0 left-0 right-0 z-[100] bg-amber-500 text-white text-center py-2 text-sm font-medium"
           >
             Sin conexión - Algunas funciones pueden no estar disponibles
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal de instrucciones para iOS */}
+      <AnimatePresence>
+        {showIOSGuide && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowIOSGuide(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="bg-gradient-to-r from-[#223945] to-blue-600 px-6 py-5 relative">
+                <button
+                  onClick={() => setShowIOSGuide(false)}
+                  className="absolute top-4 right-4 p-1.5 hover:bg-white/10 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 text-white/70" />
+                </button>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
+                    <Download className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold !text-white">Instalar en iPhone</h3>
+                    <p className="text-sm !text-white/80">Sigue estos pasos en Safari</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Steps */}
+              <div className="p-6 space-y-5">
+                {/* Step 1 */}
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0 w-8 h-8 bg-[#223945] text-white rounded-full flex items-center justify-center font-bold text-sm">
+                    1
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-neutral-800 mb-1">Abre en Safari</p>
+                    <p className="text-sm text-neutral-500">Esta función solo está disponible en Safari</p>
+                  </div>
+                </div>
+
+                {/* Step 2 */}
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0 w-8 h-8 bg-[#223945] text-white rounded-full flex items-center justify-center font-bold text-sm">
+                    2
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-neutral-800 mb-2">Pulsa el botón Compartir</p>
+                    <div className="inline-flex items-center gap-2 px-3 py-2 bg-neutral-100 rounded-xl">
+                      <Share className="w-5 h-5 text-blue-500" />
+                      <span className="text-sm text-neutral-600">Botón compartir</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Step 3 */}
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0 w-8 h-8 bg-[#223945] text-white rounded-full flex items-center justify-center font-bold text-sm">
+                    3
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-neutral-800 mb-2">Añadir a pantalla de inicio</p>
+                    <div className="inline-flex items-center gap-2 px-3 py-2 bg-neutral-100 rounded-xl">
+                      <PlusSquare className="w-5 h-5 text-neutral-600" />
+                      <span className="text-sm text-neutral-600">Añadir a inicio</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="px-6 pb-6">
+                <button
+                  onClick={() => setShowIOSGuide(false)}
+                  className="w-full py-3 bg-[#223945] text-white font-bold rounded-xl hover:bg-[#1a2c35] transition-colors"
+                >
+                  Entendido
+                </button>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

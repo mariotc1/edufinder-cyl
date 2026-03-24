@@ -28,7 +28,7 @@ export default function Navbar() {
 function NavbarContent() {
   const { user, logout, openLoginModal } = useAuth();
   const { favoritesPulse } = useFavoritesAnimation();
-  const { isInstallable, isInstalled, installApp } = usePWA();
+  const { isInstallable, isInstalled, isIOS, installApp, showIOSInstallGuide } = usePWA();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
@@ -69,9 +69,9 @@ function NavbarContent() {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-4">
             {/* Botón Instalar PWA */}
-            {isInstallable && !isInstalled && (
+            {(isInstallable || isIOS) && !isInstalled && (
               <button
-                onClick={installApp}
+                onClick={isIOS ? showIOSInstallGuide : installApp}
                 className="group flex items-center gap-2 px-4 py-2 rounded-full text-[#223945] font-bold text-sm uppercase tracking-wide border border-[#223945]/20 bg-[#223945]/5 hover:bg-[#223945] hover:text-white hover:border-[#223945] transition-all duration-300"
               >
                 <Download className="w-4 h-4" />
@@ -184,9 +184,16 @@ function NavbarContent() {
             )}
 
             {/* Botón Instalar PWA (móvil) */}
-            {isInstallable && !isInstalled && (
+            {(isInstallable || isIOS) && !isInstalled && (
               <button
-                onClick={() => { installApp(); setMobileMenuOpen(false); }}
+                onClick={() => {
+                  if (isIOS) {
+                    showIOSInstallGuide();
+                  } else {
+                    installApp();
+                  }
+                  setMobileMenuOpen(false);
+                }}
                 className="w-full flex items-center gap-4 px-4 py-3 rounded-xl bg-gradient-to-r from-[#223945] to-blue-600 text-white font-bold shadow-lg transition-all"
               >
                 <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
