@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MapPin, Building2, BookOpen, ArrowRight, Heart, Link2, Check } from "lucide-react";
+import { MapPin, Building2, BookOpen, ArrowRight, Heart, Share2, Check } from "lucide-react";
 import { Centro } from "@/types";
 import { useRef, useState } from "react";
 import { motion, Variants } from "framer-motion";
@@ -65,12 +65,27 @@ export default function CentroCard({
     e.preventDefault();
     e.stopPropagation();
     const url = `${window.location.origin}/centro/${centro.id}`;
+    const shareData = {
+      title: centro.nombre,
+      text: `${centro.nombre} - ${centro.localidad}, ${centro.provincia}`,
+      url: url
+    };
+
     try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error('Error al copiar:', err);
+      // Usar Web Share API si está disponible (móviles)
+      if (navigator.share && navigator.canShare?.(shareData)) {
+        await navigator.share(shareData);
+      } else {
+        // Fallback: copiar al clipboard
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    } catch (err: any) {
+      // Si el usuario cancela el share, no mostrar error
+      if (err?.name !== 'AbortError') {
+        console.error('Error al compartir:', err);
+      }
     }
   }; 
 
@@ -175,7 +190,7 @@ export default function CentroCard({
           aria-label={copied ? "Enlace copiado" : "Copiar enlace del centro"}
           title={copied ? "Enlace copiado" : "Copiar enlace"}
         >
-          {copied ? <Check className="w-4 h-4" /> : <Link2 className="w-4 h-4" />}
+          {copied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
         </motion.button>
 
         {/* Botón Comparador */}

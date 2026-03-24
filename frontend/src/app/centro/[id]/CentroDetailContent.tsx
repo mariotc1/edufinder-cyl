@@ -5,7 +5,7 @@ import useSWR from 'swr';
 import api from '@/lib/axios';
 import { useRef, useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { Mail, Phone, MapPin, Globe, Star, BookOpen, Building2, ChevronLeft, Heart, Link2, Check } from 'lucide-react';
+import { Mail, Phone, MapPin, Globe, Star, BookOpen, Building2, ChevronLeft, Heart, Share2, Check } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useFavorite } from '@/hooks/useFavorite';
 import { motion } from 'framer-motion';
@@ -41,12 +41,28 @@ export default function CentroDetailContent() {
     const [copied, setCopied] = useState(false);
 
     const handleShare = async () => {
+        const c = centro?.data;
+        const shareData = {
+            title: c?.nombre || 'Centro Educativo',
+            text: c ? `${c.nombre} - ${c.localidad}, ${c.provincia}` : 'Centro Educativo en Castilla y León',
+            url: window.location.href
+        };
+
         try {
-            await navigator.clipboard.writeText(window.location.href);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        } catch (err) {
-            console.error('Error al copiar:', err);
+            // Usar Web Share API si está disponible (móviles)
+            if (navigator.share && navigator.canShare?.(shareData)) {
+                await navigator.share(shareData);
+            } else {
+                // Fallback: copiar al clipboard
+                await navigator.clipboard.writeText(window.location.href);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            }
+        } catch (err: any) {
+            // Si el usuario cancela el share, no mostrar error
+            if (err?.name !== 'AbortError') {
+                console.error('Error al compartir:', err);
+            }
         }
     };
 
@@ -158,7 +174,7 @@ export default function CentroDetailContent() {
                                         {copied ? (
                                             <Check className="w-6 h-6" />
                                         ) : (
-                                            <Link2 className="w-6 h-6" />
+                                            <Share2 className="w-6 h-6" />
                                         )}
                                     </motion.button>
 
