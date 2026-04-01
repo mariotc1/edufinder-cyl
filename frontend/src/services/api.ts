@@ -42,10 +42,22 @@ export const removeFavorite = async (centroId: number) => {
 
 // SUGERENCIAS DE BÚSQUEDA (AUTOCOMPLETE)
 // Obtener sugerencias de ciclos formativos
-export const fetchCycleSuggestions = async (q: string) => {
-  const response = await axios.get(
-    `/ciclos/sugerencias?q=${encodeURIComponent(q)}`,
-  );
+// Acepta filtros opcionales para mostrar solo ciclos que coincidan con los criterios
+interface CycleSuggestionFilters {
+  nivel?: string;
+  familia?: string;
+  modalidad?: string;
+}
+
+export const fetchCycleSuggestions = async (q: string, filters?: CycleSuggestionFilters) => {
+  const params = new URLSearchParams();
+  params.append('q', q);
+
+  if (filters?.nivel) params.append('nivel', filters.nivel);
+  if (filters?.familia) params.append('familia', filters.familia);
+  if (filters?.modalidad) params.append('modalidad', filters.modalidad);
+
+  const response = await axios.get(`/ciclos/sugerencias?${params.toString()}`);
   return response.data;
 };
 

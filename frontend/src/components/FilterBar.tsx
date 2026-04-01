@@ -95,7 +95,12 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
       if (filters.ciclo && filters.ciclo.length >= 2 && filters.tipo === 'FP') {
           setIsSearching(true);
           try {
-              const results = await fetchCycleSuggestions(filters.ciclo);
+              // Pasar los filtros actuales para mostrar solo ciclos que coincidan
+              const results = await fetchCycleSuggestions(filters.ciclo, {
+                nivel: filters.nivel,
+                familia: filters.familia,
+                modalidad: filters.modalidad,
+              });
               setSuggestions(results);
               setShowSuggestions(true);
 
@@ -112,7 +117,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [filters.ciclo, filters.tipo]);
+  }, [filters.ciclo, filters.tipo, filters.nivel, filters.familia, filters.modalidad]);
 
   useEffect(() => {
     if (skipFetchCentroRef.current) {

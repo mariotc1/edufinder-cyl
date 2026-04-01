@@ -64,6 +64,7 @@ Route::get('/busqueda', [App\Http\Controllers\SearchController::class, 'index'])
 
 // GESTIÓN DE CICLOS FORMATIVOS
 // Rutas para listar y obtener sugerencias de ciclos de FP
+Route::get('/ciclos/sugerencias', [CicloFpController::class, 'suggestions']);
 Route::get('/ciclos', [CicloFpController::class, 'index']);
 
 // RUTAS PROTEGIDAS
