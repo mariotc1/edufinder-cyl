@@ -131,7 +131,10 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
           setIsSearchingCentro(true);
 
           try {
-              const results = await fetchCentroSuggestions(filters.q);
+              // Pasar la provincia si está seleccionada para filtrar sugerencias
+              const results = await fetchCentroSuggestions(filters.q, {
+                provincia: filters.provincia,
+              });
               setCentroSuggestions(results);
               setShowCentroSuggestions(true);
 
@@ -148,7 +151,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [filters.q]);
+  }, [filters.q, filters.provincia]);
 
   useEffect(() => {
     if (searchParams.get('lat') && searchParams.get('lng')) {
@@ -368,7 +371,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
             {showCentroSuggestions && centroSuggestions.length > 0 && (
                 <div className="absolute z-[60] left-0 mt-2 w-[90vw] sm:w-[500px] bg-white rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] border border-neutral-100 ring-1 ring-black/5 max-h-[320px] overflow-y-auto animate-in fade-in zoom-in-95 duration-200 custom-scrollbar">
                     <div className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-neutral-50 px-4 py-2 text-[10px] font-bold text-neutral-400 uppercase tracking-wider z-10">
-                        Centros encontrados
+                        {filters.provincia ? `Centros en ${filters.provincia}` : 'Centros encontrados'}
                     </div>
                     <ul className="py-2">
                         {centroSuggestions.map((sug, i) => (

@@ -1,6 +1,8 @@
-import { MapPin, Navigation, Layers, Search, ChevronDown, ChevronUp, Settings, Filter, X } from 'lucide-react';
-import { useState } from 'react';
+import { MapPin, Navigation, Layers, Search, ChevronDown, ChevronUp, X, Building2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { FilterOptions } from '@/types';
+import { fetchCentroSuggestions } from '@/services/api';
 
 interface MapSidebarProps {
     radius: number;
@@ -23,9 +25,79 @@ export default function MapSidebar({ radius, setRadius, filters, setFilters, onL
         config: false
     });
 
+    // Estados para el modal de búsqueda
+    const [showSearchModal, setShowSearchModal] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [suggestions, setSuggestions] = useState<string[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const modalInputRef = useRef<HTMLInputElement>(null);
+
     // Control de colapso/expansión de la barra lateral
     const toggleSection = (section: 'filters' | 'config') => {
         setSections(prev => ({ ...prev, [section]: !prev[section] }));
+    };
+
+    // Focus en el input del modal cuando se abre
+    useEffect(() => {
+        if (showSearchModal && modalInputRef.current) {
+            modalInputRef.current.focus();
+        }
+    }, [showSearchModal]);
+
+    // Cerrar modal con Escape
+    useEffect(() => {
+        function handleKeyDown(e: KeyboardEvent) {
+            if (e.key === 'Escape' && showSearchModal) {
+                setShowSearchModal(false);
+            }
+        }
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [showSearchModal]);
+
+    // Debounce para búsqueda de centros en el modal
+    useEffect(() => {
+        if (!showSearchModal) return;
+
+        const timer = setTimeout(async () => {
+            if (searchQuery && searchQuery.length >= 2) {
+                setIsSearching(true);
+                try {
+                    const results = await fetchCentroSuggestions(searchQuery, {
+                        provincia: filters.provincia,
+                    });
+                    setSuggestions(results);
+                } catch (error) {
+                    console.error("Error fetching centro suggestions", error);
+                } finally {
+                    setIsSearching(false);
+                }
+            } else {
+                setSuggestions([]);
+            }
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [searchQuery, filters.provincia, showSearchModal]);
+
+    // Abrir modal de búsqueda
+    const openSearchModal = () => {
+        setSearchQuery(filters.q || '');
+        setShowSearchModal(true);
+    };
+
+    // Seleccionar un centro de las sugerencias
+    const selectCentro = (nombre: string) => {
+        setFilters({ ...filters, q: nombre });
+        setShowSearchModal(false);
+        setSearchQuery('');
+        setSuggestions([]);
+    };
+
+    // Limpiar búsqueda
+    const clearSearch = () => {
+        setFilters({ ...filters, q: undefined });
+        setSearchQuery('');
+        setSuggestions([]);
     };
 
     const provincias = ['AVILA', 'BURGOS', 'LEON', 'PALENCIA', 'SALAMANCA', 'SEGOVIA', 'SORIA', 'VALLADOLID', 'ZAMORA'];
@@ -130,23 +202,11 @@ export default function MapSidebar({ radius, setRadius, filters, setFilters, onL
                                 <span className="font-bold text-sm text-[#223945]">Filtros</span>
                             </div>
 
-                             {/* Search Input */}
-                             <div className="relative group">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 group-focus-within:text-[#223945] transition-colors" />
-                                <input 
-                                type="text"
-                                placeholder="Buscar centro..." 
-                                className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-neutral-50 border border-neutral-200 focus:bg-white focus:border-[#223945] focus:ring-2 focus:ring-[#223945]/10 transition-all outline-none text-sm font-medium placeholder:text-neutral-400 text-neutral-800"
-                                value={filters.q || ''}
-                                onChange={(e) => handleChange('q', e.target.value)}
-                                />
-                            </div>
-
                             {/* Provincia */}
                             <div className="space-y-1">
                                 <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider ml-1">Provincia</label>
                                 <div className={selectContainerClass}>
-                                    <select 
+                                    <select
                                         className={selectClass}
                                         value={filters.provincia || ''}
                                         onChange={(e) => handleChange('provincia', e.target.value)}
@@ -158,11 +218,147 @@ export default function MapSidebar({ radius, setRadius, filters, setFilters, onL
                                     <div className={iconClass}><ChevronDown className="w-4 h-4" /></div>
                                 </div>
                             </div>
+
+                             {/* Botón para abrir modal de búsqueda */}
+                             <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider ml-1">Centro</label>
+                                <button
+                                    onClick={openSearchModal}
+                                    className="w-full flex items-center gap-2 pl-3 pr-3 py-2.5 rounded-xl bg-neutral-50 border border-neutral-200 hover:border-[#223945]/50 hover:bg-white transition-all text-left group"
+                                >
+                                    <Search className="w-4 h-4 text-neutral-400 group-hover:text-[#223945] transition-colors flex-shrink-0" />
+                                    {filters.q ? (
+                                        <span className="text-sm font-medium text-neutral-800 truncate flex-1">{filters.q}</span>
+                                    ) : (
+                                        <span className="text-sm font-medium text-neutral-400 flex-1">Buscar centro...</span>
+                                    )}
+                                    {filters.q && (
+                                        <span
+                                            onClick={(e) => { e.stopPropagation(); clearSearch(); }}
+                                            className="p-1 rounded-full text-neutral-400 hover:text-red-500 hover:bg-neutral-100 transition-all flex-shrink-0"
+                                        >
+                                            <X className="w-3.5 h-3.5" />
+                                        </span>
+                                    )}
+                                </button>
+                             </div>
                         </div>
                     </div>
 
                 </div>
             </div>
+
+            {/* Modal de Búsqueda tipo Spotlight/Command Palette */}
+            {showSearchModal && typeof document !== 'undefined' && createPortal(
+                <div className="fixed inset-0 z-[9999]">
+                    {/* Backdrop */}
+                    <div
+                        className="fixed inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"
+                        onClick={() => setShowSearchModal(false)}
+                    />
+
+                    {/* Modal Container - Centrado en pantalla */}
+                    <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 md:inset-x-auto md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-lg">
+                        <div className="bg-white rounded-2xl shadow-2xl ring-1 ring-black/10 overflow-hidden animate-in zoom-in-95 fade-in duration-200">
+
+                            {/* Header con Input de búsqueda */}
+                            <div className="relative border-b border-neutral-100">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
+                                <input
+                                    ref={modalInputRef}
+                                    type="text"
+                                    placeholder="Buscar centro educativo..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full pl-12 pr-12 py-4 text-base font-medium text-neutral-800 placeholder:text-neutral-400 outline-none bg-transparent"
+                                />
+                                {isSearching ? (
+                                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                                        <div className="w-5 h-5 border-2 border-[#223945]/30 border-t-[#223945] rounded-full animate-spin"></div>
+                                    </div>
+                                ) : searchQuery ? (
+                                    <button
+                                        onClick={() => { setSearchQuery(''); setSuggestions([]); }}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-full text-neutral-400 hover:text-red-500 hover:bg-neutral-100 transition-all"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                ) : null}
+                            </div>
+
+                            {/* Filtro activo indicator */}
+                            {filters.provincia && (
+                                <div className="px-4 py-2 bg-blue-50 border-b border-blue-100 flex items-center gap-2">
+                                    <MapPin className="w-3.5 h-3.5 text-blue-600" />
+                                    <span className="text-xs font-medium text-blue-700">
+                                        Buscando en {filters.provincia}
+                                    </span>
+                                </div>
+                            )}
+
+                            {/* Lista de sugerencias */}
+                            <div className="max-h-[50vh] overflow-y-auto">
+                                {suggestions.length > 0 ? (
+                                    <ul className="py-2">
+                                        {suggestions.map((sug, i) => (
+                                            <li
+                                                key={i}
+                                                onClick={() => selectCentro(sug)}
+                                                className="px-4 py-3 cursor-pointer hover:bg-neutral-50 transition-all flex items-start gap-3 group border-l-4 border-transparent hover:border-[#223945]"
+                                            >
+                                                <div className="mt-0.5 w-8 h-8 shrink-0 rounded-xl bg-neutral-100 flex items-center justify-center group-hover:bg-[#223945] transition-all duration-200">
+                                                    <Building2 className="w-4 h-4 text-neutral-500 group-hover:text-white transition-colors" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <span className="text-sm font-medium text-neutral-800 group-hover:text-[#223945] leading-snug block">
+                                                        {sug}
+                                                    </span>
+                                                    <span className="text-xs text-neutral-400 mt-0.5 block">
+                                                        Centro educativo
+                                                    </span>
+                                                </div>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : searchQuery.length >= 2 && !isSearching ? (
+                                    <div className="py-12 text-center">
+                                        <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-neutral-100 flex items-center justify-center">
+                                            <Search className="w-6 h-6 text-neutral-400" />
+                                        </div>
+                                        <p className="text-sm font-medium text-neutral-600">No se encontraron centros</p>
+                                        <p className="text-xs text-neutral-400 mt-1">Prueba con otro término de búsqueda</p>
+                                    </div>
+                                ) : (
+                                    <div className="py-10 px-6 text-center">
+                                        <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-[#223945]/10 to-blue-100 flex items-center justify-center">
+                                            <Search className="w-6 h-6 text-[#223945]/60" />
+                                        </div>
+                                        <p className="text-sm font-medium text-neutral-600 mb-1">Busca un centro educativo</p>
+                                        <p className="text-xs text-neutral-400">Escribe el nombre del centro que quieres encontrar</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Footer con instrucciones */}
+                            <div className="px-4 py-3 bg-neutral-50 border-t border-neutral-100 flex items-center justify-between">
+                                <div className="flex items-center gap-3 text-xs text-neutral-400">
+                                    <span className="flex items-center gap-1">
+                                        <kbd className="px-1.5 py-0.5 bg-white rounded border border-neutral-200 font-mono text-[10px]">ESC</kbd>
+                                        <span>cerrar</span>
+                                    </span>
+                                </div>
+                                <button
+                                    onClick={() => setShowSearchModal(false)}
+                                    className="text-xs font-medium text-neutral-500 hover:text-neutral-700 transition-colors"
+                                >
+                                    Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
         </div>
     );
 }

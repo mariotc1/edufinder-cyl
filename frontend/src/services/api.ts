@@ -62,10 +62,18 @@ export const fetchCycleSuggestions = async (q: string, filters?: CycleSuggestion
 };
 
 // Obtener sugerencias de centros educativos
-export const fetchCentroSuggestions = async (q: string) => {
-  const response = await axios.get(
-    `/centros/sugerencias?q=${encodeURIComponent(q)}`,
-  );
+// Acepta filtros opcionales para mostrar solo centros que coincidan con los criterios
+interface CentroSuggestionFilters {
+  provincia?: string;
+}
+
+export const fetchCentroSuggestions = async (q: string, filters?: CentroSuggestionFilters) => {
+  const params = new URLSearchParams();
+  params.append('q', q);
+
+  if (filters?.provincia) params.append('provincia', filters.provincia);
+
+  const response = await axios.get(`/centros/sugerencias?${params.toString()}`);
   return response.data;
 };
 

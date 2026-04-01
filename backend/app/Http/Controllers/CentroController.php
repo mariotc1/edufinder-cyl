@@ -174,19 +174,28 @@ class CentroController extends Controller
 
     // SUGERENCIAS DE BÚSQUEDA
     // Autocompletado para la barra de búsqueda por nombre de centro
+    // Filtra por provincia si está presente para mostrar solo centros relevantes
     public function suggestions(Request $request)
     {
         $request->validate([
             'q' => 'nullable|string|min:2',
+            'provincia' => 'nullable|string',
         ]);
 
         if (!$request->q) {
             return response()->json([]);
         }
 
-        $suggestions = Centro::query()
+        $query = Centro::query()
             ->select('nombre')
-            ->where('nombre', 'ilike', '%' . $request->q . '%')
+            ->where('nombre', 'ilike', '%' . $request->q . '%');
+
+        // Filtrar por provincia si está presente
+        if ($request->provincia) {
+            $query->where('provincia', 'ILIKE', '%' . $request->provincia . '%');
+        }
+
+        $suggestions = $query
             ->distinct()
             ->limit(10)
             ->pluck('nombre');
