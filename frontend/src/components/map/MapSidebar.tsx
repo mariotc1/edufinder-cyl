@@ -30,7 +30,13 @@ export default function MapSidebar({ radius, setRadius, filters, setFilters, onL
     const [searchQuery, setSearchQuery] = useState('');
     const [suggestions, setSuggestions] = useState<string[]>([]);
     const [isSearching, setIsSearching] = useState(false);
+    const [isMounted, setIsMounted] = useState(false);
     const modalInputRef = useRef<HTMLInputElement>(null);
+
+    // Evitar problemas de hidratación con el portal
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     // Control de colapso/expansión de la barra lateral
     const toggleSection = (section: 'filters' | 'config') => {
@@ -249,7 +255,7 @@ export default function MapSidebar({ radius, setRadius, filters, setFilters, onL
             </div>
 
             {/* Modal de Búsqueda tipo Spotlight/Command Palette */}
-            {showSearchModal && typeof document !== 'undefined' && createPortal(
+            {isMounted && showSearchModal && createPortal(
                 <div className="fixed inset-0 z-[9999]">
                     {/* Backdrop */}
                     <div
