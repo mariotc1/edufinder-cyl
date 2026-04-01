@@ -1,6 +1,5 @@
 import { MapPin, Navigation, Layers, Search, ChevronDown, ChevronUp, X, Building2 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
 import { FilterOptions } from '@/types';
 import { fetchCentroSuggestions } from '@/services/api';
 
@@ -30,13 +29,7 @@ export default function MapSidebar({ radius, setRadius, filters, setFilters, onL
     const [searchQuery, setSearchQuery] = useState('');
     const [suggestions, setSuggestions] = useState<string[]>([]);
     const [isSearching, setIsSearching] = useState(false);
-    const [isMounted, setIsMounted] = useState(false);
     const modalInputRef = useRef<HTMLInputElement>(null);
-
-    // Evitar problemas de hidratación con el portal
-    useEffect(() => {
-        setIsMounted(true);
-    }, []);
 
     // Control de colapso/expansión de la barra lateral
     const toggleSection = (section: 'filters' | 'config') => {
@@ -118,6 +111,7 @@ export default function MapSidebar({ radius, setRadius, filters, setFilters, onL
     const iconClass = "pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-neutral-500";
 
     return (
+        <>
         <div className={`absolute bottom-0 left-0 right-0 md:top-24 md:left-6 md:right-auto md:bottom-auto z-[1000] transition-transform duration-300 ${isExpanded ? 'translate-y-0' : 'translate-y-[calc(100%-60px)] md:translate-y-0'}`}>
             <div className="bg-white/95 backdrop-blur-md border border-white/20 shadow-xl rounded-t-2xl md:rounded-2xl w-full md:w-80 overflow-hidden flex flex-col max-h-[85vh] md:max-h-[calc(100vh-140px)] relative transition-all">
                 
@@ -253,9 +247,10 @@ export default function MapSidebar({ radius, setRadius, filters, setFilters, onL
 
                 </div>
             </div>
+        </div>
 
-            {/* Modal de Búsqueda tipo Spotlight/Command Palette */}
-            {isMounted && showSearchModal && createPortal(
+        {/* Modal de Búsqueda tipo Spotlight/Command Palette */}
+        {showSearchModal && (
                 <div className="fixed inset-0 z-[9999]">
                     {/* Backdrop */}
                     <div
@@ -362,9 +357,8 @@ export default function MapSidebar({ radius, setRadius, filters, setFilters, onL
                             </div>
                         </div>
                     </div>
-                </div>,
-                document.body
+                </div>
             )}
-        </div>
+        </>
     );
 }

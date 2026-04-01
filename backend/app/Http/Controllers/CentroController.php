@@ -182,17 +182,20 @@ class CentroController extends Controller
             'provincia' => 'nullable|string',
         ]);
 
-        if (!$request->q) {
+        $q = $request->input('q');
+        $provincia = $request->input('provincia');
+
+        if (!$q) {
             return response()->json([]);
         }
 
         $query = Centro::query()
             ->select('nombre')
-            ->where('nombre', 'ilike', '%' . $request->q . '%');
+            ->where('nombre', 'ilike', '%' . $q . '%');
 
         // Filtrar por provincia si está presente
-        if ($request->provincia) {
-            $query->where('provincia', 'ILIKE', '%' . $request->provincia . '%');
+        if (!empty($provincia)) {
+            $query->where('provincia', $provincia);
         }
 
         $suggestions = $query
