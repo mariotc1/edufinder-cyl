@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import api from '@/lib/axios';
 import { getSavedSearches, deleteSavedSearch } from '@/services/api';
 import { SavedSearch } from '@/types';
-import { User, MapPin, Heart, Lock, Camera, LogOut, Eye, EyeOff, ChevronLeft, Trash, AlertCircle, CheckCircle, Bookmark, Search, X } from 'lucide-react';
+import { User, MapPin, Heart, Lock, Camera, LogOut, Eye, EyeOff, ChevronLeft, Trash, AlertCircle, CheckCircle, Bookmark, Search, X, Calendar, Building2, GraduationCap, Filter } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import LogoutConfirmationModal from '@/components/auth/LogoutConfirmationModal';
@@ -52,6 +52,9 @@ export default function ProfileContent() {
     // Custom Logout Modal State
     const [showLogoutModal, setShowLogoutModal] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+    // Delete Search Confirmation Modal State
+    const [searchToDelete, setSearchToDelete] = useState<SavedSearch | null>(null);
 
 
     const passwordRequirements = useMemo(() => {
@@ -230,13 +233,15 @@ export default function ProfileContent() {
         setShowLogoutModal(true);
     };
 
-    const handleDeleteSearch = async (id: number) => {
+    const handleDeleteSearch = async (search: SavedSearch) => {
         try {
-            await deleteSavedSearch(id);
-            setSavedSearches(prev => prev.filter(s => s.id !== id));
+            await deleteSavedSearch(search.id);
+            setSavedSearches(prev => prev.filter(s => s.id !== search.id));
             setMessage({ text: 'Búsqueda eliminada', type: 'success' });
+            setSearchToDelete(null);
         } catch (error) {
             setMessage({ text: 'Error al eliminar búsqueda', type: 'error' });
+            setSearchToDelete(null);
         }
     };
 
@@ -259,15 +264,31 @@ export default function ProfileContent() {
     };
 
     const formatFilters = (filters: any) => {
-        const parts: string[] = [];
-        if (filters.provincia) parts.push(filters.provincia);
-        if (filters.tipo) parts.push(filters.tipo);
-        if (filters.naturaleza) parts.push(filters.naturaleza);
-        if (filters.familia) parts.push(filters.familia);
-        if (filters.nivel) parts.push(filters.nivel);
-        if (filters.modalidad) parts.push(filters.modalidad);
-        if (filters.lat && filters.lng) parts.push(`${filters.radio || 10}km`);
-        return parts.length > 0 ? parts.join(' · ') : 'Sin filtros específicos';
+        const parts: { label: string; type: 'location' | 'education' | 'general' }[] = [];
+        if (filters.provincia) parts.push({ label: filters.provincia, type: 'location' });
+        if (filters.naturaleza) parts.push({ label: filters.naturaleza, type: 'general' });
+        if (filters.familia) parts.push({ label: filters.familia, type: 'education' });
+        if (filters.nivel) parts.push({ label: filters.nivel, type: 'education' });
+        if (filters.modalidad) parts.push({ label: filters.modalidad, type: 'education' });
+        if (filters.lat && filters.lng) parts.push({ label: `Radio ${filters.radio || 10}km`, type: 'location' });
+        return parts;
+    };
+
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+    };
+
+    const getFilterCount = (filters: any) => {
+        let count = 0;
+        if (filters.provincia) count++;
+        if (filters.naturaleza) count++;
+        if (filters.familia) count++;
+        if (filters.nivel) count++;
+        if (filters.modalidad) count++;
+        if (filters.lat && filters.lng) count++;
+        if (filters.q) count++;
+        return count;
     };
 
     const handleLogoutConfirm = async () => {
@@ -745,46 +766,94 @@ export default function ProfileContent() {
 
                                     {savedSearches.length > 0 ? (
                                         <div className="grid gap-4 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-neutral-200 hover:scrollbar-thumb-neutral-300">
-                                            {savedSearches.map(search => (
-                                                <div key={search.id} className="group relative bg-white border border-neutral-100 rounded-2xl shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-[#223945] transition-all p-4 sm:p-5 pr-12 sm:pr-14">
-                                                    <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
-                                                        <div className="bg-[#223945]/5 p-2.5 sm:p-3 rounded-xl text-[#223945] self-start">
-                                                            <Bookmark className="w-5 h-5 sm:w-6 sm:h-6" />
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <h4 className="font-bold text-neutral-900 text-base sm:text-lg group-hover:text-[#223945] transition-colors break-words">{search.name}</h4>
-                                                            <div className="flex flex-wrap gap-1.5 mt-2">
-                                                                {formatFilters(search.filters).split(' · ').map((filter, idx) => (
-                                                                    <span key={idx} className="inline-block text-xs bg-neutral-100 text-neutral-600 px-2 py-0.5 rounded-full font-medium">
-                                                                        {filter}
-                                                                    </span>
-                                                                ))}
+                                            {savedSearches.map(search => {
+                                                const filterItems = formatFilters(search.filters);
+                                                const filterCount = getFilterCount(search.filters);
+
+                                                return (
+                                                    <div key={search.id} className="group relative bg-white border border-neutral-100 rounded-2xl shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-[#223945]/30 transition-all overflow-hidden">
+                                                        {/* Header with gradient accent */}
+                                                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                                                        <div className="p-4 sm:p-5 pr-12 sm:pr-14">
+                                                            {/* Title and meta row */}
+                                                            <div className="flex items-start gap-3 mb-3">
+                                                                <div className="bg-gradient-to-br from-[#223945] to-[#345165] p-2.5 rounded-xl text-white shadow-sm flex-shrink-0">
+                                                                    <Bookmark className="w-5 h-5" />
+                                                                </div>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <h4 className="font-bold text-neutral-900 text-base sm:text-lg group-hover:text-[#223945] transition-colors break-words leading-tight">
+                                                                        {search.name}
+                                                                    </h4>
+                                                                    <div className="flex items-center gap-3 mt-1.5 text-xs text-neutral-400">
+                                                                        <span className="flex items-center gap-1">
+                                                                            <Calendar className="w-3 h-3" />
+                                                                            {formatDate(search.created_at)}
+                                                                        </span>
+                                                                        <span className="flex items-center gap-1">
+                                                                            <Filter className="w-3 h-3" />
+                                                                            {filterCount} {filterCount === 1 ? 'filtro' : 'filtros'}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
                                                             </div>
+
+                                                            {/* Search query if exists */}
                                                             {search.filters.q && (
-                                                                <p className="text-xs text-neutral-400 mt-2 break-words">Búsqueda: "{search.filters.q}"</p>
+                                                                <div className="mb-3 flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-lg border border-blue-100">
+                                                                    <Search className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                                                                    <span className="text-sm text-blue-700 font-medium truncate">"{search.filters.q}"</span>
+                                                                </div>
                                                             )}
+
+                                                            {/* Filter chips */}
+                                                            {filterItems.length > 0 && (
+                                                                <div className="flex flex-wrap gap-1.5 mb-4">
+                                                                    {filterItems.map((filter, idx) => (
+                                                                        <span
+                                                                            key={idx}
+                                                                            className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium ${
+                                                                                filter.type === 'location'
+                                                                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                                                                                    : filter.type === 'education'
+                                                                                    ? 'bg-violet-50 text-violet-700 border border-violet-100'
+                                                                                    : 'bg-neutral-100 text-neutral-600 border border-neutral-200'
+                                                                            }`}
+                                                                        >
+                                                                            {filter.type === 'location' && <MapPin className="w-3 h-3" />}
+                                                                            {filter.type === 'education' && <GraduationCap className="w-3 h-3" />}
+                                                                            {filter.type === 'general' && <Building2 className="w-3 h-3" />}
+                                                                            {filter.label}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+
+                                                            {filterItems.length === 0 && !search.filters.q && (
+                                                                <p className="text-xs text-neutral-400 italic mb-4">Sin filtros específicos</p>
+                                                            )}
+
+                                                            {/* Action button */}
+                                                            <Link
+                                                                href={buildSearchUrl(search.filters)}
+                                                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#223945] text-white rounded-xl text-sm font-bold shadow-md shadow-[#223945]/10 hover:shadow-lg hover:shadow-[#223945]/20 hover:-translate-y-0.5 transition-all"
+                                                            >
+                                                                <Search className="w-4 h-4" />
+                                                                Aplicar búsqueda
+                                                            </Link>
                                                         </div>
-                                                    </div>
 
-                                                    <div className="mt-4">
-                                                        <Link
-                                                            href={buildSearchUrl(search.filters)}
-                                                            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#223945] text-white rounded-lg text-sm font-bold shadow hover:shadow-lg hover:-translate-y-0.5 transition-all"
+                                                        {/* Delete button */}
+                                                        <button
+                                                            onClick={() => setSearchToDelete(search)}
+                                                            className="absolute top-3 sm:top-4 right-3 sm:right-4 p-1.5 rounded-full bg-white shadow-sm border border-neutral-100 hover:bg-red-50 text-neutral-400 hover:text-red-500 transition-colors"
+                                                            title="Eliminar búsqueda"
                                                         >
-                                                            <Search className="w-4 h-4" />
-                                                            Aplicar búsqueda
-                                                        </Link>
+                                                            <X className="w-4 h-4" />
+                                                        </button>
                                                     </div>
-
-                                                    <button
-                                                        onClick={() => handleDeleteSearch(search.id)}
-                                                        className="absolute top-3 sm:top-4 right-3 sm:right-4 p-1.5 rounded-full bg-white/90 backdrop-blur-sm shadow-sm border border-neutral-100 hover:bg-red-50 text-neutral-400 hover:text-red-500 transition-colors"
-                                                        title="Eliminar búsqueda"
-                                                    >
-                                                        <X className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                            ))}
+                                                );
+                                            })}
                                         </div>
                                     ) : (
                                         <div className="text-center py-16 bg-neutral-50/50 rounded-2xl border border-dashed border-neutral-200">
@@ -833,9 +902,42 @@ export default function ProfileContent() {
                 </div>
             )}
 
-            <LogoutConfirmationModal 
+            {/* Delete Search Confirmation Modal */}
+            {searchToDelete && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-in zoom-in-95 duration-200 border border-neutral-100">
+                        <div className="flex flex-col items-center text-center">
+                            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4 text-red-600">
+                                <AlertCircle className="w-6 h-6" />
+                            </div>
+                            <h3 className="text-lg font-bold text-neutral-900 mb-2">¿Eliminar búsqueda guardada?</h3>
+                            <p className="text-sm text-neutral-500 mb-2">
+                                Vas a eliminar <span className="font-semibold text-neutral-700">"{searchToDelete.name}"</span>
+                            </p>
+                            <p className="text-xs text-neutral-400 mb-6">Esta acción no se puede deshacer.</p>
+
+                            <div className="flex gap-3 w-full">
+                                <button
+                                    onClick={() => setSearchToDelete(null)}
+                                    className="flex-1 px-4 py-2.5 rounded-xl border border-neutral-200 text-neutral-600 font-bold text-sm hover:bg-neutral-50 transition-colors"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={() => handleDeleteSearch(searchToDelete)}
+                                    className="flex-1 px-4 py-2.5 rounded-xl bg-red-600 text-white font-bold text-sm hover:bg-red-700 shadow-lg shadow-red-600/20 transition-all hover:shadow-red-600/30 hover:-translate-y-0.5"
+                                >
+                                    Eliminar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <LogoutConfirmationModal
                 key="logout-modal-profile"
-                isOpen={showLogoutModal} 
+                isOpen={showLogoutModal}
                 onClose={() => setShowLogoutModal(false)}
                 onConfirm={handleLogoutConfirm}
                 isLoggingOut={isLoggingOut}

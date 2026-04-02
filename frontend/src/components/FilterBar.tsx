@@ -1,10 +1,10 @@
 'use client';
 
-import { fetchCycleSuggestions, fetchCentroSuggestions, getSavedSearches, createSavedSearch, deleteSavedSearch } from '@/services/api';
+import { fetchCycleSuggestions, fetchCentroSuggestions, getSavedSearches, createSavedSearch, deleteSavedSearch, updateSavedSearch } from '@/services/api';
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { Search, MapPin, Building2, SlidersHorizontal, Trash2, X, Link2, Check, Bookmark, BookmarkCheck, ChevronRight } from 'lucide-react';
+import { Search, MapPin, Building2, SlidersHorizontal, Trash2, X, Link2, Check, Bookmark, ChevronRight, RefreshCw } from 'lucide-react';
 import { FilterOptions, SavedSearch } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import useSWR, { mutate } from 'swr';
@@ -46,7 +46,14 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
   const [showSavedDropdown, setShowSavedDropdown] = useState(false);
   const [searchName, setSearchName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [activeSearch, setActiveSearch] = useState<SavedSearch | null>(null);
+  const [mounted, setMounted] = useState(false);
   const savedDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Cargar búsquedas guardadas solo si el usuario está autenticado
   const { data: savedSearches } = useSWR<SavedSearch[]>(
@@ -250,6 +257,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
         naturaleza: ''
       });
       setGeolocationStatus('idle');
+      setActiveSearch(null);
   };
 
   const handleShare = async () => {
@@ -278,13 +286,47 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
     }
   };
 
-  const handleApplySavedSearch = (savedFilters: FilterOptions) => {
-    setFilters({ ...savedFilters, radio: savedFilters.radio || 10 });
-    if (savedFilters.lat && savedFilters.lng) {
+  const handleApplySavedSearch = (search: SavedSearch) => {
+    setFilters({ ...search.filters, radio: search.filters.radio || 10 });
+    if (search.filters.lat && search.filters.lng) {
       setGeolocationStatus('success');
     }
+    setActiveSearch(search);
     setShowSavedDropdown(false);
   };
+
+  const handleUpdateSavedSearch = async () => {
+    if (!activeSearch) return;
+    setIsUpdating(true);
+    try {
+      await updateSavedSearch(activeSearch.id, { filters });
+      mutate('/saved-searches');
+      setActiveSearch({ ...activeSearch, filters });
+    } catch (err) {
+      console.error('Error al actualizar búsqueda:', err);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // Compara los filtros actuales con la búsqueda activa para detectar cambios
+  const hasChangesFromActive = (): boolean => {
+    if (!activeSearch) return false;
+    const activeFilters = activeSearch.filters;
+    const keysToCompare: (keyof FilterOptions)[] = ['q', 'provincia', 'tipo', 'naturaleza', 'familia', 'ciclo', 'nivel', 'modalidad', 'lat', 'lng', 'radio'];
+
+    for (const key of keysToCompare) {
+      const current = filters[key];
+      const active = activeFilters[key];
+      // Normalizar valores vacíos
+      const currentNorm = current === '' || current === undefined ? undefined : current;
+      const activeNorm = active === '' || active === undefined ? undefined : active;
+      if (currentNorm !== activeNorm) return true;
+    }
+    return false;
+  };
+
+  const filtersChanged = hasChangesFromActive();
 
   const handleDeleteSavedSearch = async (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -431,19 +473,15 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
             <div className="relative flex-1 md:flex-initial" ref={savedDropdownRef}>
               <button
                 onClick={handleBookmarkClick}
-                className={`w-full h-full px-4 py-3 rounded-xl transition-all border flex items-center justify-center gap-2 ${
-                  savedSearches && savedSearches.length > 0
-                    ? 'text-[#223945] bg-[#223945]/10 border-[#223945]/20'
-                    : 'text-neutral-400 bg-neutral-50 border-neutral-200 hover:text-[#223945] hover:bg-[#223945]/5 hover:border-[#223945]/10'
-                }`}
-                title={savedSearches && savedSearches.length > 0 ? "Mis búsquedas guardadas" : "Guardar búsqueda"}
+                className="w-full h-full px-4 py-3 rounded-xl transition-all border flex items-center justify-center gap-2 relative text-neutral-400 bg-neutral-50 border-neutral-200 hover:text-[#223945] hover:bg-[#223945]/5 hover:border-[#223945]/10"
+                title="Búsquedas guardadas"
               >
-                {savedSearches && savedSearches.length > 0 ? (
-                  <BookmarkCheck className="w-5 h-5" />
-                ) : (
-                  <Bookmark className="w-5 h-5" />
-                )}
+                <Bookmark className="w-5 h-5" />
               </button>
+              {/* Indicador de cambios pendientes - solo en cliente */}
+              {mounted && activeSearch && filtersChanged && (
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full border-2 border-white animate-pulse z-10" />
+              )}
 
               {/* Dropdown de búsquedas guardadas - Fullscreen en móvil */}
               {showSavedDropdown && savedSearches && savedSearches.length > 0 && (
@@ -457,39 +495,60 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
                       <X className="w-5 h-5" />
                     </button>
                   </div>
+                  {/* Botón actualizar búsqueda activa si hay cambios */}
+                  {activeSearch && filtersChanged && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleUpdateSavedSearch(); }}
+                      disabled={isUpdating}
+                      className="w-full px-4 py-3 text-sm font-bold text-white bg-[#223945] hover:bg-[#1a2c35] transition-all border-b border-neutral-100 flex items-center gap-2 disabled:opacity-50"
+                    >
+                      {isUpdating ? (
+                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <RefreshCw className="w-4 h-4" />
+                      )}
+                      Actualizar "{activeSearch.name}"
+                    </button>
+                  )}
                   {hasActiveFilters && (
                     <button
                       onClick={() => { setShowSavedDropdown(false); setShowSaveModal(true); }}
                       className="w-full px-4 py-3 text-sm font-bold text-[#223945] hover:bg-[#223945]/5 transition-all border-b border-neutral-100 flex items-center gap-2"
                     >
                       <Bookmark className="w-4 h-4" />
-                      Guardar búsqueda actual
+                      Guardar como nueva
                     </button>
                   )}
                   <ul className="py-2 max-h-[50vh] md:max-h-64 overflow-y-auto">
-                    {savedSearches.map((search) => (
-                      <li
-                        key={search.id}
-                        onClick={() => handleApplySavedSearch(search.filters)}
-                        className="px-4 py-4 md:py-3 cursor-pointer hover:bg-neutral-50 active:bg-neutral-100 transition-all flex items-center justify-between group"
-                      >
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <div className="p-2 bg-[#223945]/5 rounded-lg">
-                            <Bookmark className="w-4 h-4 text-[#223945]" />
+                    {savedSearches.map((search) => {
+                      const isActive = activeSearch?.id === search.id;
+                      return (
+                        <li
+                          key={search.id}
+                          onClick={() => handleApplySavedSearch(search)}
+                          className={`px-4 py-4 md:py-3 cursor-pointer hover:bg-neutral-50 active:bg-neutral-100 transition-all flex items-center justify-between group ${isActive ? 'bg-[#223945]/5 border-l-2 border-[#223945]' : ''}`}
+                        >
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <div className={`p-2 rounded-lg ${isActive ? 'bg-[#223945] text-white' : 'bg-[#223945]/5'}`}>
+                              <Bookmark className={`w-4 h-4 ${isActive ? 'text-white' : 'text-[#223945]'}`} />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className={`text-sm font-medium ${isActive ? 'text-[#223945] font-bold' : 'text-neutral-700'}`}>{search.name}</span>
+                              {isActive && <span className="text-[10px] text-[#223945]/60 font-medium">Activa</span>}
+                            </div>
                           </div>
-                          <span className="text-sm font-medium text-neutral-700">{search.name}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={(e) => handleDeleteSavedSearch(search.id, e)}
-                            className="p-2 text-neutral-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                            title="Eliminar"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </li>
-                    ))}
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={(e) => handleDeleteSavedSearch(search.id, e)}
+                              className="p-2 text-neutral-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                              title="Eliminar"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               )}

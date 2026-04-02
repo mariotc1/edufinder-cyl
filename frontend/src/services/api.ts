@@ -90,6 +90,12 @@ export const createSavedSearch = async (name: string, filters: FilterOptions) =>
   return response.data;
 };
 
+// Actualizar una búsqueda guardada (nombre y/o filtros)
+export const updateSavedSearch = async (id: number, data: { name?: string; filters?: FilterOptions }) => {
+  const response = await axios.put(`/saved-searches/${id}`, data);
+  return response.data;
+};
+
 // Eliminar una búsqueda guardada
 export const deleteSavedSearch = async (id: number) => {
   const response = await axios.delete(`/saved-searches/${id}`);

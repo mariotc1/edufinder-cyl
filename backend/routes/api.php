@@ -91,6 +91,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Gestión de combinaciones de filtros guardadas por el usuario
     Route::get('/saved-searches', [SavedSearchController::class, 'index']);
     Route::post('/saved-searches', [SavedSearchController::class, 'store']);
+    Route::put('/saved-searches/{id}', [SavedSearchController::class, 'update']);
     Route::delete('/saved-searches/{id}', [SavedSearchController::class, 'destroy']);
 });
 
