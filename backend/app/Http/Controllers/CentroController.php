@@ -18,126 +18,111 @@ class CentroController extends Controller
     {
         $query = Centro::query();
 
-        // FILTROS BÁSICOS
-        if ($request->has('provincia')) {
-            $query->where('provincia', 'ilike', '%' . $request->provincia . '%');
+        // Verificar si hay geolocalización
+        $hasGeo = $request->filled('lat') && $request->filled('lon') && $request->filled('radius');
+        $lat = $hasGeo ? floatval($request->lat) : null;
+        $lon = $hasGeo ? floatval($request->lon) : null;
+        $radius = $hasGeo ? floatval($request->radius) : null;
+
+        // FILTROS BÁSICOS - se aplican siempre
+        if ($request->filled('provincia')) {
+            $query->where('provincia', $request->provincia);
         }
 
-        if ($request->has('municipio')) {
+        if ($request->filled('municipio')) {
             $query->where('municipio', 'ilike', '%' . $request->municipio . '%');
         }
 
-        if ($request->has('localidad')) {
+        if ($request->filled('localidad')) {
             $query->where('localidad', 'ilike', '%' . $request->localidad . '%');
         }
 
-        if ($request->has('naturaleza')) {
+        if ($request->filled('naturaleza')) {
             $query->where('naturaleza', 'ilike', '%' . $request->naturaleza . '%');
         }
 
-        if ($request->has('denominacion_generica')) {
+        if ($request->filled('denominacion_generica')) {
             $query->where('denominacion_generica', 'ilike', '%' . $request->denominacion_generica . '%');
         }
 
-        if ($request->has('q')) {
+        if ($request->filled('q')) {
             $search = $request->q;
-            $query->where(function ($q) use ($search) {
-                $q->where('nombre', 'ilike', "%{$search}%")
-                    ->orWhere('denominacion_generica', 'ilike', "%{$search}%")
-                    ->orWhere('provincia', 'ilike', "%{$search}%")
-                    ->orWhere('municipio', 'ilike', "%{$search}%");
-            });
+            $query->where('nombre', 'ilike', "%{$search}%");
         }
 
         // FILTROS AVANZADOS
-        if ($request->has('nivel')) {
+        if ($request->filled('nivel')) {
             $query->whereHas('ciclos', function ($q) use ($request) {
                 $q->where('nivel', 'ilike', '%' . $request->nivel . '%');
             });
         }
 
-        if ($request->has('familia')) {
+        if ($request->filled('familia')) {
             $query->whereHas('ciclos', function ($q) use ($request) {
                 $q->where('familia_profesional', 'ilike', '%' . $request->familia . '%');
             });
         }
 
-        if ($request->has('modalidad')) {
+        if ($request->filled('modalidad')) {
             $query->whereHas('ciclos', function ($q) use ($request) {
                 $q->where('modalidad', 'ilike', '%' . $request->modalidad . '%');
             });
         }
 
-        // FILTRO DE PROXIMIDAD (geolocalización)
-        // Utiliza la fórmula del Haversine para encontrar centros dentro de un radio específico en KM
-        if ($request->has(['lat', 'lon', 'radius'])) {
-            $lat = $request->lat;
-            $lon = $request->lon;
-            $radius = $request->radius; // en km
-
-            // Fórmula de Haversine para calcular distancia esférica
-            $query->selectRaw("*, ( 6371 * acos( cos( radians(?) ) * cos( radians( latitud ) ) * cos( radians( longitud ) - radians(?) ) + sin( radians(?) ) * sin( radians( latitud ) ) ) ) AS distance", [$lat, $lon, $lat])
-                ->havingRaw("distance < ?", [$radius])
-                ->orderBy("distance");
-
-        } else {
-            $query->orderBy('nombre');
+        // FILTRO DE GEOLOCALIZACIÓN - usar whereRaw en lugar de havingRaw
+        if ($hasGeo) {
+            $query->whereNotNull('latitud')
+                  ->whereNotNull('longitud')
+                  ->whereRaw(
+                      "( 6371 * acos( cos( radians(?) ) * cos( radians( latitud ) ) * cos( radians( longitud ) - radians(?) ) + sin( radians(?) ) * sin( radians( latitud ) ) ) ) < ?",
+                      [$lat, $lon, $lat, $radius]
+                  );
         }
 
-        // FILTRADO DE MAPA 
-        // Devuelve todos los centros (o filtro) con estructura ligera para pintar pines en el mapa
+        // FILTRADO DE MAPA
         if ($request->has('map')) {
-            $cacheKey = 'centros_map_' . md5(json_encode($request->except('map')));
-            $shouldCache = count($request->all()) === 1; // solo cachear si es petición limpia
+            if ($hasGeo) {
+                $query->selectRaw(
+                    "id, nombre, latitud, longitud, naturaleza, provincia, municipio, localidad, direccion, denominacion_generica,
+                    ( 6371 * acos( cos( radians(?) ) * cos( radians( latitud ) ) * cos( radians( longitud ) - radians(?) ) + sin( radians(?) ) * sin( radians( latitud ) ) ) ) AS distance",
+                    [$lat, $lon, $lat]
+                )->orderBy('distance');
+            } else {
+                $query->select([
+                    'id', 'nombre', 'latitud', 'longitud', 'naturaleza',
+                    'provincia', 'municipio', 'localidad', 'direccion', 'denominacion_generica'
+                ])->orderBy('nombre');
+            }
 
-            $callback = function () use ($query, $request) {
-                // si hay filtro de radio, necesitamos la fórmula del Haversine (distance)
-                if ($request->has(['lat', 'lon', 'radius'])) {
-                    $lat = $request->lat;
-                    $lon = $request->lon;
+            $centros = $query->limit(2000)->get();
 
-                    // Re-aplicamos el selectRaw pero restringiendo columnas base
-                    $query->selectRaw("id, nombre, latitud, longitud, naturaleza, provincia, municipio, localidad, direccion, denominacion_generica, ( 6371 * acos( cos( radians(?) ) * cos( radians( latitud ) ) * cos( radians( longitud ) - radians(?) ) + sin( radians(?) ) * sin( radians( latitud ) ) ) ) AS distance", [$lat, $lon, $lat]);
-
-                } else {
-                    $query->select([
-                        'id',
-                        'nombre',
-                        'latitud',
-                        'longitud',
-                        'naturaleza',
-                        'provincia',
-                        'municipio',
-                        'localidad',
-                        'direccion',
-                        'denominacion_generica'
-                    ]);
-                }
-
-                $centros = $query->limit(2000)->get();
-
-                return $centros->map(function ($centro) {
-                    return [
-                        'id' => $centro->id,
-                        'nombre' => $centro->nombre,
-                        'latitud' => $centro->latitud,
-                        'longitud' => $centro->longitud,
-                        'naturaleza' => $centro->naturaleza,
-                        'provincia' => $centro->provincia,
-                        'municipio' => $centro->municipio,
-                        'localidad' => $centro->localidad,
-                        'direccion' => $centro->direccion,
-                        'denominacion_generica' => $centro->denominacion_generica,
-                        'distance' => isset($centro->distance) ? round($centro->distance, 2) : null,
-                    ];
-                });
-            };
-
-            $data = $shouldCache
-                ? \Illuminate\Support\Facades\Cache::remember($cacheKey, 60 * 60, $callback) // 1 hora
-                : $callback();
+            $data = $centros->map(function ($centro) {
+                return [
+                    'id' => $centro->id,
+                    'nombre' => $centro->nombre,
+                    'latitud' => $centro->latitud,
+                    'longitud' => $centro->longitud,
+                    'naturaleza' => $centro->naturaleza,
+                    'provincia' => $centro->provincia,
+                    'municipio' => $centro->municipio,
+                    'localidad' => $centro->localidad,
+                    'direccion' => $centro->direccion,
+                    'denominacion_generica' => $centro->denominacion_generica,
+                    'distance' => $centro->distance ?? null,
+                ];
+            });
 
             return response()->json(['data' => $data]);
+        }
+
+        // MODO NORMAL (paginado)
+        if ($hasGeo) {
+            $query->selectRaw(
+                "*, ( 6371 * acos( cos( radians(?) ) * cos( radians( latitud ) ) * cos( radians( longitud ) - radians(?) ) + sin( radians(?) ) * sin( radians( latitud ) ) ) ) AS distance",
+                [$lat, $lon, $lat]
+            )->orderBy('distance');
+        } else {
+            $query->orderBy('nombre');
         }
 
         return CentroResource::collection($query->paginate(20));
