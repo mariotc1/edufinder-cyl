@@ -18,6 +18,7 @@ export default function SearchContent() {
     q: searchParams.get('q') || '',
     provincia: searchParams.get('provincia') || '',
     tipo: searchParams.get('tipo') || '',
+    naturaleza: searchParams.get('naturaleza') || '',
     familia: searchParams.get('familia') || '',
     nivel: searchParams.get('nivel') || '',
     modalidad: searchParams.get('modalidad') || '',
