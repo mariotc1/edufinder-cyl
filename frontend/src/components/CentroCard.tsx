@@ -260,7 +260,7 @@ export default function CentroCard({
                     </div>
                     <span className="text-xs font-medium text-neutral-700">WhatsApp</span>
                   </button>
-                  {typeof navigator !== 'undefined' && navigator.share && (
+                  {typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (
                     <button
                       onClick={handleShareNative}
                       className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-neutral-50 transition-colors text-left"
