@@ -1,12 +1,26 @@
 'use client';
 
 import { useComparison } from '@/context/ComparisonContext';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import api from '@/lib/axios';
-import { ChevronLeft, Info, MapPin, Phone, Mail, Globe, Check, X, Loader2, AlertTriangle, GraduationCap, Scale } from 'lucide-react';
+import { ChevronLeft, Info, MapPin, Phone, Mail, Globe, Check, X, Loader2, AlertTriangle, GraduationCap, Scale, Download, Share2, Link2, Copy, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
+import jsPDF from 'jspdf';
+
+// Wrapper component for Suspense
+export default function ComparadorPageWrapper() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-[#223945]" />
+            </div>
+        }>
+            <ComparadorPage />
+        </Suspense>
+    );
+}
 
 interface CentroDetail {
     id: number;
@@ -35,11 +49,39 @@ interface Ciclo {
 
 // PÁGINA DE COMPARADOR DE CENTROS
 // Muestra hasta 3 centros lado a lado para comparar su oferta y detalles
-export default function ComparadorPage() {
+function ComparadorPage() {
     const router = useRouter();
-    const { selectedCentros, removeFromCompare } = useComparison();
+    const searchParams = useSearchParams();
+    const { selectedCentros, removeFromCompare, addToCompare } = useComparison();
     const [details, setDetails] = useState<CentroDetail[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [loadedFromUrl, setLoadedFromUrl] = useState(false);
+
+    // Load centers from URL params (for shared links)
+    useEffect(() => {
+        const centrosParam = searchParams.get('centros');
+        if (centrosParam && !loadedFromUrl) {
+            const ids = centrosParam.split(',').map(id => parseInt(id)).filter(id => !isNaN(id));
+            if (ids.length >= 2) {
+                // Fetch basic info for these centers and add them to comparison
+                const fetchAndAdd = async () => {
+                    try {
+                        const promises = ids.slice(0, 3).map(id =>
+                            api.get(`/centros/${id}`).then(res => res.data.data)
+                        );
+                        const results = await Promise.all(promises);
+                        results.forEach(centro => {
+                            addToCompare({ id: centro.id, nombre: centro.nombre });
+                        });
+                        setLoadedFromUrl(true);
+                    } catch (error) {
+                        console.error("Error loading from URL:", error);
+                    }
+                };
+                fetchAndAdd();
+            }
+        }
+    }, [searchParams, loadedFromUrl, addToCompare]);
 
     // Efecto para obtener detalles completos de los centros seleccionados (fetch paralelo)
     useEffect(() => {
@@ -51,7 +93,7 @@ export default function ComparadorPage() {
 
             setIsLoading(true);
             try {
-                const promises = selectedCentros.map(c => 
+                const promises = selectedCentros.map(c =>
                     api.get(`/centros/${c.id}`).then(res => res.data.data)
                 );
                 const results = await Promise.all(promises);
@@ -120,6 +162,255 @@ export default function ComparadorPage() {
         }
     };
 
+    // Share functionality
+    const [showShareMenu, setShowShareMenu] = useState(false);
+    const [copied, setCopied] = useState(false);
+    const shareMenuRef = useRef<HTMLDivElement>(null);
+
+    // Close share menu on click outside
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (shareMenuRef.current && !shareMenuRef.current.contains(e.target as Node)) {
+                setShowShareMenu(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const getShareUrl = () => {
+        const ids = details.map(d => d.id).join(',');
+        return `${window.location.origin}/comparador?centros=${ids}`;
+    };
+
+    const handleCopyLink = async () => {
+        try {
+            await navigator.clipboard.writeText(getShareUrl());
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch (err) {
+            console.error('Error copying link:', err);
+        }
+    };
+
+    const handleShareWhatsApp = () => {
+        const centrosCount = details.length;
+        const centrosList = details.map(d => `- ${d.nombre}`).join('\n');
+        const text = `Mira, he comparado estos ${centrosCount} centros con EduFinder CyL, ¿que te parece?\n\n${centrosList}\n\nEchale un vistazo: ${getShareUrl()}`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+        setShowShareMenu(false);
+    };
+
+    const handleShareNative = async () => {
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: 'Comparación de Centros - EduFinder',
+                    text: `Compara estos centros: ${details.map(d => d.nombre).join(', ')}`,
+                    url: getShareUrl(),
+                });
+            } catch (err) {
+                // Ignore AbortError when user cancels the share dialog
+                if (err instanceof Error && err.name !== 'AbortError') {
+                    console.error('Error sharing:', err);
+                }
+            }
+        }
+        setShowShareMenu(false);
+    };
+
+    // PDF Generation
+    const [generatingPdf, setGeneratingPdf] = useState(false);
+
+    const generatePDF = async () => {
+        if (details.length === 0) return;
+
+        setGeneratingPdf(true);
+
+        try {
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const margin = 15;
+            const colWidth = (pageWidth - margin * 2 - (details.length - 1) * 5) / details.length;
+            let y = margin;
+
+            // Header
+            pdf.setFillColor(34, 57, 69);
+            pdf.rect(0, 0, pageWidth, 32, 'F');
+
+            pdf.setTextColor(255, 255, 255);
+            pdf.setFontSize(18);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('Comparacion de Centros', margin, 16);
+
+            pdf.setFontSize(9);
+            pdf.setFont('helvetica', 'normal');
+            pdf.text(`EduFinder CyL - ${new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}`, margin, 25);
+
+            y = 42;
+
+            // Each center in its own column with clear borders
+            details.forEach((centro, idx) => {
+                const x = margin + idx * (colWidth + 5);
+                let localY = y;
+
+                // Column background
+                pdf.setFillColor(249, 250, 251);
+                pdf.setDrawColor(229, 231, 235);
+                pdf.roundedRect(x, localY, colWidth, 50, 2, 2, 'FD');
+
+                // Naturaleza badge
+                pdf.setFontSize(7);
+                pdf.setFont('helvetica', 'bold');
+                if (centro.naturaleza?.toUpperCase() === 'PUBLICO') {
+                    pdf.setFillColor(219, 234, 254);
+                    pdf.setTextColor(29, 78, 216);
+                } else {
+                    pdf.setFillColor(254, 243, 199);
+                    pdf.setTextColor(180, 83, 9);
+                }
+                const badgeText = centro.naturaleza?.toUpperCase() || 'N/A';
+                pdf.roundedRect(x + 4, localY + 4, 22, 5, 1, 1, 'F');
+                pdf.text(badgeText, x + 6, localY + 7.5);
+
+                // Center name
+                pdf.setTextColor(17, 24, 39);
+                pdf.setFontSize(10);
+                pdf.setFont('helvetica', 'bold');
+                const nameLines = pdf.splitTextToSize(centro.nombre, colWidth - 10);
+                pdf.text(nameLines.slice(0, 2), x + 4, localY + 16);
+
+                // Location
+                pdf.setFontSize(8);
+                pdf.setFont('helvetica', 'normal');
+                pdf.setTextColor(107, 114, 128);
+                pdf.text(`${centro.localidad}, ${centro.provincia}`, x + 4, localY + 30);
+
+                // Contact info
+                localY += 34;
+                pdf.setFontSize(7);
+                pdf.setTextColor(75, 85, 99);
+
+                if (centro.web) {
+                    const webText = centro.web.replace(/^https?:\/\//, '').substring(0, 28);
+                    pdf.text(`Web: ${webText}`, x + 4, localY);
+                    localY += 4;
+                }
+                if (centro.telefono) {
+                    pdf.text(`Tel: ${centro.telefono}`, x + 4, localY);
+                }
+            });
+
+            y += 58;
+
+            // Separator
+            pdf.setDrawColor(209, 213, 219);
+            pdf.setLineWidth(0.3);
+            pdf.line(margin, y, pageWidth - margin, y);
+            y += 8;
+
+            // Section header
+            pdf.setTextColor(34, 57, 69);
+            pdf.setFontSize(11);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('OFERTA EDUCATIVA', margin, y);
+            y += 10;
+
+            // Get all unique families across all centers
+            const allFamilies = new Set<string>();
+            details.forEach(centro => {
+                centro.ciclos?.forEach(c => allFamilies.add(c.familia_profesional));
+            });
+
+            const sortedFamilies = Array.from(allFamilies).sort();
+
+            sortedFamilies.forEach(familia => {
+                // Check if we need a new page
+                if (y > pageHeight - 35) {
+                    pdf.addPage();
+                    y = margin;
+                }
+
+                // Family header with colored bar
+                pdf.setFillColor(34, 57, 69);
+                pdf.rect(margin, y, pageWidth - margin * 2, 6, 'F');
+                pdf.setFontSize(8);
+                pdf.setFont('helvetica', 'bold');
+                pdf.setTextColor(255, 255, 255);
+                pdf.text(familia.toUpperCase(), margin + 3, y + 4.2);
+                y += 10;
+
+                // Column headers for each center
+                details.forEach((centro, idx) => {
+                    const x = margin + idx * (colWidth + 5);
+                    const ciclosInFamily = centro.ciclos?.filter(c => c.familia_profesional === familia) || [];
+
+                    pdf.setFontSize(6);
+                    let cicloY = y;
+
+                    if (ciclosInFamily.length === 0) {
+                        pdf.setTextColor(156, 163, 175);
+                        pdf.setFont('helvetica', 'italic');
+                        pdf.text('No disponible', x, cicloY);
+                    } else {
+                        ciclosInFamily.forEach(ciclo => {
+                            if (cicloY > pageHeight - 15) return;
+
+                            // Level indicator with color
+                            const levelShort = ciclo.nivel_educativo === 'Grado Superior' ? 'GS' :
+                                              ciclo.nivel_educativo === 'Grado Medio' ? 'GM' : 'FPB';
+
+                            // Draw level badge
+                            if (ciclo.nivel_educativo?.toUpperCase() === 'GRADO SUPERIOR') {
+                                pdf.setFillColor(147, 51, 234);
+                            } else if (ciclo.nivel_educativo?.toUpperCase() === 'GRADO MEDIO') {
+                                pdf.setFillColor(245, 158, 11);
+                            } else {
+                                pdf.setFillColor(37, 99, 235);
+                            }
+                            pdf.roundedRect(x, cicloY - 2.5, 8, 3.5, 0.5, 0.5, 'F');
+                            pdf.setTextColor(255, 255, 255);
+                            pdf.setFont('helvetica', 'bold');
+                            pdf.text(levelShort, x + 1.2, cicloY);
+
+                            // Ciclo name
+                            pdf.setTextColor(55, 65, 81);
+                            pdf.setFont('helvetica', 'normal');
+                            const maxNameWidth = colWidth - 12;
+                            const cicloName = ciclo.ciclo_formativo.length > 40
+                                ? ciclo.ciclo_formativo.substring(0, 38) + '...'
+                                : ciclo.ciclo_formativo;
+                            pdf.text(cicloName, x + 10, cicloY);
+                            cicloY += 4.5;
+                        });
+                    }
+                });
+
+                const maxCiclos = Math.max(...details.map(c => (c.ciclos?.filter(ci => ci.familia_profesional === familia) || []).length), 1);
+                y += Math.max(maxCiclos * 4.5 + 3, 8);
+            });
+
+            // Footer on all pages
+            const totalPages = pdf.getNumberOfPages();
+            for (let i = 1; i <= totalPages; i++) {
+                pdf.setPage(i);
+                pdf.setFontSize(7);
+                pdf.setTextColor(156, 163, 175);
+                pdf.text(`Generado con EduFinder CyL - edufinder.es | Pagina ${i} de ${totalPages}`, margin, pageHeight - 8);
+            }
+
+            // Save
+            const fileName = `comparacion-${details.length}-centros.pdf`;
+            pdf.save(fileName);
+
+        } catch (error) {
+            console.error('Error generating PDF:', error);
+        } finally {
+            setGeneratingPdf(false);
+        }
+    };
+
     if (selectedCentros.length < 2) {
         return (
             <div className="min-h-[70vh] flex flex-col items-center justify-center p-4">
@@ -169,16 +460,98 @@ export default function ComparadorPage() {
                     Volver
                 </button>
 
-                <div className="mb-0">
-                    <h1 className="text-2xl md:text-3xl font-bold text-[#223945] mb-2 flex items-center gap-3">
-                        <div className="p-2.5 bg-gradient-to-br from-[#223945] to-[#374f5e] text-white rounded-xl shadow-lg shadow-[#223945]/20">
-                            <Scale className="w-6 h-6" />
+                <div className="mb-8">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                        <div>
+                            <h1 className="text-2xl md:text-3xl font-bold text-[#223945] mb-2 flex items-center gap-3">
+                                <div className="p-2.5 bg-gradient-to-br from-[#223945] to-[#374f5e] text-white rounded-xl shadow-lg shadow-[#223945]/20">
+                                    <Scale className="w-6 h-6" />
+                                </div>
+                                Comparador de Centros
+                            </h1>
+                            <p className="text-neutral-500 max-w-2xl text-sm pl-[3.5rem] leading-relaxed">
+                                Compara {details.length} centros educativos
+                            </p>
                         </div>
-                        Comparador de Centros
-                    </h1>
-                    <p className="text-neutral-500 max-w-2xl text-sm mb-8 pl-[3.5rem] leading-relaxed">
-                        Analiza las fortalezas de cada centro lado a lado.
-                    </p>
+
+                        {/* Action buttons */}
+                        {details.length >= 2 && !isLoading && (
+                            <div className="flex items-center justify-center sm:justify-end gap-2 w-full sm:w-auto">
+                                {/* Share button with dropdown */}
+                                <div className="relative" ref={shareMenuRef}>
+                                    <button
+                                        onClick={() => setShowShareMenu(!showShareMenu)}
+                                        className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-neutral-200 text-neutral-700 font-bold text-sm hover:border-[#223945]/30 hover:bg-neutral-50 transition-all shadow-sm"
+                                    >
+                                        <Share2 className="w-4 h-4" />
+                                        <span className="hidden sm:inline">Compartir</span>
+                                    </button>
+
+                                    <AnimatePresence>
+                                        {showShareMenu && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 5, scale: 0.95 }}
+                                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                exit={{ opacity: 0, y: 5, scale: 0.95 }}
+                                                className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-neutral-100 overflow-hidden z-50"
+                                            >
+                                                <div className="p-1">
+                                                    <button
+                                                        onClick={handleCopyLink}
+                                                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-neutral-50 transition-colors text-left"
+                                                    >
+                                                        <div className="w-8 h-8 rounded-lg bg-neutral-100 flex items-center justify-center">
+                                                            {copied ? <CheckCircle className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-neutral-500" />}
+                                                        </div>
+                                                        <span className="text-sm font-medium text-neutral-700">
+                                                            {copied ? '¡Copiado!' : 'Copiar enlace'}
+                                                        </span>
+                                                    </button>
+                                                    <button
+                                                        onClick={handleShareWhatsApp}
+                                                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-neutral-50 transition-colors text-left"
+                                                    >
+                                                        <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center">
+                                                            <svg className="w-4 h-4 text-green-600" viewBox="0 0 24 24" fill="currentColor">
+                                                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                                                            </svg>
+                                                        </div>
+                                                        <span className="text-sm font-medium text-neutral-700">WhatsApp</span>
+                                                    </button>
+                                                    {typeof navigator !== 'undefined' && navigator.share && (
+                                                        <button
+                                                            onClick={handleShareNative}
+                                                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-neutral-50 transition-colors text-left"
+                                                        >
+                                                            <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                                                                <Share2 className="w-4 h-4 text-blue-600" />
+                                                            </div>
+                                                            <span className="text-sm font-medium text-neutral-700">Más opciones...</span>
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+
+                                {/* Download PDF button */}
+                                <button
+                                    onClick={generatePDF}
+                                    disabled={generatingPdf}
+                                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#223945] text-white font-bold text-sm hover:bg-[#1a2c35] transition-all shadow-md shadow-[#223945]/20 disabled:opacity-50"
+                                >
+                                    {generatingPdf ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                        <Download className="w-4 h-4" />
+                                    )}
+                                    <span className="hidden sm:inline">{generatingPdf ? 'Generando...' : 'Descargar PDF'}</span>
+                                    <span className="sm:hidden">PDF</span>
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {isLoading ? (
