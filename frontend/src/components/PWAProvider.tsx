@@ -221,7 +221,7 @@ export default function PWAProvider({ children }: { children: React.ReactNode })
                   <Smartphone className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-white font-bold text-sm">Instalar EduFinder CYL</p>
+                  <p className="!text-white font-bold text-sm">Instalar EduFinder CYL</p>
                 </div>
                 <button
                   onClick={dismissBanner}
