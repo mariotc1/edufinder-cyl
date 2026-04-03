@@ -163,9 +163,13 @@ function NavbarContent() {
       >
           <div className="px-4 py-6 space-y-4">
             
-            {/* User Header (Mobile) */}
+            {/* User Header (Mobile) - Clickable to go to profile */}
             {user && (
-                <div className="bg-gradient-to-r from-[#223945] to-blue-600 rounded-2xl p-5 text-white mb-6 shadow-lg relative overflow-hidden">
+                <Link
+                    href="/perfil"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block bg-gradient-to-r from-[#223945] to-blue-600 rounded-2xl p-5 text-white mb-6 shadow-lg relative overflow-hidden active:scale-[0.98] transition-transform"
+                >
                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
                     <div className="relative z-10 flex items-center gap-4">
                          {user.foto_perfil ? (
@@ -175,12 +179,12 @@ function NavbarContent() {
                                 {user.name.charAt(0)}
                             </div>
                         )}
-                        <div>
+                        <div className="flex-1 min-w-0">
                             <p className="font-bold text-lg leading-tight !text-white">{user.name}</p>
-                            <p className="!text-white/90 text-xs font-medium truncate">{user.email}</p>
+                            <p className="!text-white/70 text-xs font-medium">Toca para ver tu perfil</p>
                         </div>
                     </div>
-                </div>
+                </Link>
             )}
 
             {/* Botón Instalar PWA (móvil) */}
@@ -241,17 +245,6 @@ function NavbarContent() {
                 )}
 
                 <div className="h-px bg-neutral-100 my-2"></div>
-                  
-                <Link 
-                  href="/perfil"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-neutral-50 text-neutral-600 font-medium transition-all"
-                 >
-                   <div className="w-8 h-8 rounded-full bg-neutral-100 text-neutral-500 flex items-center justify-center">
-                       <UserMenuIcon className="w-4 h-4" /> 
-                   </div>
-                   Mi Perfil
-                 </Link>
 
                 <button 
                   onClick={() => setShowLogoutModal(true)} 
