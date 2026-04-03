@@ -42,18 +42,38 @@ export const removeFavorite = async (centroId: number) => {
 
 // SUGERENCIAS DE BÚSQUEDA (AUTOCOMPLETE)
 // Obtener sugerencias de ciclos formativos
-export const fetchCycleSuggestions = async (q: string) => {
-  const response = await axios.get(
-    `/ciclos/sugerencias?q=${encodeURIComponent(q)}`,
-  );
+// Acepta filtros opcionales para mostrar solo ciclos que coincidan con los criterios
+interface CycleSuggestionFilters {
+  nivel?: string;
+  familia?: string;
+  modalidad?: string;
+}
+
+export const fetchCycleSuggestions = async (q: string, filters?: CycleSuggestionFilters) => {
+  const params = new URLSearchParams();
+  params.append('q', q);
+
+  if (filters?.nivel) params.append('nivel', filters.nivel);
+  if (filters?.familia) params.append('familia', filters.familia);
+  if (filters?.modalidad) params.append('modalidad', filters.modalidad);
+
+  const response = await axios.get(`/ciclos/sugerencias?${params.toString()}`);
   return response.data;
 };
 
 // Obtener sugerencias de centros educativos
-export const fetchCentroSuggestions = async (q: string) => {
-  const response = await axios.get(
-    `/centros/sugerencias?q=${encodeURIComponent(q)}`,
-  );
+// Acepta filtros opcionales para mostrar solo centros que coincidan con los criterios
+interface CentroSuggestionFilters {
+  provincia?: string;
+}
+
+export const fetchCentroSuggestions = async (q: string, filters?: CentroSuggestionFilters) => {
+  const params = new URLSearchParams();
+  params.append('q', q);
+
+  if (filters?.provincia) params.append('provincia', filters.provincia);
+
+  const response = await axios.get(`/centros/sugerencias?${params.toString()}`);
   return response.data;
 };
 
@@ -67,6 +87,12 @@ export const getSavedSearches = async () => {
 // Guardar una nueva búsqueda
 export const createSavedSearch = async (name: string, filters: FilterOptions) => {
   const response = await axios.post('/saved-searches', { name, filters });
+  return response.data;
+};
+
+// Actualizar una búsqueda guardada (nombre y/o filtros)
+export const updateSavedSearch = async (id: number, data: { name?: string; filters?: FilterOptions }) => {
+  const response = await axios.put(`/saved-searches/${id}`, data);
   return response.data;
 };
 

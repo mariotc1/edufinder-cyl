@@ -37,6 +37,36 @@
             ], 201);
         }
 
+        // ACTUALIZAR BÚSQUEDA GUARDADA
+        // Actualiza el nombre y/o filtros de una búsqueda existente
+        public function update(Request $request, $id) {
+            $search = SavedSearch::where('user_id', $request->user()->id)
+                ->where('id', $id)
+                ->first();
+
+            if (!$search) {
+                return response()->json(['message' => 'No encontrada'], 404);
+            }
+
+            $validated = $request->validate([
+                'name' => 'sometimes|string|max:100',
+                'filters' => 'sometimes|array',
+            ]);
+
+            if (isset($validated['name'])) {
+                $search->name = $validated['name'];
+            }
+            if (isset($validated['filters'])) {
+                $search->filters = $validated['filters'];
+            }
+            $search->save();
+
+            return response()->json([
+                'message' => 'Búsqueda actualizada correctamente',
+                'search' => $search
+            ]);
+        }
+
         // ELIMINAR BÚSQUEDA GUARDADA
         // Elimina una búsqueda guardada por su ID
         public function destroy(Request $request, $id) {

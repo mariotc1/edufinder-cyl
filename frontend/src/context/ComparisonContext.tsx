@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
 import { useAuth } from './AuthContext';
 
 export interface Centro {
@@ -34,7 +34,10 @@ export function ComparisonProvider({ children }: { children: ReactNode }) {
         const saved = localStorage.getItem('edufinder_compare');
         if (saved) {
             try {
-                setSelectedCentros(JSON.parse(saved));
+                const parsed = JSON.parse(saved);
+                if (Array.isArray(parsed)) {
+                    setSelectedCentros(parsed);
+                }
             } catch (e) {
                 console.error("Failed to parse comparison state", e);
             }
@@ -53,40 +56,42 @@ export function ComparisonProvider({ children }: { children: ReactNode }) {
         }
     }, [user]);
 
-    // Añadir centro al comparador
-    const addToCompare = (centro: Centro) => {
-        if (selectedCentros.length >= 3) {
-            return;
-        }
-        if (selectedCentros.some(c => c.id === centro.id)) {
-            return;
-        }
-        
-        setSelectedCentros(prev => [...prev, centro]);
+    // Añadir centro al comparador - ESTABILIZADO CON useCallback
+    const addToCompare = useCallback((centro: Centro) => {
+        setSelectedCentros(prev => {
+            if (prev.length >= 3) return prev;
+            if (prev.some(c => c.id === centro.id)) return prev;
+            return [...prev, centro];
+        });
         setIsOpen(true);
-    };
+    }, []);
 
-    const removeFromCompare = (id: number) => {
-        setSelectedCentros(prev => prev.filter(c => c.id !== id));
-        if (selectedCentros.length <= 1) {
-             setIsOpen(false);
-        }
-    };
+    const removeFromCompare = useCallback((id: number) => {
+        setSelectedCentros(prev => {
+            const next = prev.filter(c => c.id !== id);
+            if (next.length <= 1) {
+                setIsOpen(false);
+            }
+            return next;
+        });
+    }, []);
 
-    const clearComparison = () => {
+    const clearComparison = useCallback(() => {
         setSelectedCentros([]);
         setIsOpen(false);
-    };
+    }, []);
+
+    const value = useMemo(() => ({
+        selectedCentros,
+        addToCompare,
+        removeFromCompare,
+        clearComparison,
+        isOpen,
+        setIsOpen
+    }), [selectedCentros, addToCompare, removeFromCompare, clearComparison, isOpen]);
 
     return (
-        <ComparisonContext.Provider value={{ 
-            selectedCentros, 
-            addToCompare, 
-            removeFromCompare, 
-            clearComparison,
-            isOpen,
-            setIsOpen
-        }}>
+        <ComparisonContext.Provider value={value}>
             {children}
         </ComparisonContext.Provider>
     );

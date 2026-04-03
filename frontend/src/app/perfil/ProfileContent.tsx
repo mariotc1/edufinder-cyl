@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import api from '@/lib/axios';
 import { getSavedSearches, deleteSavedSearch } from '@/services/api';
 import { SavedSearch } from '@/types';
-import { User, MapPin, Heart, Lock, Camera, LogOut, Eye, EyeOff, ChevronLeft, Trash, AlertCircle, CheckCircle, Bookmark, Search, X } from 'lucide-react';
+import { User, MapPin, Heart, Lock, Camera, LogOut, Eye, EyeOff, ChevronLeft, Trash, AlertCircle, CheckCircle, Bookmark, Search, X, Calendar, Building2, GraduationCap, Filter } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import LogoutConfirmationModal from '@/components/auth/LogoutConfirmationModal';
@@ -52,6 +52,9 @@ export default function ProfileContent() {
     // Custom Logout Modal State
     const [showLogoutModal, setShowLogoutModal] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+    // Delete Search Confirmation Modal State
+    const [searchToDelete, setSearchToDelete] = useState<SavedSearch | null>(null);
 
 
     const passwordRequirements = useMemo(() => {
@@ -230,13 +233,15 @@ export default function ProfileContent() {
         setShowLogoutModal(true);
     };
 
-    const handleDeleteSearch = async (id: number) => {
+    const handleDeleteSearch = async (search: SavedSearch) => {
         try {
-            await deleteSavedSearch(id);
-            setSavedSearches(prev => prev.filter(s => s.id !== id));
+            await deleteSavedSearch(search.id);
+            setSavedSearches(prev => prev.filter(s => s.id !== search.id));
             setMessage({ text: 'Búsqueda eliminada', type: 'success' });
+            setSearchToDelete(null);
         } catch (error) {
             setMessage({ text: 'Error al eliminar búsqueda', type: 'error' });
+            setSearchToDelete(null);
         }
     };
 
@@ -259,15 +264,31 @@ export default function ProfileContent() {
     };
 
     const formatFilters = (filters: any) => {
-        const parts: string[] = [];
-        if (filters.provincia) parts.push(filters.provincia);
-        if (filters.tipo) parts.push(filters.tipo);
-        if (filters.naturaleza) parts.push(filters.naturaleza);
-        if (filters.familia) parts.push(filters.familia);
-        if (filters.nivel) parts.push(filters.nivel);
-        if (filters.modalidad) parts.push(filters.modalidad);
-        if (filters.lat && filters.lng) parts.push(`${filters.radio || 10}km`);
-        return parts.length > 0 ? parts.join(' · ') : 'Sin filtros específicos';
+        const parts: { label: string; type: 'location' | 'education' | 'general' }[] = [];
+        if (filters.provincia) parts.push({ label: filters.provincia, type: 'location' });
+        if (filters.naturaleza) parts.push({ label: filters.naturaleza, type: 'general' });
+        if (filters.familia) parts.push({ label: filters.familia, type: 'education' });
+        if (filters.nivel) parts.push({ label: filters.nivel, type: 'education' });
+        if (filters.modalidad) parts.push({ label: filters.modalidad, type: 'education' });
+        if (filters.lat && filters.lng) parts.push({ label: `Radio ${filters.radio || 10}km`, type: 'location' });
+        return parts;
+    };
+
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+    };
+
+    const getFilterCount = (filters: any) => {
+        let count = 0;
+        if (filters.provincia) count++;
+        if (filters.naturaleza) count++;
+        if (filters.familia) count++;
+        if (filters.nivel) count++;
+        if (filters.modalidad) count++;
+        if (filters.lat && filters.lng) count++;
+        if (filters.q) count++;
+        return count;
     };
 
     const handleLogoutConfirm = async () => {
@@ -299,28 +320,134 @@ export default function ProfileContent() {
                     {/* Decorative Top Gradient */}
                     <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300"></div>
 
-                    <div className="md:flex min-h-[600px]">
-                        {/* Sidebar - High Contrast & Branding */}
-                        <div className="md:w-1/3 bg-white p-8 border-r border-neutral-100 relative">
+                    {/* Mobile Header */}
+                    <div className="md:hidden">
+                        {/* User Card - Clean design */}
+                        <div className="p-4 pt-6 pb-4">
+                            <div className="bg-gradient-to-r from-[#223945] to-blue-600 rounded-2xl p-4 text-white relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8"></div>
+                                <div className="relative z-10 flex items-center gap-4">
+                                    <div className="relative flex-shrink-0">
+                                        {user?.foto_perfil ? (
+                                            <img
+                                                src={user.foto_perfil}
+                                                alt={user.name}
+                                                className="w-16 h-16 rounded-full object-cover border-2 border-white/30 shadow-lg bg-white"
+                                            />
+                                        ) : (
+                                            <div className="w-16 h-16 rounded-full bg-white/20 text-white flex items-center justify-center text-2xl font-bold border-2 border-white/30">
+                                                {user?.name?.charAt(0)}
+                                            </div>
+                                        )}
+                                        {/* Photo buttons */}
+                                        <button
+                                            onClick={() => fileInputRef.current?.click()}
+                                            disabled={uploading}
+                                            className="absolute -bottom-1 -right-1 p-1.5 bg-white text-[#223945] rounded-full shadow-md"
+                                        >
+                                            <Camera className="w-3 h-3" />
+                                        </button>
+                                        {user?.foto_perfil && (
+                                            <button
+                                                onClick={() => setShowDeleteConfirm(true)}
+                                                className="absolute -top-1 -left-1 p-1.5 bg-red-500 text-white rounded-full shadow-md"
+                                            >
+                                                <Trash className="w-3 h-3" />
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <h2 className="text-lg font-bold !text-white truncate">{user?.name}</h2>
+                                        <p className="text-xs !text-white/80 truncate">{user?.email}</p>
+                                    </div>
+                                </div>
+                                {/* Logout at bottom of card */}
+                                <button
+                                    onClick={handleLogoutClick}
+                                    className="mt-4 w-full flex items-center justify-center gap-2 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-bold text-white/90 transition-colors"
+                                >
+                                    <LogOut className="w-4 h-4" />
+                                    Cerrar sesión
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Grid Tabs - 4 columns, no scroll */}
+                        <div className="grid grid-cols-4 border-y border-neutral-100 bg-white">
+                            <button
+                                onClick={() => setActiveTab('profile')}
+                                className={`flex flex-col items-center justify-center gap-1 py-3 text-[10px] font-bold transition-all border-b-2 ${activeTab === 'profile'
+                                    ? 'border-[#223945] text-[#223945]'
+                                    : 'border-transparent text-neutral-400'
+                                }`}
+                            >
+                                <User className="w-4 h-4" />
+                                <span>Perfil</span>
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('security')}
+                                className={`flex flex-col items-center justify-center gap-1 py-3 text-[10px] font-bold transition-all border-b-2 ${activeTab === 'security'
+                                    ? 'border-[#223945] text-[#223945]'
+                                    : 'border-transparent text-neutral-400'
+                                }`}
+                            >
+                                <Lock className="w-4 h-4" />
+                                <span>Seguridad</span>
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('favorites')}
+                                className={`relative flex flex-col items-center justify-center gap-1 py-3 text-[10px] font-bold transition-all border-b-2 ${activeTab === 'favorites'
+                                    ? 'border-[#223945] text-[#223945]'
+                                    : 'border-transparent text-neutral-400'
+                                }`}
+                            >
+                                <Heart className="w-4 h-4" />
+                                <span>Favoritos</span>
+                                {favoritos.length > 0 && (
+                                    <span className="absolute top-1.5 right-1/4 w-4 h-4 flex items-center justify-center text-[8px] bg-[#223945] text-white rounded-full">{favoritos.length}</span>
+                                )}
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('searches')}
+                                className={`relative flex flex-col items-center justify-center gap-1 py-3 text-[10px] font-bold transition-all border-b-2 ${activeTab === 'searches'
+                                    ? 'border-[#223945] text-[#223945]'
+                                    : 'border-transparent text-neutral-400'
+                                }`}
+                            >
+                                <Bookmark className="w-4 h-4" />
+                                <span>Búsquedas</span>
+                                {savedSearches.length > 0 && (
+                                    <span className="absolute top-1.5 right-1/4 w-4 h-4 flex items-center justify-center text-[8px] bg-[#223945] text-white rounded-full">{savedSearches.length}</span>
+                                )}
+                            </button>
+                        </div>
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            className="hidden"
+                            accept="image/png, image/jpeg, image/jpg"
+                            onChange={handlePhotoUpload}
+                        />
+                    </div>
+
+                    <div className="md:flex md:min-h-[600px]">
+                        {/* Sidebar - Desktop Only */}
+                        <div className="hidden md:block md:w-1/3 bg-white p-8 border-r border-neutral-100 relative">
                             {/* Avatar Section */}
                             <div className="text-center mb-8 relative">
                                 <div className="relative inline-block group">
                                     <div className="absolute inset-0 bg-[#223945] rounded-full blur opacity-20 group-hover:opacity-30 transition-opacity"></div>
                                     {user?.foto_perfil ? (
-                                        <img 
-                                            src={user.foto_perfil} 
+                                        <img
+                                            src={user.foto_perfil}
                                             alt={user.name}
-                                            className="w-28 h-28 rounded-full object-cover border-4 border-white shadow-xl relative z-10 bg-white" 
+                                            className="w-28 h-28 rounded-full object-cover border-4 border-white shadow-xl relative z-10 bg-white"
                                         />
                                     ) : (
                                         <div className="w-28 h-28 rounded-full bg-[#223945] text-white flex items-center justify-center text-4xl font-bold shadow-xl relative z-10 border-4 border-white">
                                             {user?.name?.charAt(0)}
                                         </div>
                                     )}
-                                    {/* Fallback for onError (hidden by default) */}
-                                    <div className="hidden w-28 h-28 rounded-full bg-[#223945] text-white flex items-center justify-center text-4xl font-bold shadow-xl relative z-10 border-4 border-white absolute top-0 left-0">
-                                        {user?.name?.charAt(0)}
-                                    </div>
                                     <input
                                         type="file"
                                         ref={fileInputRef}
@@ -343,7 +470,7 @@ export default function ProfileContent() {
                                         <button
                                             onClick={() => setShowDeleteConfirm(true)}
                                             disabled={uploading}
-                                            className="absolute top-0 right-0 p-2 bg-white text-red-500 rounded-full shadow-md border-2 border-white hover:bg-red-50 hover:text-red-600 hover:scale-110 transition-all z-20 translate-x-1/4 -translate-y-1/4 opacity-100 md:opacity-0 md:group-hover:opacity-100 duration-200"
+                                            className="absolute top-0 right-0 p-2 bg-white text-red-500 rounded-full shadow-md border-2 border-white hover:bg-red-50 hover:text-red-600 hover:scale-110 transition-all z-20 translate-x-1/4 -translate-y-1/4 opacity-0 group-hover:opacity-100 duration-200"
                                             title="Eliminar foto"
                                         >
                                             <Trash className="w-3.5 h-3.5" />
@@ -406,22 +533,22 @@ export default function ProfileContent() {
                         </div>
 
                         {/* Content Area */}
-                        <div className="md:w-2/3 p-8 lg:p-12 bg-white/50">
+                        <div className="md:w-2/3 p-4 sm:p-6 md:p-8 lg:p-12 bg-white/50">
                             {message && (
-                                <div className={`mb-8 p-4 rounded-xl flex items-center gap-3 text-sm font-medium animate-in fade-in slide-in-from-top-2 ${message.type === 'success'
+                                <div className={`mb-6 sm:mb-8 p-3 sm:p-4 rounded-xl flex items-center gap-3 text-xs sm:text-sm font-medium animate-in fade-in slide-in-from-top-2 ${message.type === 'success'
                                         ? 'bg-green-50 text-green-700 border border-green-100'
                                         : 'bg-red-50 text-red-700 border border-red-100'
                                     }`}>
-                                    <div className={`w-2 h-2 rounded-full ${message.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${message.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}></div>
                                     {message.text}
                                 </div>
                             )}
 
                             {activeTab === 'profile' && (
-                                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                    <div className="mb-6">
-                                        <h3 className="text-2xl font-bold text-[#223945]">Información Personal</h3>
-                                        <p className="text-neutral-500 text-sm mt-1">Gestiona tu información básica y ubicación.</p>
+                                <div className="space-y-5 sm:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                    <div className="mb-4 sm:mb-6">
+                                        <h3 className="text-xl sm:text-2xl font-bold text-[#223945]">Información Personal</h3>
+                                        <p className="text-neutral-500 text-xs sm:text-sm mt-1">Gestiona tu información básica y ubicación.</p>
                                     </div>
 
                                     <form onSubmit={handleUpdateProfile} className="space-y-6">
@@ -530,10 +657,10 @@ export default function ProfileContent() {
                             )}
 
                             {activeTab === 'security' && (
-                                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                    <div className="mb-6">
-                                        <h3 className="text-2xl font-bold text-[#223945]">Seguridad</h3>
-                                        <p className="text-neutral-500 text-sm mt-1">Gestiona tu contraseña y acceso.</p>
+                                <div className="space-y-5 sm:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                    <div className="mb-4 sm:mb-6">
+                                        <h3 className="text-xl sm:text-2xl font-bold text-[#223945]">Seguridad</h3>
+                                        <p className="text-neutral-500 text-xs sm:text-sm mt-1">Gestiona tu contraseña y acceso.</p>
                                     </div>
 
                                     <form onSubmit={handleUpdatePassword} className="space-y-5">
@@ -663,72 +790,85 @@ export default function ProfileContent() {
                             )}
 
                             {activeTab === 'favorites' && (
-                                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                    <div className="mb-6">
-                                        <h3 className="text-2xl font-bold text-[#223945]">Mis Favoritos</h3>
-                                        <p className="text-neutral-500 text-sm mt-1">Centros que has guardado para consultar más tarde.</p>
+                                <div className="space-y-5 sm:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                    <div className="flex items-start sm:items-center justify-between gap-3 mb-4 sm:mb-6">
+                                        <div>
+                                            <h3 className="text-xl sm:text-2xl font-bold text-[#223945]">Mis Favoritos</h3>
+                                            <p className="text-neutral-500 text-xs sm:text-sm mt-1">Centros guardados para consultar.</p>
+                                        </div>
+                                        {favoritos.length > 0 && (
+                                            <span className="text-[10px] sm:text-xs font-bold text-white bg-gradient-to-r from-[#223945] to-[#345165] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full shadow-sm whitespace-nowrap">
+                                                {favoritos.length} {favoritos.length === 1 ? 'centro' : 'centros'}
+                                            </span>
+                                        )}
                                     </div>
 
                             {favoritos.length > 0 ? (
                                         <div className="grid gap-4 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-neutral-200 hover:scrollbar-thumb-neutral-300">
                                             {favoritos.map(fav => (
-                                                <div key={fav.id} className="group relative bg-white border border-neutral-100 rounded-2xl shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-[#223945] transition-all p-5 pr-14 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                                <div key={fav.id} className="group relative bg-white border border-neutral-100 rounded-2xl shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-[#223945]/30 transition-all overflow-hidden">
+                                                    {/* Gradient accent on hover */}
+                                                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300 opacity-0 group-hover:opacity-100 transition-opacity" />
 
-                                                    {/* Content */}
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="bg-[#223945]/5 p-3 rounded-xl text-[#223945]">
-                                                            <Heart className="w-6 h-6 fill-[#223945]" />
+                                                    <div className="p-4 sm:p-5">
+                                                        {/* Header: Icon + Name + Heart button */}
+                                                        <div className="flex items-start gap-3 sm:gap-4 mb-4">
+                                                            <div className="bg-gradient-to-br from-[#223945] to-[#345165] p-2.5 sm:p-3 rounded-xl text-white shadow-sm flex-shrink-0">
+                                                                <Heart className="w-5 h-5 sm:w-6 sm:h-6 fill-white" />
+                                                            </div>
+                                                            <div className="flex-1 min-w-0 pr-8">
+                                                                <h4 className="font-bold text-neutral-900 text-base sm:text-lg group-hover:text-[#223945] transition-colors leading-tight">{fav.centro.nombre}</h4>
+                                                                <p className="text-xs sm:text-sm text-neutral-500 font-medium mt-1">{fav.centro.direccion || 'Sin dirección'}</p>
+                                                            </div>
+                                                            {/* Heart Remove Button */}
+                                                            <button
+                                                                onClick={async (e) => {
+                                                                    e.preventDefault();
+                                                                    try {
+                                                                        await api.delete(`/favoritos/${fav.centro.id}`);
+                                                                        setFavoritos(prev => prev.filter(f => f.id !== fav.id));
+                                                                        setMessage({ text: 'Centro eliminado de favoritos', type: 'success' });
+                                                                    } catch (error) {
+                                                                        setMessage({ text: 'Error al eliminar favorito', type: 'error' });
+                                                                    }
+                                                                }}
+                                                                className="absolute top-4 right-4 p-1.5 rounded-full bg-white/90 backdrop-blur-sm shadow-sm border border-neutral-100 hover:bg-red-50 text-red-500 hover:text-red-600 transition-colors"
+                                                                title="Eliminar de favoritos"
+                                                            >
+                                                                <Heart className="w-4 h-4 fill-current" />
+                                                            </button>
                                                         </div>
-                                                        <div>
-                                                            <h4 className="font-bold text-neutral-900 text-lg group-hover:text-[#223945] transition-colors">{fav.centro.nombre}</h4>
-                                                            <p className="text-sm text-neutral-500 font-medium">{fav.centro.direccion}</p>
+
+                                                        {/* Actions - Full width below */}
+                                                        <div className="flex gap-2">
+                                                            <Link
+                                                                href={`/centro/${fav.centro.id}`}
+                                                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-neutral-200 text-neutral-600 rounded-xl text-sm font-bold shadow-sm hover:bg-neutral-50 hover:border-[#223945]/20 transition-all hover:-translate-y-0.5"
+                                                            >
+                                                                <Eye className="w-4 h-4" />
+                                                                Ver más
+                                                            </Link>
+                                                            <Link
+                                                                href={`/mapa?centro=${fav.centro.id}`}
+                                                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#223945] text-white rounded-xl text-sm font-bold shadow-md shadow-[#223945]/10 hover:shadow-lg hover:shadow-[#223945]/20 hover:-translate-y-0.5 transition-all"
+                                                            >
+                                                                <MapPin className="w-4 h-4" />
+                                                                Localizar
+                                                            </Link>
                                                         </div>
                                                     </div>
-
-                                                    {/* Actions */}
-                                                    <div className="flex flex-col gap-2 w-full sm:w-auto mt-2 sm:mt-0">
-                                                        <Link
-                                                            href={`/centro/${fav.centro.id}`}
-                                                            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white border border-neutral-200 text-neutral-600 rounded-lg text-sm font-bold shadow-sm hover:bg-neutral-50 transition-all hover:-translate-y-0.5 whitespace-nowrap"
-                                                        >
-                                                            <Eye className="w-4 h-4" />
-                                                            Ver más
-                                                        </Link>
-                                                        <Link
-                                                            href={`/mapa?centro=${fav.centro.id}`}
-                                                            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#223945] text-white rounded-lg text-sm font-bold shadow hover:shadow-lg hover:-translate-y-0.5 transition-all whitespace-nowrap"
-                                                        >
-                                                            <MapPin className="w-4 h-4" />
-                                                            Localizar
-                                                        </Link>
-                                                    </div>
-
-                                                    {/* Remove Button (Heart) - Floating like CentroCard */}
-                                                    <button
-                                                        onClick={async (e) => {
-                                                            e.preventDefault();
-                                                            try {
-                                                                await api.delete(`/favoritos/${fav.centro.id}`);
-                                                                setFavoritos(prev => prev.filter(f => f.id !== fav.id));
-                                                                setMessage({ text: 'Centro eliminado de favoritos', type: 'success' });
-                                                            } catch (error) {
-                                                                setMessage({ text: 'Error al eliminar favorito', type: 'error' });
-                                                            }
-                                                        }}
-                                                        className="absolute top-4 right-4 p-1.5 rounded-full bg-white/90 backdrop-blur-sm shadow-sm border border-neutral-100 hover:bg-red-50 text-red-500 hover:text-red-600 transition-colors"
-                                                        title="Eliminar de favoritos"
-                                                    >
-                                                        <Heart className="w-4 h-4 fill-current" />
-                                                    </button>
                                                 </div>
                                             ))}
                                         </div>
                                     ) : (
-                                        <div className="text-center py-16 bg-neutral-50/50 rounded-2xl border border-dashed border-neutral-200">
-                                            <Heart className="w-16 h-16 mx-auto text-neutral-300 mb-4" />
+                                        <div className="text-center py-12 sm:py-16 bg-gradient-to-b from-neutral-50/50 to-white rounded-2xl border border-dashed border-neutral-200">
+                                            <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 bg-gradient-to-br from-neutral-100 to-neutral-50 rounded-full flex items-center justify-center">
+                                                <Heart className="w-8 h-8 sm:w-10 sm:h-10 text-neutral-300" />
+                                            </div>
                                             <h4 className="text-lg font-bold text-neutral-900">No tienes favoritos</h4>
-                                            <p className="text-neutral-500 text-sm mt-1">Explora el mapa para añadir centros a tu lista.</p>
-                                            <a href="/mapa" className="inline-block mt-6 bg-[#223945] text-white px-6 py-2.5 rounded-full font-bold text-sm shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all">
+                                            <p className="text-neutral-500 text-sm mt-1 px-4">Explora el mapa para añadir centros a tu lista.</p>
+                                            <a href="/mapa" className="inline-flex items-center gap-2 mt-6 bg-[#223945] text-white px-6 py-2.5 rounded-xl font-bold text-sm shadow-md shadow-[#223945]/20 hover:shadow-lg hover:-translate-y-0.5 transition-all">
+                                                <MapPin className="w-4 h-4" />
                                                 Ir al Mapa
                                             </a>
                                         </div>
@@ -737,54 +877,109 @@ export default function ProfileContent() {
                             )}
 
                             {activeTab === 'searches' && (
-                                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                    <div className="mb-6">
-                                        <h3 className="text-2xl font-bold text-[#223945]">Búsquedas Guardadas</h3>
-                                        <p className="text-neutral-500 text-sm mt-1">Accede rápidamente a tus combinaciones de filtros favoritas.</p>
+                                <div className="space-y-5 sm:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                    <div className="flex items-start sm:items-center justify-between gap-3 mb-4 sm:mb-6">
+                                        <div>
+                                            <h3 className="text-xl sm:text-2xl font-bold text-[#223945]">Búsquedas Guardadas</h3>
+                                            <p className="text-neutral-500 text-xs sm:text-sm mt-1">Accede rápido a tus filtros favoritos.</p>
+                                        </div>
+                                        {savedSearches.length > 0 && (
+                                            <span className="text-[10px] sm:text-xs font-bold text-white bg-gradient-to-r from-[#223945] to-[#345165] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full shadow-sm whitespace-nowrap">
+                                                {savedSearches.length} {savedSearches.length === 1 ? 'búsqueda' : 'búsquedas'}
+                                            </span>
+                                        )}
                                     </div>
 
                                     {savedSearches.length > 0 ? (
                                         <div className="grid gap-4 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-neutral-200 hover:scrollbar-thumb-neutral-300">
-                                            {savedSearches.map(search => (
-                                                <div key={search.id} className="group relative bg-white border border-neutral-100 rounded-2xl shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-[#223945] transition-all p-4 sm:p-5 pr-12 sm:pr-14">
-                                                    <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
-                                                        <div className="bg-[#223945]/5 p-2.5 sm:p-3 rounded-xl text-[#223945] self-start">
-                                                            <Bookmark className="w-5 h-5 sm:w-6 sm:h-6" />
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <h4 className="font-bold text-neutral-900 text-base sm:text-lg group-hover:text-[#223945] transition-colors break-words">{search.name}</h4>
-                                                            <div className="flex flex-wrap gap-1.5 mt-2">
-                                                                {formatFilters(search.filters).split(' · ').map((filter, idx) => (
-                                                                    <span key={idx} className="inline-block text-xs bg-neutral-100 text-neutral-600 px-2 py-0.5 rounded-full font-medium">
-                                                                        {filter}
-                                                                    </span>
-                                                                ))}
+                                            {savedSearches.map(search => {
+                                                const filterItems = formatFilters(search.filters);
+                                                const filterCount = getFilterCount(search.filters);
+
+                                                return (
+                                                    <div key={search.id} className="group relative bg-white border border-neutral-100 rounded-2xl shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-[#223945]/30 transition-all overflow-hidden">
+                                                        {/* Header with gradient accent */}
+                                                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                                                        <div className="p-4 sm:p-5 pr-12 sm:pr-14">
+                                                            {/* Title and meta row */}
+                                                            <div className="flex items-start gap-3 mb-3">
+                                                                <div className="bg-gradient-to-br from-[#223945] to-[#345165] p-2.5 rounded-xl text-white shadow-sm flex-shrink-0">
+                                                                    <Bookmark className="w-5 h-5" />
+                                                                </div>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <h4 className="font-bold text-neutral-900 text-base sm:text-lg group-hover:text-[#223945] transition-colors break-words leading-tight">
+                                                                        {search.name}
+                                                                    </h4>
+                                                                    <div className="flex items-center gap-3 mt-1.5 text-xs text-neutral-400">
+                                                                        <span className="flex items-center gap-1">
+                                                                            <Calendar className="w-3 h-3" />
+                                                                            {formatDate(search.created_at)}
+                                                                        </span>
+                                                                        <span className="flex items-center gap-1">
+                                                                            <Filter className="w-3 h-3" />
+                                                                            {filterCount} {filterCount === 1 ? 'filtro' : 'filtros'}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
                                                             </div>
+
+                                                            {/* Search query if exists */}
                                                             {search.filters.q && (
-                                                                <p className="text-xs text-neutral-400 mt-2 break-words">Búsqueda: "{search.filters.q}"</p>
+                                                                <div className="mb-3 flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-lg border border-blue-100">
+                                                                    <Search className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                                                                    <span className="text-sm text-blue-700 font-medium truncate">"{search.filters.q}"</span>
+                                                                </div>
                                                             )}
+
+                                                            {/* Filter chips */}
+                                                            {filterItems.length > 0 && (
+                                                                <div className="flex flex-wrap gap-1.5 mb-4">
+                                                                    {filterItems.map((filter, idx) => (
+                                                                        <span
+                                                                            key={idx}
+                                                                            className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium ${
+                                                                                filter.type === 'location'
+                                                                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                                                                                    : filter.type === 'education'
+                                                                                    ? 'bg-violet-50 text-violet-700 border border-violet-100'
+                                                                                    : 'bg-neutral-100 text-neutral-600 border border-neutral-200'
+                                                                            }`}
+                                                                        >
+                                                                            {filter.type === 'location' && <MapPin className="w-3 h-3" />}
+                                                                            {filter.type === 'education' && <GraduationCap className="w-3 h-3" />}
+                                                                            {filter.type === 'general' && <Building2 className="w-3 h-3" />}
+                                                                            {filter.label}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+
+                                                            {filterItems.length === 0 && !search.filters.q && (
+                                                                <p className="text-xs text-neutral-400 italic mb-4">Sin filtros específicos</p>
+                                                            )}
+
+                                                            {/* Action button */}
+                                                            <Link
+                                                                href={buildSearchUrl(search.filters)}
+                                                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#223945] text-white rounded-xl text-sm font-bold shadow-md shadow-[#223945]/10 hover:shadow-lg hover:shadow-[#223945]/20 hover:-translate-y-0.5 transition-all"
+                                                            >
+                                                                <Search className="w-4 h-4" />
+                                                                Aplicar búsqueda
+                                                            </Link>
                                                         </div>
-                                                    </div>
 
-                                                    <div className="mt-4">
-                                                        <Link
-                                                            href={buildSearchUrl(search.filters)}
-                                                            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#223945] text-white rounded-lg text-sm font-bold shadow hover:shadow-lg hover:-translate-y-0.5 transition-all"
+                                                        {/* Delete button */}
+                                                        <button
+                                                            onClick={() => setSearchToDelete(search)}
+                                                            className="absolute top-3 sm:top-4 right-3 sm:right-4 p-1.5 rounded-full bg-white shadow-sm border border-neutral-100 hover:bg-red-50 text-neutral-400 hover:text-red-500 transition-colors"
+                                                            title="Eliminar búsqueda"
                                                         >
-                                                            <Search className="w-4 h-4" />
-                                                            Aplicar búsqueda
-                                                        </Link>
+                                                            <X className="w-4 h-4" />
+                                                        </button>
                                                     </div>
-
-                                                    <button
-                                                        onClick={() => handleDeleteSearch(search.id)}
-                                                        className="absolute top-3 sm:top-4 right-3 sm:right-4 p-1.5 rounded-full bg-white/90 backdrop-blur-sm shadow-sm border border-neutral-100 hover:bg-red-50 text-neutral-400 hover:text-red-500 transition-colors"
-                                                        title="Eliminar búsqueda"
-                                                    >
-                                                        <X className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                            ))}
+                                                );
+                                            })}
                                         </div>
                                     ) : (
                                         <div className="text-center py-16 bg-neutral-50/50 rounded-2xl border border-dashed border-neutral-200">
@@ -833,9 +1028,42 @@ export default function ProfileContent() {
                 </div>
             )}
 
-            <LogoutConfirmationModal 
+            {/* Delete Search Confirmation Modal */}
+            {searchToDelete && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-in zoom-in-95 duration-200 border border-neutral-100">
+                        <div className="flex flex-col items-center text-center">
+                            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4 text-red-600">
+                                <AlertCircle className="w-6 h-6" />
+                            </div>
+                            <h3 className="text-lg font-bold text-neutral-900 mb-2">¿Eliminar búsqueda guardada?</h3>
+                            <p className="text-sm text-neutral-500 mb-2">
+                                Vas a eliminar <span className="font-semibold text-neutral-700">"{searchToDelete.name}"</span>
+                            </p>
+                            <p className="text-xs text-neutral-400 mb-6">Esta acción no se puede deshacer.</p>
+
+                            <div className="flex gap-3 w-full">
+                                <button
+                                    onClick={() => setSearchToDelete(null)}
+                                    className="flex-1 px-4 py-2.5 rounded-xl border border-neutral-200 text-neutral-600 font-bold text-sm hover:bg-neutral-50 transition-colors"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={() => handleDeleteSearch(searchToDelete)}
+                                    className="flex-1 px-4 py-2.5 rounded-xl bg-red-600 text-white font-bold text-sm hover:bg-red-700 shadow-lg shadow-red-600/20 transition-all hover:shadow-red-600/30 hover:-translate-y-0.5"
+                                >
+                                    Eliminar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <LogoutConfirmationModal
                 key="logout-modal-profile"
-                isOpen={showLogoutModal} 
+                isOpen={showLogoutModal}
                 onClose={() => setShowLogoutModal(false)}
                 onConfirm={handleLogoutConfirm}
                 isLoggingOut={isLoggingOut}

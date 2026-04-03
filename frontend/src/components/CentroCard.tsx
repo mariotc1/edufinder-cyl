@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { MapPin, Building2, BookOpen, ArrowRight, Heart, Share2, Check } from "lucide-react";
+import { MapPin, Building2, BookOpen, ArrowRight, Heart, Share2, Check, Copy, CheckCircle } from "lucide-react";
 import { Centro } from "@/types";
-import { useRef, useState } from "react";
-import { motion, Variants } from "framer-motion";
+import { useRef, useState, useEffect } from "react";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 import { useFavorite } from "@/hooks/useFavorite";
 import AddToCompareButton from "./ui/AddToCompareButton";
 
@@ -59,34 +59,69 @@ export default function CentroCard({
   });
 
   const cardRef = useRef<HTMLDivElement>(null);
+  const shareMenuRef = useRef<HTMLDivElement>(null);
+  const [showShareMenu, setShowShareMenu] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const handleShare = async (e: React.MouseEvent) => {
+  // Close share menu on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (shareMenuRef.current && !shareMenuRef.current.contains(e.target as Node)) {
+        setShowShareMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const getShareUrl = () => `${window.location.origin}/centro/${centro.id}`;
+
+  const handleToggleShareMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const url = `${window.location.origin}/centro/${centro.id}`;
-    const shareData = {
-      title: centro.nombre,
-      text: `${centro.nombre} - ${centro.localidad}, ${centro.provincia}`,
-      url: url
-    };
+    setShowShareMenu(!showShareMenu);
+  };
 
+  const handleCopyLink = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     try {
-      // Usar Web Share API si está disponible (móviles)
-      if (navigator.share && navigator.canShare?.(shareData)) {
-        await navigator.share(shareData);
-      } else {
-        // Fallback: copiar al clipboard
-        await navigator.clipboard.writeText(url);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      }
-    } catch (err: any) {
-      // Si el usuario cancela el share, no mostrar error
-      if (err?.name !== 'AbortError') {
-        console.error('Error al compartir:', err);
+      await navigator.clipboard.writeText(getShareUrl());
+      setCopied(true);
+      setTimeout(() => {
+        setCopied(false);
+        setShowShareMenu(false);
+      }, 1500);
+    } catch (err) {
+      console.error('Error copying link:', err);
+    }
+  };
+
+  const handleShareWhatsApp = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const text = `Mira este centro que he encontrado en EduFinder CyL:\n\n${centro.nombre}\n${centro.localidad}, ${centro.provincia}\n\nEchale un vistazo: ${getShareUrl()}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    setShowShareMenu(false);
+  };
+
+  const handleShareNative = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: centro.nombre,
+          text: `${centro.nombre} - ${centro.localidad}, ${centro.provincia}`,
+          url: getShareUrl(),
+        });
+      } catch (err) {
+        if (err instanceof Error && err.name !== 'AbortError') {
+          console.error('Error sharing:', err);
+        }
       }
     }
+    setShowShareMenu(false);
   }; 
 
   // LÓGICA VISUAL: COLORES POR NATURALEZA (PÚBLICO, PRIVADO)
@@ -178,20 +213,69 @@ export default function CentroCard({
           />
         </motion.button>
 
-        {/* Botón Compartir */}
-        <motion.button
-          onClick={handleShare}
-          whileTap={{ scale: 0.8 }}
-          className={`p-1.5 rounded-full backdrop-blur-sm shadow-sm border transition-all ${
-            copied
-              ? "bg-green-50 border-green-200 text-green-600"
-              : "bg-white/90 border-neutral-100 text-neutral-400 hover:bg-[#223945]/5 hover:text-[#223945] hover:border-[#223945]/20"
-          }`}
-          aria-label={copied ? "Enlace copiado" : "Copiar enlace del centro"}
-          title={copied ? "Enlace copiado" : "Copiar enlace"}
-        >
-          {copied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
-        </motion.button>
+        {/* Botón Compartir con menú */}
+        <div className="relative" ref={shareMenuRef}>
+          <motion.button
+            onClick={handleToggleShareMenu}
+            whileTap={{ scale: 0.8 }}
+            className={`p-1.5 rounded-full backdrop-blur-sm shadow-sm border transition-all ${
+              showShareMenu
+                ? "bg-[#223945]/10 border-[#223945]/30 text-[#223945]"
+                : "bg-white/90 border-neutral-100 text-neutral-400 hover:bg-[#223945]/5 hover:text-[#223945] hover:border-[#223945]/20"
+            }`}
+            aria-label="Compartir centro"
+            title="Compartir"
+          >
+            <Share2 className="w-4 h-4" />
+          </motion.button>
+
+          <AnimatePresence>
+            {showShareMenu && (
+              <motion.div
+                initial={{ opacity: 0, y: 5, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 5, scale: 0.95 }}
+                className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-neutral-100 overflow-hidden z-50"
+              >
+                <div className="p-1">
+                  <button
+                    onClick={handleCopyLink}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-neutral-50 transition-colors text-left"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-neutral-100 flex items-center justify-center">
+                      {copied ? <CheckCircle className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5 text-neutral-500" />}
+                    </div>
+                    <span className="text-xs font-medium text-neutral-700">
+                      {copied ? '¡Copiado!' : 'Copiar enlace'}
+                    </span>
+                  </button>
+                  <button
+                    onClick={handleShareWhatsApp}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-neutral-50 transition-colors text-left"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-green-100 flex items-center justify-center">
+                      <svg className="w-3.5 h-3.5 text-green-600" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                      </svg>
+                    </div>
+                    <span className="text-xs font-medium text-neutral-700">WhatsApp</span>
+                  </button>
+                  {typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (
+                    <button
+                      onClick={handleShareNative}
+                      className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-neutral-50 transition-colors text-left"
+                    >
+                      <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+                        <Share2 className="w-3.5 h-3.5 text-blue-600" />
+                      </div>
+                      <span className="text-xs font-medium text-neutral-700">Más opciones...</span>
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
         {/* Botón Comparador */}
         <AddToCompareButton centro={centro} />

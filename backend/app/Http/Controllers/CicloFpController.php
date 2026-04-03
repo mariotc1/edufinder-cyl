@@ -40,18 +40,54 @@
 
         // SUGERENCIAS DE CICLOS
         // Autocompletado para la barra de búsqueda de ciclos
+        // Filtra por nivel, familia y modalidad si están presentes
         public function suggestions(Request $request) {
             $request->validate([
                 'q' => 'nullable|string|min:2',
+                'nivel' => 'nullable|string',
+                'familia' => 'nullable|string',
+                'modalidad' => 'nullable|string',
             ]);
 
             if (!$request->q) {
                 return response()->json([]);
             }
 
-            $suggestions = CicloFp::query()
+            $query = CicloFp::query()
                 ->select('ciclo_formativo')
-                ->where('ciclo_formativo', 'ilike', '%' . $request->q . '%')
+                ->where('ciclo_formativo', 'ilike', '%' . $request->q . '%');
+
+            // Filtrar por nivel educativo si está presente
+            if ($request->nivel) {
+                switch ($request->nivel) {
+                    case 'GM':
+                        $query->where('nivel_educativo', 'ILIKE', '%Grado Medio%');
+                        break;
+                    case 'GS':
+                        $query->where('nivel_educativo', 'ILIKE', '%Grado Superior%');
+                        break;
+                    case 'BASICA':
+                        $query->where('nivel_educativo', 'ILIKE', '%Grado B%sico%');
+                        break;
+                    case 'CE':
+                        $query->where('nivel_educativo', 'ILIKE', '%Curso Especializa%');
+                        break;
+                    default:
+                        $query->where('nivel_educativo', 'ILIKE', '%' . $request->nivel . '%');
+                }
+            }
+
+            // Filtrar por familia profesional si está presente
+            if ($request->familia) {
+                $query->where('familia_profesional', 'ILIKE', '%' . $request->familia . '%');
+            }
+
+            // Filtrar por modalidad si está presente
+            if ($request->modalidad) {
+                $query->where('modalidad', 'ILIKE', '%' . $request->modalidad . '%');
+            }
+
+            $suggestions = $query
                 ->distinct()
                 ->limit(10)
                 ->pluck('ciclo_formativo');
