@@ -100,11 +100,11 @@ export default function ComparisonTray() {
                             </span>
                         </div>
 
-                        <div className="text-left flex-1 min-w-0">
-                            <p className="text-sm font-bold !text-white leading-none truncate">
+                        <div className="text-left flex-1 min-w-0 overflow-hidden">
+                            <p className="text-xs font-bold !text-white leading-none truncate whitespace-nowrap">
                                 {canCompare ? 'Listo para comparar' : 'Selecciona centros'}
                             </p>
-                            <p className="text-[11px] !text-white/70 mt-0.5">
+                            <p className="text-[10px] !text-white/70 mt-0.5 truncate whitespace-nowrap">
                                 {selectedCentros.length}/3 · Toca para ver
                             </p>
                         </div>
