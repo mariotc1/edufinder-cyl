@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { MapPin, Building2, BookOpen, ArrowRight, Heart, Share2, Check, Copy, CheckCircle } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { MapPin, Building2, BookOpen, ArrowRight, Heart, Share2, Copy, CheckCircle } from "lucide-react";
 import { Centro } from "@/types";
 import { useRef, useState, useEffect } from "react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
@@ -52,6 +53,7 @@ export default function CentroCard({
   onToggle,
 
 }: CentroCardProps) {
+  const searchParams = useSearchParams();
   const { isFavorite, toggleFavorite, loading } = useFavorite({
     centro,
     initialIsFavorite,
@@ -62,6 +64,12 @@ export default function CentroCard({
   const shareMenuRef = useRef<HTMLDivElement>(null);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // Construir URL del centro con el filtro de nivel si existe
+  const nivelParam = searchParams.get('nivel');
+  const centroUrl = nivelParam
+    ? `/centro/${centro.id}?nivel=${nivelParam}`
+    : `/centro/${centro.id}`;
 
   // Close share menu on click outside
   useEffect(() => {
@@ -138,52 +146,44 @@ export default function CentroCard({
     }
   };
 
+  // Normalizar texto removiendo acentos para comparaciones
+  const normalizeText = (text: string): string => {
+    return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+  };
+
   const getLevelColor = (nivel: string) => {
-    switch (nivel?.toUpperCase()) {
-      case "GRADO SUPERIOR":
-        return "bg-purple-600 text-white border-purple-600 shadow-sm";
-
-      case "GRADO MEDIO":
-        return "bg-amber-500 text-white border-amber-500 shadow-sm";
-
-      case "FP BÁSICA":
-        return "bg-blue-600 text-white border-blue-600 shadow-sm";
-
-      default:
-        return "bg-neutral-600 text-white border-neutral-600";
-    }
+    const n = normalizeText(nivel || '');
+    if (n.includes('SUPERIOR')) return "bg-purple-600 text-white border-purple-600 shadow-sm";
+    if (n.includes('MEDIO')) return "bg-amber-500 text-white border-amber-500 shadow-sm";
+    if (n.includes('BASIC') || n.includes('BASICO')) return "bg-blue-600 text-white border-blue-600 shadow-sm";
+    if (n.includes('ESPECIALIZACION')) return "bg-rose-600 text-white border-rose-600 shadow-sm";
+    return "bg-neutral-600 text-white border-neutral-600";
   };
 
   const getLevelBackground = (nivel: string) => {
-    switch (nivel?.toUpperCase()) {
-      case "GRADO SUPERIOR":
-        return "bg-purple-50 border-purple-100 group-hover:border-purple-200";
-
-      case "GRADO MEDIO":
-        return "bg-amber-50 border-amber-100 group-hover:border-amber-200";
-
-      case "FP BÁSICA":
-        return "bg-blue-50 border-blue-100 group-hover:border-blue-200";
-
-      default:
-        return "bg-neutral-50 border-neutral-100";
-    }
+    const n = normalizeText(nivel || '');
+    if (n.includes('SUPERIOR')) return "bg-purple-50 border-purple-100 group-hover:border-purple-200";
+    if (n.includes('MEDIO')) return "bg-amber-50 border-amber-100 group-hover:border-amber-200";
+    if (n.includes('BASIC') || n.includes('BASICO')) return "bg-blue-50 border-blue-100 group-hover:border-blue-200";
+    if (n.includes('ESPECIALIZACION')) return "bg-rose-50 border-rose-100 group-hover:border-rose-200";
+    return "bg-neutral-50 border-neutral-100";
   };
 
   const getLevelDotColor = (nivel: string) => {
-    switch (nivel?.toUpperCase()) {
-      case "GRADO SUPERIOR":
-        return "bg-white/80";
-
-      case "GRADO MEDIO":
-        return "bg-white/80";
-
-      case "FP BÁSICA":
-        return "bg-white/80";
-
-      default:
-        return "bg-neutral-400";
+    const n = normalizeText(nivel || '');
+    if (n.includes('SUPERIOR') || n.includes('MEDIO') || n.includes('BASIC') || n.includes('BASICO') || n.includes('ESPECIALIZACION')) {
+      return "bg-white/80";
     }
+    return "bg-neutral-400";
+  };
+
+  const getLevelAbbreviation = (nivel: string) => {
+    const n = normalizeText(nivel || '');
+    if (n.includes('SUPERIOR')) return 'GS';
+    if (n.includes('MEDIO')) return 'GM';
+    if (n.includes('BASIC') || n.includes('BASICO')) return 'FPB';
+    if (n.includes('ESPECIALIZACION')) return 'CE';
+    return nivel?.substring(0, 2)?.toUpperCase() || '';
   };
 
   return (
@@ -358,11 +358,7 @@ export default function CentroCard({
                   <span
                     className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full border ${getLevelColor(ciclo.nivel_educativo)}`}
                   >
-                    {ciclo.nivel_educativo === "Grado Superior"
-                      ? "GS"
-                      : ciclo.nivel_educativo === "Grado Medio"
-                        ? "GM"
-                        : "FPB"}
+                    {getLevelAbbreviation(ciclo.nivel_educativo)}
                   </span>
                 </div>
               ))}
@@ -376,7 +372,7 @@ export default function CentroCard({
       {/* Footer / Action - filled button style on hover */}
       <div className="p-3 bg-neutral-50/50 border-t border-neutral-100 group-hover:bg-white transition-colors">
         <Link
-          href={`/centro/${centro.id}`}
+          href={centroUrl}
           className="flex items-center justify-center gap-2 w-full py-2 rounded-lg text-sm font-bold bg-[#223945] text-white shadow-lg shadow-[#223945]/20 hover:shadow-[#223945]/40 hover:-translate-y-0.5 transition-all duration-200"
         >
           Explorar centro

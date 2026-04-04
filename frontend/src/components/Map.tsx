@@ -85,13 +85,13 @@ function MapController({ userLocation, radius, center, zoom }: MapControllerProp
   const map = useMap();
 
   useEffect(() => {
-    if (userLocation) {
-        map.flyTo([userLocation.lat, userLocation.lon], 14, { 
-            duration: 2.0
-        });
-
-    } else if (center) {
-        map.flyTo(center, zoom || 15, { duration: 1.5 });
+    if (userLocation && Number.isFinite(userLocation.lat) && Number.isFinite(userLocation.lon)) {
+        map.flyTo([userLocation.lat, userLocation.lon], 14, { duration: 2.0 });
+    } else if (center && Array.isArray(center) && center.length === 2) {
+        const [lat, lng] = center;
+        if (Number.isFinite(lat) && Number.isFinite(lng)) {
+            map.flyTo([lat, lng], zoom || 15, { duration: 1.5 });
+        }
     }
   }, [userLocation, map, center, zoom]);
 
@@ -133,23 +133,35 @@ interface MapProps {
 export default function Map({ centros, userLocation, radius, center, zoom, favoriteIds = [], focusCenterId }: MapProps) {
     const defaultCenter: [number, number] = [41.652, -4.728]; // Valladolid center
 
-    const effectiveCenter = center || defaultCenter;
+    // Determinar el centro efectivo
+    let effectiveCenter = defaultCenter;
+    let validCenterProvided = false;
+
+    if (center && Array.isArray(center) && center.length === 2) {
+        const [lat, lng] = center;
+        if (typeof lat === 'number' && typeof lng === 'number' &&
+            Number.isFinite(lat) && Number.isFinite(lng)) {
+            effectiveCenter = [lat, lng];
+            validCenterProvided = true;
+        }
+    }
+
     const effectiveZoom = zoom || 8;
 
     return (
-        <MapContainer 
-            center={effectiveCenter} 
-            zoom={effectiveZoom} 
-            scrollWheelZoom={true} 
-            className="h-full w-full z-0 outline-none bg-neutral-100" 
+        <MapContainer
+            center={effectiveCenter}
+            zoom={effectiveZoom}
+            scrollWheelZoom={true}
+            className="h-full w-full z-0 outline-none bg-neutral-100"
             zoomControl={false}
         >
             <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
                 url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
             />
-            
-            <MapController userLocation={userLocation} radius={radius} center={center} zoom={zoom} />
+
+            <MapController userLocation={userLocation} radius={radius} center={validCenterProvided ? effectiveCenter : undefined} zoom={zoom} />
 
             {/* Radius Circle */}
             {userLocation && radius && (
