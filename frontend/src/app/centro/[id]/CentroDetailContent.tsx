@@ -429,7 +429,7 @@ export default function CentroDetailContent() {
                                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                                     exit={{ opacity: 0, y: 8, scale: 0.95 }}
                                                     transition={{ duration: 0.15 }}
-                                                    className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-neutral-100 overflow-hidden z-50"
+                                                    className="absolute left-0 sm:left-auto sm:right-0 mt-2 w-52 sm:w-56 bg-white rounded-xl shadow-2xl border border-neutral-100 overflow-hidden z-50"
                                                 >
                                                     <div className="p-1.5">
                                                         <button
