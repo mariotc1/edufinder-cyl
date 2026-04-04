@@ -36,12 +36,26 @@ export default function CentroDetailContent() {
     const [showShareMenu, setShowShareMenu] = useState(false);
     const [copied, setCopied] = useState(false);
 
+    // Mapeo de abreviaturas a nombres completos de niveles
+    const abbreviationToLevel: Record<string, string> = {
+        'GS': 'GRADO SUPERIOR',
+        'GM': 'GRADO MEDIO',
+        'FPB': 'FP BÁSICA',
+        'CE': 'CURSO DE ESPECIALIZACIÓN',
+        // También aceptar nombres completos
+        'GRADO SUPERIOR': 'GRADO SUPERIOR',
+        'GRADO MEDIO': 'GRADO MEDIO',
+        'FP BÁSICA': 'FP BÁSICA',
+        'FORMACIÓN PROFESIONAL BÁSICA': 'FP BÁSICA',
+        'CURSO DE ESPECIALIZACIÓN': 'CURSO DE ESPECIALIZACIÓN',
+    };
+
     // Acordeones: cerrados por defecto, se abren según filtros de URL
     const nivelFromUrl = searchParams.get('nivel')?.toUpperCase();
+    const expandedNivel = nivelFromUrl ? (abbreviationToLevel[nivelFromUrl] || nivelFromUrl) : null;
     const [expandedLevels, setExpandedLevels] = useState<Record<string, boolean>>(() => {
-        // Si hay un nivel en la URL, abrirlo
-        if (nivelFromUrl) {
-            return { [nivelFromUrl]: true };
+        if (expandedNivel) {
+            return { [expandedNivel]: true };
         }
         return {}; // Todos cerrados por defecto
     });
@@ -202,7 +216,7 @@ export default function CentroDetailContent() {
         return acc;
     }, {} as Record<string, CicloFP[]>) || {};
 
-    const levelOrder = ['CURSO DE ESPECIALIZACIÓN', 'GRADO SUPERIOR', 'GRADO MEDIO', 'FP BÁSICA', 'FORMACIÓN PROFESIONAL BÁSICA', 'OTROS'];
+    const levelOrder = ['FP BÁSICA', 'FORMACIÓN PROFESIONAL BÁSICA', 'GRADO MEDIO', 'GRADO SUPERIOR', 'CURSO DE ESPECIALIZACIÓN', 'OTROS'];
     const sortedLevels = Object.keys(groupedCiclos).sort((a, b) => {
         const indexA = levelOrder.indexOf(a) === -1 ? 999 : levelOrder.indexOf(a);
         const indexB = levelOrder.indexOf(b) === -1 ? 999 : levelOrder.indexOf(b);
@@ -536,28 +550,28 @@ export default function CentroDetailContent() {
                         {/* Educational Offer (Ciclos) - Con acordeones por nivel */}
                         {ciclos && ciclos.data.length > 0 && (
                             <div className="bg-white rounded-2xl p-5 sm:p-8 border border-neutral-100 shadow-lg">
-                                {/* Header con stats */}
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                                    <div>
+                                {/* Header */}
+                                <div className="mb-5">
+                                    <div className="flex items-start justify-between gap-4 mb-3">
                                         <h3 className="text-xl font-bold text-[#223945] flex items-center gap-3">
-                                            <div className="p-2 bg-[#223945] text-white rounded-lg">
+                                            <div className="p-2 bg-[#223945] text-white rounded-lg shrink-0">
                                                 <BookOpen className="w-5 h-5" />
                                             </div>
                                             Oferta Educativa
                                         </h3>
-                                        <p className="text-sm text-neutral-500 mt-2 ml-12">Pulsa en cada nivel para ver los ciclos disponibles</p>
-                                    </div>
-
-                                    {/* Quick Stats */}
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 rounded-full">
+                                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 rounded-full shrink-0">
                                             <GraduationCap className="w-4 h-4 text-[#223945]" />
                                             <span className="text-sm font-bold text-[#223945]">{totalCiclos} ciclos</span>
                                         </div>
+                                    </div>
+                                    <p className="text-sm text-neutral-500 ml-12 mb-3">Pulsa en cada nivel para ver los ciclos disponibles</p>
+
+                                    {/* Quick Stats - Siempre en fila, compactos */}
+                                    <div className="flex items-center gap-1.5 ml-12 flex-wrap">
                                         {sortedLevels.map(level => (
                                             <span
                                                 key={level}
-                                                className={`px-2 py-1 rounded-full text-xs font-bold ${getLevelColor(level)}`}
+                                                className={`px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap ${getLevelColor(level)}`}
                                             >
                                                 {groupedCiclos[level].length} {getLevelAbbreviation(level)}
                                             </span>
