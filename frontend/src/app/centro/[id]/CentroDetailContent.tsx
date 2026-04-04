@@ -36,29 +36,74 @@ export default function CentroDetailContent() {
     const [showShareMenu, setShowShareMenu] = useState(false);
     const [copied, setCopied] = useState(false);
 
-    // Mapeo de abreviaturas a nombres completos de niveles
-    const abbreviationToLevel: Record<string, string> = {
-        'GS': 'GRADO SUPERIOR',
-        'GM': 'GRADO MEDIO',
-        'FPB': 'FP BÁSICA',
-        'CE': 'CURSO DE ESPECIALIZACIÓN',
-        // También aceptar nombres completos
-        'GRADO SUPERIOR': 'GRADO SUPERIOR',
-        'GRADO MEDIO': 'GRADO MEDIO',
-        'FP BÁSICA': 'FP BÁSICA',
-        'FORMACIÓN PROFESIONAL BÁSICA': 'FP BÁSICA',
-        'CURSO DE ESPECIALIZACIÓN': 'CURSO DE ESPECIALIZACIÓN',
+    // Mapeo de parámetros de URL a palabras clave para buscar en los nombres de nivel
+    const urlParamToKeywords: Record<string, string[]> = {
+        // Abreviaturas
+        'GS': ['GRADO SUPERIOR', 'SUPERIOR'],
+        'GM': ['GRADO MEDIO', 'MEDIO'],
+        'FPB': ['FP BÁSICA', 'BÁSICA', 'FORMACIÓN PROFESIONAL BÁSICA', 'BASICA', 'GRADO BÁSICO', 'PROFESIONAL BÁSICA', 'F.P. BÁSICA', 'CICLO FORMATIVO BÁSICO', 'CICLOS FORMATIVOS DE GRADO BÁSICO'],
+        'CE': ['CURSO DE ESPECIALIZACIÓN', 'ESPECIALIZACIÓN', 'ESPECIALIZACION'],
+        // Variantes de URL usadas en FilterBar
+        'BASICA': ['FP BÁSICA', 'BÁSICA', 'FORMACIÓN PROFESIONAL BÁSICA', 'BASICA', 'GRADO BÁSICO', 'PROFESIONAL BÁSICA', 'F.P. BÁSICA', 'CICLO FORMATIVO BÁSICO', 'CICLOS FORMATIVOS DE GRADO BÁSICO'],
+        'SUPERIOR': ['GRADO SUPERIOR', 'SUPERIOR'],
+        'MEDIO': ['GRADO MEDIO', 'MEDIO'],
+        'ESPECIALIZACION': ['CURSO DE ESPECIALIZACIÓN', 'ESPECIALIZACIÓN', 'ESPECIALIZACION'],
+    };
+
+    // Normalizar texto removiendo acentos para comparaciones
+    const normalizeText = (text: string): string => {
+        return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+    };
+
+    // Función para encontrar el nivel real en los datos dado un parámetro de URL
+    const findMatchingLevel = (urlParam: string | null, levelKeys: string[]): string | null => {
+        if (!urlParam) return null;
+        const param = urlParam.toUpperCase();
+        const paramNormalized = normalizeText(param);
+
+        // Si el parámetro coincide exactamente con una clave existente
+        if (levelKeys.includes(param)) return param;
+
+        // Buscar usando las palabras clave
+        const keywords = urlParamToKeywords[param];
+        if (keywords) {
+            for (const levelKey of levelKeys) {
+                const levelKeyNormalized = normalizeText(levelKey);
+                for (const keyword of keywords) {
+                    const keywordNormalized = normalizeText(keyword);
+                    // Comparar tanto con y sin acentos
+                    if (levelKey.includes(keyword) || keyword.includes(levelKey) ||
+                        levelKeyNormalized.includes(keywordNormalized) || keywordNormalized.includes(levelKeyNormalized)) {
+                        return levelKey;
+                    }
+                }
+            }
+        }
+
+        // Buscar si el nivel contiene "BÁSIC" o "BASIC" para FP Básica
+        if (paramNormalized === 'BASICA') {
+            for (const levelKey of levelKeys) {
+                const normalized = normalizeText(levelKey);
+                if (normalized.includes('BASIC') || normalized.includes('BASICO')) {
+                    return levelKey;
+                }
+            }
+        }
+
+        // Último intento: buscar coincidencia parcial
+        for (const levelKey of levelKeys) {
+            const levelKeyNormalized = normalizeText(levelKey);
+            if (levelKeyNormalized.includes(paramNormalized) || paramNormalized.includes(levelKeyNormalized)) {
+                return levelKey;
+            }
+        }
+
+        return null;
     };
 
     // Acordeones: cerrados por defecto, se abren según filtros de URL
-    const nivelFromUrl = searchParams.get('nivel')?.toUpperCase();
-    const expandedNivel = nivelFromUrl ? (abbreviationToLevel[nivelFromUrl] || nivelFromUrl) : null;
-    const [expandedLevels, setExpandedLevels] = useState<Record<string, boolean>>(() => {
-        if (expandedNivel) {
-            return { [expandedNivel]: true };
-        }
-        return {}; // Todos cerrados por defecto
-    });
+    const nivelFromUrl = searchParams.get('nivel');
+    const [expandedLevels, setExpandedLevels] = useState<Record<string, boolean>>({});
     const [isDesktop, setIsDesktop] = useState(false);
 
     // Detectar si estamos en desktop para renderizar el mapa solo ahí
@@ -68,6 +113,28 @@ export default function CentroDetailContent() {
         window.addEventListener('resize', checkDesktop);
         return () => window.removeEventListener('resize', checkDesktop);
     }, []);
+
+    // Abrir acordeón según el nivel de la URL cuando se carguen los ciclos
+    useEffect(() => {
+        if (ciclos?.data && nivelFromUrl) {
+            const currentGrouped = ciclos.data.reduce((acc: Record<string, CicloFP[]>, ciclo: CicloFP) => {
+                const nivel = ciclo.nivel_educativo?.toUpperCase() || 'OTROS';
+                if (!acc[nivel]) acc[nivel] = [];
+                acc[nivel].push(ciclo);
+                return acc;
+            }, {} as Record<string, CicloFP[]>);
+
+            const levelKeys = Object.keys(currentGrouped);
+            const matchedLevel = findMatchingLevel(nivelFromUrl, levelKeys);
+
+            // Debug: ver qué niveles hay y cuál se encontró
+            console.log('[CentroDetail] URL nivel:', nivelFromUrl, '| Niveles disponibles:', levelKeys, '| Match encontrado:', matchedLevel);
+
+            if (matchedLevel) {
+                setExpandedLevels(prev => ({ ...prev, [matchedLevel]: true }));
+            }
+        }
+    }, [ciclos, nivelFromUrl]);
 
     // Cerrar menú de compartir al hacer clic fuera
     useEffect(() => {
@@ -171,36 +238,30 @@ export default function CentroDetailContent() {
     };
 
     const getLevelColor = (nivel: string) => {
-        switch (nivel?.toUpperCase()) {
-            case 'GRADO SUPERIOR': return 'bg-purple-600 text-white border-purple-600 shadow-sm';
-            case 'GRADO MEDIO': return 'bg-amber-500 text-white border-amber-500 shadow-sm';
-            case 'FP BÁSICA':
-            case 'FORMACIÓN PROFESIONAL BÁSICA': return 'bg-blue-600 text-white border-blue-600 shadow-sm';
-            case 'CURSO DE ESPECIALIZACIÓN': return 'bg-rose-600 text-white border-rose-600 shadow-sm';
-            default: return 'bg-neutral-600 text-white border-neutral-600';
-        }
+        const n = normalizeText(nivel || '');
+        if (n.includes('SUPERIOR')) return 'bg-purple-600 text-white border-purple-600 shadow-sm';
+        if (n.includes('MEDIO')) return 'bg-amber-500 text-white border-amber-500 shadow-sm';
+        if (n.includes('BASIC') || n.includes('BASICO')) return 'bg-blue-600 text-white border-blue-600 shadow-sm';
+        if (n.includes('ESPECIALIZACION')) return 'bg-rose-600 text-white border-rose-600 shadow-sm';
+        return 'bg-neutral-600 text-white border-neutral-600';
     };
 
     const getLevelBackground = (nivel: string) => {
-        switch (nivel?.toUpperCase()) {
-            case 'GRADO SUPERIOR': return 'bg-purple-50 border-purple-100';
-            case 'GRADO MEDIO': return 'bg-amber-50 border-amber-100';
-            case 'FP BÁSICA':
-            case 'FORMACIÓN PROFESIONAL BÁSICA': return 'bg-blue-50 border-blue-100';
-            case 'CURSO DE ESPECIALIZACIÓN': return 'bg-rose-50 border-rose-100';
-            default: return 'bg-neutral-50 border-neutral-100';
-        }
+        const n = normalizeText(nivel || '');
+        if (n.includes('SUPERIOR')) return 'bg-purple-50 border-purple-100';
+        if (n.includes('MEDIO')) return 'bg-amber-50 border-amber-100';
+        if (n.includes('BASIC') || n.includes('BASICO')) return 'bg-blue-50 border-blue-100';
+        if (n.includes('ESPECIALIZACION')) return 'bg-rose-50 border-rose-100';
+        return 'bg-neutral-50 border-neutral-100';
     };
 
     const getLevelAbbreviation = (nivel: string) => {
-        switch (nivel?.toUpperCase()) {
-            case 'GRADO SUPERIOR': return 'GS';
-            case 'GRADO MEDIO': return 'GM';
-            case 'FP BÁSICA':
-            case 'FORMACIÓN PROFESIONAL BÁSICA': return 'FPB';
-            case 'CURSO DE ESPECIALIZACIÓN': return 'CE';
-            default: return nivel?.substring(0, 2)?.toUpperCase() || '';
-        }
+        const n = normalizeText(nivel || '');
+        if (n.includes('SUPERIOR')) return 'GS';
+        if (n.includes('MEDIO')) return 'GM';
+        if (n.includes('BASIC') || n.includes('BASICO')) return 'FPB';
+        if (n.includes('ESPECIALIZACION')) return 'CE';
+        return nivel?.substring(0, 2)?.toUpperCase() || '';
     };
 
     const getMapsLink = (mode: 'driving' | 'walking' | 'transit') => {
