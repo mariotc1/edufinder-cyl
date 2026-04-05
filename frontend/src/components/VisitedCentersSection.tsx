@@ -2,15 +2,63 @@
 
 import { useVisitedCenters, VisitedCentro } from '@/hooks/useVisitedCenters';
 import Link from 'next/link';
-import { History, MapPin, X, ChevronRight, Trash2, Eye } from 'lucide-react';
+import { History, MapPin, X, ChevronRight, ChevronLeft, Trash2, Eye, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 
 // COMPONENTE: SECCIÓN DE CENTROS VISITADOS RECIENTEMENTE
 // Muestra un carrusel horizontal con los últimos centros visitados por el usuario
 export default function VisitedCentersSection() {
     const { visitedCenters, loading, removeFromHistory, clearHistory } = useVisitedCenters();
     const [showClearConfirm, setShowClearConfirm] = useState(false);
+
+    // Estado para controlar el carrusel
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const [canScrollLeft, setCanScrollLeft] = useState(false);
+    const [canScrollRight, setCanScrollRight] = useState(false);
+    const [scrollProgress, setScrollProgress] = useState(0);
+
+    // Función para verificar el estado del scroll
+    const checkScrollState = useCallback(() => {
+        const container = scrollContainerRef.current;
+        if (!container) return;
+
+        const { scrollLeft, scrollWidth, clientWidth } = container;
+        setCanScrollLeft(scrollLeft > 10);
+        setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+
+        // Calcular progreso del scroll
+        const maxScroll = scrollWidth - clientWidth;
+        setScrollProgress(maxScroll > 0 ? (scrollLeft / maxScroll) * 100 : 0);
+    }, []);
+
+    // Verificar estado del scroll al montar y cuando cambian los centros
+    useEffect(() => {
+        checkScrollState();
+        const container = scrollContainerRef.current;
+        if (container) {
+            container.addEventListener('scroll', checkScrollState);
+            window.addEventListener('resize', checkScrollState);
+            return () => {
+                container.removeEventListener('scroll', checkScrollState);
+                window.removeEventListener('resize', checkScrollState);
+            };
+        }
+    }, [visitedCenters, checkScrollState]);
+
+    // Función para hacer scroll
+    const scroll = (direction: 'left' | 'right') => {
+        const container = scrollContainerRef.current;
+        if (!container) return;
+
+        const cardWidth = 320 + 16; // Ancho de card + gap
+        const scrollAmount = direction === 'left' ? -cardWidth * 2 : cardWidth * 2;
+
+        container.scrollBy({
+            left: scrollAmount,
+            behavior: 'smooth'
+        });
+    };
 
     // No mostrar si no hay historial o está cargando
     if (loading || visitedCenters.length === 0) {
@@ -41,74 +89,147 @@ export default function VisitedCentersSection() {
     };
 
     return (
-        <section className="py-8">
+        <section className="py-8 sm:py-10">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-[#223945]/10 rounded-lg">
-                            <History className="w-5 h-5 text-[#223945]" />
+                {/* Header mejorado */}
+                <div className="flex items-center justify-between mb-5">
+                    <div className="flex items-center gap-3 sm:gap-4">
+                        {/* Icono con diseño premium */}
+                        <div className="relative">
+                            <div className="p-2.5 sm:p-3 bg-gradient-to-br from-[#223945] to-[#223945]/80 rounded-xl shadow-lg shadow-[#223945]/20">
+                                <History className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                            </div>
+                            {/* Badge contador */}
+                            <div className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1.5 bg-primary-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-md">
+                                {visitedCenters.length}
+                            </div>
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold text-[#223945]">Visitados recientemente</h2>
-                            <p className="text-sm text-neutral-500">Los últimos centros que has explorado</p>
+                            <h2 className="text-lg sm:text-xl font-bold text-[#223945]">Visitados recientemente</h2>
+                            <p className="text-xs sm:text-sm text-neutral-500">Retoma donde lo dejaste</p>
                         </div>
                     </div>
 
-                    {/* Botón limpiar historial */}
+                    {/* Botón limpiar historial - Rediseñado */}
                     <div className="relative">
                         <button
                             onClick={() => setShowClearConfirm(true)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-neutral-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            className="group flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 text-sm font-medium text-neutral-500 bg-white border border-neutral-200 hover:border-red-200 hover:bg-red-50 hover:text-red-600 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md"
                         >
-                            <Trash2 className="w-4 h-4" />
-                            <span className="hidden sm:inline">Limpiar</span>
+                            <Trash2 className="w-4 h-4 transition-transform group-hover:scale-110" />
+                            <span className="hidden sm:inline">Borrar historial</span>
                         </button>
 
-                        {/* Confirmación de limpiar */}
+                        {/* Modal de confirmación mejorado */}
                         <AnimatePresence>
                             {showClearConfirm && (
-                                <motion.div
-                                    initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                                    exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                                    className="absolute right-0 top-full mt-2 p-4 bg-white rounded-xl shadow-xl border border-neutral-200 z-50 w-64"
-                                >
-                                    <p className="text-sm font-medium text-neutral-700 mb-3">
-                                        ¿Eliminar todo el historial?
-                                    </p>
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => setShowClearConfirm(false)}
-                                            className="flex-1 px-3 py-2 text-sm font-medium text-neutral-600 bg-neutral-100 hover:bg-neutral-200 rounded-lg transition-colors"
-                                        >
-                                            Cancelar
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                clearHistory();
-                                                setShowClearConfirm(false);
-                                            }}
-                                            className="flex-1 px-3 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors"
-                                        >
-                                            Eliminar
-                                        </button>
-                                    </div>
-                                </motion.div>
+                                <>
+                                    {/* Overlay para cerrar al hacer clic fuera */}
+                                    <motion.div
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        className="fixed inset-0 z-40"
+                                        onClick={() => setShowClearConfirm(false)}
+                                    />
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                                        exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                                        transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                                        className="absolute right-0 top-full mt-3 p-5 bg-white rounded-2xl shadow-2xl border border-neutral-100 z-50 w-72"
+                                    >
+                                        {/* Icono de advertencia */}
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="p-2 bg-red-100 rounded-xl">
+                                                <AlertTriangle className="w-5 h-5 text-red-500" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-bold text-neutral-800">¿Borrar historial?</p>
+                                                <p className="text-xs text-neutral-500">Esta acción no se puede deshacer</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => setShowClearConfirm(false)}
+                                                className="flex-1 px-4 py-2.5 text-sm font-semibold text-neutral-600 bg-neutral-100 hover:bg-neutral-200 rounded-xl transition-colors"
+                                            >
+                                                Cancelar
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    clearHistory();
+                                                    setShowClearConfirm(false);
+                                                }}
+                                                className="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 rounded-xl transition-colors shadow-lg shadow-red-500/25"
+                                            >
+                                                Borrar todo
+                                            </button>
+                                        </div>
+                                    </motion.div>
+                                </>
                             )}
                         </AnimatePresence>
                     </div>
                 </div>
 
-                {/* Carrusel horizontal */}
-                <div className="relative">
-                    <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory">
+                {/* Carrusel con controles */}
+                <div className="relative group/carousel">
+                    {/* Flecha izquierda */}
+                    <AnimatePresence>
+                        {canScrollLeft && (
+                            <motion.button
+                                initial={{ opacity: 0, x: 10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 10 }}
+                                onClick={() => scroll('left')}
+                                className="hidden sm:flex absolute -left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 items-center justify-center bg-white border border-neutral-200 rounded-full shadow-lg hover:shadow-xl hover:border-[#223945] hover:scale-110 transition-all duration-200"
+                                aria-label="Anterior"
+                            >
+                                <ChevronLeft className="w-5 h-5 text-[#223945]" />
+                            </motion.button>
+                        )}
+                    </AnimatePresence>
+
+                    {/* Flecha derecha */}
+                    <AnimatePresence>
+                        {canScrollRight && (
+                            <motion.button
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -10 }}
+                                onClick={() => scroll('right')}
+                                className="hidden sm:flex absolute -right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 items-center justify-center bg-white border border-neutral-200 rounded-full shadow-lg hover:shadow-xl hover:border-[#223945] hover:scale-110 transition-all duration-200"
+                                aria-label="Siguiente"
+                            >
+                                <ChevronRight className="w-5 h-5 text-[#223945]" />
+                            </motion.button>
+                        )}
+                    </AnimatePresence>
+
+                    {/* Gradient fade izquierdo */}
+                    <AnimatePresence>
+                        {canScrollLeft && (
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="absolute left-0 top-0 bottom-6 w-12 sm:w-20 bg-gradient-to-r from-[#f8fafc] via-[#f8fafc]/80 to-transparent pointer-events-none z-10"
+                            />
+                        )}
+                    </AnimatePresence>
+
+                    {/* Contenedor del carrusel */}
+                    <div
+                        ref={scrollContainerRef}
+                        className="flex gap-4 overflow-x-auto pb-6 scrollbar-hide snap-x snap-mandatory scroll-smooth"
+                    >
                         {visitedCenters.map((centro, index) => (
                             <motion.div
                                 key={centro.id}
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: index * 0.05 }}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.05, type: "spring", stiffness: 100 }}
                                 className="flex-shrink-0 snap-start"
                             >
                                 <VisitedCentroCard
@@ -122,21 +243,45 @@ export default function VisitedCentersSection() {
 
                         {/* Ver más placeholder */}
                         {visitedCenters.length >= 5 && (
-                            <div className="flex-shrink-0 snap-start w-[200px] flex items-center justify-center">
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.3 }}
+                                className="flex-shrink-0 snap-start w-[200px] flex items-center justify-center"
+                            >
                                 <Link
                                     href="/perfil"
-                                    className="flex flex-col items-center gap-2 p-4 text-neutral-400 hover:text-[#223945] transition-colors"
+                                    className="group flex flex-col items-center gap-3 p-6 text-neutral-400 hover:text-[#223945] transition-all"
                                 >
-                                    <ChevronRight className="w-8 h-8" />
-                                    <span className="text-sm font-medium">Ver perfil</span>
+                                    <div className="p-4 rounded-2xl bg-neutral-100 group-hover:bg-[#223945]/10 transition-colors">
+                                        <ChevronRight className="w-8 h-8 transition-transform group-hover:translate-x-1" />
+                                    </div>
+                                    <span className="text-sm font-semibold">Ver perfil</span>
                                 </Link>
-                            </div>
+                            </motion.div>
                         )}
                     </div>
 
-                    {/* Gradient fade en los bordes */}
-                    <div className="absolute right-0 top-0 bottom-4 w-16 bg-gradient-to-l from-[#f8fafc] to-transparent pointer-events-none"></div>
+                    {/* Gradient fade derecho - siempre visible si hay más contenido */}
+                    <div className="absolute right-0 top-0 bottom-6 w-12 sm:w-20 bg-gradient-to-l from-[#f8fafc] via-[#f8fafc]/80 to-transparent pointer-events-none z-10"></div>
                 </div>
+
+                {/* Indicador de progreso - solo visible si hay scroll */}
+                {(canScrollLeft || canScrollRight) && (
+                    <div className="mt-2 flex justify-center">
+                        <div className="w-24 sm:w-32 h-1 bg-neutral-200 rounded-full overflow-hidden">
+                            <motion.div
+                                className="h-full bg-gradient-to-r from-[#223945] to-primary-500 rounded-full"
+                                initial={{ width: '20%', x: 0 }}
+                                animate={{
+                                    width: '30%',
+                                    x: `${scrollProgress * 0.7}%`
+                                }}
+                                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                            />
+                        </div>
+                    </div>
+                )}
             </div>
         </section>
     );
@@ -156,7 +301,7 @@ function VisitedCentroCard({
 }) {
     return (
         <div className="relative group w-[280px] sm:w-[320px]">
-            <div className="relative bg-white rounded-xl border border-neutral-200 overflow-hidden hover:border-[#223945]/30 hover:shadow-lg transition-all">
+            <div className="relative bg-white rounded-xl border border-neutral-200 overflow-hidden hover:border-[#223945]/30 hover:shadow-lg transition-all duration-200">
                 {/* Degradado corporativo superior */}
                 <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-primary-500 to-primary-300"></div>
 
