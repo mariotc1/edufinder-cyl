@@ -10,10 +10,14 @@ import FilterBar from '@/components/FilterBar';
 import CentroCard from '@/components/CentroCard';
 import CentroCardSkeleton from '@/components/CentroCardSkeleton';
 import VisitedCentersSection from '@/components/VisitedCentersSection';
+import RecommendationsSection from '@/components/recommendations/RecommendationsSection';
+import AIWizardModal from '@/components/ai-wizard/AIWizardModal';
+import AIWizardTriggerButton from '@/components/ai-wizard/AIWizardTriggerButton';
 import { motion } from 'framer-motion';
 
 export default function SearchContent() {
   const searchParams = useSearchParams();
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
 
   const [filters, setFilters] = useState<FilterOptions>({
     q: searchParams.get('q') || '',
@@ -55,6 +59,19 @@ export default function SearchContent() {
     setPage(1);
   }, []);
 
+  // Detectar si hay filtros activos (para ocultar secciones personalizadas)
+  const hasActiveFilters = Boolean(
+    filters.q ||
+    filters.provincia ||
+    filters.tipo ||
+    filters.naturaleza ||
+    filters.familia ||
+    filters.nivel ||
+    filters.modalidad ||
+    filters.lat ||
+    filters.lng
+  );
+
   const containerVariants = {
     hidden: { opacity: 0 },
     show: {
@@ -79,6 +96,11 @@ export default function SearchContent() {
             <p className="text-lg sm:text-xl text-neutral-600 max-w-2xl mx-auto leading-relaxed">
               Encuentra tu centro ideal en <span className="font-semibold text-[#223945]">Castilla y León</span> con nuestra búsqueda inteligente.
             </p>
+
+            {/* Botón AI Wizard */}
+            <div className="mt-6">
+              <AIWizardTriggerButton onClick={() => setIsWizardOpen(true)} />
+            </div>
           </div>
 
           {/* Filter Bar Component */}
@@ -88,8 +110,13 @@ export default function SearchContent() {
         </div>
       </section>
 
-      {/* Visited Centers Section */}
-      <VisitedCentersSection />
+      {/* Secciones personalizadas - Solo visibles sin filtros activos */}
+      {!hasActiveFilters && (
+        <>
+          <VisitedCentersSection />
+          <RecommendationsSection />
+        </>
+      )}
 
       {/* Results Section - Backgrounds removed */}
       <section className="flex-grow px-4 sm:px-6 lg:px-8 py-12">
@@ -251,6 +278,12 @@ export default function SearchContent() {
           )}
         </div>
       </section>
+
+      {/* AI Wizard Modal */}
+      <AIWizardModal
+        isOpen={isWizardOpen}
+        onClose={() => setIsWizardOpen(false)}
+      />
     </>
   );
 }

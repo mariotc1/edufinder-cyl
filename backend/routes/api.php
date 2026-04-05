@@ -3,6 +3,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CentroController;
 use App\Http\Controllers\CicloFpController;
 use App\Http\Controllers\FavoritoController;
+use App\Http\Controllers\RecommendationController;
 use App\Http\Controllers\SavedSearchController;
 use Illuminate\Support\Facades\Route;
 
@@ -62,6 +63,10 @@ Route::get('/centros/{id}/ciclos', [CentroController::class, 'ciclos']);
 // Endpoint para realizar búsquedas globales en la plataforma
 Route::get('/busqueda', [App\Http\Controllers\SearchController::class, 'index']);
 
+// RECOMENDACIONES IA
+// Endpoint público para búsqueda guiada del wizard
+Route::get('/recommendations/wizard', [RecommendationController::class, 'fromWizard']);
+
 // GESTIÓN DE CICLOS FORMATIVOS
 // Rutas para listar y obtener sugerencias de ciclos de FP
 Route::get('/ciclos/sugerencias', [CicloFpController::class, 'suggestions']);
@@ -86,6 +91,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/favoritos', [FavoritoController::class, 'index']);
     Route::post('/favoritos/{id}', [FavoritoController::class, 'store']);
     Route::delete('/favoritos/{id}', [FavoritoController::class, 'destroy']);
+
+    // RECOMENDACIONES PERSONALIZADAS
+    // Recomendaciones basadas en los favoritos del usuario
+    Route::get('/recommendations/favorites', [RecommendationController::class, 'fromFavorites']);
 
     // BÚSQUEDAS GUARDADAS
     // Gestión de combinaciones de filtros guardadas por el usuario

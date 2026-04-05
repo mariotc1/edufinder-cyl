@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Heart, School, ArrowRight, Loader2, ChevronLeft } from 'lucide-react';
 import CentroCard from '@/components/CentroCard';
 import CentroCardSkeleton from '@/components/CentroCardSkeleton';
+import RecommendationsSection from '@/components/recommendations/RecommendationsSection';
 import { Centro } from '@/types';
 import axios from '@/lib/axios';
 
@@ -112,17 +113,24 @@ export default function FavoritosContent() {
                         </div>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                         {centros.map((centro: Centro, index: number) => (
-                             <CentroCard
-                                key={centro.id}
-                                centro={centro}
-                                index={index}
-                                initialIsFavorite={true}
-                                onToggle={handleToggle}
-                             />
-                         ))}
-                    </div>
+                    <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                             {centros.map((centro: Centro, index: number) => (
+                                 <CentroCard
+                                    key={centro.id}
+                                    centro={centro}
+                                    index={index}
+                                    initialIsFavorite={true}
+                                    onToggle={handleToggle}
+                                 />
+                             ))}
+                        </div>
+
+                        {/* Sección de recomendaciones basadas en favoritos */}
+                        <div className="mt-12">
+                            <RecommendationsSection />
+                        </div>
+                    </>
                 )}
              </div>
         </div>
