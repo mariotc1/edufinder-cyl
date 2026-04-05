@@ -157,6 +157,45 @@ class CentroController extends Controller
         return CicloFpResource::collection($centro->ciclos);
     }
 
+    // HISTORIAL DE CENTROS VISITADOS
+    // Devuelve los últimos centros visitados por el usuario autenticado
+    public function visitedCenters(Request $request)
+    {
+        $visits = CentroVisit::where('user_id', $request->user()->id)
+            ->with('centro:id,nombre,localidad,provincia,naturaleza,direccion,denominacion_generica')
+            ->orderByDesc('created_at')
+            ->limit(20)
+            ->get()
+            ->unique('centro_id') // Evitar duplicados del mismo centro
+            ->values();
+
+        return response()->json($visits);
+    }
+
+    // ELIMINAR UN CENTRO DEL HISTORIAL
+    // Elimina todas las visitas de un centro específico para el usuario
+    public function removeVisitedCenter(Request $request, $centroId)
+    {
+        $deleted = CentroVisit::where('user_id', $request->user()->id)
+            ->where('centro_id', $centroId)
+            ->delete();
+
+        if ($deleted) {
+            return response()->json(['message' => 'Eliminado del historial']);
+        }
+
+        return response()->json(['message' => 'No encontrado'], 404);
+    }
+
+    // LIMPIAR TODO EL HISTORIAL
+    // Elimina todas las visitas del usuario
+    public function clearVisitedCenters(Request $request)
+    {
+        CentroVisit::where('user_id', $request->user()->id)->delete();
+
+        return response()->json(['message' => 'Historial limpiado']);
+    }
+
     // SUGERENCIAS DE BÚSQUEDA
     // Autocompletado para la barra de búsqueda por nombre de centro
     // Filtra por provincia si está presente para mostrar solo centros relevantes

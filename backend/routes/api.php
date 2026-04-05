@@ -93,6 +93,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/saved-searches', [SavedSearchController::class, 'store']);
     Route::put('/saved-searches/{id}', [SavedSearchController::class, 'update']);
     Route::delete('/saved-searches/{id}', [SavedSearchController::class, 'destroy']);
+
+    // HISTORIAL DE CENTROS VISITADOS
+    // Obtener los centros visitados por el usuario autenticado
+    Route::get('/visited-centers', [CentroController::class, 'visitedCenters']);
+    Route::delete('/visited-centers/{centroId}', [CentroController::class, 'removeVisitedCenter']);
+    Route::delete('/visited-centers', [CentroController::class, 'clearVisitedCenters']);
 });
 
 // PANEL DE ADMINISTRACIÓN
