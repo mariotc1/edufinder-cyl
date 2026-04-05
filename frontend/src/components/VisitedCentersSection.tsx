@@ -2,7 +2,7 @@
 
 import { useVisitedCenters, VisitedCentro } from '@/hooks/useVisitedCenters';
 import Link from 'next/link';
-import { History, MapPin, X, ChevronRight, Trash2 } from 'lucide-react';
+import { History, MapPin, X, ChevronRight, Trash2, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 
@@ -19,9 +19,9 @@ export default function VisitedCentersSection() {
 
     const getNaturalezaColor = (naturaleza: string) => {
         switch (naturaleza?.toUpperCase()) {
-            case 'PÚBLICO': return 'bg-blue-100 text-blue-700 border-blue-200';
-            case 'PRIVADO': return 'bg-amber-100 text-amber-700 border-amber-200';
-            default: return 'bg-neutral-100 text-neutral-600 border-neutral-200';
+            case 'PÚBLICO': return 'bg-blue-50 text-blue-700 border-blue-200 ring-1 ring-blue-100';
+            case 'PRIVADO': return 'bg-amber-50 text-amber-700 border-amber-200 ring-1 ring-amber-100';
+            default: return 'bg-neutral-50 text-neutral-600 border-neutral-200';
         }
     };
 
@@ -156,44 +156,57 @@ function VisitedCentroCard({
 }) {
     return (
         <div className="relative group w-[280px] sm:w-[320px]">
-            <Link
-                href={`/centro/${centro.id}`}
-                className="block bg-white rounded-xl border border-neutral-200 p-4 hover:border-[#223945]/30 hover:shadow-lg transition-all"
-            >
-                {/* Badge de naturaleza */}
-                <div className="flex items-center justify-between mb-3">
-                    <span className={`text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full border ${getNaturalezaColor(centro.naturaleza)}`}>
-                        {centro.naturaleza || 'Centro'}
-                    </span>
-                    <span className="text-[10px] text-neutral-400 font-medium">
-                        {formatDate(centro.visitedAt)}
-                    </span>
+            <div className="relative bg-white rounded-xl border border-neutral-200 overflow-hidden hover:border-[#223945]/30 hover:shadow-lg transition-all">
+                {/* Degradado corporativo superior */}
+                <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-primary-500 to-primary-300"></div>
+
+                <div className="p-4 pt-5">
+                    {/* Badge de naturaleza + tiempo de visita */}
+                    <div className="flex items-center gap-2 mb-3 pr-8">
+                        <span className={`text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full border ${getNaturalezaColor(centro.naturaleza)}`}>
+                            {centro.naturaleza || 'Centro'}
+                        </span>
+                        <span className="text-[10px] text-neutral-400 font-medium">
+                            {formatDate(centro.visitedAt)}
+                        </span>
+                    </div>
+
+                    {/* Nombre del centro */}
+                    <h3 className="font-bold text-[#223945] text-sm leading-tight mb-2 line-clamp-2 min-h-[2.5rem]">
+                        {centro.nombre}
+                    </h3>
+
+                    {/* Ubicación */}
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 text-neutral-500">
+                            <MapPin className="w-3.5 h-3.5 shrink-0" />
+                            <span className="text-xs truncate">{centro.localidad}, {centro.provincia}</span>
+                        </div>
+
+                        {/* Botón ver detalles */}
+                        <Link
+                            href={`/centro/${centro.id}`}
+                            className="p-2 rounded-lg bg-[#223945] text-white hover:bg-[#223945]/90 hover:scale-105 transition-all shadow-md"
+                            title="Ver detalles del centro"
+                        >
+                            <Eye className="w-4 h-4" />
+                        </Link>
+                    </div>
                 </div>
 
-                {/* Nombre del centro */}
-                <h3 className="font-bold text-[#223945] text-sm leading-tight mb-2 line-clamp-2 min-h-[2.5rem]">
-                    {centro.nombre}
-                </h3>
-
-                {/* Ubicación */}
-                <div className="flex items-center gap-1.5 text-neutral-500">
-                    <MapPin className="w-3.5 h-3.5 shrink-0" />
-                    <span className="text-xs truncate">{centro.localidad}, {centro.provincia}</span>
-                </div>
-            </Link>
-
-            {/* Botón eliminar (aparece en hover) */}
-            <button
-                onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onRemove();
-                }}
-                className="absolute top-2 right-2 p-1.5 rounded-full bg-white/90 text-neutral-400 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all shadow-sm border border-neutral-100"
-                title="Eliminar del historial"
-            >
-                <X className="w-3.5 h-3.5" />
-            </button>
+                {/* Botón eliminar (siempre visible) */}
+                <button
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onRemove();
+                    }}
+                    className="absolute top-3 right-2 p-1.5 rounded-full bg-white/90 text-neutral-400 hover:text-red-500 hover:bg-red-50 transition-all shadow-sm border border-neutral-100"
+                    title="Eliminar del historial"
+                >
+                    <X className="w-3.5 h-3.5" />
+                </button>
+            </div>
         </div>
     );
 }
