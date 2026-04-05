@@ -9,6 +9,7 @@ import { FilterOptions, Centro } from '@/types';
 import FilterBar from '@/components/FilterBar';
 import CentroCard from '@/components/CentroCard';
 import CentroCardSkeleton from '@/components/CentroCardSkeleton';
+import VisitedCentersSection from '@/components/VisitedCentersSection';
 import { motion } from 'framer-motion';
 
 export default function SearchContent() {
@@ -86,6 +87,9 @@ export default function SearchContent() {
           </div>
         </div>
       </section>
+
+      {/* Visited Centers Section */}
+      <VisitedCentersSection />
 
       {/* Results Section - Backgrounds removed */}
       <section className="flex-grow px-4 sm:px-6 lg:px-8 py-12">

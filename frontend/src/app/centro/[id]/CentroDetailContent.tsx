@@ -7,6 +7,7 @@ import { useRef, useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { Mail, Phone, MapPin, Globe, BookOpen, ChevronLeft, Heart, Share2, Copy, CheckCircle, ChevronDown, GraduationCap } from 'lucide-react';
 import { useFavorite } from '@/hooks/useFavorite';
+import { useVisitedCenters } from '@/hooks/useVisitedCenters';
 import { motion, AnimatePresence } from 'framer-motion';
 import CentroDetailSkeleton from '@/components/CentroDetailSkeleton';
 import { CicloFP } from '@/types';
@@ -106,6 +107,9 @@ export default function CentroDetailContent() {
     const [expandedLevels, setExpandedLevels] = useState<Record<string, boolean>>({});
     const [isDesktop, setIsDesktop] = useState(false);
 
+    // Hook para gestionar historial de centros visitados
+    const { addVisitedCenter } = useVisitedCenters();
+
     // Detectar si estamos en desktop para renderizar el mapa solo ahí
     useEffect(() => {
         const checkDesktop = () => setIsDesktop(window.innerWidth >= 1024);
@@ -113,6 +117,13 @@ export default function CentroDetailContent() {
         window.addEventListener('resize', checkDesktop);
         return () => window.removeEventListener('resize', checkDesktop);
     }, []);
+
+    // Guardar centro en el historial de visitados (localStorage)
+    useEffect(() => {
+        if (centro?.data) {
+            addVisitedCenter(centro.data);
+        }
+    }, [centro]);
 
     // Abrir acordeón según el nivel de la URL cuando se carguen los ciclos
     useEffect(() => {
@@ -126,9 +137,6 @@ export default function CentroDetailContent() {
 
             const levelKeys = Object.keys(currentGrouped);
             const matchedLevel = findMatchingLevel(nivelFromUrl, levelKeys);
-
-            // Debug: ver qué niveles hay y cuál se encontró
-            console.log('[CentroDetail] URL nivel:', nivelFromUrl, '| Niveles disponibles:', levelKeys, '| Match encontrado:', matchedLevel);
 
             if (matchedLevel) {
                 setExpandedLevels(prev => ({ ...prev, [matchedLevel]: true }));

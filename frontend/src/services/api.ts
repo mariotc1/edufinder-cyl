@@ -101,3 +101,10 @@ export const deleteSavedSearch = async (id: number) => {
   const response = await axios.delete(`/saved-searches/${id}`);
   return response.data;
 };
+
+// HISTORIAL DE CENTROS VISITADOS
+// Obtener los centros visitados por el usuario autenticado
+export const getVisitedCenters = async () => {
+  const response = await axios.get('/visited-centers');
+  return response.data;
+};
