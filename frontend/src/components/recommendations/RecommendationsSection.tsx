@@ -33,6 +33,8 @@ export default function RecommendationsSection() {
 
     const recommendations: Centro[] = data?.recommendations || [];
 
+    const [scrollProgress, setScrollProgress] = useState(0);
+
     // Verificar estado del scroll
     const checkScrollState = useCallback(() => {
         const container = scrollContainerRef.current;
@@ -41,6 +43,10 @@ export default function RecommendationsSection() {
         const { scrollLeft, scrollWidth, clientWidth } = container;
         setCanScrollLeft(scrollLeft > 10);
         setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+
+        // Calcular progreso del scroll
+        const maxScroll = scrollWidth - clientWidth;
+        setScrollProgress(maxScroll > 0 ? (scrollLeft / maxScroll) * 100 : 0);
     }, []);
 
     useEffect(() => {
@@ -81,17 +87,9 @@ export default function RecommendationsSection() {
                 {/* Header */}
                 <div className="flex items-center justify-between mb-5">
                     <div className="flex items-center gap-3 sm:gap-4">
-                        {/* Icono con diseño premium */}
-                        <div className="relative">
-                            <motion.div
-                                animate={{
-                                    scale: [1, 1.1, 1],
-                                }}
-                                transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
-                                className="p-2.5 sm:p-3 bg-gradient-to-br from-purple-500 to-blue-600 rounded-xl shadow-lg shadow-purple-500/20"
-                            >
-                                <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                            </motion.div>
+                        {/* Icono estático */}
+                        <div className="p-2.5 sm:p-3 bg-gradient-to-br from-purple-500 to-blue-600 rounded-xl shadow-lg shadow-purple-500/20">
+                            <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                         </div>
                         <div>
                             <h2 className="text-lg sm:text-xl font-bold text-[#223945]">
@@ -185,6 +183,23 @@ export default function RecommendationsSection() {
                     {/* Gradient fade derecho */}
                     <div className="absolute right-0 top-0 bottom-6 w-12 sm:w-20 bg-gradient-to-l from-[#f8fafc] via-[#f8fafc]/80 to-transparent pointer-events-none z-10"></div>
                 </div>
+
+                {/* Indicador de progreso - solo visible si hay scroll */}
+                {(canScrollLeft || canScrollRight) && (
+                    <div className="mt-2 flex justify-center">
+                        <div className="w-24 sm:w-32 h-1 bg-neutral-200 rounded-full overflow-hidden">
+                            <motion.div
+                                className="h-full bg-gradient-to-r from-purple-500 to-blue-500 rounded-full"
+                                initial={{ width: '20%', x: 0 }}
+                                animate={{
+                                    width: '30%',
+                                    x: `${scrollProgress * 0.7}%`
+                                }}
+                                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                            />
+                        </div>
+                    </div>
+                )}
             </div>
         </section>
     );

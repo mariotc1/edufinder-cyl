@@ -20,41 +20,55 @@ export default function RecommendationCard({ centro }: RecommendationCardProps) 
         }
     };
 
+    // Formatear ubicación de forma compacta
+    const formatLocation = (localidad: string, provincia: string) => {
+        const loc = localidad || '';
+        const prov = provincia || '';
+
+        // Si la localidad es muy larga, solo mostrar provincia
+        if (loc.length > 20) {
+            return prov;
+        }
+
+        return `${loc}, ${prov}`;
+    };
+
     return (
         <div className="relative group w-[280px] sm:w-[320px]">
-            <div className="relative bg-white rounded-xl border border-neutral-200 overflow-hidden hover:border-purple-300 hover:shadow-lg transition-all duration-200">
-                {/* Degradado superior con tono púrpura para diferenciar */}
+            {/* Card con altura fija */}
+            <div className="relative bg-white rounded-xl border border-neutral-200 overflow-hidden hover:border-purple-300 hover:shadow-lg transition-all duration-200 h-[180px] flex flex-col">
+                {/* Degradado superior */}
                 <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-purple-500 via-blue-500 to-blue-400"></div>
 
                 {/* Badge de recomendación */}
-                <div className="absolute top-3 right-3">
+                <div className="absolute top-3 right-3 z-10">
                     <div className="flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-[10px] font-bold">
                         <Sparkles className="w-3 h-3" />
                         Para ti
                     </div>
                 </div>
 
-                <div className="p-4 pt-5">
+                <div className="p-4 pt-5 flex flex-col flex-1">
                     {/* Badge de naturaleza */}
-                    <div className="flex items-center gap-2 mb-3">
+                    <div className="flex items-center gap-2 mb-2">
                         <span className={`text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full border ${getNaturalezaColor(centro.naturaleza)}`}>
                             {centro.naturaleza || 'Centro'}
                         </span>
                     </div>
 
-                    {/* Nombre del centro */}
-                    <h3 className="font-bold text-[#223945] text-sm leading-tight mb-2 line-clamp-2 min-h-[2.5rem]">
+                    {/* Nombre del centro - altura fija con truncado */}
+                    <h3 className="font-bold text-[#223945] text-[13px] leading-snug line-clamp-2 min-h-[2.5rem] mb-2" title={centro.nombre}>
                         {centro.nombre}
                     </h3>
 
-                    {/* Ciclos si existen */}
-                    {centro.ciclos && centro.ciclos.length > 0 && (
-                        <div className="mb-3">
-                            <div className="flex flex-wrap gap-1">
+                    {/* Ciclos - altura fija */}
+                    <div className="h-[1.5rem] mb-2">
+                        {centro.ciclos && centro.ciclos.length > 0 ? (
+                            <div className="flex flex-wrap gap-1 overflow-hidden h-full">
                                 {centro.ciclos.slice(0, 2).map((ciclo, idx) => (
                                     <span
                                         key={idx}
-                                        className="text-[9px] px-1.5 py-0.5 bg-purple-50 text-purple-700 rounded-full truncate max-w-[140px]"
+                                        className="text-[9px] px-1.5 py-0.5 bg-purple-50 text-purple-700 rounded-full truncate max-w-[120px]"
                                     >
                                         {ciclo.ciclo_formativo}
                                     </span>
@@ -65,22 +79,24 @@ export default function RecommendationCard({ centro }: RecommendationCardProps) 
                                     </span>
                                 )}
                             </div>
-                        </div>
-                    )}
+                        ) : (
+                            <div className="h-full"></div>
+                        )}
+                    </div>
 
-                    {/* Ubicación */}
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 text-neutral-500">
+                    {/* Ubicación - siempre al fondo */}
+                    <div className="flex items-center justify-between mt-auto">
+                        <div className="flex items-center gap-1.5 text-neutral-500 min-w-0 flex-1 mr-3">
                             <MapPin className="w-3.5 h-3.5 shrink-0" />
                             <span className="text-xs truncate">
-                                {centro.localidad}, {centro.provincia}
+                                {formatLocation(centro.localidad, centro.provincia)}
                             </span>
                         </div>
 
                         {/* Botón ver detalles */}
                         <Link
                             href={`/centro/${centro.id}`}
-                            className="p-2 rounded-lg bg-[#223945] text-white hover:bg-[#223945]/90 hover:scale-105 transition-all shadow-md"
+                            className="p-2 rounded-lg bg-[#223945] text-white hover:bg-[#223945]/90 hover:scale-105 transition-all shadow-md shrink-0"
                             title="Ver detalles del centro"
                         >
                             <Eye className="w-4 h-4" />
