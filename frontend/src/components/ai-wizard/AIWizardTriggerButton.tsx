@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Sparkles, ArrowRight } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 interface AIWizardTriggerButtonProps {
     onClick: () => void;
@@ -11,31 +11,44 @@ export default function AIWizardTriggerButton({ onClick }: AIWizardTriggerButton
     return (
         <motion.button
             onClick={onClick}
-            whileHover={{ scale: 1.02 }}
+            whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.98 }}
-            className="group relative inline-flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-[#223945] via-blue-600 to-blue-500 text-white font-bold rounded-2xl shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition-all overflow-hidden"
+            className="group relative inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#223945] to-[#2d4a5a] text-white text-sm font-medium rounded-full shadow-md hover:shadow-lg transition-all overflow-hidden"
         >
-            {/* Efecto de brillo */}
+            {/* Shimmer sutil */}
             <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12"
                 initial={{ x: '-100%' }}
                 animate={{ x: '200%' }}
                 transition={{
                     repeat: Infinity,
                     duration: 3,
-                    ease: 'linear',
+                    ease: 'easeInOut',
                     repeatDelay: 2
                 }}
             />
 
-            {/* Contenido */}
-            <div className="relative flex items-center gap-3">
-                <div className="p-1.5 bg-white/20 rounded-lg">
-                    <Sparkles className="w-5 h-5" />
-                </div>
-                <span>Encuentra tu centro ideal con IA</span>
-                <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-            </div>
+            <Sparkles className="w-4 h-4 text-blue-300 relative z-10" />
+            <span className="relative z-10">Te ayudo a elegir</span>
+
+            {/* Badge IA con efecto glow */}
+            <motion.span
+                className="relative z-10 px-2 py-0.5 bg-gradient-to-r from-blue-500 to-blue-400 rounded-md text-[10px] font-bold tracking-wider"
+                animate={{
+                    boxShadow: [
+                        '0 0 8px 2px rgba(59, 130, 246, 0.4)',
+                        '0 0 20px 4px rgba(59, 130, 246, 0.6)',
+                        '0 0 8px 2px rgba(59, 130, 246, 0.4)'
+                    ]
+                }}
+                transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: 'easeInOut'
+                }}
+            >
+                IA
+            </motion.span>
         </motion.button>
     );
 }
