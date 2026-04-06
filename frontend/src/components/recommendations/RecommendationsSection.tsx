@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect, useCallback } from 'react';
 import useSWR from 'swr';
-import { Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Sparkles, ChevronLeft, ChevronRight, MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import RecommendationCard from './RecommendationCard';
@@ -102,15 +102,16 @@ export default function RecommendationsSection() {
                     </div>
 
                     {/* Patrones detectados */}
-                    {data?.patterns && (
+                    {data?.patterns?.top_provincias?.length > 0 && (
                         <div className="hidden sm:flex items-center gap-2">
-                            {data.patterns.top_provincias?.slice(0, 2).map((prov: string) => (
-                                <span
+                            {data.patterns.top_provincias.slice(0, 2).map((prov: string) => (
+                                <div
                                     key={prov}
-                                    className="px-2 py-1 bg-neutral-100 text-neutral-600 text-xs font-medium rounded-full"
+                                    className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-100/50 text-purple-700/80 text-xs font-medium rounded-full"
                                 >
-                                    {prov}
-                                </span>
+                                    <MapPin className="w-3 h-3" />
+                                    <span className="capitalize">{prov.toLowerCase()}</span>
+                                </div>
                             ))}
                         </div>
                     )}

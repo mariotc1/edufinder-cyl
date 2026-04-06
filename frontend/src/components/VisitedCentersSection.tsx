@@ -315,25 +315,27 @@ function VisitedCentroCard({
     return (
         <div className="relative group w-[280px] sm:w-[320px]">
             {/* Card con altura fija */}
-            <div className="relative bg-white rounded-xl border border-neutral-200 overflow-hidden hover:border-[#223945]/30 hover:shadow-lg transition-all duration-200 h-[150px] flex flex-col">
+            <div className="relative bg-white rounded-xl border border-neutral-200 overflow-hidden hover:border-[#223945]/30 hover:shadow-lg transition-all duration-200 h-[145px] sm:h-[160px] flex flex-col">
                 {/* Degradado corporativo superior */}
                 <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-primary-500 to-primary-300"></div>
 
-                <div className="p-4 pt-5 pb-5 flex flex-col flex-1">
+                <div className="p-3 sm:p-4 pt-4 sm:pt-5 pb-3 sm:pb-5 flex flex-col flex-1">
                     {/* Badge de naturaleza + tiempo de visita */}
-                    <div className="flex items-center gap-2 mb-2 pr-8">
-                        <span className={`text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full border ${getNaturalezaColor(centro.naturaleza)}`}>
+                    <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2 pr-8 shrink-0">
+                        <span className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-wide px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full border ${getNaturalezaColor(centro.naturaleza)}`}>
                             {centro.naturaleza || 'Centro'}
                         </span>
-                        <span className="text-[10px] text-neutral-400 font-medium whitespace-nowrap">
+                        <span className="text-[9px] sm:text-[10px] text-neutral-400 font-medium whitespace-nowrap">
                             {formatDate(centro.visitedAt)}
                         </span>
                     </div>
 
                     {/* Nombre del centro - altura fija con truncado */}
-                    <h3 className="font-bold text-[#223945] text-[13px] leading-snug line-clamp-2 min-h-[2.5rem] mb-2" title={centro.nombre}>
-                        {centro.nombre}
-                    </h3>
+                    <div className="h-[2.2rem] sm:h-[2.4rem] mb-1.5 sm:mb-2 shrink-0 overflow-hidden">
+                        <h3 className="font-bold text-[#223945] text-[11px] sm:text-[12px] leading-[1.1rem] sm:leading-[1.2rem] line-clamp-2" title={centro.nombre}>
+                            {centro.nombre}
+                        </h3>
+                    </div>
 
                     {/* Ubicación - siempre al fondo */}
                     <div className="flex items-center justify-between mt-auto">
