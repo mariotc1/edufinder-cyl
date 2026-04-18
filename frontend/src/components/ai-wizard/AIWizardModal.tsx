@@ -120,8 +120,8 @@ export default function AIWizardModal({ isOpen, onClose }: AIWizardModalProps) {
                 if (wizardData.modalidad) params.set('modalidad', wizardData.modalidad);
             }
 
-            // Naturaleza
-            if (wizardData.naturaleza) {
+            // Naturaleza (no enviar si es INDIFERENTE)
+            if (wizardData.naturaleza && wizardData.naturaleza !== 'INDIFERENTE') {
                 params.set('naturaleza', wizardData.naturaleza);
             }
 
