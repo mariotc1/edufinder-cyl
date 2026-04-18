@@ -33,9 +33,9 @@ export default function WizardProgressBar({ currentStep, showFPDetails }: Wizard
     const totalSteps = visibleSteps.length;
 
     return (
-        <div className="px-3 sm:px-4 pt-3 pb-2">
-            <div className="relative bg-white/50 backdrop-blur-sm rounded-xl px-2 sm:px-3 py-2 border border-white/60">
-                <div className="flex items-center justify-between">
+        <div className="px-4 sm:px-6 pt-3 pb-2">
+            <div className="relative bg-white/50 backdrop-blur-sm rounded-xl px-3 sm:px-4 py-2 border border-white/60 mx-auto max-w-md">
+                <div className="flex items-center justify-center">
                     {visibleSteps.map((step, index) => {
                         const Icon = step.icon;
                         const isCompleted = index < currentIndex;

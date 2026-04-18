@@ -1,29 +1,28 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { BookOpen, ArrowRight, ArrowLeft, ChevronDown, Check } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import { BookOpen, ArrowRight, ArrowLeft, Check } from 'lucide-react';
 
 const familiasProfesionales = [
-    { id: 'admin', name: 'Administración y Gestión' },
-    { id: 'info', name: 'Informática y Comunicaciones' },
+    { id: 'admin', name: 'Administración' },
+    { id: 'info', name: 'Informática' },
     { id: 'sanidad', name: 'Sanidad' },
-    { id: 'comercio', name: 'Comercio y Marketing' },
-    { id: 'electric', name: 'Electricidad y Electrónica' },
-    { id: 'social', name: 'Servicios Socioculturales' },
-    { id: 'transport', name: 'Transporte y Vehículos' },
-    { id: 'hostel', name: 'Hostelería y Turismo' },
-    { id: 'instal', name: 'Instalación y Mantenimiento' },
-    { id: 'deporte', name: 'Actividades Físicas y Deportivas' },
+    { id: 'comercio', name: 'Comercio' },
+    { id: 'electric', name: 'Electricidad' },
+    { id: 'social', name: 'Socioculturales' },
+    { id: 'transport', name: 'Transporte' },
+    { id: 'hostel', name: 'Hostelería' },
+    { id: 'instal', name: 'Instalaciones' },
+    { id: 'deporte', name: 'Deportes' },
     { id: 'imagen', name: 'Imagen Personal' },
     { id: 'agraria', name: 'Agraria' }
 ];
 
 const niveles = [
-    { id: 'BASICA', name: 'FP Básica', short: 'Básica' },
-    { id: 'GM', name: 'Grado Medio', short: 'Medio' },
-    { id: 'GS', name: 'Grado Superior', short: 'Superior' },
-    { id: 'CE', name: 'Especialización', short: 'Esp.' }
+    { id: 'BASICA', name: 'Básica' },
+    { id: 'GM', name: 'Grado Medio' },
+    { id: 'GS', name: 'Grado Superior' },
+    { id: 'CE', name: 'Especialización' }
 ];
 
 const modalidades = [
@@ -52,22 +51,6 @@ export default function FPDetailsStep({
     onNext,
     onBack
 }: FPDetailsStepProps) {
-    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const dropdownRef = useRef<HTMLDivElement>(null);
-
-    // Cerrar dropdown al hacer click fuera
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setIsDropdownOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-
-    const selectedFamiliaName = familiasProfesionales.find(f => f.id === selectedFamilia)?.name;
-
     return (
         <motion.div
             initial={{ opacity: 0, x: 50 }}
@@ -76,7 +59,7 @@ export default function FPDetailsStep({
             className="py-3 px-4 sm:px-6 flex flex-col"
         >
             {/* Header compacto */}
-            <div className="text-center mb-3">
+            <div className="text-center mb-2">
                 <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
@@ -104,86 +87,55 @@ export default function FPDetailsStep({
 
             {/* Contenido compacto */}
             <div className="space-y-3 mb-3">
-                {/* Familia Profesional - Dropdown */}
-                <div ref={dropdownRef} className="relative">
-                    <label className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wide mb-1 block">
+                {/* Familia Profesional - Grid compacto */}
+                <div>
+                    <label className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wide mb-1.5 block">
                         Familia Profesional
                     </label>
-                    <button
-                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                        className={`w-full flex items-center justify-between p-2.5 rounded-xl border transition-all text-left ${
-                            selectedFamilia
-                                ? 'border-[#223945] bg-[#223945]/5'
-                                : 'border-neutral-200 bg-white hover:border-neutral-300'
-                        }`}
-                    >
-                        <span className={`text-[13px] ${selectedFamilia ? 'text-[#223945] font-medium' : 'text-neutral-400'}`}>
-                            {selectedFamiliaName || 'Seleccionar familia...'}
-                        </span>
-                        <ChevronDown className={`w-4 h-4 text-neutral-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
-                    </button>
-
-                    {/* Dropdown menu */}
-                    {isDropdownOpen && (
-                        <motion.div
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="absolute z-20 w-full mt-1 bg-white border border-neutral-200 rounded-xl shadow-lg max-h-[180px] overflow-y-auto"
-                        >
-                            {/* Opción para limpiar */}
-                            {selectedFamilia && (
-                                <button
-                                    onClick={() => {
-                                        onSelectFamilia(null);
-                                        setIsDropdownOpen(false);
-                                    }}
-                                    className="w-full px-3 py-2 text-left text-[12px] text-neutral-400 hover:bg-neutral-50 border-b border-neutral-100"
-                                >
-                                    — Sin preferencia —
-                                </button>
-                            )}
-                            {familiasProfesionales.map((familia) => (
+                    <div className="flex flex-wrap gap-1">
+                        {familiasProfesionales.map((familia) => {
+                            const isSelected = selectedFamilia === familia.id;
+                            return (
                                 <button
                                     key={familia.id}
-                                    onClick={() => {
-                                        onSelectFamilia(familia.id);
-                                        setIsDropdownOpen(false);
-                                    }}
-                                    className={`w-full px-3 py-2 text-left text-[12px] transition-colors flex items-center justify-between ${
-                                        selectedFamilia === familia.id
-                                            ? 'bg-[#223945]/5 text-[#223945] font-medium'
-                                            : 'text-neutral-600 hover:bg-neutral-50'
+                                    onClick={() => onSelectFamilia(isSelected ? null : familia.id)}
+                                    className={`flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium transition-all ${
+                                        isSelected
+                                            ? 'bg-[#223945] text-white shadow-sm'
+                                            : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
                                     }`}
                                 >
+                                    {isSelected && <Check className="w-2.5 h-2.5" />}
                                     {familia.name}
-                                    {selectedFamilia === familia.id && (
-                                        <Check className="w-3.5 h-3.5 text-[#223945]" />
-                                    )}
                                 </button>
-                            ))}
-                        </motion.div>
-                    )}
+                            );
+                        })}
+                    </div>
                 </div>
 
-                {/* Nivel - Pills compactos */}
+                {/* Nivel - Grid 2x2 compacto */}
                 <div>
                     <label className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wide mb-1.5 block">
                         Nivel
                     </label>
-                    <div className="flex gap-1.5">
-                        {niveles.map((nivel) => (
-                            <button
-                                key={nivel.id}
-                                onClick={() => onSelectNivel(selectedNivel === nivel.id ? null : nivel.id)}
-                                className={`flex-1 py-2 px-1 rounded-lg text-[11px] font-semibold transition-all ${
-                                    selectedNivel === nivel.id
-                                        ? 'bg-[#223945] text-white shadow-sm'
-                                        : 'bg-neutral-100 text-neutral-500 hover:bg-neutral-200'
-                                }`}
-                            >
-                                {nivel.short}
-                            </button>
-                        ))}
+                    <div className="grid grid-cols-2 gap-1.5">
+                        {niveles.map((nivel) => {
+                            const isSelected = selectedNivel === nivel.id;
+                            return (
+                                <button
+                                    key={nivel.id}
+                                    onClick={() => onSelectNivel(isSelected ? null : nivel.id)}
+                                    className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-[11px] font-semibold transition-all ${
+                                        isSelected
+                                            ? 'bg-[#223945] text-white shadow-sm'
+                                            : 'bg-neutral-100 text-neutral-500 hover:bg-neutral-200'
+                                    }`}
+                                >
+                                    {isSelected && <Check className="w-3 h-3" />}
+                                    {nivel.name}
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
 
@@ -192,20 +144,24 @@ export default function FPDetailsStep({
                     <label className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wide mb-1.5 block">
                         Modalidad
                     </label>
-                    <div className="flex gap-2">
-                        {modalidades.map((modalidad) => (
-                            <button
-                                key={modalidad.id}
-                                onClick={() => onSelectModalidad(selectedModalidad === modalidad.id ? null : modalidad.id)}
-                                className={`flex-1 py-2 rounded-lg text-[12px] font-semibold transition-all ${
-                                    selectedModalidad === modalidad.id
-                                        ? 'bg-[#223945] text-white shadow-sm'
-                                        : 'bg-neutral-100 text-neutral-500 hover:bg-neutral-200'
-                                }`}
-                            >
-                                {modalidad.name}
-                            </button>
-                        ))}
+                    <div className="flex gap-1.5">
+                        {modalidades.map((modalidad) => {
+                            const isSelected = selectedModalidad === modalidad.id;
+                            return (
+                                <button
+                                    key={modalidad.id}
+                                    onClick={() => onSelectModalidad(isSelected ? null : modalidad.id)}
+                                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-semibold transition-all ${
+                                        isSelected
+                                            ? 'bg-[#223945] text-white shadow-sm'
+                                            : 'bg-neutral-100 text-neutral-500 hover:bg-neutral-200'
+                                    }`}
+                                >
+                                    {isSelected && <Check className="w-3 h-3" />}
+                                    {modalidad.name}
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
             </div>
