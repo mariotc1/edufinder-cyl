@@ -50,14 +50,16 @@ export default function ResultsStep({ results, onReset, onClose }: ResultsStepPr
                 <h3 className="text-base sm:text-lg font-bold text-[#223945] mb-0.5">
                     {hasResults
                         ? userName
-                            ? `${userName}, encontré ${results.length} centro${results.length !== 1 ? 's' : ''}`
+                            ? `${userName}, encontré ${results.length} centro${results.length !== 1 ? 's' : ''} para ti`
                             : `Encontré ${results.length} centro${results.length !== 1 ? 's' : ''} para ti`
-                        : 'No encontré centros'
+                        : userName
+                            ? `${userName}, no encontré centros`
+                            : 'No encontré centros'
                     }
                 </h3>
                 <p className="text-neutral-500 text-[11px] sm:text-xs">
                     {hasResults
-                        ? 'Los que mejor se adaptan a ti'
+                        ? 'Pulsa en cualquiera para ver más detalles'
                         : 'Prueba a ampliar tus criterios'
                     }
                 </p>
@@ -170,20 +172,20 @@ export default function ResultsStep({ results, onReset, onClose }: ResultsStepPr
                 <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={onReset}
+                    onClick={onClose}
                     className="flex items-center justify-center gap-1 px-3 py-2.5 bg-white border border-neutral-200 text-neutral-600 font-semibold rounded-xl hover:bg-neutral-50 transition-colors text-[13px]"
                 >
-                    <RotateCcw className="w-3.5 h-3.5" />
-                    Nueva búsqueda
+                    <X className="w-3.5 h-3.5" />
+                    Cerrar
                 </motion.button>
                 <motion.button
                     whileHover={{ scale: 1.02, y: -1 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={onClose}
+                    onClick={onReset}
                     className="flex-1 relative flex items-center justify-center gap-1.5 px-4 py-2.5 font-semibold rounded-xl transition-all text-[13px] overflow-hidden bg-gradient-to-r from-[#223945] via-[#2d4a5e] to-blue-600 text-white shadow-lg shadow-[#223945]/25 hover:shadow-xl hover:shadow-[#223945]/30"
                 >
-                    <X className="w-3.5 h-3.5" />
-                    <span>Cerrar</span>
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>Nueva búsqueda</span>
                     {/* Shine effect */}
                     <motion.div
                         initial={{ x: '-100%' }}
