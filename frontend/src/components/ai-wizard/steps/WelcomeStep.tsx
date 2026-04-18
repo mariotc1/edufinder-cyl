@@ -1,14 +1,16 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Sparkles, ArrowRight, MapPin, GraduationCap, Zap } from 'lucide-react';
+import { Sparkles, ArrowRight, MapPin, GraduationCap, Zap, History } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 interface WelcomeStepProps {
     onNext: () => void;
+    hasSavedSearch?: boolean;
+    onContinueSaved?: () => void;
 }
 
-export default function WelcomeStep({ onNext }: WelcomeStepProps) {
+export default function WelcomeStep({ onNext, hasSavedSearch, onContinueSaved }: WelcomeStepProps) {
     const { user } = useAuth();
 
     // Extraer solo el primer nombre para un saludo más personal
@@ -136,33 +138,52 @@ export default function WelcomeStep({ onNext }: WelcomeStepProps) {
                     Unas preguntas rápidas y te mostraré las <span className="font-medium text-neutral-700">mejores opciones</span> para ti.
                 </motion.p>
 
-                {/* Botón comenzar */}
-                <motion.button
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.7 }}
-                    whileHover={{ scale: 1.03, y: -2 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={onNext}
-                    className="group relative inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-[#223945] via-[#2d4a5e] to-blue-600 text-white font-bold rounded-2xl shadow-lg shadow-[#223945]/25 hover:shadow-xl hover:shadow-[#223945]/30 transition-all duration-300"
-                >
-                    <span>Comenzar</span>
-                    <motion.div
-                        animate={{ x: [0, 4, 0] }}
-                        transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
+                {/* Botones */}
+                <div className="flex flex-col items-center gap-3">
+                    {/* Botón comenzar */}
+                    <motion.button
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.7 }}
+                        whileHover={{ scale: 1.03, y: -2 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={onNext}
+                        className="group relative inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-[#223945] via-[#2d4a5e] to-blue-600 text-white font-bold rounded-2xl shadow-lg shadow-[#223945]/25 hover:shadow-xl hover:shadow-[#223945]/30 transition-all duration-300"
                     >
-                        <ArrowRight className="w-5 h-5" />
-                    </motion.div>
-                    {/* Shine effect */}
-                    <div className="absolute inset-0 rounded-2xl overflow-hidden">
+                        <span>{hasSavedSearch ? 'Nueva búsqueda' : 'Comenzar'}</span>
                         <motion.div
-                            initial={{ x: '-100%' }}
-                            animate={{ x: '200%' }}
-                            transition={{ repeat: Infinity, duration: 3, ease: 'linear', repeatDelay: 2 }}
-                            className="absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
-                        />
-                    </div>
-                </motion.button>
+                            animate={{ x: [0, 4, 0] }}
+                            transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
+                        >
+                            <ArrowRight className="w-5 h-5" />
+                        </motion.div>
+                        {/* Shine effect */}
+                        <div className="absolute inset-0 rounded-2xl overflow-hidden">
+                            <motion.div
+                                initial={{ x: '-100%' }}
+                                animate={{ x: '200%' }}
+                                transition={{ repeat: Infinity, duration: 3, ease: 'linear', repeatDelay: 2 }}
+                                className="absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
+                            />
+                        </div>
+                    </motion.button>
+
+                    {/* Botón continuar búsqueda anterior */}
+                    {hasSavedSearch && onContinueSaved && (
+                        <motion.button
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.8 }}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={onContinueSaved}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-white border border-neutral-200 text-neutral-600 font-medium rounded-xl hover:bg-neutral-50 hover:border-neutral-300 transition-all text-sm"
+                        >
+                            <History className="w-4 h-4" />
+                            <span>Ver mi última búsqueda</span>
+                        </motion.button>
+                    )}
+                </div>
             </div>
         </motion.div>
     );

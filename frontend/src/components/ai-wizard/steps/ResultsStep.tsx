@@ -1,10 +1,12 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Trophy, MapPin, Building2, ChevronRight, RotateCcw, X, Sparkles } from 'lucide-react';
+import { Trophy, MapPin, Building2, ExternalLink, RotateCcw, X, Sparkles, Heart } from 'lucide-react';
 import Link from 'next/link';
 import { Centro } from '@/types';
 import { useAuth } from '@/context/AuthContext';
+import { useFavorite } from '@/hooks/useFavorite';
+import { useRef } from 'react';
 
 interface ResultsStepProps {
     results: Centro[];
@@ -12,10 +14,125 @@ interface ResultsStepProps {
     onClose: () => void;
 }
 
+// Componente de card individual para usar el hook de favoritos
+function ResultCard({ centro, index }: { centro: Centro; index: number }) {
+    const buttonRef = useRef<HTMLButtonElement>(null);
+    const { isFavorite, toggleFavorite, loading } = useFavorite({
+        centro,
+        initialIsFavorite: centro.isFavorito ?? false
+    });
+
+    const handleFavoriteClick = (e: React.MouseEvent) => {
+        toggleFavorite(e, buttonRef.current || undefined);
+    };
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.03 }}
+            className="relative"
+        >
+            <Link
+                href={`/centro/${centro.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block p-3 bg-white border border-neutral-200 rounded-xl hover:border-[#223945]/40 hover:shadow-md transition-all group"
+            >
+                <div className="flex items-start gap-3">
+                    {/* Icono del centro */}
+                    <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${
+                        centro.naturaleza?.toUpperCase() === 'PÚBLICO'
+                            ? 'bg-blue-50'
+                            : 'bg-amber-50'
+                    }`}>
+                        <Building2 className={`w-5 h-5 ${
+                            centro.naturaleza?.toUpperCase() === 'PÚBLICO'
+                                ? 'text-blue-600'
+                                : 'text-amber-600'
+                        }`} />
+                    </div>
+
+                    {/* Info principal */}
+                    <div className="flex-1 min-w-0 pr-14">
+                        {/* Badges */}
+                        <div className="flex items-center gap-1.5 mb-1">
+                            <span className={`text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded ${
+                                centro.naturaleza?.toUpperCase() === 'PÚBLICO'
+                                    ? 'bg-blue-100 text-blue-700'
+                                    : 'bg-amber-100 text-amber-700'
+                            }`}>
+                                {centro.naturaleza || 'Centro'}
+                            </span>
+                            {centro.distancia !== undefined && centro.distancia !== null && (
+                                <span className="text-[9px] text-neutral-400 flex items-center gap-0.5">
+                                    <MapPin className="w-2.5 h-2.5" />
+                                    {parseFloat(String(centro.distancia)).toFixed(1)} km
+                                </span>
+                            )}
+                        </div>
+
+                        {/* Nombre */}
+                        <h4 className="font-semibold text-[#223945] text-[13px] leading-tight mb-1 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                            {centro.nombre}
+                        </h4>
+
+                        {/* Ubicación */}
+                        <p className="text-[11px] text-neutral-500">
+                            {centro.localidad}, {centro.provincia}
+                        </p>
+
+                        {/* Ciclos si existen */}
+                        {centro.ciclos && centro.ciclos.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1.5">
+                                {centro.ciclos.slice(0, 2).map((ciclo, idx) => (
+                                    <span
+                                        key={idx}
+                                        className="text-[9px] px-1.5 py-0.5 bg-[#223945]/5 text-[#223945] rounded"
+                                    >
+                                        {ciclo.ciclo_formativo}
+                                    </span>
+                                ))}
+                                {centro.ciclos.length > 2 && (
+                                    <span className="text-[9px] px-1.5 py-0.5 bg-neutral-100 text-neutral-500 rounded">
+                                        +{centro.ciclos.length - 2}
+                                    </span>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Indicador nueva pestaña */}
+                    <div className="flex-shrink-0 self-center">
+                        <div className="w-7 h-7 rounded-full bg-neutral-100 group-hover:bg-[#223945] flex items-center justify-center transition-all">
+                            <ExternalLink className="w-3.5 h-3.5 text-neutral-400 group-hover:text-white transition-colors" />
+                        </div>
+                    </div>
+                </div>
+            </Link>
+
+            {/* Botón favorito */}
+            <button
+                ref={buttonRef}
+                onClick={handleFavoriteClick}
+                disabled={loading}
+                className={`absolute top-3 right-12 w-7 h-7 rounded-full flex items-center justify-center transition-all z-10 ${
+                    isFavorite
+                        ? 'bg-red-50 text-red-500 hover:bg-red-100'
+                        : 'bg-neutral-100 text-neutral-400 hover:bg-neutral-200 hover:text-red-400'
+                }`}
+                title={isFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'}
+            >
+                <Heart className={`w-3.5 h-3.5 transition-all ${isFavorite ? 'fill-current' : ''} ${loading ? 'animate-pulse' : ''}`} />
+            </button>
+        </motion.div>
+    );
+}
+
 export default function ResultsStep({ results, onReset, onClose }: ResultsStepProps) {
     const { user } = useAuth();
     const hasResults = results.length > 0;
-    const userName = user?.name?.split(' ')[0]; // Primer nombre
+    const userName = user?.name?.split(' ')[0];
 
     return (
         <motion.div
@@ -70,89 +187,7 @@ export default function ResultsStep({ results, onReset, onClose }: ResultsStepPr
                 <div className="flex-1 overflow-y-auto min-h-0 mb-3 -mx-1 px-1">
                     <div className="space-y-2">
                         {results.map((centro, index) => (
-                            <motion.div
-                                key={centro.id}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.03 }}
-                            >
-                                <Link
-                                    href={`/centro/${centro.id}`}
-                                    onClick={onClose}
-                                    className="block p-3 bg-white border border-neutral-200 rounded-xl hover:border-[#223945]/40 hover:shadow-md transition-all group relative overflow-hidden"
-                                >
-                                    <div className="flex items-start gap-3">
-                                        {/* Icono del centro */}
-                                        <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${
-                                            centro.naturaleza?.toUpperCase() === 'PÚBLICO'
-                                                ? 'bg-blue-50'
-                                                : 'bg-amber-50'
-                                        }`}>
-                                            <Building2 className={`w-5 h-5 ${
-                                                centro.naturaleza?.toUpperCase() === 'PÚBLICO'
-                                                    ? 'text-blue-600'
-                                                    : 'text-amber-600'
-                                            }`} />
-                                        </div>
-
-                                        {/* Info principal */}
-                                        <div className="flex-1 min-w-0">
-                                            {/* Badges */}
-                                            <div className="flex items-center gap-1.5 mb-1">
-                                                <span className={`text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded ${
-                                                    centro.naturaleza?.toUpperCase() === 'PÚBLICO'
-                                                        ? 'bg-blue-100 text-blue-700'
-                                                        : 'bg-amber-100 text-amber-700'
-                                                }`}>
-                                                    {centro.naturaleza || 'Centro'}
-                                                </span>
-                                                {centro.distancia !== undefined && centro.distancia !== null && (
-                                                    <span className="text-[9px] text-neutral-400 flex items-center gap-0.5">
-                                                        <MapPin className="w-2.5 h-2.5" />
-                                                        {parseFloat(String(centro.distancia)).toFixed(1)} km
-                                                    </span>
-                                                )}
-                                            </div>
-
-                                            {/* Nombre */}
-                                            <h4 className="font-semibold text-[#223945] text-[13px] leading-tight mb-1 line-clamp-2 group-hover:text-blue-600 transition-colors">
-                                                {centro.nombre}
-                                            </h4>
-
-                                            {/* Ubicación */}
-                                            <p className="text-[11px] text-neutral-500">
-                                                {centro.localidad}, {centro.provincia}
-                                            </p>
-
-                                            {/* Ciclos si existen */}
-                                            {centro.ciclos && centro.ciclos.length > 0 && (
-                                                <div className="flex flex-wrap gap-1 mt-1.5">
-                                                    {centro.ciclos.slice(0, 2).map((ciclo, idx) => (
-                                                        <span
-                                                            key={idx}
-                                                            className="text-[9px] px-1.5 py-0.5 bg-[#223945]/5 text-[#223945] rounded"
-                                                        >
-                                                            {ciclo.ciclo_formativo}
-                                                        </span>
-                                                    ))}
-                                                    {centro.ciclos.length > 2 && (
-                                                        <span className="text-[9px] px-1.5 py-0.5 bg-neutral-100 text-neutral-500 rounded">
-                                                            +{centro.ciclos.length - 2}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Flecha - siempre visible */}
-                                        <div className="flex-shrink-0 self-center">
-                                            <div className="w-7 h-7 rounded-full bg-neutral-100 group-hover:bg-[#223945] flex items-center justify-center transition-all">
-                                                <ChevronRight className="w-4 h-4 text-neutral-400 group-hover:text-white transition-colors" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </Link>
-                            </motion.div>
+                            <ResultCard key={centro.id} centro={centro} index={index} />
                         ))}
                     </div>
                 </div>
@@ -186,7 +221,6 @@ export default function ResultsStep({ results, onReset, onClose }: ResultsStepPr
                 >
                     <RotateCcw className="w-3.5 h-3.5" />
                     <span>Nueva búsqueda</span>
-                    {/* Shine effect */}
                     <motion.div
                         initial={{ x: '-100%' }}
                         animate={{ x: '200%' }}

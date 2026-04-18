@@ -1,7 +1,7 @@
 'use client';
 
 import { Dialog, Transition } from '@headlessui/react';
-import { Fragment, useState, useCallback } from 'react';
+import { Fragment, useState, useCallback, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { Centro } from '@/types';
 
@@ -15,6 +15,8 @@ import SearchingStep from './steps/SearchingStep';
 import ResultsStep from './steps/ResultsStep';
 
 type StepId = 'welcome' | 'location' | 'study-type' | 'fp-details' | 'ownership' | 'searching' | 'results';
+
+const STORAGE_KEY = 'edufinder_wizard_search';
 
 interface WizardData {
     provincias: string[];
@@ -49,6 +51,58 @@ export default function AIWizardModal({ isOpen, onClose }: AIWizardModalProps) {
     const [currentStep, setCurrentStep] = useState<StepId>('welcome');
     const [wizardData, setWizardData] = useState<WizardData>(initialData);
     const [results, setResults] = useState<Centro[]>([]);
+    const [hasSavedSearch, setHasSavedSearch] = useState(false);
+
+    // Verificar si hay búsqueda guardada al abrir
+    useEffect(() => {
+        if (isOpen) {
+            try {
+                const saved = sessionStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    const { results: savedResults } = JSON.parse(saved);
+                    setHasSavedSearch(savedResults && savedResults.length > 0);
+                }
+            } catch {
+                setHasSavedSearch(false);
+            }
+        }
+    }, [isOpen]);
+
+    // Guardar búsqueda cuando hay resultados
+    useEffect(() => {
+        if (currentStep === 'results' && results.length > 0) {
+            try {
+                sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+                    wizardData,
+                    results,
+                    timestamp: Date.now()
+                }));
+            } catch (error) {
+                console.error('Error saving search:', error);
+            }
+        }
+    }, [currentStep, results, wizardData]);
+
+    // Función para continuar búsqueda guardada
+    const continueSavedSearch = useCallback(() => {
+        try {
+            const saved = sessionStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                const { wizardData: savedData, results: savedResults } = JSON.parse(saved);
+                setWizardData(savedData);
+                setResults(savedResults);
+                setCurrentStep('results');
+            }
+        } catch (error) {
+            console.error('Error loading saved search:', error);
+        }
+    }, []);
+
+    // Limpiar búsqueda guardada
+    const clearSavedSearch = useCallback(() => {
+        sessionStorage.removeItem(STORAGE_KEY);
+        setHasSavedSearch(false);
+    }, []);
 
     // Handlers para actualizar datos
     const toggleProvincia = useCallback((provinciaId: string) => {
@@ -147,7 +201,8 @@ export default function AIWizardModal({ isOpen, onClose }: AIWizardModalProps) {
         setWizardData(initialData);
         setResults([]);
         setCurrentStep('welcome');
-    }, []);
+        clearSavedSearch();
+    }, [clearSavedSearch]);
 
     // Cerrar y resetear
     const handleClose = useCallback(() => {
@@ -224,6 +279,8 @@ export default function AIWizardModal({ isOpen, onClose }: AIWizardModalProps) {
                                         <WelcomeStep
                                             key="welcome"
                                             onNext={() => setCurrentStep('location')}
+                                            hasSavedSearch={hasSavedSearch}
+                                            onContinueSaved={continueSavedSearch}
                                         />
                                     )}
 
