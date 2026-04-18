@@ -59,28 +59,44 @@ export default function StudyTypeStep({
     onNext,
     onBack
 }: StudyTypeStepProps) {
+    const canContinue = selectedType !== null;
+
     return (
         <motion.div
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -50 }}
-            className="py-6 px-4"
+            className="py-3 px-4 sm:px-6 flex flex-col"
         >
-            {/* Header */}
-            <div className="text-center mb-6">
-                <div className="inline-flex p-3 bg-[#223945]/10 rounded-xl mb-3">
-                    <GraduationCap className="w-6 h-6 text-[#223945]" />
-                </div>
-                <h3 className="text-xl font-bold text-[#223945] mb-2">
+            {/* Header compacto */}
+            <div className="text-center mb-2">
+                <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+                    className="inline-flex mb-1.5"
+                >
+                    <div className="relative">
+                        <motion.div
+                            animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.1, 0.3] }}
+                            transition={{ repeat: Infinity, duration: 2.5, ease: 'easeInOut' }}
+                            className="absolute inset-0 bg-[#223945] rounded-full"
+                        />
+                        <div className="relative p-2.5 bg-gradient-to-br from-[#223945] to-blue-600 rounded-full shadow-lg shadow-[#223945]/25">
+                            <GraduationCap className="w-4 h-4 text-white" />
+                        </div>
+                    </div>
+                </motion.div>
+                <h3 className="text-base sm:text-lg font-bold text-[#223945] mb-0.5">
                     ¿Qué tipo de estudios buscas?
                 </h3>
-                <p className="text-neutral-500 text-sm">
-                    Selecciona el nivel educativo que te interesa
+                <p className="text-neutral-500 text-[11px] sm:text-xs">
+                    Selecciona el nivel educativo
                 </p>
             </div>
 
             {/* Opciones */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
+            <div className="grid grid-cols-2 gap-2 mb-3">
                 {studyTypes.map((type, index) => {
                     const isSelected = selectedType === type.id;
                     const Icon = type.icon;
@@ -88,13 +104,13 @@ export default function StudyTypeStep({
                     return (
                         <motion.button
                             key={type.id}
-                            initial={{ opacity: 0, y: 20 }}
+                            initial={{ opacity: 0, y: 15 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.1 }}
+                            transition={{ delay: index * 0.05 }}
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={() => onSelectType(type.id)}
-                            className={`relative p-4 rounded-xl border-2 text-left transition-all ${
+                            className={`relative p-3 rounded-xl border-2 text-left transition-all ${
                                 isSelected
                                     ? `${type.selectedBorder} ${type.bgColor} shadow-md`
                                     : `${type.borderColor} bg-white hover:${type.bgColor}`
@@ -105,47 +121,56 @@ export default function StudyTypeStep({
                                 <motion.div
                                     initial={{ scale: 0 }}
                                     animate={{ scale: 1 }}
-                                    className="absolute top-3 right-3 w-5 h-5 bg-[#223945] rounded-full flex items-center justify-center"
+                                    className="absolute top-2 right-2 w-4 h-4 bg-[#223945] rounded-full flex items-center justify-center"
                                 >
-                                    <Check className="w-3 h-3 text-white" />
+                                    <Check className="w-2.5 h-2.5 text-white" />
                                 </motion.div>
                             )}
 
-                            <div className={`inline-flex p-2.5 rounded-lg bg-gradient-to-br ${type.color} mb-3`}>
-                                <Icon className="w-5 h-5 text-white" />
+                            <div className={`inline-flex p-2 rounded-lg bg-gradient-to-br ${type.color} mb-2`}>
+                                <Icon className="w-4 h-4 text-white" />
                             </div>
 
-                            <h4 className="font-bold text-[#223945] mb-1">{type.name}</h4>
-                            <p className="text-xs text-neutral-500">{type.description}</p>
+                            <h4 className="font-bold text-[13px] text-[#223945] mb-0.5 leading-tight">{type.name}</h4>
+                            <p className="text-[10px] text-neutral-500 leading-tight">{type.description}</p>
                         </motion.button>
                     );
                 })}
             </div>
 
             {/* Botones navegación */}
-            <div className="flex gap-3">
+            <div className="flex gap-2 mt-auto">
                 <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={onBack}
-                    className="flex items-center justify-center gap-2 px-6 py-3 bg-neutral-100 text-neutral-600 font-semibold rounded-xl hover:bg-neutral-200 transition-colors"
+                    className="flex items-center justify-center gap-1 px-3 py-2.5 bg-white border border-neutral-200 text-neutral-600 font-semibold rounded-xl hover:bg-neutral-50 transition-colors text-[13px]"
                 >
-                    <ArrowLeft className="w-4 h-4" />
+                    <ArrowLeft className="w-3.5 h-3.5" />
                     Atrás
                 </motion.button>
                 <motion.button
-                    whileHover={selectedType ? { scale: 1.02 } : {}}
-                    whileTap={selectedType ? { scale: 0.98 } : {}}
+                    whileHover={canContinue ? { scale: 1.02, y: -1 } : {}}
+                    whileTap={canContinue ? { scale: 0.98 } : {}}
                     onClick={onNext}
-                    disabled={!selectedType}
-                    className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 font-semibold rounded-xl transition-all ${
-                        selectedType
-                            ? 'bg-[#223945] text-white hover:bg-[#1a2c35]'
+                    disabled={!canContinue}
+                    className={`flex-1 relative flex items-center justify-center gap-1.5 px-4 py-2.5 font-semibold rounded-xl transition-all text-[13px] overflow-hidden ${
+                        canContinue
+                            ? 'bg-gradient-to-r from-[#223945] via-[#2d4a5e] to-blue-600 text-white shadow-lg shadow-[#223945]/25 hover:shadow-xl hover:shadow-[#223945]/30'
                             : 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
                     }`}
                 >
-                    Continuar
-                    <ArrowRight className="w-4 h-4" />
+                    <span>Continuar</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                    {/* Shine effect */}
+                    {canContinue && (
+                        <motion.div
+                            initial={{ x: '-100%' }}
+                            animate={{ x: '200%' }}
+                            transition={{ repeat: Infinity, duration: 3, ease: 'linear', repeatDelay: 2 }}
+                            className="absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
+                        />
+                    )}
                 </motion.button>
             </div>
         </motion.div>
