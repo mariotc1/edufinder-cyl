@@ -101,95 +101,74 @@ export default function LocationStep({
                 <div className="flex-1 h-px bg-gradient-to-r from-transparent via-neutral-300 to-transparent"></div>
             </div>
 
-            {/* Opción geolocalización futurista */}
+            {/* Opción geolocalización */}
             <motion.button
                 onClick={handleGeolocationToggle}
                 disabled={geoLoading}
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
-                className={`w-full relative overflow-hidden flex items-center justify-between p-3 rounded-2xl transition-all ${
-                    useGeolocation
-                        ? 'bg-gradient-to-r from-[#223945] to-[#2d5a7b] text-white shadow-lg shadow-[#223945]/20'
-                        : 'bg-white/80 backdrop-blur-sm border border-neutral-200/80 hover:border-[#223945]/30 hover:shadow-md'
-                }`}
+                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-white border border-neutral-200 hover:border-[#223945]/30 transition-all"
             >
-                <div className="flex items-center gap-3">
-                    <div className={`relative p-2.5 rounded-xl transition-all ${
+                <div className="flex items-center gap-2.5">
+                    <div className={`p-2 rounded-lg transition-all ${
                         useGeolocation
-                            ? 'bg-white/20'
-                            : 'bg-gradient-to-br from-blue-50 to-blue-100'
+                            ? 'bg-gradient-to-br from-[#223945] to-[#2d5a7b]'
+                            : 'bg-neutral-100'
                     }`}>
-                        {/* Pulse effect when active */}
-                        {useGeolocation && (
-                            <motion.div
-                                animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
-                                transition={{ repeat: Infinity, duration: 2 }}
-                                className="absolute inset-0 bg-white/30 rounded-xl"
-                            />
-                        )}
-                        <Navigation className={`w-4 h-4 relative z-10 ${
-                            useGeolocation ? 'text-white' : 'text-[#223945]'
-                        }`} />
+                        <Navigation className={`w-4 h-4 ${useGeolocation ? 'text-white' : 'text-neutral-500'}`} />
                     </div>
                     <div className="text-left">
-                        <p className={`font-semibold text-sm ${useGeolocation ? 'text-white' : 'text-[#223945]'}`}>
-                            {geoLoading ? 'Localizando...' : 'Usar mi ubicación actual'}
+                        <p className="font-semibold text-sm text-[#223945]">
+                            {geoLoading ? 'Localizando...' : 'Usar mi ubicación'}
                         </p>
-                        <p className={`text-[11px] ${useGeolocation ? 'text-white/70' : 'text-neutral-500'}`}>
-                            Encuentra centros cerca de ti automáticamente
+                        <p className="text-[10px] text-neutral-500">
+                            Buscar centros cerca de ti
                         </p>
                     </div>
                 </div>
 
-                {/* Toggle indicator */}
-                <div className={`w-12 h-6 rounded-full p-0.5 transition-all ${
-                    useGeolocation ? 'bg-white/20' : 'bg-neutral-200'
+                {/* Toggle switch */}
+                <div className={`w-11 h-6 rounded-full p-0.5 transition-colors ${
+                    useGeolocation
+                        ? 'bg-gradient-to-r from-[#223945] to-[#2d5a7b]'
+                        : 'bg-neutral-200'
                 }`}>
                     <motion.div
-                        animate={{ x: useGeolocation ? 24 : 0 }}
+                        animate={{ x: useGeolocation ? 20 : 0 }}
                         transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                        className={`w-5 h-5 rounded-full shadow-sm ${
-                            useGeolocation ? 'bg-white' : 'bg-white'
-                        }`}
+                        className="w-5 h-5 rounded-full bg-white shadow-md"
                     />
                 </div>
-
-                {/* Shine effect when active */}
-                {useGeolocation && (
-                    <motion.div
-                        initial={{ x: '-100%' }}
-                        animate={{ x: '200%' }}
-                        transition={{ repeat: Infinity, duration: 3, ease: 'linear', repeatDelay: 1 }}
-                        className="absolute inset-0 w-1/3 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12"
-                    />
-                )}
             </motion.button>
 
-            {/* Slider de radio - futurista */}
+            {/* Selector de radio con pills - más opciones cercanas */}
             {useGeolocation && (
                 <motion.div
-                    initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                    animate={{ opacity: 1, height: 'auto', marginTop: 12 }}
-                    exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                    className="p-3 bg-gradient-to-r from-[#223945]/5 to-blue-50/50 rounded-2xl border border-[#223945]/10"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="mt-2"
                 >
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-medium text-neutral-600">Radio de búsqueda</span>
-                        <span className="text-sm font-bold text-[#223945] bg-white px-2 py-0.5 rounded-lg shadow-sm">{radio} km</span>
-                    </div>
-                    <input
-                        type="range"
-                        min="5"
-                        max="100"
-                        step="5"
-                        value={radio}
-                        onChange={(e) => onRadioChange(parseInt(e.target.value))}
-                        className="w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer accent-[#223945]"
-                    />
-                    <div className="flex justify-between text-[10px] text-neutral-400 mt-1.5">
-                        <span>5 km</span>
-                        <span>50 km</span>
-                        <span>100 km</span>
+                    <div className="flex items-center gap-1.5 bg-neutral-100 p-1 rounded-xl">
+                        {[
+                            { value: 5, label: '5 km' },
+                            { value: 10, label: '10 km' },
+                            { value: 15, label: '15 km' },
+                            { value: 25, label: '25 km' },
+                            { value: 50, label: '+50' }
+                        ].map((option) => (
+                            <button
+                                key={option.value}
+                                onClick={() => onRadioChange(option.value)}
+                                className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                                    radio === option.value
+                                        ? 'bg-gradient-to-r from-[#223945] to-[#2d5a7b] text-white shadow-md'
+                                        : 'text-neutral-500 hover:text-[#223945] hover:bg-white/50'
+                                }`}
+                            >
+                                {option.label}
+                            </button>
+                        ))}
                     </div>
                 </motion.div>
             )}
