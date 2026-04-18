@@ -149,9 +149,9 @@ export default function LocationStep({
                     exit={{ opacity: 0, height: 0 }}
                     className="mt-1.5 overflow-hidden"
                 >
-                    <div className="flex items-center justify-center gap-1.5 bg-neutral-50/80 px-2 py-1.5 rounded-lg border border-neutral-100">
-                        <span className="text-[10px] text-neutral-500 font-medium">Buscar a</span>
-                        <div className="flex items-center gap-0.5">
+                    <div className="flex items-center w-full bg-neutral-50/80 px-3 py-1.5 rounded-lg border border-neutral-100">
+                        <span className="text-[11px] text-[#223945] font-bold whitespace-nowrap">Buscar a</span>
+                        <div className="flex-1 flex items-center justify-center gap-1 mx-2">
                             {[
                                 { value: 5, label: '5' },
                                 { value: 10, label: '10' },
@@ -162,7 +162,7 @@ export default function LocationStep({
                                 <button
                                     key={option.value}
                                     onClick={() => onRadioChange(option.value)}
-                                    className={`px-2.5 py-0.5 rounded-md text-[11px] font-semibold transition-all ${
+                                    className={`flex-1 py-1 rounded-md text-[11px] font-semibold transition-all ${
                                         radio === option.value
                                             ? 'bg-[#223945] text-white shadow-sm'
                                             : 'text-neutral-400 hover:text-[#223945] hover:bg-white'
@@ -172,7 +172,7 @@ export default function LocationStep({
                                 </button>
                             ))}
                         </div>
-                        <span className="text-[10px] text-neutral-500 font-medium">km</span>
+                        <span className="text-[11px] text-[#223945] font-bold whitespace-nowrap">km</span>
                     </div>
                 </motion.div>
             )}
