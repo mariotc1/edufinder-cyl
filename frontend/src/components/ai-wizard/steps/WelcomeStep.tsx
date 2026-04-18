@@ -2,12 +2,18 @@
 
 import { motion } from 'framer-motion';
 import { Sparkles, ArrowRight } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 interface WelcomeStepProps {
     onNext: () => void;
 }
 
 export default function WelcomeStep({ onNext }: WelcomeStepProps) {
+    const { user } = useAuth();
+
+    // Extraer solo el primer nombre para un saludo más personal
+    const firstName = user?.name?.split(' ')[0];
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -37,14 +43,14 @@ export default function WelcomeStep({ onNext }: WelcomeStepProps) {
                 </div>
             </motion.div>
 
-            {/* Título */}
+            {/* Título personalizado */}
             <motion.h2
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3 }}
                 className="text-2xl sm:text-3xl font-bold text-[#223945] mb-3"
             >
-                ¡Hola!
+                {firstName ? `¡Hola, ${firstName}!` : '¡Hola!'}
             </motion.h2>
 
             {/* Subtítulo */}
