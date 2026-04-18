@@ -7,6 +7,7 @@ import { Centro } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import { useFavorite } from '@/hooks/useFavorite';
 import { useRef } from 'react';
+import useSWR from 'swr';
 
 interface ResultsStepProps {
     results: Centro[];
@@ -15,11 +16,11 @@ interface ResultsStepProps {
 }
 
 // Componente de card individual para usar el hook de favoritos
-function ResultCard({ centro, index }: { centro: Centro; index: number }) {
+function ResultCard({ centro, index, isFavoriteInitial }: { centro: Centro; index: number; isFavoriteInitial: boolean }) {
     const buttonRef = useRef<HTMLButtonElement>(null);
     const { isFavorite, toggleFavorite, loading } = useFavorite({
         centro,
-        initialIsFavorite: centro.isFavorito ?? false
+        initialIsFavorite: isFavoriteInitial
     });
 
     const handleFavoriteClick = (e: React.MouseEvent) => {
@@ -54,7 +55,7 @@ function ResultCard({ centro, index }: { centro: Centro; index: number }) {
                     </div>
 
                     {/* Info principal */}
-                    <div className="flex-1 min-w-0 pr-14">
+                    <div className="flex-1 min-w-0">
                         {/* Badges */}
                         <div className="flex items-center gap-1.5 mb-1">
                             <span className={`text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded ${
@@ -73,7 +74,7 @@ function ResultCard({ centro, index }: { centro: Centro; index: number }) {
                         </div>
 
                         {/* Nombre */}
-                        <h4 className="font-semibold text-[#223945] text-[13px] leading-tight mb-1 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                        <h4 className="font-semibold text-[#223945] text-[13px] leading-tight mb-1 line-clamp-2 group-hover:text-blue-600 transition-colors pr-16">
                             {centro.nombre}
                         </h4>
 
@@ -101,30 +102,38 @@ function ResultCard({ centro, index }: { centro: Centro; index: number }) {
                             </div>
                         )}
                     </div>
-
-                    {/* Indicador nueva pestaña */}
-                    <div className="flex-shrink-0 self-center">
-                        <div className="w-7 h-7 rounded-full bg-neutral-100 group-hover:bg-[#223945] flex items-center justify-center transition-all">
-                            <ExternalLink className="w-3.5 h-3.5 text-neutral-400 group-hover:text-white transition-colors" />
-                        </div>
-                    </div>
                 </div>
             </Link>
 
-            {/* Botón favorito */}
-            <button
-                ref={buttonRef}
-                onClick={handleFavoriteClick}
-                disabled={loading}
-                className={`absolute top-3 right-12 w-7 h-7 rounded-full flex items-center justify-center transition-all z-10 ${
-                    isFavorite
-                        ? 'bg-red-50 text-red-500 hover:bg-red-100'
-                        : 'bg-neutral-100 text-neutral-400 hover:bg-neutral-200 hover:text-red-400'
-                }`}
-                title={isFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'}
-            >
-                <Heart className={`w-3.5 h-3.5 transition-all ${isFavorite ? 'fill-current' : ''} ${loading ? 'animate-pulse' : ''}`} />
-            </button>
+            {/* Botones en esquina superior derecha */}
+            <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5">
+                {/* Botón favorito */}
+                <button
+                    ref={buttonRef}
+                    onClick={handleFavoriteClick}
+                    disabled={loading}
+                    className={`w-7 h-7 rounded-full flex items-center justify-center transition-all z-10 ${
+                        isFavorite
+                            ? 'bg-red-50 text-red-500 hover:bg-red-100'
+                            : 'bg-neutral-100 text-neutral-400 hover:bg-neutral-200 hover:text-red-400'
+                    }`}
+                    title={isFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'}
+                >
+                    <Heart className={`w-3.5 h-3.5 transition-all ${isFavorite ? 'fill-current' : ''} ${loading ? 'animate-pulse' : ''}`} />
+                </button>
+
+                {/* Botón abrir en nueva pestaña */}
+                <Link
+                    href={`/centro/${centro.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-7 h-7 rounded-full bg-neutral-100 hover:bg-[#223945] flex items-center justify-center transition-all group/link"
+                    title="Abrir en nueva pestaña"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <ExternalLink className="w-3.5 h-3.5 text-neutral-400 group-hover/link:text-white transition-colors" />
+                </Link>
+            </div>
         </motion.div>
     );
 }
@@ -133,6 +142,21 @@ export default function ResultsStep({ results, onReset, onClose }: ResultsStepPr
     const { user } = useAuth();
     const hasResults = results.length > 0;
     const userName = user?.name?.split(' ')[0];
+
+    // Obtener favoritos del usuario
+    const { data: favoritesData } = useSWR(user ? '/favoritos' : null, async (url) => {
+        return (await import('@/lib/axios')).default.get(url).then(res => res.data);
+    }, {
+        shouldRetryOnError: false,
+        errorRetryCount: 0
+    });
+
+    // Crear Set de IDs de favoritos
+    const favoriteIds = new Set<number>(
+        Array.isArray(favoritesData)
+            ? favoritesData.map((f: { centro: Centro }) => f.centro.id)
+            : (favoritesData?.data ? favoritesData.data.map((f: { centro: Centro }) => f.centro.id) : [])
+    );
 
     return (
         <motion.div
@@ -187,7 +211,12 @@ export default function ResultsStep({ results, onReset, onClose }: ResultsStepPr
                 <div className="flex-1 overflow-y-auto min-h-0 mb-3 -mx-1 px-1">
                     <div className="space-y-2">
                         {results.map((centro, index) => (
-                            <ResultCard key={centro.id} centro={centro} index={index} />
+                            <ResultCard
+                                key={centro.id}
+                                centro={centro}
+                                index={index}
+                                isFavoriteInitial={favoriteIds.has(centro.id)}
+                            />
                         ))}
                     </div>
                 </div>
