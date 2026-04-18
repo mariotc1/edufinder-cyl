@@ -7,42 +7,26 @@ const studyTypes = [
     {
         id: 'FP',
         name: 'Formación Profesional',
-        description: 'Ciclos formativos de grado básico, medio y superior',
-        icon: GraduationCap,
-        color: 'from-purple-500 to-purple-600',
-        bgColor: 'bg-purple-50',
-        borderColor: 'border-purple-200',
-        selectedBorder: 'border-purple-500'
+        description: 'Grado básico, medio y superior',
+        icon: GraduationCap
     },
     {
         id: 'ESO',
         name: 'ESO / Bachillerato',
-        description: 'Educación Secundaria Obligatoria y Bachillerato',
-        icon: BookOpen,
-        color: 'from-blue-500 to-blue-600',
-        bgColor: 'bg-blue-50',
-        borderColor: 'border-blue-200',
-        selectedBorder: 'border-blue-500'
+        description: 'Secundaria y Bachillerato',
+        icon: BookOpen
     },
     {
         id: 'PRIMARIA',
         name: 'Infantil y Primaria',
-        description: 'Educación Infantil y Primaria',
-        icon: Baby,
-        color: 'from-green-500 to-green-600',
-        bgColor: 'bg-green-50',
-        borderColor: 'border-green-200',
-        selectedBorder: 'border-green-500'
+        description: 'Educación inicial',
+        icon: Baby
     },
     {
         id: 'ESPECIAL',
         name: 'Educación Especial',
-        description: 'Centros de educación especial',
-        icon: Heart,
-        color: 'from-rose-500 to-rose-600',
-        bgColor: 'bg-rose-50',
-        borderColor: 'border-rose-200',
-        selectedBorder: 'border-rose-500'
+        description: 'Centros especializados',
+        icon: Heart
     }
 ];
 
@@ -96,43 +80,58 @@ export default function StudyTypeStep({
             </div>
 
             {/* Opciones */}
-            <div className="grid grid-cols-2 gap-2 mb-3">
-                {studyTypes.map((type, index) => {
+            <div className="flex flex-col gap-2 mb-3">
+                {studyTypes.map((type) => {
                     const isSelected = selectedType === type.id;
                     const Icon = type.icon;
 
                     return (
                         <motion.button
                             key={type.id}
-                            initial={{ opacity: 0, y: 15 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.05 }}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
+                            whileHover={{ scale: 1.01 }}
+                            whileTap={{ scale: 0.99 }}
                             onClick={() => onSelectType(type.id)}
-                            className={`relative p-3 rounded-xl border-2 text-left transition-all ${
+                            className={`relative flex items-center gap-3 p-3 rounded-xl border transition-all ${
                                 isSelected
-                                    ? `${type.selectedBorder} ${type.bgColor} shadow-md`
-                                    : `${type.borderColor} bg-white hover:${type.bgColor}`
+                                    ? 'border-[#223945] bg-[#223945]/5 shadow-sm'
+                                    : 'border-neutral-200 bg-white hover:border-neutral-300 hover:bg-neutral-50'
                             }`}
                         >
-                            {/* Indicador de selección */}
-                            {isSelected && (
-                                <motion.div
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    className="absolute top-2 right-2 w-4 h-4 bg-[#223945] rounded-full flex items-center justify-center"
-                                >
-                                    <Check className="w-2.5 h-2.5 text-white" />
-                                </motion.div>
-                            )}
-
-                            <div className={`inline-flex p-2 rounded-lg bg-gradient-to-br ${type.color} mb-2`}>
-                                <Icon className="w-4 h-4 text-white" />
+                            {/* Icono */}
+                            <div className={`flex-shrink-0 p-2.5 rounded-xl transition-all ${
+                                isSelected
+                                    ? 'bg-gradient-to-br from-[#223945] to-[#2d5a7b]'
+                                    : 'bg-neutral-100'
+                            }`}>
+                                <Icon className={`w-5 h-5 transition-colors ${
+                                    isSelected ? 'text-white' : 'text-neutral-500'
+                                }`} />
                             </div>
 
-                            <h4 className="font-bold text-[13px] text-[#223945] mb-0.5 leading-tight">{type.name}</h4>
-                            <p className="text-[10px] text-neutral-500 leading-tight">{type.description}</p>
+                            {/* Texto */}
+                            <div className="flex-1 text-left">
+                                <h4 className={`font-semibold text-[13px] leading-tight transition-colors ${
+                                    isSelected ? 'text-[#223945]' : 'text-neutral-700'
+                                }`}>{type.name}</h4>
+                                <p className="text-[11px] text-neutral-500 leading-tight mt-0.5">{type.description}</p>
+                            </div>
+
+                            {/* Radio indicator */}
+                            <div className={`flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                                isSelected
+                                    ? 'border-[#223945] bg-[#223945]'
+                                    : 'border-neutral-300'
+                            }`}>
+                                {isSelected && (
+                                    <motion.div
+                                        initial={{ scale: 0 }}
+                                        animate={{ scale: 1 }}
+                                        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                                    >
+                                        <Check className="w-3 h-3 text-white" />
+                                    </motion.div>
+                                )}
+                            </div>
                         </motion.button>
                     );
                 })}
