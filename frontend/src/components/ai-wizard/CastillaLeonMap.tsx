@@ -76,7 +76,7 @@ export default function CastillaLeonMap({
         <div className="relative w-full">
             <svg
                 viewBox="25 28 145 118"
-                className="w-full h-auto max-h-[220px]"
+                className="w-full h-auto max-h-[180px] sm:max-h-[200px]"
                 style={{ filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))' }}
             >
                 <defs>
@@ -122,16 +122,16 @@ export default function CastillaLeonMap({
 
             {selectedProvincias.length > 0 && (
                 <motion.div
-                    initial={{ opacity: 0, y: 5 }}
+                    initial={{ opacity: 0, y: 3 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex flex-wrap justify-center gap-1.5 mt-2"
+                    className="flex flex-wrap justify-center gap-1 mt-1.5"
                 >
                     {selectedProvincias.map(id => {
                         const prov = provincias.find(p => p.id === id);
                         return (
                             <span
                                 key={id}
-                                className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#223945] text-white rounded-full text-[10px] font-medium"
+                                className="inline-flex items-center px-2 py-0.5 bg-[#223945] text-white rounded-full text-[9px] font-medium"
                             >
                                 {prov?.name}
                             </span>

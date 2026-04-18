@@ -32,7 +32,7 @@ interface WizardData {
 const initialData: WizardData = {
     provincias: [],
     useGeolocation: false,
-    radio: 25,
+    radio: 20,
     tipo: null,
     familia: null,
     nivel: null,
@@ -218,7 +218,7 @@ export default function AIWizardModal({ isOpen, onClose }: AIWizardModalProps) {
                             />
 
                             {/* Contenido */}
-                            <div className="max-h-[70vh] overflow-y-auto">
+                            <div className="max-h-[75vh] sm:max-h-[70vh] overflow-y-auto">
                                 <AnimatePresence mode="wait">
                                     {currentStep === 'welcome' && (
                                         <WelcomeStep
