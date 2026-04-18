@@ -208,11 +208,14 @@ export default function AIWizardModal({ isOpen, onClose }: AIWizardModalProps) {
                         leaveFrom="opacity-100 scale-100"
                         leaveTo="opacity-0 scale-95"
                     >
-                        <Dialog.Panel className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden">
+                        <Dialog.Panel className="relative w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden bg-gradient-to-b from-[#dbeafe] via-white to-[#eff6ff]">
+                            {/* Línea superior decorativa - consistente con el resto de la web */}
+                            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300 z-20" />
+
                             {/* Botón cerrar */}
                             <button
                                 onClick={handleClose}
-                                className="absolute top-4 right-4 z-10 p-2 rounded-full bg-neutral-100 text-neutral-400 hover:bg-neutral-200 hover:text-neutral-600 transition-colors"
+                                className="absolute top-4 right-4 z-30 p-2 rounded-full bg-white text-neutral-400 hover:bg-red-50 hover:text-red-500 transition-all shadow-sm border border-neutral-100 hover:border-red-200"
                             >
                                 <X className="w-5 h-5" />
                             </button>
