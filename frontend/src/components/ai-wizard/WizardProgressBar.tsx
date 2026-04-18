@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { MapPin, GraduationCap, BookOpen, Building2, Search, CheckCircle } from 'lucide-react';
+import { MapPin, GraduationCap, BookOpen, Building2, CheckCircle, Trophy } from 'lucide-react';
 
 type StepId = 'welcome' | 'location' | 'study-type' | 'fp-details' | 'ownership' | 'searching' | 'results';
 
@@ -10,8 +10,11 @@ const steps = [
     { id: 'study-type', icon: GraduationCap, label: 'Estudios' },
     { id: 'fp-details', icon: BookOpen, label: 'Detalles' },
     { id: 'ownership', icon: Building2, label: 'Titularidad' },
-    { id: 'results', icon: CheckCircle, label: 'Resultados' }
+    { id: 'results', icon: Trophy, label: 'Resultados' }
 ];
+
+// Número fijo de puntos entre cada paso
+const DOTS_COUNT = 3;
 
 interface WizardProgressBarProps {
     currentStep: StepId;
@@ -32,68 +35,85 @@ export default function WizardProgressBar({ currentStep, showFPDetails }: Wizard
     const currentIndex = visibleSteps.findIndex(s => s.id === currentStep);
 
     return (
-        <div className="px-6 py-4 border-b border-neutral-100">
-            <div className="flex items-center justify-between">
-                {visibleSteps.map((step, index) => {
-                    const Icon = step.icon;
-                    const isCompleted = index < currentIndex;
-                    const isCurrent = step.id === currentStep;
-                    const isPending = index > currentIndex;
+        <div className="px-3 sm:px-6 pt-4 pb-3">
+            {/* Contenedor compacto con fondo sutil */}
+            <div className="relative bg-white/50 backdrop-blur-sm rounded-xl px-3 sm:px-4 py-2.5 border border-white/60">
+                <div className="flex items-center justify-between">
+                    {visibleSteps.map((step, index) => {
+                        const Icon = step.icon;
+                        const isCompleted = index < currentIndex;
+                        const isCurrent = step.id === currentStep;
+                        const isLast = index === visibleSteps.length - 1;
 
-                    return (
-                        <div key={step.id} className="flex items-center">
-                            {/* Step indicator */}
-                            <div className="flex flex-col items-center">
-                                <motion.div
-                                    initial={false}
-                                    animate={{
-                                        scale: isCurrent ? 1.1 : 1,
-                                        backgroundColor: isCompleted
-                                            ? '#223945'
-                                            : isCurrent
-                                                ? '#223945'
-                                                : '#e5e7eb'
-                                    }}
-                                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                                        isCompleted || isCurrent ? 'shadow-md' : ''
-                                    }`}
-                                >
-                                    {isCompleted ? (
-                                        <motion.div
-                                            initial={{ scale: 0 }}
-                                            animate={{ scale: 1 }}
-                                        >
-                                            <CheckCircle className="w-4 h-4 text-white" />
-                                        </motion.div>
-                                    ) : (
-                                        <Icon className={`w-4 h-4 ${
-                                            isCurrent ? 'text-white' : 'text-neutral-400'
-                                        }`} />
-                                    )}
-                                </motion.div>
-                                <span className={`text-[10px] mt-1 font-medium hidden sm:block ${
-                                    isCurrent ? 'text-[#223945]' : 'text-neutral-400'
-                                }`}>
-                                    {step.label}
-                                </span>
-                            </div>
-
-                            {/* Connector line */}
-                            {index < visibleSteps.length - 1 && (
-                                <div className="w-8 sm:w-12 h-0.5 mx-1 sm:mx-2 bg-neutral-200 relative overflow-hidden">
+                        return (
+                            <div key={step.id} className="flex items-center flex-1 last:flex-none">
+                                {/* Step indicator */}
+                                <div className="flex flex-col items-center relative z-10">
                                     <motion.div
-                                        className="absolute inset-y-0 left-0 bg-[#223945]"
-                                        initial={{ width: '0%' }}
-                                        animate={{
-                                            width: isCompleted ? '100%' : '0%'
-                                        }}
-                                        transition={{ duration: 0.3 }}
-                                    />
+                                        initial={false}
+                                        className={`
+                                            w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all duration-300
+                                            ${isCompleted
+                                                ? 'bg-gradient-to-br from-[#223945] to-[#2d4a5e] shadow-md shadow-[#223945]/20'
+                                                : isCurrent
+                                                    ? 'bg-gradient-to-br from-[#223945] to-blue-600 shadow-lg shadow-blue-500/25 ring-[3px] ring-blue-100'
+                                                    : 'bg-white border-2 border-neutral-200'
+                                            }
+                                        `}
+                                    >
+                                        {isCompleted ? (
+                                            <motion.div
+                                                initial={{ scale: 0, rotate: -180 }}
+                                                animate={{ scale: 1, rotate: 0 }}
+                                                transition={{ type: 'spring', stiffness: 200 }}
+                                            >
+                                                <CheckCircle className="w-4 h-4 text-white" />
+                                            </motion.div>
+                                        ) : (
+                                            <Icon className={`w-4 h-4 transition-colors ${
+                                                isCurrent ? 'text-white' : 'text-neutral-300'
+                                            }`} />
+                                        )}
+                                    </motion.div>
+
+                                    {/* Label */}
+                                    <span
+                                        className={`text-[9px] sm:text-[10px] mt-1 font-medium whitespace-nowrap transition-colors ${
+                                            isCurrent
+                                                ? 'text-[#223945] font-semibold'
+                                                : isCompleted
+                                                    ? 'text-[#223945]/70'
+                                                    : 'text-neutral-400'
+                                        }`}
+                                    >
+                                        {step.label}
+                                    </span>
                                 </div>
-                            )}
-                        </div>
-                    );
-                })}
+
+                                {/* Connector - puntos uniformes */}
+                                {!isLast && (
+                                    <div className="flex-1 flex items-center justify-center gap-1.5 sm:gap-2 mx-1.5 sm:mx-2">
+                                        {[...Array(DOTS_COUNT)].map((_, i) => (
+                                            <motion.div
+                                                key={i}
+                                                initial={false}
+                                                animate={{
+                                                    backgroundColor: isCompleted ? '#223945' : '#e5e7eb',
+                                                    scale: isCompleted ? 1 : 1
+                                                }}
+                                                transition={{
+                                                    duration: 0.3,
+                                                    delay: isCompleted ? i * 0.1 : 0
+                                                }}
+                                                className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full"
+                                            />
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
             </div>
         </div>
     );

@@ -3,7 +3,6 @@
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment, useState, useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { X } from 'lucide-react';
 import { Centro } from '@/types';
 
 import WizardProgressBar from './WizardProgressBar';
@@ -211,14 +210,6 @@ export default function AIWizardModal({ isOpen, onClose }: AIWizardModalProps) {
                         <Dialog.Panel className="relative w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden bg-gradient-to-b from-[#dbeafe] via-white to-[#eff6ff]">
                             {/* Línea superior decorativa - consistente con el resto de la web */}
                             <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300 z-20" />
-
-                            {/* Botón cerrar */}
-                            <button
-                                onClick={handleClose}
-                                className="absolute top-4 right-4 z-30 p-2 rounded-full bg-white text-neutral-400 hover:bg-red-50 hover:text-red-500 transition-all shadow-sm border border-neutral-100 hover:border-red-200"
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
 
                             {/* Progress bar */}
                             <WizardProgressBar
