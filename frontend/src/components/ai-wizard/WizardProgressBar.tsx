@@ -6,15 +6,12 @@ import { MapPin, GraduationCap, BookOpen, Building2, CheckCircle, Trophy } from 
 type StepId = 'welcome' | 'location' | 'study-type' | 'fp-details' | 'ownership' | 'searching' | 'results';
 
 const steps = [
-    { id: 'location', icon: MapPin, label: 'Ubicación' },
-    { id: 'study-type', icon: GraduationCap, label: 'Estudios' },
-    { id: 'fp-details', icon: BookOpen, label: 'Detalles' },
-    { id: 'ownership', icon: Building2, label: 'Titularidad' },
-    { id: 'results', icon: Trophy, label: 'Resultados' }
+    { id: 'location', icon: MapPin, label: 'Ubicación', shortLabel: 'Zona' },
+    { id: 'study-type', icon: GraduationCap, label: 'Estudios', shortLabel: 'Tipo' },
+    { id: 'fp-details', icon: BookOpen, label: 'Detalles', shortLabel: 'FP' },
+    { id: 'ownership', icon: Building2, label: 'Titularidad', shortLabel: 'Centro' },
+    { id: 'results', icon: Trophy, label: 'Resultados', shortLabel: 'Fin' }
 ];
-
-// Número fijo de puntos entre cada paso
-const DOTS_COUNT = 3;
 
 interface WizardProgressBarProps {
     currentStep: StepId;
@@ -33,11 +30,11 @@ export default function WizardProgressBar({ currentStep, showFPDetails }: Wizard
         : steps.filter(s => s.id !== 'fp-details');
 
     const currentIndex = visibleSteps.findIndex(s => s.id === currentStep);
+    const totalSteps = visibleSteps.length;
 
     return (
-        <div className="px-3 sm:px-6 pt-4 pb-3">
-            {/* Contenedor compacto con fondo sutil */}
-            <div className="relative bg-white/50 backdrop-blur-sm rounded-xl px-3 sm:px-4 py-2.5 border border-white/60">
+        <div className="px-3 sm:px-4 pt-3 pb-2">
+            <div className="relative bg-white/50 backdrop-blur-sm rounded-xl px-2 sm:px-3 py-2 border border-white/60">
                 <div className="flex items-center justify-between">
                     {visibleSteps.map((step, index) => {
                         const Icon = step.icon;
@@ -52,11 +49,11 @@ export default function WizardProgressBar({ currentStep, showFPDetails }: Wizard
                                     <motion.div
                                         initial={false}
                                         className={`
-                                            w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all duration-300
+                                            w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all duration-300
                                             ${isCompleted
-                                                ? 'bg-gradient-to-br from-[#223945] to-[#2d4a5e] shadow-md shadow-[#223945]/20'
+                                                ? 'bg-gradient-to-br from-[#223945] to-[#2d4a5e] shadow-sm shadow-[#223945]/20'
                                                 : isCurrent
-                                                    ? 'bg-gradient-to-br from-[#223945] to-blue-600 shadow-lg shadow-blue-500/25 ring-[3px] ring-blue-100'
+                                                    ? 'bg-gradient-to-br from-[#223945] to-blue-600 shadow-md shadow-blue-500/25 ring-2 ring-blue-100'
                                                     : 'bg-white border-2 border-neutral-200'
                                             }
                                         `}
@@ -67,18 +64,18 @@ export default function WizardProgressBar({ currentStep, showFPDetails }: Wizard
                                                 animate={{ scale: 1, rotate: 0 }}
                                                 transition={{ type: 'spring', stiffness: 200 }}
                                             >
-                                                <CheckCircle className="w-4 h-4 text-white" />
+                                                <CheckCircle className="w-3.5 h-3.5 text-white" />
                                             </motion.div>
                                         ) : (
-                                            <Icon className={`w-4 h-4 transition-colors ${
+                                            <Icon className={`w-3.5 h-3.5 transition-colors ${
                                                 isCurrent ? 'text-white' : 'text-neutral-300'
                                             }`} />
                                         )}
                                     </motion.div>
 
-                                    {/* Label */}
+                                    {/* Label - usar shortLabel en móvil si hay 5 pasos */}
                                     <span
-                                        className={`text-[9px] sm:text-[10px] mt-1 font-medium whitespace-nowrap transition-colors ${
+                                        className={`text-[8px] sm:text-[9px] mt-0.5 font-medium whitespace-nowrap transition-colors ${
                                             isCurrent
                                                 ? 'text-[#223945] font-semibold'
                                                 : isCompleted
@@ -86,28 +83,22 @@ export default function WizardProgressBar({ currentStep, showFPDetails }: Wizard
                                                     : 'text-neutral-400'
                                         }`}
                                     >
-                                        {step.label}
+                                        <span className={totalSteps > 4 ? 'sm:hidden' : 'hidden'}>{step.shortLabel}</span>
+                                        <span className={totalSteps > 4 ? 'hidden sm:inline' : ''}>{step.label}</span>
                                     </span>
                                 </div>
 
-                                {/* Connector - puntos uniformes */}
+                                {/* Connector - línea simple */}
                                 {!isLast && (
-                                    <div className="flex-1 flex items-center justify-center gap-1.5 sm:gap-2 mx-1.5 sm:mx-2">
-                                        {[...Array(DOTS_COUNT)].map((_, i) => (
+                                    <div className="flex-1 mx-1 sm:mx-1.5">
+                                        <div className="h-0.5 rounded-full bg-neutral-200 overflow-hidden">
                                             <motion.div
-                                                key={i}
-                                                initial={false}
-                                                animate={{
-                                                    backgroundColor: isCompleted ? '#223945' : '#e5e7eb',
-                                                    scale: isCompleted ? 1 : 1
-                                                }}
-                                                transition={{
-                                                    duration: 0.3,
-                                                    delay: isCompleted ? i * 0.1 : 0
-                                                }}
-                                                className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full"
+                                                initial={{ width: 0 }}
+                                                animate={{ width: isCompleted ? '100%' : '0%' }}
+                                                transition={{ duration: 0.3 }}
+                                                className="h-full bg-[#223945]"
                                             />
-                                        ))}
+                                        </div>
                                     </div>
                                 )}
                             </div>

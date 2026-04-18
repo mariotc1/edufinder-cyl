@@ -1,29 +1,29 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { BookOpen, ArrowRight, ArrowLeft, Check, X } from 'lucide-react';
-import { useState } from 'react';
+import { BookOpen, ArrowRight, ArrowLeft, ChevronDown, Check } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
 
 const familiasProfesionales = [
-    'Administración y Gestión',
-    'Informática y Comunicaciones',
-    'Sanidad',
-    'Comercio y Marketing',
-    'Electricidad y Electrónica',
-    'Servicios Socioculturales y a la Comunidad',
-    'Transporte y Mantenimiento de Vehículos',
-    'Hostelería y Turismo',
-    'Instalación y Mantenimiento',
-    'Actividades Físicas y Deportivas',
-    'Imagen Personal',
-    'Agraria'
+    { id: 'admin', name: 'Administración y Gestión' },
+    { id: 'info', name: 'Informática y Comunicaciones' },
+    { id: 'sanidad', name: 'Sanidad' },
+    { id: 'comercio', name: 'Comercio y Marketing' },
+    { id: 'electric', name: 'Electricidad y Electrónica' },
+    { id: 'social', name: 'Servicios Socioculturales' },
+    { id: 'transport', name: 'Transporte y Vehículos' },
+    { id: 'hostel', name: 'Hostelería y Turismo' },
+    { id: 'instal', name: 'Instalación y Mantenimiento' },
+    { id: 'deporte', name: 'Actividades Físicas y Deportivas' },
+    { id: 'imagen', name: 'Imagen Personal' },
+    { id: 'agraria', name: 'Agraria' }
 ];
 
 const niveles = [
-    { id: 'BASICA', name: 'FP Básica', shortName: 'FPB', color: 'bg-blue-500' },
-    { id: 'GM', name: 'Grado Medio', shortName: 'GM', color: 'bg-amber-500' },
-    { id: 'GS', name: 'Grado Superior', shortName: 'GS', color: 'bg-purple-500' },
-    { id: 'CE', name: 'Especialización', shortName: 'CE', color: 'bg-rose-500' }
+    { id: 'BASICA', name: 'FP Básica', short: 'Básica' },
+    { id: 'GM', name: 'Grado Medio', short: 'Medio' },
+    { id: 'GS', name: 'Grado Superior', short: 'Superior' },
+    { id: 'CE', name: 'Especialización', short: 'Esp.' }
 ];
 
 const modalidades = [
@@ -52,170 +52,190 @@ export default function FPDetailsStep({
     onNext,
     onBack
 }: FPDetailsStepProps) {
-    const [showAllFamilias, setShowAllFamilias] = useState(false);
-    const displayedFamilias = showAllFamilias ? familiasProfesionales : familiasProfesionales.slice(0, 6);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Cerrar dropdown al hacer click fuera
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const selectedFamiliaName = familiasProfesionales.find(f => f.id === selectedFamilia)?.name;
 
     return (
         <motion.div
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -50 }}
-            className="py-6 px-4"
+            className="py-3 px-4 sm:px-6 flex flex-col"
         >
-            {/* Header */}
-            <div className="text-center mb-6">
-                <div className="inline-flex p-3 bg-purple-100 rounded-xl mb-3">
-                    <BookOpen className="w-6 h-6 text-purple-600" />
-                </div>
-                <h3 className="text-xl font-bold text-[#223945] mb-2">
-                    Detalles de FP
+            {/* Header compacto */}
+            <div className="text-center mb-3">
+                <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+                    className="inline-flex mb-1.5"
+                >
+                    <div className="relative">
+                        <motion.div
+                            animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.1, 0.3] }}
+                            transition={{ repeat: Infinity, duration: 2.5, ease: 'easeInOut' }}
+                            className="absolute inset-0 bg-[#223945] rounded-full"
+                        />
+                        <div className="relative p-2.5 bg-gradient-to-br from-[#223945] to-blue-600 rounded-full shadow-lg shadow-[#223945]/25">
+                            <BookOpen className="w-4 h-4 text-white" />
+                        </div>
+                    </div>
+                </motion.div>
+                <h3 className="text-base sm:text-lg font-bold text-[#223945] mb-0.5">
+                    Personaliza tu búsqueda
                 </h3>
-                <p className="text-neutral-500 text-sm">
-                    Cuéntanos más sobre lo que buscas (todo es opcional)
+                <p className="text-neutral-500 text-[11px] sm:text-xs">
+                    Todos los campos son opcionales
                 </p>
             </div>
 
-            {/* Familia Profesional */}
-            <div className="mb-6">
-                <div className="flex items-center justify-between mb-3">
-                    <label className="text-sm font-semibold text-neutral-700">
+            {/* Contenido compacto */}
+            <div className="space-y-3 mb-3">
+                {/* Familia Profesional - Dropdown */}
+                <div ref={dropdownRef} className="relative">
+                    <label className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wide mb-1 block">
                         Familia Profesional
                     </label>
-                    {selectedFamilia && (
-                        <button
-                            onClick={() => onSelectFamilia(null)}
-                            className="text-xs text-neutral-400 hover:text-red-500 flex items-center gap-1"
-                        >
-                            <X className="w-3 h-3" /> Limpiar
-                        </button>
-                    )}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                    {displayedFamilias.map((familia) => (
-                        <motion.button
-                            key={familia}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={() => onSelectFamilia(selectedFamilia === familia ? null : familia)}
-                            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                                selectedFamilia === familia
-                                    ? 'bg-purple-500 text-white'
-                                    : 'bg-neutral-100 text-neutral-600 hover:bg-purple-100 hover:text-purple-700'
-                            }`}
-                        >
-                            {familia}
-                        </motion.button>
-                    ))}
-                </div>
-                {familiasProfesionales.length > 6 && (
                     <button
-                        onClick={() => setShowAllFamilias(!showAllFamilias)}
-                        className="mt-2 text-xs text-[#223945] hover:underline"
+                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                        className={`w-full flex items-center justify-between p-2.5 rounded-xl border transition-all text-left ${
+                            selectedFamilia
+                                ? 'border-[#223945] bg-[#223945]/5'
+                                : 'border-neutral-200 bg-white hover:border-neutral-300'
+                        }`}
                     >
-                        {showAllFamilias ? 'Ver menos' : `Ver todas (${familiasProfesionales.length})`}
+                        <span className={`text-[13px] ${selectedFamilia ? 'text-[#223945] font-medium' : 'text-neutral-400'}`}>
+                            {selectedFamiliaName || 'Seleccionar familia...'}
+                        </span>
+                        <ChevronDown className={`w-4 h-4 text-neutral-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
                     </button>
-                )}
-            </div>
 
-            {/* Nivel */}
-            <div className="mb-6">
-                <div className="flex items-center justify-between mb-3">
-                    <label className="text-sm font-semibold text-neutral-700">
-                        Nivel educativo
-                    </label>
-                    {selectedNivel && (
-                        <button
-                            onClick={() => onSelectNivel(null)}
-                            className="text-xs text-neutral-400 hover:text-red-500 flex items-center gap-1"
+                    {/* Dropdown menu */}
+                    {isDropdownOpen && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="absolute z-20 w-full mt-1 bg-white border border-neutral-200 rounded-xl shadow-lg max-h-[180px] overflow-y-auto"
                         >
-                            <X className="w-3 h-3" /> Limpiar
-                        </button>
+                            {/* Opción para limpiar */}
+                            {selectedFamilia && (
+                                <button
+                                    onClick={() => {
+                                        onSelectFamilia(null);
+                                        setIsDropdownOpen(false);
+                                    }}
+                                    className="w-full px-3 py-2 text-left text-[12px] text-neutral-400 hover:bg-neutral-50 border-b border-neutral-100"
+                                >
+                                    — Sin preferencia —
+                                </button>
+                            )}
+                            {familiasProfesionales.map((familia) => (
+                                <button
+                                    key={familia.id}
+                                    onClick={() => {
+                                        onSelectFamilia(familia.id);
+                                        setIsDropdownOpen(false);
+                                    }}
+                                    className={`w-full px-3 py-2 text-left text-[12px] transition-colors flex items-center justify-between ${
+                                        selectedFamilia === familia.id
+                                            ? 'bg-[#223945]/5 text-[#223945] font-medium'
+                                            : 'text-neutral-600 hover:bg-neutral-50'
+                                    }`}
+                                >
+                                    {familia.name}
+                                    {selectedFamilia === familia.id && (
+                                        <Check className="w-3.5 h-3.5 text-[#223945]" />
+                                    )}
+                                </button>
+                            ))}
+                        </motion.div>
                     )}
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {niveles.map((nivel) => (
-                        <motion.button
-                            key={nivel.id}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={() => onSelectNivel(selectedNivel === nivel.id ? null : nivel.id)}
-                            className={`relative p-3 rounded-xl border-2 text-center transition-all ${
-                                selectedNivel === nivel.id
-                                    ? 'border-[#223945] bg-[#223945]/5'
-                                    : 'border-neutral-200 hover:border-neutral-300'
-                            }`}
-                        >
-                            {selectedNivel === nivel.id && (
-                                <motion.div
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    className="absolute top-1 right-1 w-4 h-4 bg-[#223945] rounded-full flex items-center justify-center"
-                                >
-                                    <Check className="w-2.5 h-2.5 text-white" />
-                                </motion.div>
-                            )}
-                            <div className={`w-8 h-8 ${nivel.color} rounded-lg flex items-center justify-center mx-auto mb-2`}>
-                                <span className="text-white text-xs font-bold">{nivel.shortName}</span>
-                            </div>
-                            <span className="text-xs font-medium text-neutral-700">{nivel.name}</span>
-                        </motion.button>
-                    ))}
-                </div>
-            </div>
 
-            {/* Modalidad */}
-            <div className="mb-8">
-                <div className="flex items-center justify-between mb-3">
-                    <label className="text-sm font-semibold text-neutral-700">
+                {/* Nivel - Pills compactos */}
+                <div>
+                    <label className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wide mb-1.5 block">
+                        Nivel
+                    </label>
+                    <div className="flex gap-1.5">
+                        {niveles.map((nivel) => (
+                            <button
+                                key={nivel.id}
+                                onClick={() => onSelectNivel(selectedNivel === nivel.id ? null : nivel.id)}
+                                className={`flex-1 py-2 px-1 rounded-lg text-[11px] font-semibold transition-all ${
+                                    selectedNivel === nivel.id
+                                        ? 'bg-[#223945] text-white shadow-sm'
+                                        : 'bg-neutral-100 text-neutral-500 hover:bg-neutral-200'
+                                }`}
+                            >
+                                {nivel.short}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Modalidad - Toggle buttons */}
+                <div>
+                    <label className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wide mb-1.5 block">
                         Modalidad
                     </label>
-                    {selectedModalidad && (
-                        <button
-                            onClick={() => onSelectModalidad(null)}
-                            className="text-xs text-neutral-400 hover:text-red-500 flex items-center gap-1"
-                        >
-                            <X className="w-3 h-3" /> Limpiar
-                        </button>
-                    )}
-                </div>
-                <div className="flex gap-3">
-                    {modalidades.map((modalidad) => (
-                        <motion.button
-                            key={modalidad.id}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={() => onSelectModalidad(selectedModalidad === modalidad.id ? null : modalidad.id)}
-                            className={`flex-1 p-3 rounded-xl border-2 text-center font-medium transition-all ${
-                                selectedModalidad === modalidad.id
-                                    ? 'border-[#223945] bg-[#223945] text-white'
-                                    : 'border-neutral-200 text-neutral-600 hover:border-neutral-300'
-                            }`}
-                        >
-                            {modalidad.name}
-                        </motion.button>
-                    ))}
+                    <div className="flex gap-2">
+                        {modalidades.map((modalidad) => (
+                            <button
+                                key={modalidad.id}
+                                onClick={() => onSelectModalidad(selectedModalidad === modalidad.id ? null : modalidad.id)}
+                                className={`flex-1 py-2 rounded-lg text-[12px] font-semibold transition-all ${
+                                    selectedModalidad === modalidad.id
+                                        ? 'bg-[#223945] text-white shadow-sm'
+                                        : 'bg-neutral-100 text-neutral-500 hover:bg-neutral-200'
+                                }`}
+                            >
+                                {modalidad.name}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
 
             {/* Botones navegación */}
-            <div className="flex gap-3">
+            <div className="flex gap-2 mt-auto">
                 <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={onBack}
-                    className="flex items-center justify-center gap-2 px-6 py-3 bg-neutral-100 text-neutral-600 font-semibold rounded-xl hover:bg-neutral-200 transition-colors"
+                    className="flex items-center justify-center gap-1 px-3 py-2.5 bg-white border border-neutral-200 text-neutral-600 font-semibold rounded-xl hover:bg-neutral-50 transition-colors text-[13px]"
                 >
-                    <ArrowLeft className="w-4 h-4" />
+                    <ArrowLeft className="w-3.5 h-3.5" />
                     Atrás
                 </motion.button>
                 <motion.button
-                    whileHover={{ scale: 1.02 }}
+                    whileHover={{ scale: 1.02, y: -1 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={onNext}
-                    className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-[#223945] text-white font-semibold rounded-xl hover:bg-[#1a2c35] transition-colors"
+                    className="flex-1 relative flex items-center justify-center gap-1.5 px-4 py-2.5 font-semibold rounded-xl transition-all text-[13px] overflow-hidden bg-gradient-to-r from-[#223945] via-[#2d4a5e] to-blue-600 text-white shadow-lg shadow-[#223945]/25 hover:shadow-xl hover:shadow-[#223945]/30"
                 >
-                    Continuar
-                    <ArrowRight className="w-4 h-4" />
+                    <span>Continuar</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                    {/* Shine effect */}
+                    <motion.div
+                        initial={{ x: '-100%' }}
+                        animate={{ x: '200%' }}
+                        transition={{ repeat: Infinity, duration: 3, ease: 'linear', repeatDelay: 2 }}
+                        className="absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
+                    />
                 </motion.button>
             </div>
         </motion.div>
