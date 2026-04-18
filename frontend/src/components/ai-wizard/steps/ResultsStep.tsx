@@ -36,8 +36,6 @@ function ResultCard({ centro, index, isFavoriteInitial }: { centro: Centro; inde
         >
             <Link
                 href={`/centro/${centro.id}`}
-                target="_blank"
-                rel="noopener noreferrer"
                 className="block p-3 bg-white border border-neutral-200 rounded-xl hover:border-[#223945]/40 hover:shadow-md transition-all group"
             >
                 <div className="flex items-start gap-3">
