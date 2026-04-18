@@ -2,61 +2,61 @@
 
 import { motion } from 'framer-motion';
 
-// Datos de las provincias con sus paths SVG simplificados
+// Paths SVG más realistas de las provincias de Castilla y León
 const provincias = [
     {
         id: 'LEON',
         name: 'León',
-        path: 'M85,45 L120,30 L165,35 L180,55 L175,90 L155,120 L120,135 L85,125 L60,100 L55,70 Z',
-        center: { x: 115, y: 80 }
+        path: 'M45,25 L58,18 L75,15 L95,12 L115,18 L130,28 L138,45 L142,65 L138,85 L128,98 L115,105 L98,108 L82,105 L68,95 L55,88 L42,78 L35,65 L32,50 L38,35 Z',
+        center: { x: 88, y: 60 }
     },
     {
         id: 'PALENCIA',
         name: 'Palencia',
-        path: 'M180,55 L220,45 L250,60 L255,95 L240,125 L200,130 L175,120 L175,90 Z',
-        center: { x: 215, y: 90 }
+        path: 'M138,45 L155,38 L172,42 L185,55 L188,72 L182,88 L170,98 L155,102 L142,98 L132,88 L128,72 L132,58 Z',
+        center: { x: 158, y: 70 }
     },
     {
         id: 'BURGOS',
         name: 'Burgos',
-        path: 'M250,60 L295,40 L350,50 L365,85 L355,130 L310,145 L270,140 L255,125 L255,95 Z',
-        center: { x: 305, y: 95 }
+        path: 'M185,55 L205,45 L228,42 L252,48 L270,58 L278,75 L275,95 L268,112 L255,122 L238,128 L218,125 L198,118 L185,105 L178,88 L182,72 Z',
+        center: { x: 228, y: 85 }
     },
     {
         id: 'SORIA',
         name: 'Soria',
-        path: 'M355,130 L365,85 L395,90 L420,110 L415,160 L380,180 L345,170 L340,145 Z',
-        center: { x: 380, y: 135 }
+        path: 'M275,95 L288,88 L305,92 L318,102 L322,118 L318,135 L308,148 L292,155 L275,152 L260,142 L255,125 L258,108 L268,98 Z',
+        center: { x: 288, y: 122 }
     },
     {
         id: 'ZAMORA',
         name: 'Zamora',
-        path: 'M55,100 L85,125 L120,135 L125,175 L100,210 L55,205 L35,165 L40,125 Z',
-        center: { x: 80, y: 165 }
+        path: 'M32,78 L55,88 L68,95 L82,105 L88,118 L85,135 L78,150 L65,162 L48,168 L32,165 L18,155 L12,138 L15,118 L22,98 Z',
+        center: { x: 52, y: 128 }
     },
     {
         id: 'VALLADOLID',
         name: 'Valladolid',
-        path: 'M120,135 L175,120 L200,130 L210,170 L185,205 L145,210 L125,190 L125,175 Z',
-        center: { x: 165, y: 170 }
+        path: 'M98,108 L115,105 L132,108 L148,115 L158,128 L155,145 L145,158 L128,165 L110,162 L95,152 L88,138 L88,122 Z',
+        center: { x: 122, y: 135 }
     },
     {
         id: 'SEGOVIA',
         name: 'Segovia',
-        path: 'M240,125 L270,140 L310,145 L320,175 L295,215 L250,220 L220,200 L210,170 L220,145 Z',
-        center: { x: 265, y: 180 }
+        path: 'M170,118 L188,112 L208,115 L228,122 L242,135 L245,152 L238,168 L222,178 L202,180 L182,175 L168,162 L162,145 L165,128 Z',
+        center: { x: 205, y: 148 }
     },
     {
         id: 'SALAMANCA',
         name: 'Salamanca',
-        path: 'M35,165 L55,205 L100,210 L125,250 L105,295 L55,300 L25,265 L20,215 Z',
-        center: { x: 70, y: 250 }
+        path: 'M12,155 L32,165 L48,168 L62,175 L72,190 L68,210 L58,228 L42,238 L22,235 L8,220 L2,198 L5,175 Z',
+        center: { x: 38, y: 198 }
     },
     {
         id: 'AVILA',
         name: 'Ávila',
-        path: 'M100,210 L145,210 L185,205 L220,200 L230,240 L200,285 L150,295 L125,280 L105,295 L125,250 Z',
-        center: { x: 165, y: 250 }
+        path: 'M78,168 L98,162 L118,165 L138,172 L158,178 L172,192 L168,212 L155,228 L135,235 L112,232 L92,222 L78,205 L72,188 Z',
+        center: { x: 122, y: 198 }
     }
 ];
 
@@ -72,37 +72,26 @@ export default function CastillaLeonMap({
     disabled = false
 }: CastillaLeonMapProps) {
     return (
-        <div className="relative w-full max-w-md mx-auto">
-            {/* Leyenda */}
-            <div className="flex items-center justify-center gap-4 mb-4 text-xs">
-                <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-3 rounded bg-neutral-200 border border-neutral-300"></div>
-                    <span className="text-neutral-500">Disponible</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-3 rounded bg-[#223945]"></div>
-                    <span className="text-neutral-500">Seleccionada</span>
-                </div>
-            </div>
-
+        <div className="relative w-full">
             {/* SVG del mapa */}
             <svg
-                viewBox="0 0 440 340"
-                className="w-full h-auto"
-                style={{ filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))' }}
+                viewBox="0 0 330 250"
+                className="w-full h-auto max-h-[180px]"
+                style={{ filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08))' }}
             >
                 {/* Definiciones */}
                 <defs>
                     {/* Gradiente para provincias seleccionadas */}
                     <linearGradient id="selectedGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                         <stop offset="0%" stopColor="#223945" />
-                        <stop offset="100%" stopColor="#3b82f6" />
+                        <stop offset="100%" stopColor="#2d5a7b" />
                     </linearGradient>
 
-                    {/* Sombra */}
-                    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-                        <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.3" />
-                    </filter>
+                    {/* Gradiente hover */}
+                    <linearGradient id="hoverGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#e0e7eb" />
+                        <stop offset="100%" stopColor="#d1dbe3" />
+                    </linearGradient>
                 </defs>
 
                 {/* Provincias */}
@@ -116,65 +105,65 @@ export default function CastillaLeonMap({
                                 d={provincia.path}
                                 initial={false}
                                 animate={{
-                                    fill: isSelected ? 'url(#selectedGradient)' : '#e5e7eb',
-                                    stroke: isSelected ? '#1e3a5f' : '#9ca3af',
-                                    strokeWidth: isSelected ? 2.5 : 1.5,
-                                    scale: isSelected ? 1.02 : 1,
+                                    fill: isSelected ? 'url(#selectedGradient)' : '#f1f5f9',
+                                    stroke: isSelected ? '#1a2f3d' : '#cbd5e1',
+                                    strokeWidth: isSelected ? 2 : 1,
                                 }}
                                 whileHover={!disabled ? {
-                                    fill: isSelected ? 'url(#selectedGradient)' : '#d1d5db',
-                                    scale: 1.03,
-                                    transition: { duration: 0.2 }
+                                    fill: isSelected ? 'url(#selectedGradient)' : 'url(#hoverGradient)',
+                                    strokeWidth: 1.5,
+                                    transition: { duration: 0.15 }
                                 } : {}}
                                 whileTap={!disabled ? { scale: 0.98 } : {}}
-                                transition={{ duration: 0.3, ease: 'easeOut' }}
+                                transition={{ duration: 0.2, ease: 'easeOut' }}
                                 onClick={() => !disabled && onToggleProvincia(provincia.id)}
                                 style={{
                                     cursor: disabled ? 'default' : 'pointer',
                                     transformOrigin: `${provincia.center.x}px ${provincia.center.y}px`,
-                                    filter: isSelected ? 'url(#shadow)' : 'none'
                                 }}
                                 className="outline-none"
                             />
 
                             {/* Nombre de la provincia */}
-                            <motion.text
+                            <text
                                 x={provincia.center.x}
                                 y={provincia.center.y}
                                 textAnchor="middle"
                                 dominantBaseline="middle"
-                                initial={false}
-                                animate={{
-                                    fill: isSelected ? '#ffffff' : '#374151',
-                                    fontWeight: isSelected ? 700 : 500,
-                                }}
-                                transition={{ duration: 0.3 }}
-                                className="text-[11px] pointer-events-none select-none"
+                                fill={isSelected ? '#ffffff' : '#475569'}
+                                fontWeight={isSelected ? 600 : 500}
+                                className="text-[8px] pointer-events-none select-none"
                                 style={{
                                     fontFamily: 'system-ui, -apple-system, sans-serif',
-                                    textShadow: isSelected ? '0 1px 2px rgba(0,0,0,0.3)' : 'none'
+                                    textShadow: isSelected ? '0 1px 2px rgba(0,0,0,0.2)' : 'none',
+                                    opacity: disabled ? 0.5 : 1
                                 }}
                             >
                                 {provincia.name}
-                            </motion.text>
+                            </text>
                         </g>
                     );
                 })}
             </svg>
 
-            {/* Contador de seleccionadas */}
+            {/* Pills de provincias seleccionadas */}
             {selectedProvincias.length > 0 && (
                 <motion.div
-                    initial={{ opacity: 0, y: 10 }}
+                    initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mt-4 text-center"
+                    className="flex flex-wrap justify-center gap-1.5 mt-2"
                 >
-                    <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#223945]/10 text-[#223945] rounded-full text-sm font-medium">
-                        <span className="w-5 h-5 bg-[#223945] text-white rounded-full text-xs flex items-center justify-center font-bold">
-                            {selectedProvincias.length}
-                        </span>
-                        {selectedProvincias.length === 1 ? 'provincia seleccionada' : 'provincias seleccionadas'}
-                    </span>
+                    {selectedProvincias.map(id => {
+                        const prov = provincias.find(p => p.id === id);
+                        return (
+                            <span
+                                key={id}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#223945] text-white rounded-full text-[10px] font-medium"
+                            >
+                                {prov?.name}
+                            </span>
+                        );
+                    })}
                 </motion.div>
             )}
         </div>
