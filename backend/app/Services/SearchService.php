@@ -157,8 +157,10 @@
 
                 case 'PRIMARIA':
                 case 'INFANTIL':
-                    $query->where('denominacion_generica', 'ILIKE', '%PRIMARIA%')
-                        ->orWhere('denominacion_generica', 'ILIKE', '%INFANTIL%');
+                    $query->where(function ($q) {
+                        $q->where('denominacion_generica', 'ILIKE', '%PRIMARIA%')
+                          ->orWhere('denominacion_generica', 'ILIKE', '%INFANTIL%');
+                    });
                     break;
 
                 case 'ESPECIAL':
@@ -169,6 +171,191 @@
                     $query->where('denominacion_generica', 'ILIKE', '%' . $tipo . '%');
                     break;
             }
+        }
+
+        // CALCULAR RAZONES DE MATCH
+        // Devuelve un array con las razones por las que un centro coincide con los filtros
+        public function calculateMatchReasons(Centro $centro, array $filters): array
+        {
+            $reasons = [];
+
+            // Match por ubicación
+            if (!empty($filters['provincia'])) {
+                if (stripos($centro->provincia, $filters['provincia']) !== false) {
+                    $reasons[] = [
+                        'type' => 'location',
+                        'icon' => 'map-pin',
+                        'text' => 'En ' . $centro->provincia
+                    ];
+                }
+            }
+
+            // Match por geolocalización
+            if (!empty($filters['lat']) && !empty($filters['lng']) && $centro->distancia !== null) {
+                $distancia = round($centro->distancia, 1);
+                $reasons[] = [
+                    'type' => 'distance',
+                    'icon' => 'navigation',
+                    'text' => "A {$distancia} km de ti"
+                ];
+            }
+
+            // Match por tipo de estudio
+            if (!empty($filters['tipo'])) {
+                $tipoLabels = [
+                    'FP' => 'Formación Profesional',
+                    'ESO' => 'ESO/Bachillerato',
+                    'PRIMARIA' => 'Infantil/Primaria',
+                    'ESPECIAL' => 'Educación Especial'
+                ];
+                $label = $tipoLabels[strtoupper($filters['tipo'])] ?? $filters['tipo'];
+                $reasons[] = [
+                    'type' => 'study',
+                    'icon' => 'graduation-cap',
+                    'text' => $label
+                ];
+            }
+
+            // Match por naturaleza
+            if (!empty($filters['naturaleza'])) {
+                $esPublico = stripos($centro->naturaleza, 'PÚBLICO') !== false || stripos($centro->naturaleza, 'PUBLICO') !== false;
+                $reasons[] = [
+                    'type' => 'ownership',
+                    'icon' => $esPublico ? 'landmark' : 'building',
+                    'text' => $esPublico ? 'Centro público' : 'Centro privado'
+                ];
+            }
+
+            // Match por familia profesional (FP)
+            if (!empty($filters['familia']) && $centro->ciclos) {
+                foreach ($centro->ciclos as $ciclo) {
+                    if (stripos($ciclo->familia_profesional, $filters['familia']) !== false) {
+                        $reasons[] = [
+                            'type' => 'family',
+                            'icon' => 'briefcase',
+                            'text' => $ciclo->familia_profesional
+                        ];
+                        break;
+                    }
+                }
+            }
+
+            // Match por nivel (FP)
+            if (!empty($filters['nivel']) && $centro->ciclos) {
+                $nivelLabels = [
+                    'GM' => 'Grado Medio',
+                    'GS' => 'Grado Superior',
+                    'BASICA' => 'FP Básica',
+                    'CE' => 'Especialización'
+                ];
+                $label = $nivelLabels[strtoupper($filters['nivel'])] ?? $filters['nivel'];
+                $reasons[] = [
+                    'type' => 'level',
+                    'icon' => 'award',
+                    'text' => $label
+                ];
+            }
+
+            // Match por modalidad
+            if (!empty($filters['modalidad'])) {
+                $esDistancia = stripos($filters['modalidad'], 'DISTANCIA') !== false;
+                $reasons[] = [
+                    'type' => 'modality',
+                    'icon' => $esDistancia ? 'wifi' : 'users',
+                    'text' => $esDistancia ? 'A distancia' : 'Presencial'
+                ];
+            }
+
+            return $reasons;
+        }
+
+        // GENERAR SUGERENCIAS DE FALLBACK
+        // Cuando no hay resultados, sugiere cómo ampliar la búsqueda
+        public function generateFallbackSuggestions(array $filters, int $currentResults): array
+        {
+            $suggestions = [];
+
+            // Si hay pocos resultados y está usando geolocalización
+            if ($currentResults < 5 && !empty($filters['radio']) && $filters['radio'] < 50) {
+                $newRadio = min($filters['radio'] + 20, 100);
+                $suggestions[] = [
+                    'type' => 'expand_radius',
+                    'action' => 'radio',
+                    'value' => $newRadio,
+                    'text' => "Ampliar búsqueda a {$newRadio} km",
+                    'icon' => 'expand'
+                ];
+            }
+
+            // Si filtró por naturaleza
+            if ($currentResults < 5 && !empty($filters['naturaleza'])) {
+                $suggestions[] = [
+                    'type' => 'remove_filter',
+                    'action' => 'naturaleza',
+                    'value' => null,
+                    'text' => 'Incluir públicos y privados',
+                    'icon' => 'filter-x'
+                ];
+            }
+
+            // Si filtró por modalidad
+            if ($currentResults < 5 && !empty($filters['modalidad'])) {
+                $suggestions[] = [
+                    'type' => 'remove_filter',
+                    'action' => 'modalidad',
+                    'value' => null,
+                    'text' => 'Incluir todas las modalidades',
+                    'icon' => 'filter-x'
+                ];
+            }
+
+            // Si filtró por familia profesional
+            if ($currentResults < 3 && !empty($filters['familia'])) {
+                $suggestions[] = [
+                    'type' => 'remove_filter',
+                    'action' => 'familia',
+                    'value' => null,
+                    'text' => 'Ver todas las familias profesionales',
+                    'icon' => 'filter-x'
+                ];
+            }
+
+            // Si hay provincia pero no geolocalización, sugerir provincias vecinas
+            if ($currentResults < 3 && !empty($filters['provincia']) && empty($filters['lat'])) {
+                $provinciasVecinas = $this->getProvinciasVecinas($filters['provincia']);
+                if (!empty($provinciasVecinas)) {
+                    $suggestions[] = [
+                        'type' => 'nearby_provinces',
+                        'action' => 'provincias',
+                        'value' => $provinciasVecinas,
+                        'text' => 'Buscar también en provincias cercanas',
+                        'icon' => 'map'
+                    ];
+                }
+            }
+
+            return $suggestions;
+        }
+
+        // OBTENER PROVINCIAS VECINAS
+        private function getProvinciasVecinas(string $provincia): array
+        {
+            $vecinas = [
+                'ÁVILA' => ['SALAMANCA', 'VALLADOLID', 'SEGOVIA'],
+                'AVILA' => ['SALAMANCA', 'VALLADOLID', 'SEGOVIA'],
+                'BURGOS' => ['PALENCIA', 'VALLADOLID', 'SORIA'],
+                'LEÓN' => ['ZAMORA', 'VALLADOLID', 'PALENCIA'],
+                'LEON' => ['ZAMORA', 'VALLADOLID', 'PALENCIA'],
+                'PALENCIA' => ['LEÓN', 'VALLADOLID', 'BURGOS'],
+                'SALAMANCA' => ['ZAMORA', 'ÁVILA', 'VALLADOLID'],
+                'SEGOVIA' => ['ÁVILA', 'VALLADOLID', 'SORIA'],
+                'SORIA' => ['BURGOS', 'SEGOVIA', 'VALLADOLID'],
+                'VALLADOLID' => ['PALENCIA', 'BURGOS', 'SEGOVIA', 'ÁVILA', 'SALAMANCA', 'ZAMORA', 'LEÓN'],
+                'ZAMORA' => ['LEÓN', 'VALLADOLID', 'SALAMANCA'],
+            ];
+
+            $provinciaUpper = mb_strtoupper(trim($provincia));
+            return $vecinas[$provinciaUpper] ?? [];
         }
     }
 ?>
