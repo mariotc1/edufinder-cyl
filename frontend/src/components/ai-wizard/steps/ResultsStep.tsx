@@ -162,11 +162,6 @@ function ResultCard({
                                     {parseFloat(String(centro.distancia)).toFixed(1)} km
                                 </span>
                             )}
-                            {hasFavoriteAffinity && (
-                                <span className="text-[9px] text-pink-500 flex items-center gap-0.5">
-                                    <Heart className="w-2.5 h-2.5 fill-current" />
-                                </span>
-                            )}
                         </div>
 
                         {/* Nombre */}

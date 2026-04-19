@@ -80,13 +80,20 @@ class RecommendationController extends Controller
         $filters = array_filter($filters, fn($v) => $v !== null && $v !== '');
 
         // Obtener patrones de favoritos del usuario si está autenticado
+        // Usamos try-catch porque auth('sanctum') puede fallar si el token es inválido
         $userPatterns = null;
-        $user = $request->user();
-        if ($user) {
-            $favoritos = $user->favoritos()->with(['centro.ciclos'])->get();
-            if ($favoritos->isNotEmpty()) {
-                $userPatterns = $this->recommendationService->extractPatterns($favoritos);
+        $user = null;
+        try {
+            $user = auth('sanctum')->user();
+            if ($user) {
+                $favoritos = $user->favoritos()->with(['centro.ciclos'])->get();
+                if ($favoritos->isNotEmpty()) {
+                    $userPatterns = $this->recommendationService->extractPatterns($favoritos);
+                }
             }
+        } catch (\Exception $e) {
+            // Si falla la autenticación, continuar sin boost de favoritos
+            $user = null;
         }
 
         // Si se enviaron múltiples provincias
@@ -104,32 +111,40 @@ class RecommendationController extends Controller
             // Eliminar duplicados por ID y limitar
             $results = $allResults->unique('id')->take(20)->values();
         } else {
-            // Búsqueda normal
+            // Búsqueda normal (cuando no hay provincias seleccionadas o hay solo una provincia en $filters)
             $results = $this->recommendationService->searchFromWizard($filters);
         }
 
+        // Debug: cuántos resultados tenemos antes del procesamiento
+        $resultsCountBefore = $results->count();
+
         // Añadir razones de match y score a cada resultado
         $searchService = app(\App\Services\SearchService::class);
-        $results = $results->map(function ($centro) use ($filters, $userPatterns, $searchService) {
+        $recommendationService = $this->recommendationService;
+        $results = $results->map(function ($centro) use ($filters, $userPatterns, $searchService, $recommendationService) {
+            // Convertir a array para poder añadir propiedades custom
+            $centroArray = $centro->toArray();
+
             // Calcular razones de match
-            $centro->match_reasons = $searchService->calculateMatchReasons($centro, $filters);
+            $matchReasons = $searchService->calculateMatchReasons($centro, $filters);
 
             // Si hay patrones del usuario, calcular afinidad con sus favoritos
             if ($userPatterns) {
-                $similarity = $this->recommendationService->calculateSimilarityScore($centro, $userPatterns);
-                $centro->favorite_affinity = $similarity;
+                $similarity = $recommendationService->calculateSimilarityScore($centro, $userPatterns);
+                $centroArray['favorite_affinity'] = $similarity;
 
-                // Añadir indicador si coincide con patrones de favoritos
-                if ($similarity >= 5) {
-                    $centro->match_reasons[] = [
+                // Añadir indicador AL PRINCIPIO si coincide con patrones de favoritos
+                if ($similarity >= 3) {
+                    array_unshift($matchReasons, [
                         'type' => 'favorite_match',
                         'icon' => 'heart',
-                        'text' => 'Similar a tus favoritos'
-                    ];
+                        'text' => 'Según tus favoritos'
+                    ]);
                 }
             }
 
-            return $centro;
+            $centroArray['match_reasons'] = $matchReasons;
+            return $centroArray;
         });
 
         // Si hay patrones de favoritos, ordenar por afinidad
@@ -152,7 +167,13 @@ class RecommendationController extends Controller
             'filters_applied' => $filters,
             'suggestions' => $suggestions,
             'alternatives' => $alternatives,
-            'has_favorite_boost' => $userPatterns !== null
+            'has_favorite_boost' => $userPatterns !== null,
+            'user_authenticated' => $user !== null,
+            'favorites_count' => $user ? $user->favoritos()->count() : 0,
+            'debug' => [
+                'results_before_processing' => $resultsCountBefore ?? 0,
+                'provincias_received' => $provincias,
+            ]
         ]);
     }
 
@@ -161,19 +182,21 @@ class RecommendationController extends Controller
     private function findAlternatives(array $filters, $searchService): \Illuminate\Support\Collection
     {
         $alternatives = collect();
+        $recommendationService = $this->recommendationService;
 
         // Intentar sin filtro de naturaleza
         if (!empty($filters['naturaleza'])) {
             $relaxedFilters = $filters;
             unset($relaxedFilters['naturaleza']);
 
-            $results = $this->recommendationService->searchFromWizard($relaxedFilters);
+            $results = $recommendationService->searchFromWizard($relaxedFilters);
             if ($results->isNotEmpty()) {
                 $alternatives = $alternatives->merge(
                     $results->take(5)->map(function ($centro) use ($relaxedFilters, $searchService) {
-                        $centro->match_reasons = $searchService->calculateMatchReasons($centro, $relaxedFilters);
-                        $centro->alternative_reason = 'Sin filtrar por titularidad';
-                        return $centro;
+                        $centroArray = $centro->toArray();
+                        $centroArray['match_reasons'] = $searchService->calculateMatchReasons($centro, $relaxedFilters);
+                        $centroArray['alternative_reason'] = 'Sin filtrar por titularidad';
+                        return $centroArray;
                     })
                 );
             }
@@ -184,12 +207,13 @@ class RecommendationController extends Controller
             $relaxedFilters = $filters;
             unset($relaxedFilters['modalidad']);
 
-            $results = $this->recommendationService->searchFromWizard($relaxedFilters);
+            $results = $recommendationService->searchFromWizard($relaxedFilters);
             if ($results->isNotEmpty()) {
                 $newAlts = $results->take(5)->map(function ($centro) use ($relaxedFilters, $searchService) {
-                    $centro->match_reasons = $searchService->calculateMatchReasons($centro, $relaxedFilters);
-                    $centro->alternative_reason = 'Otras modalidades';
-                    return $centro;
+                    $centroArray = $centro->toArray();
+                    $centroArray['match_reasons'] = $searchService->calculateMatchReasons($centro, $relaxedFilters);
+                    $centroArray['alternative_reason'] = 'Otras modalidades';
+                    return $centroArray;
                 });
                 $alternatives = $alternatives->merge($newAlts)->unique('id');
             }
@@ -200,12 +224,13 @@ class RecommendationController extends Controller
             $relaxedFilters = $filters;
             $relaxedFilters['radio'] = 100;
 
-            $results = $this->recommendationService->searchFromWizard($relaxedFilters);
+            $results = $recommendationService->searchFromWizard($relaxedFilters);
             if ($results->isNotEmpty()) {
                 $newAlts = $results->take(5)->map(function ($centro) use ($relaxedFilters, $searchService) {
-                    $centro->match_reasons = $searchService->calculateMatchReasons($centro, $relaxedFilters);
-                    $centro->alternative_reason = 'Ampliando radio de búsqueda';
-                    return $centro;
+                    $centroArray = $centro->toArray();
+                    $centroArray['match_reasons'] = $searchService->calculateMatchReasons($centro, $relaxedFilters);
+                    $centroArray['alternative_reason'] = 'Ampliando radio de búsqueda';
+                    return $centroArray;
                 });
                 $alternatives = $alternatives->merge($newAlts)->unique('id');
             }
