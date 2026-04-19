@@ -157,8 +157,10 @@
 
                 case 'PRIMARIA':
                 case 'INFANTIL':
-                    $query->where('denominacion_generica', 'ILIKE', '%PRIMARIA%')
-                        ->orWhere('denominacion_generica', 'ILIKE', '%INFANTIL%');
+                    $query->where(function ($q) {
+                        $q->where('denominacion_generica', 'ILIKE', '%PRIMARIA%')
+                          ->orWhere('denominacion_generica', 'ILIKE', '%INFANTIL%');
+                    });
                     break;
 
                 case 'ESPECIAL':
