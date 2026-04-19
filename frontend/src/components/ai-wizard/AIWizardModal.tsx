@@ -4,6 +4,7 @@ import { Dialog, Transition } from '@headlessui/react';
 import { Fragment, useState, useCallback, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { Centro } from '@/types';
+import { useAuth } from '@/context/AuthContext';
 
 import WizardProgressBar from './WizardProgressBar';
 import WelcomeStep from './steps/WelcomeStep';
@@ -31,6 +32,20 @@ interface WizardData {
     naturaleza: string | null;
 }
 
+interface Suggestion {
+    type: string;
+    action: string;
+    value: unknown;
+    text: string;
+    icon: string;
+}
+
+interface CentroWithMatch extends Centro {
+    match_reasons?: Array<{ type: string; icon: string; text: string }>;
+    favorite_affinity?: number;
+    alternative_reason?: string;
+}
+
 const initialData: WizardData = {
     provincias: [],
     useGeolocation: false,
@@ -48,9 +63,13 @@ interface AIWizardModalProps {
 }
 
 export default function AIWizardModal({ isOpen, onClose }: AIWizardModalProps) {
+    const { user } = useAuth();
     const [currentStep, setCurrentStep] = useState<StepId>('welcome');
     const [wizardData, setWizardData] = useState<WizardData>(initialData);
-    const [results, setResults] = useState<Centro[]>([]);
+    const [results, setResults] = useState<CentroWithMatch[]>([]);
+    const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+    const [alternatives, setAlternatives] = useState<CentroWithMatch[]>([]);
+    const [hasFavoriteBoost, setHasFavoriteBoost] = useState(false);
     const [hasSavedSearch, setHasSavedSearch] = useState(false);
 
     // Verificar si hay búsqueda guardada al abrir
@@ -70,27 +89,39 @@ export default function AIWizardModal({ isOpen, onClose }: AIWizardModalProps) {
 
     // Guardar búsqueda cuando hay resultados
     useEffect(() => {
-        if (currentStep === 'results' && results.length > 0) {
+        if (currentStep === 'results' && (results.length > 0 || alternatives.length > 0)) {
             try {
                 sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
                     wizardData,
                     results,
+                    suggestions,
+                    alternatives,
+                    hasFavoriteBoost,
                     timestamp: Date.now()
                 }));
             } catch (error) {
                 console.error('Error saving search:', error);
             }
         }
-    }, [currentStep, results, wizardData]);
+    }, [currentStep, results, suggestions, alternatives, hasFavoriteBoost, wizardData]);
 
     // Función para continuar búsqueda guardada
     const continueSavedSearch = useCallback(() => {
         try {
             const saved = sessionStorage.getItem(STORAGE_KEY);
             if (saved) {
-                const { wizardData: savedData, results: savedResults } = JSON.parse(saved);
+                const {
+                    wizardData: savedData,
+                    results: savedResults,
+                    suggestions: savedSuggestions,
+                    alternatives: savedAlternatives,
+                    hasFavoriteBoost: savedBoost
+                } = JSON.parse(saved);
                 setWizardData(savedData);
-                setResults(savedResults);
+                setResults(savedResults || []);
+                setSuggestions(savedSuggestions || []);
+                setAlternatives(savedAlternatives || []);
+                setHasFavoriteBoost(savedBoost || false);
                 setCurrentStep('results');
             }
         } catch (error) {
@@ -179,30 +210,86 @@ export default function AIWizardModal({ isOpen, onClose }: AIWizardModalProps) {
                 params.set('naturaleza', wizardData.naturaleza);
             }
 
-            // Hacer la petición
+            // Hacer la petición con token si está autenticado
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
-            const response = await fetch(`${apiUrl}/recommendations/wizard?${params.toString()}`);
+            const headers: HeadersInit = {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            };
+
+            // Si hay usuario, incluir token de auth para obtener boost de favoritos
+            if (user) {
+                const token = localStorage.getItem('token');
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+            }
+
+            const response = await fetch(`${apiUrl}/recommendations/wizard?${params.toString()}`, { headers });
             const data = await response.json();
 
             // Simular un poco más de tiempo para la animación
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            await new Promise(resolve => setTimeout(resolve, 1200));
 
             setResults(data.results || []);
+            setSuggestions(data.suggestions || []);
+            setAlternatives(data.alternatives || []);
+            setHasFavoriteBoost(data.has_favorite_boost || false);
             setCurrentStep('results');
         } catch (error) {
             console.error('Error en búsqueda:', error);
             setResults([]);
+            setSuggestions([]);
+            setAlternatives([]);
+            setHasFavoriteBoost(false);
             setCurrentStep('results');
         }
-    }, [wizardData]);
+    }, [wizardData, user]);
 
     // Reset wizard
     const resetWizard = useCallback(() => {
         setWizardData(initialData);
         setResults([]);
+        setSuggestions([]);
+        setAlternatives([]);
+        setHasFavoriteBoost(false);
         setCurrentStep('welcome');
         clearSavedSearch();
     }, [clearSavedSearch]);
+
+    // Aplicar sugerencia (re-buscar con filtros modificados)
+    const handleApplySuggestion = useCallback((suggestion: Suggestion) => {
+        setWizardData(prev => {
+            const newData = { ...prev };
+
+            switch (suggestion.action) {
+                case 'radio':
+                    newData.radio = suggestion.value as number;
+                    break;
+                case 'naturaleza':
+                    newData.naturaleza = null;
+                    break;
+                case 'modalidad':
+                    newData.modalidad = null;
+                    break;
+                case 'familia':
+                    newData.familia = null;
+                    break;
+                case 'provincias':
+                    // Añadir provincias vecinas
+                    const nuevasProvincias = suggestion.value as string[];
+                    newData.provincias = [...new Set([...prev.provincias, ...nuevasProvincias])];
+                    break;
+            }
+
+            return newData;
+        });
+
+        // Ejecutar búsqueda con nuevos filtros
+        setTimeout(() => {
+            performSearch();
+        }, 100);
+    }, [performSearch]);
 
     // Cerrar y resetear
     const handleClose = useCallback(() => {
@@ -340,8 +427,12 @@ export default function AIWizardModal({ isOpen, onClose }: AIWizardModalProps) {
                                         <ResultsStep
                                             key="results"
                                             results={results}
+                                            suggestions={suggestions}
+                                            alternatives={alternatives}
+                                            hasFavoriteBoost={hasFavoriteBoost}
                                             onReset={resetWizard}
                                             onClose={handleClose}
+                                            onApplySuggestion={handleApplySuggestion}
                                         />
                                     )}
                                 </AnimatePresence>
