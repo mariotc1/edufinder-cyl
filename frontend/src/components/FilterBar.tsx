@@ -1,13 +1,14 @@
 'use client';
 
 import { fetchCycleSuggestions, fetchCentroSuggestions, getSavedSearches, createSavedSearch, deleteSavedSearch, updateSavedSearch } from '@/services/api';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Search, MapPin, Building2, SlidersHorizontal, Trash2, X, Link2, Check, Bookmark, ChevronRight, RefreshCw } from 'lucide-react';
 import { FilterOptions, SavedSearch } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import useSWR, { mutate } from 'swr';
+import LocationSearchInput from './LocationSearchInput';
 
 interface FilterBarProps {
   onFilterChange: (filters: FilterOptions) => void;
@@ -36,9 +37,11 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
     radio: Number(searchParams.get('radio')) || 10,
     lat: searchParams.get('lat') ? Number(searchParams.get('lat')) : undefined,
     lng: searchParams.get('lng') ? Number(searchParams.get('lng')) : undefined,
+    locationName: searchParams.get('locationName') || '',
   });
 
   const [geolocationStatus, setGeolocationStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [isUsingMyLocation, setIsUsingMyLocation] = useState(false);
   const [copied, setCopied] = useState(false);
 
   // Estado para búsquedas guardadas
@@ -162,6 +165,12 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
 
   useEffect(() => {
     if (searchParams.get('lat') && searchParams.get('lng')) {
+      // Si tiene locationName, es ubicación personalizada; si no, es "Mi ubicación"
+      if (searchParams.get('locationName')) {
+        setIsUsingMyLocation(false);
+      } else {
+        setIsUsingMyLocation(true);
+      }
       setGeolocationStatus('success');
     }
   }, [searchParams]);
@@ -178,20 +187,23 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
       if (filters.ciclo) params.set('ciclo', filters.ciclo);
       if (filters.nivel) params.set('nivel', filters.nivel);
       if (filters.modalidad) params.set('modalidad', filters.modalidad);
-      
+
       if (filters.lat && filters.lng) {
         params.set('lat', filters.lat.toString());
         params.set('lng', filters.lng.toString());
         params.set('radio', (filters.radio || 10).toString());
+        if (filters.locationName) {
+          params.set('locationName', filters.locationName);
+        }
       }
 
       const filtersChanged = JSON.stringify(filters) !== JSON.stringify(prevFiltersRef.current);
-      
+
       const pageInUrl = filtersChanged ? 1 : page;
       if (pageInUrl > 1) params.set('page', pageInUrl.toString());
 
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-      
+
       if (filtersChanged) {
         onFilterChange(filters);
         prevFiltersRef.current = filters;
@@ -217,7 +229,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
   };
 
   // Handler para obtener ubicación del usuario (API Geolocation del navegador)
-  const handleGeolocation = () => {
+  const handleGeolocation = useCallback(() => {
     if (!navigator.geolocation) {
       alert('Tu navegador no soporta geolocalización');
       return;
@@ -227,13 +239,15 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
-        setFilters(prev => ({ 
-          ...prev, 
-          lat: latitude, 
-          lng: longitude, 
-          radio: prev.radio || 10 
+        setFilters(prev => ({
+          ...prev,
+          lat: latitude,
+          lng: longitude,
+          radio: prev.radio || 10,
+          locationName: '', // Limpiar nombre de ubicación personalizada
         }));
         setGeolocationStatus('success');
+        setIsUsingMyLocation(true);
       },
       (error) => {
         console.error(error);
@@ -241,15 +255,39 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
         alert('No pudimos obtener tu ubicación.');
       }
     );
-  };
+  }, []);
 
-  const clearGeolocation = () => {
+  // Handler para seleccionar ubicación personalizada
+  const handleLocationSelect = useCallback((location: { lat: number; lng: number; name: string } | null) => {
+    if (location) {
+      setFilters(prev => ({
+        ...prev,
+        lat: location.lat,
+        lng: location.lng,
+        locationName: location.name,
+        radio: prev.radio || 10,
+      }));
+      setGeolocationStatus('success');
+      setIsUsingMyLocation(false);
+    } else {
+      // Limpiar ubicación
+      setFilters(prev => {
+        const { lat, lng, locationName, ...rest } = prev;
+        return { ...rest, radio: 10 };
+      });
+      setGeolocationStatus('idle');
+      setIsUsingMyLocation(false);
+    }
+  }, []);
+
+  const clearGeolocation = useCallback(() => {
     setFilters(prev => {
-        const { lat, lng, ...rest } = prev;
-        return rest;
+        const { lat, lng, locationName, ...rest } = prev;
+        return { ...rest, radio: 10 };
     });
     setGeolocationStatus('idle');
-  };
+    setIsUsingMyLocation(false);
+  }, []);
 
   const clearAll = () => {
       setFilters({
@@ -257,6 +295,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
         naturaleza: ''
       });
       setGeolocationStatus('idle');
+      setIsUsingMyLocation(false);
       setActiveSearch(null);
   };
 
@@ -379,12 +418,12 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
         
         {/* Top Row: Search & Location */}
         <div className="flex flex-col md:flex-row gap-4 items-stretch">
-          <div className="flex-grow relative group" ref={wrapperCentroRef}>
+          <div className="flex-1 md:flex-[1] relative group" ref={wrapperCentroRef}>
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400 group-focus-within:text-[#223945] transition-colors" />
             <input
               type="text"
               placeholder="Buscar centro..."
-              className="w-full pl-12 pr-12 py-3.5 rounded-xl bg-neutral-50 border border-neutral-200 focus:bg-white focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 transition-all outline-none font-medium placeholder:text-neutral-400 text-neutral-800 hover:border-[#223945]/50 text-sm md:text-base md:placeholder:text-base"
+              className="w-full pl-12 pr-12 py-3.5 rounded-xl bg-neutral-50 border border-neutral-200 focus:bg-white focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 transition-all outline-none font-medium placeholder:text-neutral-400 text-neutral-800 hover:border-[#223945]/50 text-sm"
               value={filters.q || ''}
               onChange={(e) => handleChange('q', e.target.value)}
               onFocus={() => { if(centroSuggestions.length > 0) setShowCentroSuggestions(true); }}
@@ -441,33 +480,22 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
             )}
           </div>
           
-          {/* Botones - Iconos en móvil, con texto en desktop */}
-          <div className="w-full md:w-auto md:flex-shrink-0 flex gap-2">
-            {/* Botón Cerca de mí */}
-            {geolocationStatus === 'success' ? (
-               <button
-                 onClick={clearGeolocation}
-                 className="flex-1 md:flex-initial flex items-center justify-center gap-2 bg-[#223945] text-white px-4 py-3 rounded-xl border border-[#223945] transition-all hover:bg-[#1a2c35]"
-                 title="Desactivar ubicación"
-               >
-                 <MapPin className="w-5 h-5" />
-                 <span className="hidden md:inline text-sm font-bold">Cerca de mí</span>
-                 <X className="w-4 h-4" />
-               </button>
-            ) : (
-              <button
-                onClick={handleGeolocation}
-                disabled={geolocationStatus === 'loading'}
-                className="flex-1 md:flex-initial bg-neutral-50 text-neutral-500 border border-neutral-200 hover:text-[#223945] hover:bg-[#223945]/5 hover:border-[#223945]/20 px-4 py-3 rounded-xl transition-all flex items-center justify-center gap-2 font-bold"
-              >
-                {geolocationStatus === 'loading' ? (
-                  <span className="animate-spin rounded-full h-5 w-5 border-2 border-[#223945]/30 border-t-[#223945]"></span>
-                ) : (
-                  <MapPin className="w-5 h-5" />
-                )}
-                <span className="hidden md:inline text-sm">Cerca de mí</span>
-              </button>
-            )}
+          {/* Buscador de ubicación + Botones */}
+          <div className="w-full md:flex-[1] flex gap-2">
+            {/* Buscador de ubicación inteligente */}
+            <div className="flex-1">
+              <LocationSearchInput
+                onLocationSelect={handleLocationSelect}
+                selectedLocation={
+                  filters.lat && filters.lng && filters.locationName
+                    ? { lat: filters.lat, lng: filters.lng, name: filters.locationName }
+                    : null
+                }
+                onUseMyLocation={handleGeolocation}
+                isUsingMyLocation={isUsingMyLocation && geolocationStatus === 'success'}
+                isLoadingMyLocation={geolocationStatus === 'loading'}
+              />
+            </div>
 
             {/* Botón Búsquedas Guardadas */}
             <div className="relative flex-1 md:flex-initial" ref={savedDropdownRef}>
@@ -581,12 +609,17 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
           </div>
         </div>
 
-        {/* Radius Slider (Conditional) */}
-        {geolocationStatus === 'success' && (
+        {/* Radius Slider (Conditional) - Mostrar cuando hay ubicación activa */}
+        {(geolocationStatus === 'success' || (filters.lat && filters.lng)) && (
              <div className="bg-gradient-to-r from-blue-50 to-white p-4 rounded-xl border border-blue-100/50 flex flex-col sm:flex-row gap-4 items-center animate-in zoom-in-95 duration-200 shadow-inner">
-                <div className="flex items-center gap-2 text-[#223945] min-w-[140px]">
-                    <SlidersHorizontal className="w-4 h-4" />
-                    <span className="text-sm font-bold">Radio: {filters.radio} km</span>
+                <div className="flex items-center gap-2 text-[#223945] min-w-[160px]">
+                    <MapPin className="w-4 h-4" />
+                    <div className="flex flex-col">
+                        <span className="text-sm font-bold">Radio: {filters.radio} km</span>
+                        <span className="text-[10px] text-neutral-500 truncate max-w-[140px]">
+                            {isUsingMyLocation ? 'Desde tu ubicación' : filters.locationName ? `Desde ${filters.locationName.split(',')[0]}` : ''}
+                        </span>
+                    </div>
                 </div>
                 <div className="flex-grow w-full px-2">
                     <input 

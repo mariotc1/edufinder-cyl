@@ -53,6 +53,7 @@ export interface FilterOptions {
   lat?: number;
   lng?: number;
   radio?: number;
+  locationName?: string; // Nombre de ubicación personalizada (ej: "Salamanca, 37001")
   page?: number;
 }
 
