@@ -9,6 +9,7 @@ import { Mail, Phone, MapPin, Globe, BookOpen, ChevronLeft, Heart, Share2, Copy,
 import { useFavorite } from '@/hooks/useFavorite';
 import { useCicloFavorite } from '@/hooks/useCicloFavorite';
 import { useVisitedCenters } from '@/hooks/useVisitedCenters';
+import { useFavoritesAnimation } from '@/context/FavoritesAnimationContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import CentroDetailSkeleton from '@/components/CentroDetailSkeleton';
 import { CicloFP } from '@/types';
@@ -229,6 +230,25 @@ export default function CentroDetailContent() {
     const { toggleCiclo, isCicloFavorito } = useCicloFavorite({
         centroId: centro?.data?.id || 0
     });
+
+    // Animación de favoritos
+    const { triggerAnimation } = useFavoritesAnimation();
+
+    // Handler para toggle de ciclo con animación
+    const handleToggleCiclo = (cicloId: number, cicloNombre: string, elementRef: HTMLElement | null) => {
+        const wasLiked = isCicloFavorito(cicloId);
+
+        // Disparar animación solo si se está añadiendo a favoritos
+        if (!wasLiked && elementRef) {
+            const rect = elementRef.getBoundingClientRect();
+            triggerAnimation(rect, {
+                title: cicloNombre,
+                naturaleza: centro?.data?.naturaleza || ''
+            });
+        }
+
+        toggleCiclo(cicloId);
+    };
 
     if (error) return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -638,7 +658,9 @@ export default function CentroDetailContent() {
                                             <span className="text-sm font-bold text-[#223945]">{totalCiclos} ciclos</span>
                                         </div>
                                     </div>
-                                    <p className="text-sm text-neutral-500 ml-12 mb-3">Pulsa en cada nivel para ver los ciclos disponibles</p>
+                                    <p className="text-sm text-neutral-500 ml-12 mb-3">
+                                        Pulsa en cada nivel para ver los ciclos disponibles, y guarda los que más te interesen pulsando en el corazón.{' '}
+                                    </p>
 
                                     {/* Quick Stats - Siempre en fila, compactos */}
                                     <div className="flex items-center gap-1.5 ml-12 flex-wrap">
@@ -695,6 +717,7 @@ export default function CentroDetailContent() {
                                                                     <div
                                                                         key={ciclo.id}
                                                                         className="bg-white/80 backdrop-blur-sm p-4 rounded-lg border border-white/50 shadow-sm hover:shadow-md transition-all"
+                                                                        data-ciclo-card
                                                                     >
                                                                         <div className="flex items-start justify-between gap-3">
                                                                             <div className="flex-1 min-w-0">
@@ -709,8 +732,13 @@ export default function CentroDetailContent() {
                                                                                 </p>
                                                                             </div>
                                                                             <motion.button
-                                                                                onClick={() => toggleCiclo(ciclo.id)}
+                                                                                onClick={(e) => {
+                                                                                    const cardEl = (e.currentTarget as HTMLElement).closest('[data-ciclo-card]') as HTMLElement;
+                                                                                    handleToggleCiclo(ciclo.id, ciclo.ciclo_formativo, cardEl);
+                                                                                }}
                                                                                 whileTap={{ scale: 0.85 }}
+                                                                                animate={isFavorito ? { scale: [1, 1.2, 1] } : {}}
+                                                                                transition={{ duration: 0.3 }}
                                                                                 className={`p-2 rounded-full shrink-0 transition-all ${
                                                                                     isFavorito
                                                                                         ? 'bg-red-50 text-red-500'
