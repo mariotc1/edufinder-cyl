@@ -7,6 +7,7 @@ import { useRef, useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { Mail, Phone, MapPin, Globe, BookOpen, ChevronLeft, Heart, Share2, Copy, CheckCircle, ChevronDown, GraduationCap } from 'lucide-react';
 import { useFavorite } from '@/hooks/useFavorite';
+import { useCicloFavorite } from '@/hooks/useCicloFavorite';
 import { useVisitedCenters } from '@/hooks/useVisitedCenters';
 import { motion, AnimatePresence } from 'framer-motion';
 import CentroDetailSkeleton from '@/components/CentroDetailSkeleton';
@@ -224,6 +225,10 @@ export default function CentroDetailContent() {
         initialIsFavorite: calculatedIsFavorite
     });
 
+    // Hook para gestionar ciclos favoritos
+    const { toggleCiclo, isCicloFavorito } = useCicloFavorite({
+        centroId: centro?.data?.id || 0
+    });
 
     if (error) return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -684,26 +689,41 @@ export default function CentroDetailContent() {
                                                         className="overflow-hidden"
                                                     >
                                                         <div className="p-4 pt-0 space-y-2">
-                                                            {groupedCiclos[level].map((ciclo: CicloFP) => (
-                                                                <div
-                                                                    key={ciclo.id}
-                                                                    className="bg-white/80 backdrop-blur-sm p-4 rounded-lg border border-white/50 shadow-sm hover:shadow-md transition-all"
-                                                                >
-                                                                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
-                                                                        <div className="flex-1">
-                                                                            <div className="flex items-center gap-2 mb-2">
-                                                                                <span className="text-xs font-bold text-[#223945] bg-white px-2 py-0.5 rounded border border-neutral-200/50 uppercase tracking-wide">
-                                                                                    {ciclo.modalidad}
-                                                                                </span>
+                                                            {groupedCiclos[level].map((ciclo: CicloFP) => {
+                                                                const isFavorito = isCicloFavorito(ciclo.id);
+                                                                return (
+                                                                    <div
+                                                                        key={ciclo.id}
+                                                                        className="bg-white/80 backdrop-blur-sm p-4 rounded-lg border border-white/50 shadow-sm hover:shadow-md transition-all"
+                                                                    >
+                                                                        <div className="flex items-start justify-between gap-3">
+                                                                            <div className="flex-1 min-w-0">
+                                                                                <div className="flex items-center gap-2 mb-2">
+                                                                                    <span className="text-xs font-bold text-[#223945] bg-white px-2 py-0.5 rounded border border-neutral-200/50 uppercase tracking-wide">
+                                                                                        {ciclo.modalidad}
+                                                                                    </span>
+                                                                                </div>
+                                                                                <h4 className="font-bold text-[#111827] leading-snug">{ciclo.ciclo_formativo}</h4>
+                                                                                <p className="text-sm text-neutral-500 mt-1">
+                                                                                    {ciclo.familia_profesional}
+                                                                                </p>
                                                                             </div>
-                                                                            <h4 className="font-bold text-[#111827] leading-snug">{ciclo.ciclo_formativo}</h4>
-                                                                            <p className="text-sm text-neutral-500 mt-1">
-                                                                                {ciclo.familia_profesional}
-                                                                            </p>
+                                                                            <motion.button
+                                                                                onClick={() => toggleCiclo(ciclo.id)}
+                                                                                whileTap={{ scale: 0.85 }}
+                                                                                className={`p-2 rounded-full shrink-0 transition-all ${
+                                                                                    isFavorito
+                                                                                        ? 'bg-red-50 text-red-500'
+                                                                                        : 'bg-neutral-100 text-neutral-400 hover:bg-red-50 hover:text-red-400'
+                                                                                }`}
+                                                                                title={isFavorito ? 'Quitar de favoritos' : 'Añadir a favoritos'}
+                                                                            >
+                                                                                <Heart className={`w-4 h-4 ${isFavorito ? 'fill-current' : ''}`} />
+                                                                            </motion.button>
                                                                         </div>
                                                                     </div>
-                                                                </div>
-                                                            ))}
+                                                                );
+                                                            })}
                                                         </div>
                                                     </motion.div>
                                                 )}

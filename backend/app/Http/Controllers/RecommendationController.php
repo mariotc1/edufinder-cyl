@@ -50,8 +50,18 @@ class RecommendationController extends Controller
         // Extraer IDs de favoritos para excluirlos de resultados
         $favoriteIds = $favoritos->pluck('centro_id')->toArray();
 
-        // Extraer patrones avanzados de los favoritos
-        $patterns = $this->recommendationService->extractPatterns($favoritos);
+        // Obtener IDs de ciclos con like directo (con manejo de error si la tabla no existe)
+        $ciclosLikedIds = [];
+        try {
+            if (\Schema::hasTable('ciclo_favoritos')) {
+                $ciclosLikedIds = $user->ciclosFavoritos()->pluck('ciclo_id')->toArray();
+            }
+        } catch (\Exception $e) {
+            $ciclosLikedIds = [];
+        }
+
+        // Extraer patrones avanzados de los favoritos (incluyendo ciclos con like)
+        $patterns = $this->recommendationService->extractPatterns($favoritos, $ciclosLikedIds);
 
         // Buscar centros similares con el nuevo algoritmo (pasando el usuario para proximidad)
         $recommendations = $this->recommendationService->findSimilarCenters(
@@ -135,7 +145,16 @@ class RecommendationController extends Controller
             if ($user) {
                 $favoritos = $user->favoritos()->with(['centro.ciclos'])->get();
                 if ($favoritos->isNotEmpty()) {
-                    $userPatterns = $this->recommendationService->extractPatterns($favoritos);
+                    // Obtener ciclos con like directo (con manejo de error si la tabla no existe)
+                    $ciclosLikedIds = [];
+                    try {
+                        if (\Schema::hasTable('ciclo_favoritos')) {
+                            $ciclosLikedIds = $user->ciclosFavoritos()->pluck('ciclo_id')->toArray();
+                        }
+                    } catch (\Exception $e) {
+                        $ciclosLikedIds = [];
+                    }
+                    $userPatterns = $this->recommendationService->extractPatterns($favoritos, $ciclosLikedIds);
                 }
             }
         } catch (\Exception $e) {

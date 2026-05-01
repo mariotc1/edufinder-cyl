@@ -19,7 +19,8 @@ class RecommendationService
     protected SearchService $searchService;
 
     // Pesos del sistema de scoring (configurables)
-    private const SCORE_CICLO_EXACTO = 20;      // Mismo ciclo formativo = máximo match
+    private const SCORE_CICLO_LIKED = 30;        // Ciclo con like directo = máxima prioridad
+    private const SCORE_CICLO_EXACTO = 20;       // Mismo ciclo de centro favorito
     private const SCORE_FAMILIA = 10;            // Misma familia profesional
     private const SCORE_NIVEL = 6;               // Mismo nivel (GM, GS, etc.)
     private const SCORE_PROVINCIA = 8;           // Misma provincia
@@ -43,15 +44,20 @@ class RecommendationService
      * EXTRAER PATRONES AVANZADOS DE FAVORITOS
      *
      * Analiza en profundidad los favoritos del usuario extrayendo:
-     * - Ciclos específicos favoriteados (clave_ciclo + nombre)
+     * - Ciclos con like directo (máxima prioridad)
+     * - Ciclos específicos de centros favoriteados
      * - Familias con peso relativo (frecuencia)
      * - Centroide geográfico de los favoritos
      * - Preferencias de naturaleza, nivel, modalidad
+     *
+     * @param Collection $favoritos Favoritos del usuario (centros)
+     * @param array $ciclosLikedIds IDs de ciclos con like directo
      */
-    public function extractPatterns(Collection $favoritos): array
+    public function extractPatterns(Collection $favoritos, array $ciclosLikedIds = []): array
     {
         $patterns = [
-            'ciclos_especificos' => [],    // Ciclos concretos (ej: "DAW", "ASIR")
+            'ciclos_liked' => [],           // Ciclos con like directo (máxima prioridad)
+            'ciclos_especificos' => [],     // Ciclos de centros favoritos
             'familias' => [],               // Familias profesionales con frecuencia
             'niveles' => [],                // Niveles educativos
             'modalidades' => [],            // Presencial/Distancia
@@ -61,6 +67,9 @@ class RecommendationService
             'centroide' => null,            // Centro geográfico de favoritos
             'total_favoritos' => 0,
         ];
+
+        // Convertir IDs de ciclos liked a un set para búsqueda rápida
+        $ciclosLikedSet = array_flip($ciclosLikedIds);
 
         $latitudes = [];
         $longitudes = [];
@@ -100,32 +109,56 @@ class RecommendationService
             // Analizar ciclos FP (lo más importante para recomendaciones de calidad)
             if ($centro->ciclos && $centro->ciclos->count() > 0) {
                 foreach ($centro->ciclos as $ciclo) {
-                    // Ciclo específico (clave única)
-                    if ($ciclo->clave_ciclo || $ciclo->ciclo_formativo) {
-                        $claveCiclo = $ciclo->clave_ciclo ?: $this->generateClaveCiclo($ciclo);
-                        $patterns['ciclos_especificos'][$claveCiclo] = [
-                            'count' => ($patterns['ciclos_especificos'][$claveCiclo]['count'] ?? 0) + 1,
+                    $claveCiclo = $ciclo->clave_ciclo ?: $this->generateClaveCiclo($ciclo);
+                    $isLiked = isset($ciclosLikedSet[$ciclo->id]);
+
+                    // Ciclo con like directo → máxima prioridad
+                    if ($isLiked) {
+                        $patterns['ciclos_liked'][$claveCiclo] = [
+                            'id' => $ciclo->id,
                             'nombre' => $ciclo->ciclo_formativo,
                             'familia' => $ciclo->familia_profesional,
                             'nivel' => $ciclo->nivel_educativo,
                         ];
-                    }
 
-                    // Familia profesional
-                    if ($ciclo->familia_profesional) {
-                        $familia = $this->normalizeString($ciclo->familia_profesional);
-                        $patterns['familias'][$familia] = ($patterns['familias'][$familia] ?? 0) + 1;
-                    }
+                        // Los ciclos con like directo pesan más en familias y niveles
+                        if ($ciclo->familia_profesional) {
+                            $familia = $this->normalizeString($ciclo->familia_profesional);
+                            $patterns['familias'][$familia] = ($patterns['familias'][$familia] ?? 0) + 3; // x3 peso
+                        }
+                        if ($ciclo->nivel_educativo) {
+                            $nivel = $this->normalizeNivel($ciclo->nivel_educativo);
+                            if ($nivel) {
+                                $patterns['niveles'][$nivel] = ($patterns['niveles'][$nivel] ?? 0) + 3; // x3 peso
+                            }
+                        }
+                    } else {
+                        // Ciclo de centro favorito (sin like directo)
+                        if ($ciclo->clave_ciclo || $ciclo->ciclo_formativo) {
+                            $patterns['ciclos_especificos'][$claveCiclo] = [
+                                'count' => ($patterns['ciclos_especificos'][$claveCiclo]['count'] ?? 0) + 1,
+                                'nombre' => $ciclo->ciclo_formativo,
+                                'familia' => $ciclo->familia_profesional,
+                                'nivel' => $ciclo->nivel_educativo,
+                            ];
+                        }
 
-                    // Nivel educativo
-                    if ($ciclo->nivel_educativo) {
-                        $nivel = $this->normalizeNivel($ciclo->nivel_educativo);
-                        if ($nivel) {
-                            $patterns['niveles'][$nivel] = ($patterns['niveles'][$nivel] ?? 0) + 1;
+                        // Familia profesional (peso normal)
+                        if ($ciclo->familia_profesional) {
+                            $familia = $this->normalizeString($ciclo->familia_profesional);
+                            $patterns['familias'][$familia] = ($patterns['familias'][$familia] ?? 0) + 1;
+                        }
+
+                        // Nivel educativo (peso normal)
+                        if ($ciclo->nivel_educativo) {
+                            $nivel = $this->normalizeNivel($ciclo->nivel_educativo);
+                            if ($nivel) {
+                                $patterns['niveles'][$nivel] = ($patterns['niveles'][$nivel] ?? 0) + 1;
+                            }
                         }
                     }
 
-                    // Modalidad
+                    // Modalidad (siempre igual)
                     if ($ciclo->modalidad) {
                         $modalidad = $this->normalizeString($ciclo->modalidad);
                         $patterns['modalidades'][$modalidad] = ($patterns['modalidades'][$modalidad] ?? 0) + 1;
@@ -224,8 +257,31 @@ class RecommendationService
 
         $totalFavoritos = max($patterns['total_favoritos'], 1);
 
-        // 1. CICLO EXACTO (máxima prioridad)
-        if ($centro->ciclos && $centro->ciclos->count() > 0) {
+        // 1. CICLOS CON LIKE DIRECTO (máxima prioridad)
+        $cicloLikedMatch = false;
+        if ($centro->ciclos && $centro->ciclos->count() > 0 && !empty($patterns['ciclos_liked'])) {
+            foreach ($centro->ciclos as $ciclo) {
+                $claveCiclo = $ciclo->clave_ciclo ?: $this->generateClaveCiclo($ciclo);
+
+                if (isset($patterns['ciclos_liked'][$claveCiclo])) {
+                    $cicloData = $patterns['ciclos_liked'][$claveCiclo];
+                    $points = self::SCORE_CICLO_LIKED; // Máximo score
+                    $score += $points;
+                    $breakdown['ciclo_liked'] = round($points, 1);
+                    $highlights[] = [
+                        'type' => 'ciclo_liked',
+                        'icon' => 'heart',
+                        'text' => $cicloData['nombre'] ?? 'Ciclo que te gusta',
+                        'priority' => 0, // Máxima prioridad
+                    ];
+                    $cicloLikedMatch = true;
+                    break;
+                }
+            }
+        }
+
+        // 2. CICLO DE CENTRO FAVORITO (si no hay match de ciclo con like)
+        if (!$cicloLikedMatch && $centro->ciclos && $centro->ciclos->count() > 0) {
             foreach ($centro->ciclos as $ciclo) {
                 $claveCiclo = $ciclo->clave_ciclo ?: $this->generateClaveCiclo($ciclo);
 
@@ -241,7 +297,7 @@ class RecommendationService
                         'text' => $cicloData['nombre'] ?? 'Ciclo que te interesa',
                         'priority' => 1,
                     ];
-                    break; // Solo contar una vez
+                    break;
                 }
             }
         }

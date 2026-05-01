@@ -28,5 +28,10 @@
         public function centro() {
             return $this->belongsTo(Centro::class);
         }
+
+        // RELACIÓN: USUARIOS QUE LO TIENEN COMO FAVORITO
+        public function favoritedBy() {
+            return $this->belongsToMany(User::class, 'ciclo_favoritos', 'ciclo_id', 'user_id');
+        }
     }
 ?>

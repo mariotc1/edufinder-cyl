@@ -22,14 +22,19 @@ export default function FavoritosContent() {
         shouldRetryOnError: false 
     });
 
-    const getCentros = useCallback(() => {
+    const getFavoritos = useCallback(() => {
         if (!data) return [];
         const rawList = Array.isArray(data) ? data : (data.data || []);
-        
-        return rawList.map((item: any) => item.centro).filter(Boolean);
+
+        return rawList.map((item: any) => ({
+            centro: item.centro,
+            // El backend puede devolver ciclos completos (con id) o referencias (con ciclo_id)
+            ciclosFavoritosIds: item.ciclos_favoritos?.map((cf: any) => cf.id || cf.ciclo_id) || []
+        })).filter((item: any) => item.centro);
     }, [data]);
 
-    const centros = getCentros();
+    const favoritos = getFavoritos();
+    const centros = favoritos.map((f: any) => f.centro);
 
     const handleToggle = async () => {
         setTimeout(() => {
@@ -115,13 +120,14 @@ export default function FavoritosContent() {
                 ) : (
                     <>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                             {centros.map((centro: Centro, index: number) => (
+                             {favoritos.map((fav: { centro: Centro; ciclosFavoritosIds: number[] }, index: number) => (
                                  <CentroCard
-                                    key={centro.id}
-                                    centro={centro}
+                                    key={fav.centro.id}
+                                    centro={fav.centro}
                                     index={index}
                                     initialIsFavorite={true}
                                     onToggle={handleToggle}
+                                    ciclosFavoritosIds={fav.ciclosFavoritosIds}
                                  />
                              ))}
                         </div>

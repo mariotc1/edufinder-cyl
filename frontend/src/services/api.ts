@@ -40,6 +40,25 @@ export const removeFavorite = async (centroId: number) => {
   return response.data;
 };
 
+// GESTIÓN DE CICLOS FAVORITOS
+// Toggle like de un ciclo (añade/quita y auto-añade centro si necesario)
+export const toggleCicloFavorite = async (cicloId: number) => {
+  const response = await axios.post(`/ciclos-favoritos/${cicloId}/toggle`);
+  return response.data;
+};
+
+// Obtener IDs de ciclos favoritos del usuario
+export const getCiclosFavoritosIds = async () => {
+  const response = await axios.get('/ciclos-favoritos/ids');
+  return response.data;
+};
+
+// Obtener IDs de ciclos favoritos de un centro específico
+export const getCiclosFavoritosByCentro = async (centroId: number) => {
+  const response = await axios.get(`/ciclos-favoritos/centro/${centroId}`);
+  return response.data;
+};
+
 // SUGERENCIAS DE BÚSQUEDA (AUTOCOMPLETE)
 // Obtener sugerencias de ciclos formativos
 // Acepta filtros opcionales para mostrar solo ciclos que coincidan con los criterios
