@@ -318,15 +318,40 @@ function VisitedCentroCard({
 
     return (
         <div className="relative group w-[280px] sm:w-[320px]">
-            {/* Card con altura fija */}
-            <div className="relative bg-white rounded-xl border border-neutral-200 overflow-hidden hover:border-[#223945]/30 hover:shadow-lg transition-all duration-200 h-[145px] sm:h-[160px] flex flex-col">
+            {/* Card con altura fija - mismo tamaño que RecommendationCard */}
+            <div className="relative bg-white rounded-xl border border-neutral-200 overflow-hidden hover:border-[#223945]/30 hover:shadow-lg transition-all duration-200 h-[140px] sm:h-[150px] flex flex-col">
                 {/* Degradado corporativo superior */}
                 <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-primary-500 to-primary-300"></div>
 
-                <div className="p-3 sm:p-4 pt-4 sm:pt-5 pb-3 sm:pb-5 flex flex-col flex-1">
+                {/* Botones superiores: Ver centro + Eliminar */}
+                <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5 z-10">
+                    {/* Botón ver centro */}
+                    <Link
+                        href={`/centro/${centro.id}`}
+                        className="p-1.5 sm:p-2 rounded-full bg-[#223945] text-white shadow-md sm:shadow-lg hover:scale-110 hover:shadow-xl transition-all"
+                        title="Ver centro"
+                    >
+                        <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    </Link>
+
+                    {/* Botón eliminar */}
+                    <button
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onRemove();
+                        }}
+                        className="p-1.5 sm:p-2 rounded-full bg-white/90 text-neutral-400 hover:text-red-500 hover:bg-red-50 transition-all shadow-md sm:shadow-lg border border-neutral-100"
+                        title="Eliminar del historial"
+                    >
+                        <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    </button>
+                </div>
+
+                <div className="p-3 sm:p-4 pt-4 sm:pt-5 flex flex-col flex-1 pr-20">
                     {/* Badge de naturaleza + tiempo de visita */}
-                    <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2 pr-8 shrink-0">
-                        <span className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-wide px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full border ${getNaturalezaColor(centro.naturaleza)}`}>
+                    <div className="flex items-center gap-1.5 mb-2 shrink-0">
+                        <span className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full border ${getNaturalezaColor(centro.naturaleza)}`}>
                             {centro.naturaleza || 'Centro'}
                         </span>
                         <span className="text-[9px] sm:text-[10px] text-neutral-400 font-medium whitespace-nowrap">
@@ -334,45 +359,19 @@ function VisitedCentroCard({
                         </span>
                     </div>
 
-                    {/* Nombre del centro - altura fija con truncado */}
-                    <div className="h-[2.2rem] sm:h-[2.4rem] mb-1.5 sm:mb-2 shrink-0 overflow-hidden">
-                        <h3 className="font-bold text-[#223945] text-[11px] sm:text-[12px] leading-[1.1rem] sm:leading-[1.2rem] line-clamp-2" title={centro.nombre}>
-                            {centro.nombre}
-                        </h3>
-                    </div>
+                    {/* Nombre del centro */}
+                    <h3 className="font-bold text-[#223945] text-[11px] sm:text-[12px] leading-tight line-clamp-2 mb-1.5" title={centro.nombre}>
+                        {centro.nombre}
+                    </h3>
 
                     {/* Ubicación - siempre al fondo */}
-                    <div className="flex items-center justify-between mt-auto">
-                        <div className="flex items-center gap-1.5 text-neutral-500 min-w-0 flex-1 mr-3">
-                            <MapPin className="w-3.5 h-3.5 shrink-0" />
-                            <span className="text-xs truncate">
-                                {formatLocation(centro.localidad, centro.provincia)}
-                            </span>
-                        </div>
-
-                        {/* Botón ver detalles */}
-                        <Link
-                            href={`/centro/${centro.id}`}
-                            className="p-2 rounded-lg bg-[#223945] text-white hover:bg-[#223945]/90 hover:scale-105 transition-all shadow-md shrink-0"
-                            title="Ver detalles del centro"
-                        >
-                            <Eye className="w-4 h-4" />
-                        </Link>
+                    <div className="flex items-center gap-1.5 text-neutral-500 mt-auto">
+                        <MapPin className="w-3 h-3 shrink-0" />
+                        <span className="text-[10px] sm:text-xs truncate">
+                            {formatLocation(centro.localidad, centro.provincia)}
+                        </span>
                     </div>
                 </div>
-
-                {/* Botón eliminar (siempre visible) */}
-                <button
-                    onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        onRemove();
-                    }}
-                    className="absolute top-3 right-2 p-1.5 rounded-full bg-white/90 text-neutral-400 hover:text-red-500 hover:bg-red-50 transition-all shadow-sm border border-neutral-100"
-                    title="Eliminar del historial"
-                >
-                    <X className="w-3.5 h-3.5" />
-                </button>
             </div>
         </div>
     );

@@ -70,14 +70,14 @@ export default function RecommendationCard({ centro }: RecommendationCardProps) 
                 {/* Botón ver centro - esquina superior derecha */}
                 <Link
                     href={`/centro/${centro.id}`}
-                    className={`absolute top-3 right-3 p-2 rounded-full text-white shadow-lg hover:scale-110 hover:shadow-xl transition-all z-10 ${
+                    className={`absolute top-2.5 right-2.5 p-1.5 sm:p-2 rounded-full text-white shadow-md sm:shadow-lg hover:scale-110 hover:shadow-xl transition-all z-10 ${
                         affinity === 'high'
                             ? 'bg-gradient-to-br from-red-400 via-purple-500 to-blue-500'
                             : 'bg-gradient-to-br from-purple-500 via-blue-500 to-blue-400'
                     }`}
                     title="Ver centro"
                 >
-                    <Eye className="w-4 h-4" />
+                    <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </Link>
 
                 <div className="p-3 sm:p-4 pt-4 sm:pt-5 flex flex-col flex-1 pr-12">
