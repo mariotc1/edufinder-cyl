@@ -146,7 +146,7 @@ export default function LocationSearchInput({
     const typingHint = getTypingHint();
 
     return (
-        <div className="flex items-center gap-2">
+        <div className="flex-1 flex items-center gap-2">
             {hasLocation ? (
                 // Estado: Ubicación activa
                 <div className="flex-1 flex items-center gap-2 bg-[#223945] text-white px-4 py-3 rounded-xl border border-[#223945] transition-all">
@@ -163,8 +163,8 @@ export default function LocationSearchInput({
                     </button>
                 </div>
             ) : (
-                // Estado: Buscando ubicación - Input con ancho fijo
-                <div className="relative w-52">
+                // Estado: Buscando ubicación - Input flexible
+                <div className="relative flex-1">
                     <div className="relative">
                         {isSearching && (
                             <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10">

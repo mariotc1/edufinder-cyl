@@ -483,22 +483,20 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
           {/* Buscador de ubicación + Botones */}
           <div className="w-full md:flex-[1] flex gap-2">
             {/* Buscador de ubicación inteligente */}
-            <div className="flex-1">
-              <LocationSearchInput
-                onLocationSelect={handleLocationSelect}
-                selectedLocation={
-                  filters.lat && filters.lng && filters.locationName
-                    ? { lat: filters.lat, lng: filters.lng, name: filters.locationName }
-                    : null
-                }
-                onUseMyLocation={handleGeolocation}
-                isUsingMyLocation={isUsingMyLocation && geolocationStatus === 'success'}
-                isLoadingMyLocation={geolocationStatus === 'loading'}
-              />
-            </div>
+            <LocationSearchInput
+              onLocationSelect={handleLocationSelect}
+              selectedLocation={
+                filters.lat && filters.lng && filters.locationName
+                  ? { lat: filters.lat, lng: filters.lng, name: filters.locationName }
+                  : null
+              }
+              onUseMyLocation={handleGeolocation}
+              isUsingMyLocation={isUsingMyLocation && geolocationStatus === 'success'}
+              isLoadingMyLocation={geolocationStatus === 'loading'}
+            />
 
             {/* Botón Búsquedas Guardadas */}
-            <div className="relative flex-1 md:flex-initial" ref={savedDropdownRef}>
+            <div className="relative shrink-0" ref={savedDropdownRef}>
               <button
                 onClick={handleBookmarkClick}
                 className="w-full h-full px-4 py-3 rounded-xl transition-all border flex items-center justify-center gap-2 relative text-neutral-400 bg-neutral-50 border-neutral-200 hover:text-[#223945] hover:bg-[#223945]/5 hover:border-[#223945]/10"
