@@ -481,7 +481,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
           </div>
           
           {/* Buscador de ubicación + Botones */}
-          <div className="w-full md:flex-[1] flex gap-2">
+          <div className="w-full md:flex-[1] flex gap-2 min-w-0">
             {/* Buscador de ubicación inteligente */}
             <LocationSearchInput
               onLocationSelect={handleLocationSelect}
@@ -499,7 +499,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
             <div className="relative shrink-0" ref={savedDropdownRef}>
               <button
                 onClick={handleBookmarkClick}
-                className="w-full h-full px-4 py-3 rounded-xl transition-all border flex items-center justify-center gap-2 relative text-neutral-400 bg-neutral-50 border-neutral-200 hover:text-[#223945] hover:bg-[#223945]/5 hover:border-[#223945]/10"
+                className="px-4 py-3.5 rounded-xl transition-all border flex items-center justify-center gap-2 relative text-neutral-400 bg-neutral-50 border-neutral-200 hover:text-[#223945] hover:bg-[#223945]/5 hover:border-[#223945]/10"
                 title="Búsquedas guardadas"
               >
                 <Bookmark className="w-5 h-5" />
@@ -585,7 +585,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
               <>
                 <button
                     onClick={handleShare}
-                    className={`flex-1 md:flex-initial px-4 py-3 rounded-xl transition-all border flex items-center justify-center gap-2 font-bold ${
+                    className={`shrink-0 px-4 py-3.5 rounded-xl transition-all border flex items-center justify-center gap-2 font-bold ${
                       copied
                         ? 'text-green-600 bg-green-50 border-green-200'
                         : 'text-neutral-500 bg-neutral-50 border-neutral-200 hover:text-[#223945] hover:bg-[#223945]/5 hover:border-[#223945]/20'
@@ -597,7 +597,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
                 </button>
                 <button
                     onClick={clearAll}
-                    className="flex-1 md:flex-initial px-4 py-3 text-neutral-400 bg-neutral-50 border border-neutral-200 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all hover:border-red-100 flex items-center justify-center gap-2"
+                    className="shrink-0 px-4 py-3.5 text-neutral-400 bg-neutral-50 border border-neutral-200 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all hover:border-red-100 flex items-center justify-center gap-2"
                     title="Limpiar filtros"
                 >
                     <Trash2 className="w-5 h-5" />
