@@ -115,9 +115,6 @@ class RecommendationController extends Controller
             $results = $this->recommendationService->searchFromWizard($filters);
         }
 
-        // Debug: cuántos resultados tenemos antes del procesamiento
-        $resultsCountBefore = $results->count();
-
         // Añadir razones de match y score a cada resultado
         $searchService = app(\App\Services\SearchService::class);
         $recommendationService = $this->recommendationService;
@@ -164,16 +161,9 @@ class RecommendationController extends Controller
         return response()->json([
             'results' => $results->take(15),
             'total' => $results->count(),
-            'filters_applied' => $filters,
             'suggestions' => $suggestions,
             'alternatives' => $alternatives,
-            'has_favorite_boost' => $userPatterns !== null,
-            'user_authenticated' => $user !== null,
-            'favorites_count' => $user ? $user->favoritos()->count() : 0,
-            'debug' => [
-                'results_before_processing' => $resultsCountBefore ?? 0,
-                'provincias_received' => $provincias,
-            ]
+            'has_favorite_boost' => $userPatterns !== null
         ]);
     }
 

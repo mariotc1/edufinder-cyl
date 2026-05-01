@@ -227,9 +227,13 @@ export default function VisitedCentersSection() {
                         {visitedCenters.map((centro, index) => (
                             <motion.div
                                 key={centro.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.05, type: "spring", stiffness: 100 }}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{
+                                    duration: 0.4,
+                                    delay: Math.min(index * 0.03, 0.15),
+                                    ease: [0.25, 0.1, 0.25, 1]
+                                }}
                                 className="flex-shrink-0 snap-start"
                             >
                                 <VisitedCentroCard
@@ -246,7 +250,7 @@ export default function VisitedCentersSection() {
                             <motion.div
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
-                                transition={{ delay: 0.3 }}
+                                transition={{ duration: 0.4, delay: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
                                 className="flex-shrink-0 snap-start w-[200px] flex items-center justify-center"
                             >
                                 <Link
