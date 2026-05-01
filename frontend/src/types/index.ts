@@ -10,6 +10,13 @@ export interface CicloFP {
   tipo_ensenanza: string;
 }
 
+export interface MatchReason {
+  type: string;
+  icon: string;
+  text: string;
+  priority?: number;
+}
+
 export interface Centro {
   id: number;
   codigo: string;
@@ -27,7 +34,11 @@ export interface Centro {
   latitud: string;
   longitud: string;
   distancia?: number;
+  distancia_km?: number;
   ciclos?: CicloFP[];
+  match_reasons?: MatchReason[];
+  relevance_score?: number;
+  favorite_affinity?: number;
 }
 
 export interface FilterOptions {
