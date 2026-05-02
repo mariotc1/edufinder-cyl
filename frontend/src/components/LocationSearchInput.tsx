@@ -163,8 +163,8 @@ export default function LocationSearchInput({
                     </button>
                 </div>
             ) : (
-                // Estado: Buscando ubicación - Input flexible
-                <div className="relative flex-1 min-w-0">
+                // Estado: Buscando ubicación - Input con ancho mínimo usable
+                <div className="relative flex-1 min-w-36">
                     <div className="relative">
                         {isSearching && (
                             <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10">

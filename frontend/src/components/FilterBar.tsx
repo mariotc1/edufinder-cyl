@@ -4,7 +4,7 @@ import { fetchCycleSuggestions, fetchCentroSuggestions, getSavedSearches, create
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { Search, MapPin, Building2, SlidersHorizontal, Trash2, X, Link2, Check, Bookmark, ChevronRight, RefreshCw } from 'lucide-react';
+import { Search, MapPin, Building2, SlidersHorizontal, Trash2, X, Check, Bookmark, ChevronRight, RefreshCw, Share2, Copy } from 'lucide-react';
 import { FilterOptions, SavedSearch } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import useSWR, { mutate } from 'swr';
@@ -43,6 +43,8 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
   const [geolocationStatus, setGeolocationStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [isUsingMyLocation, setIsUsingMyLocation] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showShareMenu, setShowShareMenu] = useState(false);
+  const shareMenuRef = useRef<HTMLDivElement>(null);
 
   // Estado para búsquedas guardadas
   const [showSaveModal, setShowSaveModal] = useState(false);
@@ -89,6 +91,10 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
 
       if (savedDropdownRef.current && !savedDropdownRef.current.contains(event.target as Node)) {
         setShowSavedDropdown(false);
+      }
+
+      if (shareMenuRef.current && !shareMenuRef.current.contains(event.target as Node)) {
+        setShowShareMenu(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -299,14 +305,42 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
       setActiveSearch(null);
   };
 
-  const handleShare = async () => {
+  const getShareUrl = () => window.location.href;
+
+  const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      await navigator.clipboard.writeText(getShareUrl());
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setTimeout(() => {
+        setCopied(false);
+        setShowShareMenu(false);
+      }, 1500);
     } catch (err) {
       console.error('Error al copiar:', err);
     }
+  };
+
+  const handleShareWhatsApp = () => {
+    const text = `Mira esta búsqueda de centros en EduFinder CyL:\n\n${getShareUrl()}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    setShowShareMenu(false);
+  };
+
+  const handleShareNative = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Búsqueda en EduFinder CyL',
+          text: 'Mira esta búsqueda de centros educativos',
+          url: getShareUrl(),
+        });
+      } catch (err) {
+        if (err instanceof Error && err.name !== 'AbortError') {
+          console.error('Error sharing:', err);
+        }
+      }
+    }
+    setShowShareMenu(false);
   };
 
   const handleSaveSearch = async () => {
@@ -413,6 +447,18 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
     <div className="relative z-30 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/50 p-6 transition-all hover:shadow-2xl">
        {/* Decorative top border/gradient - matching cards */}
        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300"></div>
+
+       {/* Botón Limpiar filtros - Arriba a la derecha */}
+       {hasActiveFilters && (
+         <button
+             onClick={clearAll}
+             className="absolute top-4 right-4 text-xs text-neutral-400 hover:text-red-500 transition-colors flex items-center gap-1 group z-10"
+             title="Limpiar todos los filtros"
+         >
+             <X className="w-3.5 h-3.5 group-hover:rotate-90 transition-transform" />
+             <span className="hidden sm:inline">Limpiar</span>
+         </button>
+       )}
 
       <div className="flex flex-col gap-6 pt-2">
         
@@ -580,29 +626,62 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
               )}
             </div>
 
-            {/* Botones condicionales: Compartir y Limpiar */}
+            {/* Botón Compartir con menú */}
             {hasActiveFilters && (
-              <>
+              <div className="relative shrink-0" ref={shareMenuRef}>
                 <button
-                    onClick={handleShare}
-                    className={`shrink-0 px-4 py-3.5 rounded-xl transition-all border flex items-center justify-center gap-2 font-bold ${
-                      copied
-                        ? 'text-green-600 bg-green-50 border-green-200'
-                        : 'text-neutral-500 bg-neutral-50 border-neutral-200 hover:text-[#223945] hover:bg-[#223945]/5 hover:border-[#223945]/20'
+                    onClick={() => setShowShareMenu(!showShareMenu)}
+                    className={`p-3.5 rounded-xl transition-all border flex items-center justify-center ${
+                      showShareMenu
+                        ? 'text-[#223945] bg-[#223945]/10 border-[#223945]/30'
+                        : 'text-neutral-400 bg-neutral-50 border-neutral-200 hover:text-[#223945] hover:bg-[#223945]/5 hover:border-[#223945]/20'
                     }`}
-                    title={copied ? "Enlace copiado" : "Copiar enlace de búsqueda"}
+                    title="Compartir búsqueda"
                 >
-                    {copied ? <Check className="w-5 h-5" /> : <Link2 className="w-5 h-5" />}
-                    <span className="hidden md:inline text-sm">{copied ? 'Copiado' : 'Copiar enlace'}</span>
+                    <Share2 className="w-5 h-5" />
                 </button>
-                <button
-                    onClick={clearAll}
-                    className="shrink-0 px-4 py-3.5 text-neutral-400 bg-neutral-50 border border-neutral-200 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all hover:border-red-100 flex items-center justify-center gap-2"
-                    title="Limpiar filtros"
-                >
-                    <Trash2 className="w-5 h-5" />
-                </button>
-              </>
+
+                {/* Menú desplegable de compartir */}
+                {showShareMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-neutral-100 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
+                    <div className="p-1">
+                      <button
+                        onClick={handleCopyLink}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-neutral-50 transition-colors text-left"
+                      >
+                        <div className="w-7 h-7 rounded-lg bg-neutral-100 flex items-center justify-center">
+                          {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5 text-neutral-500" />}
+                        </div>
+                        <span className="text-xs font-medium text-neutral-700">
+                          {copied ? '¡Copiado!' : 'Copiar enlace'}
+                        </span>
+                      </button>
+                      <button
+                        onClick={handleShareWhatsApp}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-neutral-50 transition-colors text-left"
+                      >
+                        <div className="w-7 h-7 rounded-lg bg-green-100 flex items-center justify-center">
+                          <svg className="w-3.5 h-3.5 text-green-600" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                          </svg>
+                        </div>
+                        <span className="text-xs font-medium text-neutral-700">WhatsApp</span>
+                      </button>
+                      {typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (
+                        <button
+                          onClick={handleShareNative}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-neutral-50 transition-colors text-left"
+                        >
+                          <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+                            <Share2 className="w-3.5 h-3.5 text-blue-600" />
+                          </div>
+                          <span className="text-xs font-medium text-neutral-700">Más opciones...</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>
