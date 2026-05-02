@@ -533,7 +533,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
           </div>
           
           {/* Buscador de ubicación + Botones */}
-          <div className="w-full md:flex-[1] flex gap-2 min-w-0">
+          <div className="w-full md:flex-[1] flex flex-wrap gap-2 min-w-0">
             {/* Buscador de ubicación inteligente */}
             <LocationSearchInput
               onLocationSelect={handleLocationSelect}
