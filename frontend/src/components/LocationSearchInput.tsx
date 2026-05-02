@@ -181,16 +181,16 @@ export default function LocationSearchInput({
                             className={`w-full py-3.5 rounded-xl bg-neutral-50 border transition-all outline-none ring-0 focus:outline-none focus:ring-4 focus:ring-[#223945]/10 font-medium text-sm text-neutral-800 placeholder:text-neutral-400 ${
                                 isSearching ? 'pl-9' : 'pl-4'
                             } ${
-                                typingHint || localidad ? 'pr-24' : 'pr-4'
+                                (typingHint || localidad) ? 'pr-4 sm:pr-24' : 'pr-4'
                             } ${
                                 error
                                     ? 'border-red-300 focus:border-red-300'
                                     : 'border-neutral-200 hover:border-[#223945]/50 focus:border-[#223945]'
                             }`}
                         />
-                        {/* Indicador de provincia/localidad - posicionado absoluto */}
+                        {/* Indicador de provincia - oculto en móvil para ahorrar espacio */}
                         {typingHint && !error && postalCode.length < 5 && (
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-[#223945] pointer-events-none">
+                            <span className="hidden sm:block absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-[#223945] pointer-events-none">
                                 {typingHint}
                             </span>
                         )}
