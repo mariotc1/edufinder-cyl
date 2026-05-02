@@ -1,13 +1,14 @@
 'use client';
 
 import { fetchCycleSuggestions, fetchCentroSuggestions, getSavedSearches, createSavedSearch, deleteSavedSearch, updateSavedSearch } from '@/services/api';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { Search, MapPin, Building2, SlidersHorizontal, Trash2, X, Link2, Check, Bookmark, ChevronRight, RefreshCw } from 'lucide-react';
+import { Search, MapPin, Building2, SlidersHorizontal, Trash2, X, Check, Bookmark, ChevronRight, RefreshCw, Share2, Copy } from 'lucide-react';
 import { FilterOptions, SavedSearch } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import useSWR, { mutate } from 'swr';
+import LocationSearchInput from './LocationSearchInput';
 
 interface FilterBarProps {
   onFilterChange: (filters: FilterOptions) => void;
@@ -36,10 +37,14 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
     radio: Number(searchParams.get('radio')) || 10,
     lat: searchParams.get('lat') ? Number(searchParams.get('lat')) : undefined,
     lng: searchParams.get('lng') ? Number(searchParams.get('lng')) : undefined,
+    locationName: searchParams.get('locationName') || '',
   });
 
   const [geolocationStatus, setGeolocationStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [isUsingMyLocation, setIsUsingMyLocation] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showShareMenu, setShowShareMenu] = useState(false);
+  const shareMenuRef = useRef<HTMLDivElement>(null);
 
   // Estado para búsquedas guardadas
   const [showSaveModal, setShowSaveModal] = useState(false);
@@ -86,6 +91,10 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
 
       if (savedDropdownRef.current && !savedDropdownRef.current.contains(event.target as Node)) {
         setShowSavedDropdown(false);
+      }
+
+      if (shareMenuRef.current && !shareMenuRef.current.contains(event.target as Node)) {
+        setShowShareMenu(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -162,6 +171,12 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
 
   useEffect(() => {
     if (searchParams.get('lat') && searchParams.get('lng')) {
+      // Si tiene locationName, es ubicación personalizada; si no, es "Mi ubicación"
+      if (searchParams.get('locationName')) {
+        setIsUsingMyLocation(false);
+      } else {
+        setIsUsingMyLocation(true);
+      }
       setGeolocationStatus('success');
     }
   }, [searchParams]);
@@ -178,20 +193,23 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
       if (filters.ciclo) params.set('ciclo', filters.ciclo);
       if (filters.nivel) params.set('nivel', filters.nivel);
       if (filters.modalidad) params.set('modalidad', filters.modalidad);
-      
+
       if (filters.lat && filters.lng) {
         params.set('lat', filters.lat.toString());
         params.set('lng', filters.lng.toString());
         params.set('radio', (filters.radio || 10).toString());
+        if (filters.locationName) {
+          params.set('locationName', filters.locationName);
+        }
       }
 
       const filtersChanged = JSON.stringify(filters) !== JSON.stringify(prevFiltersRef.current);
-      
+
       const pageInUrl = filtersChanged ? 1 : page;
       if (pageInUrl > 1) params.set('page', pageInUrl.toString());
 
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-      
+
       if (filtersChanged) {
         onFilterChange(filters);
         prevFiltersRef.current = filters;
@@ -217,7 +235,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
   };
 
   // Handler para obtener ubicación del usuario (API Geolocation del navegador)
-  const handleGeolocation = () => {
+  const handleGeolocation = useCallback(() => {
     if (!navigator.geolocation) {
       alert('Tu navegador no soporta geolocalización');
       return;
@@ -227,13 +245,15 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
-        setFilters(prev => ({ 
-          ...prev, 
-          lat: latitude, 
-          lng: longitude, 
-          radio: prev.radio || 10 
+        setFilters(prev => ({
+          ...prev,
+          lat: latitude,
+          lng: longitude,
+          radio: prev.radio || 10,
+          locationName: '', // Limpiar nombre de ubicación personalizada
         }));
         setGeolocationStatus('success');
+        setIsUsingMyLocation(true);
       },
       (error) => {
         console.error(error);
@@ -241,15 +261,39 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
         alert('No pudimos obtener tu ubicación.');
       }
     );
-  };
+  }, []);
 
-  const clearGeolocation = () => {
+  // Handler para seleccionar ubicación personalizada
+  const handleLocationSelect = useCallback((location: { lat: number; lng: number; name: string } | null) => {
+    if (location) {
+      setFilters(prev => ({
+        ...prev,
+        lat: location.lat,
+        lng: location.lng,
+        locationName: location.name,
+        radio: prev.radio || 10,
+      }));
+      setGeolocationStatus('success');
+      setIsUsingMyLocation(false);
+    } else {
+      // Limpiar ubicación
+      setFilters(prev => {
+        const { lat, lng, locationName, ...rest } = prev;
+        return { ...rest, radio: 10 };
+      });
+      setGeolocationStatus('idle');
+      setIsUsingMyLocation(false);
+    }
+  }, []);
+
+  const clearGeolocation = useCallback(() => {
     setFilters(prev => {
-        const { lat, lng, ...rest } = prev;
-        return rest;
+        const { lat, lng, locationName, ...rest } = prev;
+        return { ...rest, radio: 10 };
     });
     setGeolocationStatus('idle');
-  };
+    setIsUsingMyLocation(false);
+  }, []);
 
   const clearAll = () => {
       setFilters({
@@ -257,17 +301,46 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
         naturaleza: ''
       });
       setGeolocationStatus('idle');
+      setIsUsingMyLocation(false);
       setActiveSearch(null);
   };
 
-  const handleShare = async () => {
+  const getShareUrl = () => window.location.href;
+
+  const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      await navigator.clipboard.writeText(getShareUrl());
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setTimeout(() => {
+        setCopied(false);
+        setShowShareMenu(false);
+      }, 1500);
     } catch (err) {
       console.error('Error al copiar:', err);
     }
+  };
+
+  const handleShareWhatsApp = () => {
+    const text = `Mira esta búsqueda de centros en EduFinder CyL:\n\n${getShareUrl()}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    setShowShareMenu(false);
+  };
+
+  const handleShareNative = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Búsqueda en EduFinder CyL',
+          text: 'Mira esta búsqueda de centros educativos',
+          url: getShareUrl(),
+        });
+      } catch (err) {
+        if (err instanceof Error && err.name !== 'AbortError') {
+          console.error('Error sharing:', err);
+        }
+      }
+    }
+    setShowShareMenu(false);
   };
 
   const handleSaveSearch = async () => {
@@ -365,7 +438,24 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
   ];
 
   const hasActiveFilters = Object.values(filters).some(val => val !== undefined && val !== '' && val !== 10) || geolocationStatus === 'success';
-  
+
+  // Contar filtros activos
+  const countActiveFilters = (): number => {
+    let count = 0;
+    if (filters.q) count++;
+    if (filters.provincia) count++;
+    if (filters.tipo) count++;
+    if (filters.naturaleza) count++;
+    if (filters.familia) count++;
+    if (filters.ciclo) count++;
+    if (filters.nivel) count++;
+    if (filters.modalidad) count++;
+    if (filters.lat && filters.lng) count++;
+    return count;
+  };
+
+  const activeFilterCount = countActiveFilters();
+
   const inputClasses = "w-full appearance-none bg-neutral-50 border border-neutral-200 text-neutral-700 py-3 px-4 pr-8 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#223945]/20 focus:border-[#223945] transition-all font-medium text-sm hover:border-[#223945]/50 placeholder:text-neutral-400";
   const labelClasses = "text-[11px] font-bold text-[#223945] ml-1 uppercase tracking-wider mb-1 block opacity-80";
 
@@ -375,16 +465,17 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
        {/* Decorative top border/gradient - matching cards */}
        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300"></div>
 
+       
       <div className="flex flex-col gap-6 pt-2">
         
         {/* Top Row: Search & Location */}
         <div className="flex flex-col md:flex-row gap-4 items-stretch">
-          <div className="flex-grow relative group" ref={wrapperCentroRef}>
+          <div className="flex-1 md:flex-[1] relative group" ref={wrapperCentroRef}>
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400 group-focus-within:text-[#223945] transition-colors" />
             <input
               type="text"
               placeholder="Buscar centro..."
-              className="w-full pl-12 pr-12 py-3.5 rounded-xl bg-neutral-50 border border-neutral-200 focus:bg-white focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 transition-all outline-none font-medium placeholder:text-neutral-400 text-neutral-800 hover:border-[#223945]/50 text-sm md:text-base md:placeholder:text-base"
+              className="w-full pl-12 pr-12 py-3.5 rounded-xl bg-neutral-50 border border-neutral-200 focus:bg-white focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 transition-all outline-none font-medium placeholder:text-neutral-400 text-neutral-800 hover:border-[#223945]/50 text-sm"
               value={filters.q || ''}
               onChange={(e) => handleChange('q', e.target.value)}
               onFocus={() => { if(centroSuggestions.length > 0) setShowCentroSuggestions(true); }}
@@ -441,39 +532,26 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
             )}
           </div>
           
-          {/* Botones - Iconos en móvil, con texto en desktop */}
-          <div className="w-full md:w-auto md:flex-shrink-0 flex gap-2">
-            {/* Botón Cerca de mí */}
-            {geolocationStatus === 'success' ? (
-               <button
-                 onClick={clearGeolocation}
-                 className="flex-1 md:flex-initial flex items-center justify-center gap-2 bg-[#223945] text-white px-4 py-3 rounded-xl border border-[#223945] transition-all hover:bg-[#1a2c35]"
-                 title="Desactivar ubicación"
-               >
-                 <MapPin className="w-5 h-5" />
-                 <span className="hidden md:inline text-sm font-bold">Cerca de mí</span>
-                 <X className="w-4 h-4" />
-               </button>
-            ) : (
-              <button
-                onClick={handleGeolocation}
-                disabled={geolocationStatus === 'loading'}
-                className="flex-1 md:flex-initial bg-neutral-50 text-neutral-500 border border-neutral-200 hover:text-[#223945] hover:bg-[#223945]/5 hover:border-[#223945]/20 px-4 py-3 rounded-xl transition-all flex items-center justify-center gap-2 font-bold"
-              >
-                {geolocationStatus === 'loading' ? (
-                  <span className="animate-spin rounded-full h-5 w-5 border-2 border-[#223945]/30 border-t-[#223945]"></span>
-                ) : (
-                  <MapPin className="w-5 h-5" />
-                )}
-                <span className="hidden md:inline text-sm">Cerca de mí</span>
-              </button>
-            )}
+          {/* Buscador de ubicación + Botones */}
+          <div className="w-full md:flex-[1] flex flex-wrap gap-2 min-w-0">
+            {/* Buscador de ubicación inteligente */}
+            <LocationSearchInput
+              onLocationSelect={handleLocationSelect}
+              selectedLocation={
+                filters.lat && filters.lng && filters.locationName
+                  ? { lat: filters.lat, lng: filters.lng, name: filters.locationName }
+                  : null
+              }
+              onUseMyLocation={handleGeolocation}
+              isUsingMyLocation={isUsingMyLocation && geolocationStatus === 'success'}
+              isLoadingMyLocation={geolocationStatus === 'loading'}
+            />
 
             {/* Botón Búsquedas Guardadas */}
-            <div className="relative flex-1 md:flex-initial" ref={savedDropdownRef}>
+            <div className="relative shrink-0" ref={savedDropdownRef}>
               <button
                 onClick={handleBookmarkClick}
-                className="w-full h-full px-4 py-3 rounded-xl transition-all border flex items-center justify-center gap-2 relative text-neutral-400 bg-neutral-50 border-neutral-200 hover:text-[#223945] hover:bg-[#223945]/5 hover:border-[#223945]/10"
+                className="px-4 py-3.5 rounded-xl transition-all border flex items-center justify-center gap-2 relative text-neutral-400 bg-neutral-50 border-neutral-200 hover:text-[#223945] hover:bg-[#223945]/5 hover:border-[#223945]/10"
                 title="Búsquedas guardadas"
               >
                 <Bookmark className="w-5 h-5" />
@@ -554,39 +632,78 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
               )}
             </div>
 
-            {/* Botones condicionales: Compartir y Limpiar */}
+            {/* Botón Compartir con menú */}
             {hasActiveFilters && (
-              <>
+              <div className="relative shrink-0" ref={shareMenuRef}>
                 <button
-                    onClick={handleShare}
-                    className={`flex-1 md:flex-initial px-4 py-3 rounded-xl transition-all border flex items-center justify-center gap-2 font-bold ${
-                      copied
-                        ? 'text-green-600 bg-green-50 border-green-200'
-                        : 'text-neutral-500 bg-neutral-50 border-neutral-200 hover:text-[#223945] hover:bg-[#223945]/5 hover:border-[#223945]/20'
+                    onClick={() => setShowShareMenu(!showShareMenu)}
+                    className={`p-3.5 rounded-xl transition-all border flex items-center justify-center ${
+                      showShareMenu
+                        ? 'text-[#223945] bg-[#223945]/10 border-[#223945]/30'
+                        : 'text-neutral-400 bg-neutral-50 border-neutral-200 hover:text-[#223945] hover:bg-[#223945]/5 hover:border-[#223945]/20'
                     }`}
-                    title={copied ? "Enlace copiado" : "Copiar enlace de búsqueda"}
+                    title="Compartir búsqueda"
                 >
-                    {copied ? <Check className="w-5 h-5" /> : <Link2 className="w-5 h-5" />}
-                    <span className="hidden md:inline text-sm">{copied ? 'Copiado' : 'Copiar enlace'}</span>
+                    <Share2 className="w-5 h-5" />
                 </button>
-                <button
-                    onClick={clearAll}
-                    className="flex-1 md:flex-initial px-4 py-3 text-neutral-400 bg-neutral-50 border border-neutral-200 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all hover:border-red-100 flex items-center justify-center gap-2"
-                    title="Limpiar filtros"
-                >
-                    <Trash2 className="w-5 h-5" />
-                </button>
-              </>
+
+                {/* Menú desplegable de compartir */}
+                {showShareMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-neutral-100 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
+                    <div className="p-1">
+                      <button
+                        onClick={handleCopyLink}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-neutral-50 transition-colors text-left"
+                      >
+                        <div className="w-7 h-7 rounded-lg bg-neutral-100 flex items-center justify-center">
+                          {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5 text-neutral-500" />}
+                        </div>
+                        <span className="text-xs font-medium text-neutral-700">
+                          {copied ? '¡Copiado!' : 'Copiar enlace'}
+                        </span>
+                      </button>
+                      <button
+                        onClick={handleShareWhatsApp}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-neutral-50 transition-colors text-left"
+                      >
+                        <div className="w-7 h-7 rounded-lg bg-green-100 flex items-center justify-center">
+                          <svg className="w-3.5 h-3.5 text-green-600" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                          </svg>
+                        </div>
+                        <span className="text-xs font-medium text-neutral-700">WhatsApp</span>
+                      </button>
+                      {typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (
+                        <button
+                          onClick={handleShareNative}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-neutral-50 transition-colors text-left"
+                        >
+                          <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+                            <Share2 className="w-3.5 h-3.5 text-blue-600" />
+                          </div>
+                          <span className="text-xs font-medium text-neutral-700">Más opciones...</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
-          </div>
+
+                      </div>
         </div>
 
-        {/* Radius Slider (Conditional) */}
-        {geolocationStatus === 'success' && (
+        {/* Radius Slider (Conditional) - Mostrar cuando hay ubicación activa */}
+        {(geolocationStatus === 'success' || (filters.lat && filters.lng)) && (
              <div className="bg-gradient-to-r from-blue-50 to-white p-4 rounded-xl border border-blue-100/50 flex flex-col sm:flex-row gap-4 items-center animate-in zoom-in-95 duration-200 shadow-inner">
-                <div className="flex items-center gap-2 text-[#223945] min-w-[140px]">
-                    <SlidersHorizontal className="w-4 h-4" />
-                    <span className="text-sm font-bold">Radio: {filters.radio} km</span>
+                <div className="flex items-center gap-2 text-[#223945] min-w-[160px]">
+                    <MapPin className="w-4 h-4" />
+                    <div className="flex flex-col">
+                        <span className="text-sm font-bold">Radio: {filters.radio} km</span>
+                        <span className="text-[10px] text-neutral-500 truncate max-w-[140px]">
+                            {isUsingMyLocation ? 'Desde tu ubicación' : filters.locationName ? `Desde ${filters.locationName.split(',')[0]}` : ''}
+                        </span>
+                    </div>
                 </div>
                 <div className="flex-grow w-full px-2">
                     <input 
@@ -799,6 +916,22 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
               </div>
             </div>
           )}
+
+        {/* Eliminar filtros - Al final del card */}
+        {hasActiveFilters && (
+          <div className="flex justify-center py-3 -mb-3 border-t border-neutral-100">
+            <button
+                onClick={clearAll}
+                className="flex items-center gap-2 px-4 py-2 text-neutral-400 hover:text-red-500 transition-colors group"
+                title="Eliminar todos los filtros"
+            >
+                <span className="text-sm font-medium">
+                  Eliminar {activeFilterCount} {activeFilterCount === 1 ? 'filtro' : 'filtros'}
+                </span>
+                <X className="w-4 h-4 group-hover:rotate-90 transition-transform" />
+            </button>
+          </div>
+        )}
 
       </div>
 

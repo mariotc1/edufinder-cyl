@@ -5,8 +5,16 @@ use App\Services\RecommendationService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
-// CONTROLADOR DE RECOMENDACIONES
-// Gestiona las recomendaciones personalizadas de centros educativos
+/**
+ * CONTROLADOR DE RECOMENDACIONES
+ *
+ * Gestiona las recomendaciones personalizadas de centros educativos.
+ * Utiliza un sistema de scoring inteligente basado en:
+ * - Ciclos específicos favoriteados (máxima prioridad)
+ * - Familias profesionales con ponderación
+ * - Proximidad geográfica
+ * - Preferencias de naturaleza, nivel, modalidad
+ */
 class RecommendationController extends Controller
 {
     protected RecommendationService $recommendationService;
@@ -16,8 +24,12 @@ class RecommendationController extends Controller
         $this->recommendationService = $recommendationService;
     }
 
-    // RECOMENDACIONES BASADAS EN FAVORITOS
-    // Analiza los favoritos del usuario y devuelve centros similares
+    /**
+     * RECOMENDACIONES BASADAS EN FAVORITOS
+     *
+     * Analiza los favoritos del usuario y devuelve centros similares
+     * utilizando un sistema de scoring multi-criterio inteligente.
+     */
     public function fromFavorites(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -25,40 +37,86 @@ class RecommendationController extends Controller
         // Obtener favoritos con centro y ciclos
         $favoritos = $user->favoritos()->with(['centro.ciclos'])->get();
 
-        // Si no hay favoritos, devolver array vacío
+        // Si no hay favoritos, devolver array vacío con mensaje amigable
         if ($favoritos->isEmpty()) {
             return response()->json([
                 'recommendations' => [],
-                'message' => 'No tienes favoritos guardados'
+                'patterns' => null,
+                'total' => 0,
+                'message' => 'Añade centros a favoritos para recibir recomendaciones personalizadas'
             ]);
         }
 
-        // Extraer IDs de favoritos para excluirlos
+        // Extraer IDs de favoritos para excluirlos de resultados
         $favoriteIds = $favoritos->pluck('centro_id')->toArray();
 
-        // Extraer patrones de los favoritos
-        $patterns = $this->recommendationService->extractPatterns($favoritos);
+        // Obtener IDs de ciclos con like directo (con manejo de error si la tabla no existe)
+        $ciclosLikedIds = [];
+        try {
+            if (\Schema::hasTable('ciclo_favoritos')) {
+                $ciclosLikedIds = $user->ciclosFavoritos()->pluck('ciclo_id')->toArray();
+            }
+        } catch (\Exception $e) {
+            $ciclosLikedIds = [];
+        }
 
-        // Buscar centros similares
+        // Extraer patrones avanzados de los favoritos (incluyendo ciclos con like)
+        $patterns = $this->recommendationService->extractPatterns($favoritos, $ciclosLikedIds);
+
+        // Buscar centros similares con el nuevo algoritmo (pasando el usuario para proximidad)
         $recommendations = $this->recommendationService->findSimilarCenters(
             $patterns,
             $favoriteIds,
-            10
+            10,
+            $user
         );
 
+        // Formatear recomendaciones con información enriquecida
+        $formattedRecommendations = $recommendations->map(function ($centro) {
+            $data = $centro->toArray();
+
+            // Añadir highlights como match_reasons para el frontend
+            if (isset($centro->match_highlights)) {
+                $data['match_reasons'] = $centro->match_highlights;
+            }
+
+            // Añadir score para debugging/transparencia (opcional)
+            if (isset($centro->similarity_score)) {
+                $data['relevance_score'] = $centro->similarity_score;
+            }
+
+            // Añadir distancia si está calculada
+            if (isset($centro->distancia_km)) {
+                $data['distancia_km'] = $centro->distancia_km;
+            }
+
+            return $data;
+        });
+
+        // Preparar resumen de patrones para el frontend
+        $patternsSummary = [
+            'top_provincias' => array_slice(array_keys($patterns['provincias']), 0, 3),
+            'top_familias' => array_slice(array_keys($patterns['familias']), 0, 3),
+            'top_ciclos' => $this->getTopCiclosNames($patterns['ciclos_especificos'], 3),
+            'preferencia_naturaleza' => array_key_first($patterns['naturalezas']),
+            'preferencia_nivel' => array_key_first($patterns['niveles']),
+            'total_favoritos' => $patterns['total_favoritos'],
+        ];
+
         return response()->json([
-            'recommendations' => $recommendations,
-            'patterns' => [
-                'top_provincias' => array_slice(array_keys($patterns['provincias']), 0, 3),
-                'top_familias' => array_slice(array_keys($patterns['familias']), 0, 3),
-                'preferencia_naturaleza' => array_key_first($patterns['naturalezas']),
-            ],
-            'total' => $recommendations->count()
+            'recommendations' => $formattedRecommendations,
+            'patterns' => $patternsSummary,
+            'total' => $formattedRecommendations->count(),
+            'has_location_boost' => $user->ubicacion_lat && $user->ubicacion_lon,
         ]);
     }
 
-    // BÚSQUEDA DEL WIZARD
-    // Procesa los filtros del wizard de IA y devuelve centros que coincidan
+    /**
+     * BÚSQUEDA DEL WIZARD
+     *
+     * Procesa los filtros del wizard de IA y devuelve centros que coincidan.
+     * Si el usuario está autenticado, aplica boost basado en sus favoritos.
+     */
     public function fromWizard(Request $request): JsonResponse
     {
         // Obtener provincias del request (puede venir como array)
@@ -80,7 +138,6 @@ class RecommendationController extends Controller
         $filters = array_filter($filters, fn($v) => $v !== null && $v !== '');
 
         // Obtener patrones de favoritos del usuario si está autenticado
-        // Usamos try-catch porque auth('sanctum') puede fallar si el token es inválido
         $userPatterns = null;
         $user = null;
         try {
@@ -88,7 +145,16 @@ class RecommendationController extends Controller
             if ($user) {
                 $favoritos = $user->favoritos()->with(['centro.ciclos'])->get();
                 if ($favoritos->isNotEmpty()) {
-                    $userPatterns = $this->recommendationService->extractPatterns($favoritos);
+                    // Obtener ciclos con like directo (con manejo de error si la tabla no existe)
+                    $ciclosLikedIds = [];
+                    try {
+                        if (\Schema::hasTable('ciclo_favoritos')) {
+                            $ciclosLikedIds = $user->ciclosFavoritos()->pluck('ciclo_id')->toArray();
+                        }
+                    } catch (\Exception $e) {
+                        $ciclosLikedIds = [];
+                    }
+                    $userPatterns = $this->recommendationService->extractPatterns($favoritos, $ciclosLikedIds);
                 }
             }
         } catch (\Exception $e) {
@@ -111,21 +177,29 @@ class RecommendationController extends Controller
             // Eliminar duplicados por ID y limitar
             $results = $allResults->unique('id')->take(20)->values();
         } else {
-            // Búsqueda normal (cuando no hay provincias seleccionadas o hay solo una provincia en $filters)
+            // Búsqueda normal
             $results = $this->recommendationService->searchFromWizard($filters);
         }
-
-        // Debug: cuántos resultados tenemos antes del procesamiento
-        $resultsCountBefore = $results->count();
 
         // Añadir razones de match y score a cada resultado
         $searchService = app(\App\Services\SearchService::class);
         $recommendationService = $this->recommendationService;
-        $results = $results->map(function ($centro) use ($filters, $userPatterns, $searchService, $recommendationService) {
-            // Convertir a array para poder añadir propiedades custom
+
+        // Punto de referencia para proximidad
+        $referencePoint = null;
+        if ($user && $user->ubicacion_lat && $user->ubicacion_lon) {
+            $referencePoint = [
+                'lat' => (float) $user->ubicacion_lat,
+                'lng' => (float) $user->ubicacion_lon,
+            ];
+        } elseif ($userPatterns && isset($userPatterns['centroide'])) {
+            $referencePoint = $userPatterns['centroide'];
+        }
+
+        $results = $results->map(function ($centro) use ($filters, $userPatterns, $searchService, $recommendationService, $referencePoint) {
             $centroArray = $centro->toArray();
 
-            // Calcular razones de match
+            // Calcular razones de match basadas en filtros
             $matchReasons = $searchService->calculateMatchReasons($centro, $filters);
 
             // Si hay patrones del usuario, calcular afinidad con sus favoritos
@@ -133,8 +207,16 @@ class RecommendationController extends Controller
                 $similarity = $recommendationService->calculateSimilarityScore($centro, $userPatterns);
                 $centroArray['favorite_affinity'] = $similarity;
 
-                // Añadir indicador AL PRINCIPIO si coincide con patrones de favoritos
-                if ($similarity >= 3) {
+                // Añadir indicador AL PRINCIPIO si coincide significativamente con favoritos
+                if ($similarity >= 15) {
+                    // Match muy fuerte (probablemente ciclo exacto)
+                    array_unshift($matchReasons, [
+                        'type' => 'favorite_match',
+                        'icon' => 'heart',
+                        'text' => 'Muy afín a tus favoritos'
+                    ]);
+                } elseif ($similarity >= 8) {
+                    // Match bueno
                     array_unshift($matchReasons, [
                         'type' => 'favorite_match',
                         'icon' => 'heart',
@@ -164,21 +246,17 @@ class RecommendationController extends Controller
         return response()->json([
             'results' => $results->take(15),
             'total' => $results->count(),
-            'filters_applied' => $filters,
             'suggestions' => $suggestions,
             'alternatives' => $alternatives,
-            'has_favorite_boost' => $userPatterns !== null,
-            'user_authenticated' => $user !== null,
-            'favorites_count' => $user ? $user->favoritos()->count() : 0,
-            'debug' => [
-                'results_before_processing' => $resultsCountBefore ?? 0,
-                'provincias_received' => $provincias,
-            ]
+            'has_favorite_boost' => $userPatterns !== null
         ]);
     }
 
-    // BUSCAR ALTERNATIVAS
-    // Cuando no hay resultados, busca con filtros más relajados
+    /**
+     * BUSCAR ALTERNATIVAS
+     *
+     * Cuando no hay resultados, busca con filtros más relajados
+     */
     private function findAlternatives(array $filters, $searchService): \Illuminate\Support\Collection
     {
         $alternatives = collect();
@@ -237,5 +315,26 @@ class RecommendationController extends Controller
         }
 
         return $alternatives->take(5)->values();
+    }
+
+    /**
+     * OBTENER NOMBRES DE TOP CICLOS
+     *
+     * Extrae los nombres de los ciclos más frecuentes de los patrones
+     */
+    private function getTopCiclosNames(array $ciclosEspecificos, int $limit): array
+    {
+        $names = [];
+        $count = 0;
+
+        foreach ($ciclosEspecificos as $clave => $data) {
+            if ($count >= $limit) break;
+            if (isset($data['nombre'])) {
+                $names[] = $data['nombre'];
+                $count++;
+            }
+        }
+
+        return $names;
     }
 }

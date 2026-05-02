@@ -27,11 +27,18 @@ class User extends Authenticatable
         'last_login_at',
     ];
 
-    // RELACIÓN: FAVORITOS
+    // RELACIÓN: FAVORITOS (CENTROS)
     // Un usuario puede tener múltiples centros marcados como favoritos
     public function favoritos()
     {
         return $this->hasMany(Favorito::class);
+    }
+
+    // RELACIÓN: CICLOS FAVORITOS
+    // Un usuario puede marcar ciclos específicos como favoritos
+    public function ciclosFavoritos()
+    {
+        return $this->hasMany(CicloFavorito::class);
     }
 
     // RELACIÓN: BÚSQUEDAS GUARDADAS

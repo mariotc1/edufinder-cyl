@@ -104,7 +104,7 @@ export default function SearchContent() {
           </div>
 
           {/* Filter Bar Component */}
-          <div className="max-w-5xl mx-auto">
+          <div className="max-w-[1050px] mx-auto">
             <FilterBar onFilterChange={handleFilterChange} isLoading={isLoading} page={page} />
           </div>
         </div>

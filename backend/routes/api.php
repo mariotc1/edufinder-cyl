@@ -2,6 +2,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CentroController;
 use App\Http\Controllers\CicloFpController;
+use App\Http\Controllers\CicloFavoritoController;
 use App\Http\Controllers\FavoritoController;
 use App\Http\Controllers\RecommendationController;
 use App\Http\Controllers\SavedSearchController;
@@ -86,11 +87,19 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/me/photo', [AuthController::class, 'deleteProfilePhoto']);
     Route::put('/me/password', [AuthController::class, 'updatePassword']);
 
-    // SISTEMA DE FAVORITOS
+    // SISTEMA DE FAVORITOS (CENTROS)
     // Gestión de los centros guardados como favoritos por el usuario
     Route::get('/favoritos', [FavoritoController::class, 'index']);
     Route::post('/favoritos/{id}', [FavoritoController::class, 'store']);
     Route::delete('/favoritos/{id}', [FavoritoController::class, 'destroy']);
+
+    // SISTEMA DE FAVORITOS (CICLOS)
+    // Gestión de ciclos específicos marcados como favoritos
+    Route::get('/ciclos-favoritos', [CicloFavoritoController::class, 'index']);
+    Route::get('/ciclos-favoritos/ids', [CicloFavoritoController::class, 'ids']);
+    Route::get('/ciclos-favoritos/centro/{centroId}', [CicloFavoritoController::class, 'byCentro']);
+    Route::post('/ciclos-favoritos/{cicloId}/toggle', [CicloFavoritoController::class, 'toggle']);
+    Route::get('/ciclos-favoritos/{cicloId}/check', [CicloFavoritoController::class, 'check']);
 
     // RECOMENDACIONES PERSONALIZADAS
     // Recomendaciones basadas en los favoritos del usuario

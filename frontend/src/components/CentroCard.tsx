@@ -13,6 +13,7 @@ interface CentroCardProps {
   index: number;
   initialIsFavorite?: boolean;
   onToggle?: (newStatus: boolean) => void;
+  ciclosFavoritosIds?: number[];
 }
 
 // DEFINICIÓN DE ANIMACIONES FRAMER MOTION
@@ -51,7 +52,7 @@ export default function CentroCard({
   index,
   initialIsFavorite = false,
   onToggle,
-
+  ciclosFavoritosIds = [],
 }: CentroCardProps) {
   const searchParams = useSearchParams();
   const { isFavorite, toggleFavorite, loading } = useFavorite({
@@ -343,25 +344,49 @@ export default function CentroCard({
               <div className="p-1 bg-[#223945] rounded text-white shadow-sm">
                 <BookOpen className="w-3 h-3" />
                 </div>
-                <span className="text-xs font-bold text-neutral-500 uppercase tracking-widest">Oferta destacada</span>
+                <span className="text-xs font-bold text-neutral-500 uppercase tracking-widest">
+                  {ciclosFavoritosIds.length > 0 ? 'Ciclos favoritos' : 'Oferta destacada'}
+                </span>
             </div>
 
             {/* Static height scrollable container */}
             <div className="space-y-1.5 max-h-[100px] overflow-y-auto pr-1 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-[#223945]/20 hover:scrollbar-thumb-[#223945]/50 scrollbar-thumb-rounded-full transition-colors">
-              {centro.ciclos.map((ciclo, idx) => (
-                <div
-                  key={idx}
-                  className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded-md border shadow-sm transition-colors ${getLevelBackground(ciclo.nivel_educativo)}`}
-                >
-                  <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${getLevelDotColor(ciclo.nivel_educativo)}`}></div>
-                  <span className="truncate flex-1 font-medium text-neutral-800 text-sm">{ciclo.ciclo_formativo}</span>
-                  <span
-                    className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full border ${getLevelColor(ciclo.nivel_educativo)}`}
-                  >
-                    {getLevelAbbreviation(ciclo.nivel_educativo)}
-                  </span>
-                </div>
-              ))}
+              {/* Mostrar primero los ciclos favoritos, luego el resto */}
+              {[...centro.ciclos]
+                .sort((a, b) => {
+                  const aFav = ciclosFavoritosIds.includes(a.id);
+                  const bFav = ciclosFavoritosIds.includes(b.id);
+                  if (aFav && !bFav) return -1;
+                  if (!aFav && bFav) return 1;
+                  return 0;
+                })
+                .map((ciclo, idx) => {
+                  const isFavorito = ciclosFavoritosIds.includes(ciclo.id);
+                  return (
+                    <div
+                      key={idx}
+                      className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded-md border shadow-sm transition-colors ${
+                        isFavorito
+                          ? 'bg-red-50 border-red-200 ring-1 ring-red-100'
+                          : getLevelBackground(ciclo.nivel_educativo)
+                      }`}
+                    >
+                      {isFavorito ? (
+                        <Heart className="w-3.5 h-3.5 fill-red-500 text-red-500 shrink-0" />
+                      ) : (
+                        <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${getLevelDotColor(ciclo.nivel_educativo)}`}></div>
+                      )}
+                      <span className={`truncate flex-1 font-medium text-sm ${isFavorito ? 'text-red-900' : 'text-neutral-800'}`}>
+                        {ciclo.ciclo_formativo}
+                      </span>
+                      <span
+                        className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full border ${getLevelColor(ciclo.nivel_educativo)}`}
+                      >
+                        {getLevelAbbreviation(ciclo.nivel_educativo)}
+                      </span>
+                    </div>
+                  );
+                })}
             </div>
           </div>
         ) : (
