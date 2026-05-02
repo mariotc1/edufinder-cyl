@@ -438,7 +438,24 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
   ];
 
   const hasActiveFilters = Object.values(filters).some(val => val !== undefined && val !== '' && val !== 10) || geolocationStatus === 'success';
-  
+
+  // Contar filtros activos
+  const countActiveFilters = (): number => {
+    let count = 0;
+    if (filters.q) count++;
+    if (filters.provincia) count++;
+    if (filters.tipo) count++;
+    if (filters.naturaleza) count++;
+    if (filters.familia) count++;
+    if (filters.ciclo) count++;
+    if (filters.nivel) count++;
+    if (filters.modalidad) count++;
+    if (filters.lat && filters.lng) count++;
+    return count;
+  };
+
+  const activeFilterCount = countActiveFilters();
+
   const inputClasses = "w-full appearance-none bg-neutral-50 border border-neutral-200 text-neutral-700 py-3 px-4 pr-8 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#223945]/20 focus:border-[#223945] transition-all font-medium text-sm hover:border-[#223945]/50 placeholder:text-neutral-400";
   const labelClasses = "text-[11px] font-bold text-[#223945] ml-1 uppercase tracking-wider mb-1 block opacity-80";
 
@@ -448,18 +465,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
        {/* Decorative top border/gradient - matching cards */}
        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300"></div>
 
-       {/* Botón Limpiar filtros - Arriba a la derecha */}
-       {hasActiveFilters && (
-         <button
-             onClick={clearAll}
-             className="absolute top-4 right-4 text-xs text-neutral-400 hover:text-red-500 transition-colors flex items-center gap-1 group z-10"
-             title="Limpiar todos los filtros"
-         >
-             <X className="w-3.5 h-3.5 group-hover:rotate-90 transition-transform" />
-             <span className="hidden sm:inline">Limpiar</span>
-         </button>
-       )}
-
+       
       <div className="flex flex-col gap-6 pt-2">
         
         {/* Top Row: Search & Location */}
@@ -683,7 +689,8 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
                 )}
               </div>
             )}
-          </div>
+
+                      </div>
         </div>
 
         {/* Radius Slider (Conditional) - Mostrar cuando hay ubicación activa */}
@@ -909,6 +916,22 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
               </div>
             </div>
           )}
+
+        {/* Eliminar filtros - Al final del card */}
+        {hasActiveFilters && (
+          <div className="flex justify-center py-3 -mb-3 border-t border-neutral-100">
+            <button
+                onClick={clearAll}
+                className="flex items-center gap-2 px-4 py-2 text-neutral-400 hover:text-red-500 transition-colors group"
+                title="Eliminar todos los filtros"
+            >
+                <span className="text-sm font-medium">
+                  Eliminar {activeFilterCount} {activeFilterCount === 1 ? 'filtro' : 'filtros'}
+                </span>
+                <X className="w-4 h-4 group-hover:rotate-90 transition-transform" />
+            </button>
+          </div>
+        )}
 
       </div>
 
