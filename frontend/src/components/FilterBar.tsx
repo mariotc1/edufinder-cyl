@@ -586,7 +586,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
                                 className="px-4 py-3 cursor-pointer hover:bg-gradient-to-r hover:from-neutral-50 hover:to-white transition-all flex items-center gap-3 group/item border-l-2 border-transparent hover:border-[#223945]"
                             >
                                 <div
-                                    className="flex-1 flex items-center gap-3"
+                                    className="flex-1 flex items-start gap-3"
                                     onClick={() => {
                                         skipFetchCentroRef.current = true;
                                         handleChange('q', item.search_term);
@@ -595,10 +595,10 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
                                         addToHistory(item.search_term);
                                     }}
                                 >
-                                    <div className="w-6 h-6 shrink-0 rounded-full bg-neutral-100 flex items-center justify-center group-hover/item:bg-[#223945]/10 transition-all duration-300">
+                                    <div className="mt-0.5 w-6 h-6 shrink-0 rounded-full bg-neutral-100 flex items-center justify-center group-hover/item:bg-[#223945]/10 transition-all duration-300">
                                         <History className="w-3 h-3 text-neutral-400 group-hover/item:text-[#223945] transition-colors" />
                                     </div>
-                                    <span className="text-sm font-medium text-neutral-600 group-hover/item:text-[#223945] transition-colors truncate">
+                                    <span className="text-sm font-medium text-neutral-600 group-hover/item:text-[#223945] transition-colors break-words whitespace-normal leading-snug">
                                         {item.search_term}
                                     </span>
                                 </div>
@@ -985,7 +985,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
                                          className="px-4 py-3 cursor-pointer hover:bg-gradient-to-r hover:from-neutral-50 hover:to-white transition-all flex items-center gap-3 group/item border-l-2 border-transparent hover:border-[#223945]"
                                      >
                                          <div
-                                             className="flex-1 flex items-center gap-3"
+                                             className="flex-1 flex items-start gap-3"
                                              onClick={() => {
                                                  skipFetchRef.current = true;
                                                  handleChange('ciclo', item.search_term);
@@ -993,10 +993,10 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
                                                  addToCycleHistory(item.search_term);
                                              }}
                                          >
-                                             <div className="w-6 h-6 shrink-0 rounded-full bg-neutral-100 flex items-center justify-center group-hover/item:bg-[#223945]/10 transition-all duration-300">
+                                             <div className="mt-0.5 w-6 h-6 shrink-0 rounded-full bg-neutral-100 flex items-center justify-center group-hover/item:bg-[#223945]/10 transition-all duration-300">
                                                  <History className="w-3 h-3 text-neutral-400 group-hover/item:text-[#223945] transition-colors" />
                                              </div>
-                                             <span className="text-sm font-medium text-neutral-600 group-hover/item:text-[#223945] transition-colors truncate">
+                                             <span className="text-sm font-medium text-neutral-600 group-hover/item:text-[#223945] transition-colors break-words whitespace-normal leading-snug">
                                                  {item.search_term}
                                              </span>
                                          </div>
