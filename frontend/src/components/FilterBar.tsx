@@ -556,7 +556,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
 
             {/* Dropdown - Historial de búsquedas */}
             {showSearchHistory && searchHistory.length > 0 && !showCentroSuggestions && (
-                <div className="absolute z-[60] left-0 mt-2 w-[90vw] sm:w-[400px] bg-white rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] border border-neutral-100 ring-1 ring-black/5 max-h-[320px] overflow-y-auto animate-in fade-in zoom-in-95 duration-200 custom-scrollbar">
+                <div className="fixed md:absolute inset-x-4 md:inset-x-auto md:left-0 top-auto mt-2 md:w-[400px] bg-white rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] border border-neutral-100 ring-1 ring-black/5 max-h-[320px] overflow-y-auto animate-in fade-in zoom-in-95 duration-200 custom-scrollbar z-[60]">
                     <div className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-neutral-50 px-4 py-2 flex items-center justify-between z-10">
                         <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider flex items-center gap-1.5">
                             <Clock className="w-3 h-3" />
