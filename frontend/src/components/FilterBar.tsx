@@ -4,11 +4,12 @@ import { fetchCycleSuggestions, fetchCentroSuggestions, getSavedSearches, create
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { Search, MapPin, Building2, SlidersHorizontal, Trash2, X, Check, Bookmark, ChevronRight, RefreshCw, Share2, Copy } from 'lucide-react';
+import { Search, MapPin, Building2, SlidersHorizontal, Trash2, X, Check, Bookmark, ChevronRight, RefreshCw, Share2, Copy, Clock, History } from 'lucide-react';
 import { FilterOptions, SavedSearch } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import useSWR, { mutate } from 'swr';
 import LocationSearchInput from './LocationSearchInput';
+import { useSearchHistory } from '@/hooks/useSearchHistory';
 
 interface FilterBarProps {
   onFilterChange: (filters: FilterOptions) => void;
@@ -79,6 +80,10 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
   const skipFetchCentroRef = useRef(false);
   const prevFiltersRef = useRef(filters);
 
+  // Hook de historial de búsquedas
+  const { history: searchHistory, addToHistory, removeFromHistory, clearHistory: clearSearchHistory } = useSearchHistory();
+  const [showSearchHistory, setShowSearchHistory] = useState(false);
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
@@ -87,6 +92,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
 
       if (wrapperCentroRef.current && !wrapperCentroRef.current.contains(event.target as Node)) {
         setShowCentroSuggestions(false);
+        setShowSearchHistory(false);
       }
 
       if (savedDropdownRef.current && !savedDropdownRef.current.contains(event.target as Node)) {
@@ -477,8 +483,23 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
               placeholder="Buscar centro..."
               className="w-full pl-12 pr-12 py-3.5 rounded-xl bg-neutral-50 border border-neutral-200 focus:bg-white focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 transition-all outline-none font-medium placeholder:text-neutral-400 text-neutral-800 hover:border-[#223945]/50 text-sm"
               value={filters.q || ''}
-              onChange={(e) => handleChange('q', e.target.value)}
-              onFocus={() => { if(centroSuggestions.length > 0) setShowCentroSuggestions(true); }}
+              onChange={(e) => {
+                handleChange('q', e.target.value);
+                // Mostrar historial si el input está vacío o muy corto
+                if (!e.target.value || e.target.value.length < 2) {
+                  setShowSearchHistory(searchHistory.length > 0);
+                  setShowCentroSuggestions(false);
+                } else {
+                  setShowSearchHistory(false);
+                }
+              }}
+              onFocus={() => {
+                if(centroSuggestions.length > 0) {
+                  setShowCentroSuggestions(true);
+                } else if ((!filters.q || filters.q.length < 2) && searchHistory.length > 0) {
+                  setShowSearchHistory(true);
+                }
+              }}
             />
 
             {/* Spinner / Clear Button */}
@@ -500,7 +521,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
                 </button>
             ) : null}
 
-            {/* Premium Dropdown - Centro */}
+            {/* Premium Dropdown - Centro Suggestions */}
             {showCentroSuggestions && centroSuggestions.length > 0 && (
                 <div className="absolute z-[60] left-0 mt-2 w-[90vw] sm:w-[500px] bg-white rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] border border-neutral-100 ring-1 ring-black/5 max-h-[320px] overflow-y-auto animate-in fade-in zoom-in-95 duration-200 custom-scrollbar">
                     <div className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-neutral-50 px-4 py-2 text-[10px] font-bold text-neutral-400 uppercase tracking-wider z-10">
@@ -508,12 +529,14 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
                     </div>
                     <ul className="py-2">
                         {centroSuggestions.map((sug, i) => (
-                            <li 
+                            <li
                                 key={i}
                                 onClick={() => {
                                     skipFetchCentroRef.current = true;
                                     handleChange('q', sug);
                                     setShowCentroSuggestions(false);
+                                    // Guardar en el historial
+                                    addToHistory(sug);
                                 }}
                                 className="px-4 py-3 cursor-pointer hover:bg-gradient-to-r hover:from-neutral-50 hover:to-white transition-all flex items-start gap-3 group/item border-l-2 border-transparent hover:border-[#223945]"
                             >
@@ -525,6 +548,64 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
                                         {sug}
                                     </span>
                                 </div>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+
+            {/* Dropdown - Historial de búsquedas */}
+            {showSearchHistory && searchHistory.length > 0 && !showCentroSuggestions && (
+                <div className="absolute z-[60] left-0 mt-2 w-[90vw] sm:w-[400px] bg-white rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] border border-neutral-100 ring-1 ring-black/5 max-h-[320px] overflow-y-auto animate-in fade-in zoom-in-95 duration-200 custom-scrollbar">
+                    <div className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-neutral-50 px-4 py-2 flex items-center justify-between z-10">
+                        <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider flex items-center gap-1.5">
+                            <Clock className="w-3 h-3" />
+                            Búsquedas recientes
+                        </span>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                clearSearchHistory();
+                                setShowSearchHistory(false);
+                            }}
+                            className="text-[10px] font-medium text-neutral-400 hover:text-red-500 transition-colors"
+                        >
+                            Limpiar
+                        </button>
+                    </div>
+                    <ul className="py-2">
+                        {searchHistory.map((item, i) => (
+                            <li
+                                key={item.id || i}
+                                className="px-4 py-3 cursor-pointer hover:bg-gradient-to-r hover:from-neutral-50 hover:to-white transition-all flex items-center gap-3 group/item border-l-2 border-transparent hover:border-[#223945]"
+                            >
+                                <div
+                                    className="flex-1 flex items-center gap-3"
+                                    onClick={() => {
+                                        skipFetchCentroRef.current = true;
+                                        handleChange('q', item.search_term);
+                                        setShowSearchHistory(false);
+                                        // Actualizar posición en el historial
+                                        addToHistory(item.search_term);
+                                    }}
+                                >
+                                    <div className="w-6 h-6 shrink-0 rounded-full bg-neutral-100 flex items-center justify-center group-hover/item:bg-[#223945]/10 transition-all duration-300">
+                                        <History className="w-3 h-3 text-neutral-400 group-hover/item:text-[#223945] transition-colors" />
+                                    </div>
+                                    <span className="text-sm font-medium text-neutral-600 group-hover/item:text-[#223945] transition-colors truncate">
+                                        {item.search_term}
+                                    </span>
+                                </div>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        removeFromHistory(item.search_term, item.id);
+                                    }}
+                                    className="p-1 rounded-full text-neutral-300 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover/item:opacity-100"
+                                    title="Eliminar del historial"
+                                >
+                                    <X className="w-3.5 h-3.5" />
+                                </button>
                             </li>
                         ))}
                     </ul>
