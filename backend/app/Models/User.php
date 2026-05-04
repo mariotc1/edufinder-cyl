@@ -55,6 +55,13 @@ class User extends Authenticatable
         return $this->hasMany(SearchHistory::class);
     }
 
+    // RELACIÓN: HISTORIAL DE BÚSQUEDAS DE CICLOS FP
+    // Almacena las búsquedas de ciclos realizadas por el usuario
+    public function cycleSearchHistories()
+    {
+        return $this->hasMany(CycleSearchHistory::class);
+    }
+
     protected $hidden = [
         'password',
         'remember_token',

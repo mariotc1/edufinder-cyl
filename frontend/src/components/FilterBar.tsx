@@ -10,6 +10,7 @@ import { useAuth } from '@/context/AuthContext';
 import useSWR, { mutate } from 'swr';
 import LocationSearchInput from './LocationSearchInput';
 import { useSearchHistory } from '@/hooks/useSearchHistory';
+import { useCycleSearchHistory } from '@/hooks/useCycleSearchHistory';
 
 interface FilterBarProps {
   onFilterChange: (filters: FilterOptions) => void;
@@ -80,14 +81,19 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
   const skipFetchCentroRef = useRef(false);
   const prevFiltersRef = useRef(filters);
 
-  // Hook de historial de búsquedas
+  // Hook de historial de búsquedas de centros
   const { history: searchHistory, addToHistory, removeFromHistory, clearHistory: clearSearchHistory } = useSearchHistory();
   const [showSearchHistory, setShowSearchHistory] = useState(false);
+
+  // Hook de historial de búsquedas de ciclos FP
+  const { history: cycleHistory, addToHistory: addToCycleHistory, removeFromHistory: removeFromCycleHistory, clearHistory: clearCycleHistory } = useCycleSearchHistory();
+  const [showCycleHistory, setShowCycleHistory] = useState(false);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
         setShowSuggestions(false);
+        setShowCycleHistory(false);
       }
 
       if (wrapperCentroRef.current && !wrapperCentroRef.current.contains(event.target as Node)) {
@@ -876,13 +882,28 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
                  <label className={labelClasses}>Nombre del Ciclo</label>
                   <div className="relative group">
                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 group-focus-within:text-[#223945] transition-colors" />
-                     <input 
+                     <input
                        type="text"
-                       placeholder="Ej: Desarrollo Web" 
+                       placeholder="Ej: Desarrollo Web"
                        className={`w-full bg-neutral-50 border border-neutral-200 text-neutral-700 py-3 pl-10 pr-10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#223945]/20 focus:border-[#223945] transition-all font-medium text-sm hover:border-[#223945]/50 placeholder:text-neutral-400`}
                        value={filters.ciclo || ''}
-                       onChange={(e) => handleChange('ciclo', e.target.value)}
-                       onFocus={() => { if(suggestions.length > 0) setShowSuggestions(true); }}
+                       onChange={(e) => {
+                         handleChange('ciclo', e.target.value);
+                         // Mostrar historial si el input está vacío o muy corto
+                         if (!e.target.value || e.target.value.length < 2) {
+                           setShowCycleHistory(cycleHistory.length > 0);
+                           setShowSuggestions(false);
+                         } else {
+                           setShowCycleHistory(false);
+                         }
+                       }}
+                       onFocus={() => {
+                         if(suggestions.length > 0) {
+                           setShowSuggestions(true);
+                         } else if ((!filters.ciclo || filters.ciclo.length < 2) && cycleHistory.length > 0) {
+                           setShowCycleHistory(true);
+                         }
+                       }}
                      />
                      
                      {/* Loading Spinner */}
@@ -905,20 +926,22 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
                         </button>
                      ) : null}
  
-                     {/* Premium Dropdown */}
+                     {/* Premium Dropdown - Sugerencias de ciclos */}
                      {showSuggestions && suggestions.length > 0 && (
-                         <div className="absolute z-50 left-0 mt-2 w-[90vw] sm:w-[500px] bg-white rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] border border-neutral-100 ring-1 ring-black/5 max-h-[320px] overflow-y-auto animate-in fade-in zoom-in-95 duration-200 custom-scrollbar">
+                         <div className="fixed md:absolute inset-x-4 md:inset-x-auto md:left-0 top-auto mt-2 md:w-[500px] bg-white rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] border border-neutral-100 ring-1 ring-black/5 max-h-[320px] overflow-y-auto animate-in fade-in zoom-in-95 duration-200 custom-scrollbar z-50">
                              <div className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-neutral-50 px-4 py-2 text-[10px] font-bold text-neutral-400 uppercase tracking-wider z-10">
                                  Sugerencias encontradas
                              </div>
                              <ul className="py-2">
                                  {suggestions.map((sug, i) => (
-                                     <li 
+                                     <li
                                          key={i}
                                          onClick={() => {
-                                             skipFetchRef.current = true; 
+                                             skipFetchRef.current = true;
                                              handleChange('ciclo', sug);
                                              setShowSuggestions(false);
+                                             // Guardar en el historial
+                                             addToCycleHistory(sug);
                                          }}
                                          className="px-4 py-3 cursor-pointer hover:bg-gradient-to-r hover:from-neutral-50 hover:to-white transition-all flex items-start gap-3 group/item border-l-2 border-transparent hover:border-[#223945]"
                                      >
@@ -930,6 +953,63 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
                                                  {sug}
                                              </span>
                                          </div>
+                                     </li>
+                                 ))}
+                             </ul>
+                         </div>
+                     )}
+
+                     {/* Dropdown - Historial de búsquedas de ciclos */}
+                     {showCycleHistory && cycleHistory.length > 0 && !showSuggestions && (
+                         <div className="fixed md:absolute inset-x-4 md:inset-x-auto md:left-0 top-auto mt-2 md:w-[400px] bg-white rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] border border-neutral-100 ring-1 ring-black/5 max-h-[320px] overflow-y-auto animate-in fade-in zoom-in-95 duration-200 custom-scrollbar z-50">
+                             <div className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-neutral-50 px-4 py-2 flex items-center justify-between z-10">
+                                 <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider flex items-center gap-1.5">
+                                     <Clock className="w-3 h-3" />
+                                     Ciclos buscados
+                                 </span>
+                                 <button
+                                     onClick={(e) => {
+                                         e.stopPropagation();
+                                         clearCycleHistory();
+                                         setShowCycleHistory(false);
+                                     }}
+                                     className="text-[10px] font-medium text-neutral-400 hover:text-red-500 transition-colors"
+                                 >
+                                     Limpiar
+                                 </button>
+                             </div>
+                             <ul className="py-2">
+                                 {cycleHistory.map((item, i) => (
+                                     <li
+                                         key={item.id || i}
+                                         className="px-4 py-3 cursor-pointer hover:bg-gradient-to-r hover:from-neutral-50 hover:to-white transition-all flex items-center gap-3 group/item border-l-2 border-transparent hover:border-[#223945]"
+                                     >
+                                         <div
+                                             className="flex-1 flex items-center gap-3"
+                                             onClick={() => {
+                                                 skipFetchRef.current = true;
+                                                 handleChange('ciclo', item.search_term);
+                                                 setShowCycleHistory(false);
+                                                 addToCycleHistory(item.search_term);
+                                             }}
+                                         >
+                                             <div className="w-6 h-6 shrink-0 rounded-full bg-neutral-100 flex items-center justify-center group-hover/item:bg-[#223945]/10 transition-all duration-300">
+                                                 <History className="w-3 h-3 text-neutral-400 group-hover/item:text-[#223945] transition-colors" />
+                                             </div>
+                                             <span className="text-sm font-medium text-neutral-600 group-hover/item:text-[#223945] transition-colors truncate">
+                                                 {item.search_term}
+                                             </span>
+                                         </div>
+                                         <button
+                                             onClick={(e) => {
+                                                 e.stopPropagation();
+                                                 removeFromCycleHistory(item.search_term, item.id);
+                                             }}
+                                             className="p-1.5 rounded-full text-neutral-400 hover:text-red-500 hover:bg-red-50 transition-all md:opacity-0 md:group-hover/item:opacity-100"
+                                             title="Eliminar del historial"
+                                         >
+                                             <X className="w-4 h-4" />
+                                         </button>
                                      </li>
                                  ))}
                              </ul>

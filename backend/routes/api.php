@@ -7,6 +7,7 @@ use App\Http\Controllers\FavoritoController;
 use App\Http\Controllers\RecommendationController;
 use App\Http\Controllers\SavedSearchController;
 use App\Http\Controllers\SearchHistoryController;
+use App\Http\Controllers\CycleSearchHistoryController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -120,6 +121,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/search-history/sync', [SearchHistoryController::class, 'sync']);
     Route::delete('/search-history/{id}', [SearchHistoryController::class, 'destroy']);
     Route::delete('/search-history', [SearchHistoryController::class, 'clear']);
+
+    // HISTORIAL DE BÚSQUEDAS DE CICLOS FP
+    // Gestión del historial de búsquedas por nombre de ciclo
+    Route::get('/cycle-search-history', [CycleSearchHistoryController::class, 'index']);
+    Route::post('/cycle-search-history', [CycleSearchHistoryController::class, 'store']);
+    Route::post('/cycle-search-history/sync', [CycleSearchHistoryController::class, 'sync']);
+    Route::delete('/cycle-search-history/{id}', [CycleSearchHistoryController::class, 'destroy']);
+    Route::delete('/cycle-search-history', [CycleSearchHistoryController::class, 'clear']);
 
     // HISTORIAL DE CENTROS VISITADOS
     // Obtener los centros visitados por el usuario autenticado
