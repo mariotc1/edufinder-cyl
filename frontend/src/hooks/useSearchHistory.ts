@@ -143,6 +143,15 @@ export function useSearchHistory() {
 
     // Eliminar un término del historial
     const removeFromHistory = useCallback(async (searchTerm: string, itemId?: number) => {
+        // Buscar el ID si no se proporcionó
+        let idToDelete = itemId;
+        if (!idToDelete) {
+            const item = history.find(h =>
+                h.search_term.toLowerCase() === searchTerm.toLowerCase()
+            );
+            idToDelete = item?.id;
+        }
+
         setHistory(prev => {
             const updated = prev.filter(item =>
                 item.search_term.toLowerCase() !== searchTerm.toLowerCase()
@@ -151,15 +160,15 @@ export function useSearchHistory() {
             return updated;
         });
 
-        // Si está logueado y tiene ID, eliminar del backend
-        if (user && itemId) {
+        // Si está logueado y tenemos ID, eliminar del backend
+        if (user && idToDelete) {
             try {
-                await api.delete(`/search-history/${itemId}`);
+                await api.delete(`/search-history/${idToDelete}`);
             } catch (error) {
                 console.error('Error removing from backend:', error);
             }
         }
-    }, [user, saveToLocalStorage]);
+    }, [user, saveToLocalStorage, history]);
 
     // Limpiar todo el historial
     const clearHistory = useCallback(async () => {

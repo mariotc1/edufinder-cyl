@@ -601,10 +601,10 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1 }: Filte
                                         e.stopPropagation();
                                         removeFromHistory(item.search_term, item.id);
                                     }}
-                                    className="p-1 rounded-full text-neutral-300 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover/item:opacity-100"
+                                    className="p-1.5 rounded-full text-neutral-400 hover:text-red-500 hover:bg-red-50 transition-all md:opacity-0 md:group-hover/item:opacity-100"
                                     title="Eliminar del historial"
                                 >
-                                    <X className="w-3.5 h-3.5" />
+                                    <X className="w-4 h-4" />
                                 </button>
                             </li>
                         ))}
