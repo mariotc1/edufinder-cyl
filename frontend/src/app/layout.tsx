@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
 import AppShell from '@/components/AppShell';
+import { AdaptiveIcons } from '@/components/pwa/AdaptiveIcons';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -47,7 +48,7 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'default',
+    statusBarStyle: 'black-translucent',
     title: 'EduFinder CYL',
   },
   formatDetection: {
@@ -69,7 +70,7 @@ export const viewport: Viewport = {
     { media: '(prefers-color-scheme: light)', color: '#223945' },
     { media: '(prefers-color-scheme: dark)', color: '#223945' },
   ],
-  colorScheme: 'light',
+  colorScheme: 'light dark',
 };
 
 // LAYOUT RAÍZ (ROOT LAYOUT)
@@ -82,6 +83,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
+      <head>
+        <AdaptiveIcons />
+      </head>
       <body className={`${inter.variable} font-sans min-h-screen bg-neutral-50 text-neutral-900 antialiased`}>
         <Providers>
           <AppShell>
