@@ -3,7 +3,7 @@
 import React, { Suspense } from 'react';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Menu, X, MapPin, Heart, LogIn, UserPlus, User as UserMenuIcon, LogOut as LogOutIcon, LayoutDashboard, Download } from 'lucide-react';
 import Logo from './Logo';
@@ -33,6 +33,16 @@ function NavbarContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  // Listen for onboarding event to open mobile menu
+  useEffect(() => {
+    const handleOpenMobileMenu = () => {
+      setMobileMenuOpen(true);
+    };
+
+    window.addEventListener('onboarding:openMobileMenu', handleOpenMobileMenu);
+    return () => window.removeEventListener('onboarding:openMobileMenu', handleOpenMobileMenu);
+  }, []);
 
   // Logout Modal State
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -81,6 +91,7 @@ function NavbarContent() {
 
             <Link
               href="/mapa"
+              data-tour="map"
               className="group flex items-center gap-2 px-4 py-2 rounded-full text-[#223945] font-bold text-sm uppercase tracking-wide border border-transparent hover:border-neutral-200 hover:bg-white hover:shadow-sm transition-all duration-300"
             >
               <MapPin className="w-4 h-4 text-neutral-400 group-hover:text-blue-600 transition-colors" />
@@ -89,8 +100,9 @@ function NavbarContent() {
             
             {user ? (
               <>
-                <Link 
-                  href="/favoritos" 
+                <Link
+                  href="/favoritos"
+                  data-tour="favorites"
                   className="group flex items-center gap-2 px-4 py-2 rounded-full text-[#223945] font-bold text-sm uppercase tracking-wide border border-transparent hover:border-neutral-200 hover:bg-white hover:shadow-sm transition-all duration-300"
                 >
                   {/* Puliing Heart Icon */}
@@ -209,6 +221,7 @@ function NavbarContent() {
 
             <Link
               href="/mapa"
+              data-tour="map-mobile"
               className="flex items-center gap-4 px-4 py-3 rounded-xl bg-neutral-50 text-neutral-700 font-bold hover:bg-blue-50 hover:text-blue-700 transition-all"
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -220,8 +233,9 @@ function NavbarContent() {
             
             {user ? (
               <>
-                <Link 
-                  href="/favoritos" 
+                <Link
+                  href="/favoritos"
+                  data-tour="favorites-mobile"
                   className="flex items-center gap-4 px-4 py-3 rounded-xl bg-neutral-50 text-neutral-700 font-bold hover:bg-red-50 hover:text-red-600 transition-all"
                   onClick={() => setMobileMenuOpen(false)}
                 >

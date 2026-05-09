@@ -28,12 +28,12 @@ const FavoritesAnimationContext = createContext<FavoritesAnimationContextType | 
 export function FavoritesAnimationProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<AnimationItem[]>([]);
   const [favoritesPulse, setFavoritesPulse] = useState(false);
-  
+
   // Disparar animación desde una posición inicial (botón) hacia el destino (navbar)
   const triggerAnimation = (startRect: DOMRect, data: CardData) => {
     const id = Math.random().toString(36).substring(7);
     const targetId = window.innerWidth >= 768 ? 'nav-favorites-icon-desktop' : 'nav-mobile-menu-button';
-    
+
     setItems(prev => [...prev, { id, startRect, targetId, data }]);
     setTimeout(() => {
         setFavoritesPulse(true);

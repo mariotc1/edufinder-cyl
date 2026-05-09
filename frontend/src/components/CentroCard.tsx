@@ -203,6 +203,7 @@ export default function CentroCard({
       <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5">
         {/* Botón Favorito */}
         <motion.button
+          data-tour={index === 0 ? "favorite-button" : undefined}
           onClick={(e) => toggleFavorite(e, cardRef.current!)}
           whileTap={{ scale: 0.8 }}
           className="p-1.5 rounded-full bg-white/90 backdrop-blur-sm shadow-sm border border-neutral-100 hover:bg-red-50 active:bg-red-100 transition-colors group/heart"

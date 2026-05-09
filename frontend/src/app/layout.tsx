@@ -3,12 +3,16 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
 import AppShell from '@/components/AppShell';
+import { AdaptiveIcons } from '@/components/pwa/AdaptiveIcons';
 
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
   display: 'swap',
 });
+
+// URL base para Open Graph
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://edufinder.es';
 
 // METADATOS GLOBALES DE LA APLICACIÓN
 // Configuración SEO y PWA para todas las páginas
@@ -23,6 +27,7 @@ export const metadata: Metadata = {
   creator: 'EduFinder CYL',
   publisher: 'EduFinder CYL',
   manifest: '/manifest.json',
+  metadataBase: new URL(baseUrl),
   icons: {
     icon: [
       { url: '/logo.ico', sizes: 'any' },
@@ -33,6 +38,28 @@ export const metadata: Metadata = {
       { url: '/icons/icon-152x152.png', sizes: '152x152', type: 'image/png' },
       { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
     ],
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'es_ES',
+    url: baseUrl,
+    siteName: 'EduFinder CyL',
+    title: 'EduFinder CyL - Encuentra tu centro educativo ideal',
+    description: 'Busca y compara centros educativos y ciclos de FP en Castilla y León. Información actualizada de colegios, institutos y formación profesional.',
+    images: [
+      {
+        url: `${baseUrl}/api/og`,
+        width: 1200,
+        height: 630,
+        alt: 'EduFinder CyL - Encuentra tu centro educativo ideal',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'EduFinder CyL - Encuentra tu centro educativo ideal',
+    description: 'Busca y compara centros educativos y ciclos de FP en Castilla y León.',
+    images: [`${baseUrl}/api/og`],
   },
   robots: {
     index: true,
@@ -47,7 +74,7 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'default',
+    statusBarStyle: 'black-translucent',
     title: 'EduFinder CYL',
   },
   formatDetection: {
@@ -69,7 +96,7 @@ export const viewport: Viewport = {
     { media: '(prefers-color-scheme: light)', color: '#223945' },
     { media: '(prefers-color-scheme: dark)', color: '#223945' },
   ],
-  colorScheme: 'light',
+  colorScheme: 'light dark',
 };
 
 // LAYOUT RAÍZ (ROOT LAYOUT)
@@ -82,6 +109,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
+      <head>
+        <AdaptiveIcons />
+      </head>
       <body className={`${inter.variable} font-sans min-h-screen bg-neutral-50 text-neutral-900 antialiased`}>
         <Providers>
           <AppShell>
