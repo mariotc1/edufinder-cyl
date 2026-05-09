@@ -363,14 +363,26 @@ export default function ProfileContent() {
                                         <p className="text-xs !text-white/80 truncate">{user?.email}</p>
                                     </div>
                                 </div>
-                                {/* Logout at bottom of card */}
-                                <button
-                                    onClick={handleLogoutClick}
-                                    className="mt-4 w-full flex items-center justify-center gap-2 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-bold text-white/90 transition-colors"
-                                >
-                                    <LogOut className="w-4 h-4" />
-                                    Cerrar sesión
-                                </button>
+                                {/* Actions at bottom of card */}
+                                <div className="mt-4 flex gap-2">
+                                    <button
+                                        onClick={() => {
+                                            restartTour();
+                                            router.push('/');
+                                        }}
+                                        className="flex-1 flex items-center justify-center gap-2 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-bold text-white/90 transition-colors"
+                                    >
+                                        <RotateCcw className="w-4 h-4" />
+                                        Repetir Tour
+                                    </button>
+                                    <button
+                                        onClick={handleLogoutClick}
+                                        className="flex-1 flex items-center justify-center gap-2 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-bold text-white/90 transition-colors"
+                                    >
+                                        <LogOut className="w-4 h-4" />
+                                        Cerrar sesión
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
