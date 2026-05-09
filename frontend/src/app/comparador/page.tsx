@@ -4,6 +4,7 @@ import { useComparison } from '@/context/ComparisonContext';
 import { useEffect, useState, useRef, Suspense, useCallback } from 'react';
 import api from '@/lib/axios';
 import { ChevronLeft, Info, MapPin, Phone, Mail, Globe, Check, X, Loader2, AlertTriangle, GraduationCap, Scale, Download, Share2, Link2, Copy, CheckCircle } from 'lucide-react';
+import { hapticFeedback } from '@/lib/haptics';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -108,6 +109,10 @@ function ComparadorPage() {
                 );
                 const results = await Promise.all(promises);
                 setDetails(results);
+                // Haptic feedback cuando la comparación está lista
+                if (results.length >= 2) {
+                    hapticFeedback('success');
+                }
             } catch (error) {
                 console.error("Error fetching comparison details", error);
             } finally {

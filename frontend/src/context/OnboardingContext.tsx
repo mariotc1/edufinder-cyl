@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
 import { tourSteps, type TourStep } from '@/components/onboarding/tourSteps';
+import { hapticFeedback } from '@/lib/haptics';
 
 const STORAGE_KEY = 'edufinder_onboarding_completed';
 
@@ -39,6 +40,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         // Small delay to ensure DOM is ready
         const timer = setTimeout(() => {
           setIsActive(true);
+          hapticFeedback('success'); // Vibración de bienvenida
         }, 1000);
         return () => clearTimeout(timer);
       }
@@ -95,6 +97,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     }
     setCurrentStepIndex(0);
     setIsActive(true);
+    hapticFeedback('success'); // Vibración de bienvenida al reiniciar
   }, []);
 
   // Don't render until initialized to prevent hydration mismatch
