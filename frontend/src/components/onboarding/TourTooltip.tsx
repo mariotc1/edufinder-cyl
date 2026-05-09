@@ -276,40 +276,40 @@ export default function TourTooltip({
             </button>
 
             {/* Content - Compact for mobile */}
-            <div className="px-5 pt-2 pb-5">
-              <div className="flex items-start gap-4">
+            <div className="px-4 pt-2 pb-4">
+              <div className="flex items-start gap-3">
                 {/* Icon - Smaller on mobile */}
                 {Icon && (
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ type: 'spring', stiffness: 400, damping: 20, delay: 0.1 }}
-                    className="w-12 h-12 flex-shrink-0 rounded-xl bg-gradient-to-br from-[#223945] to-blue-600 flex items-center justify-center shadow-lg"
+                    className="w-10 h-10 flex-shrink-0 rounded-xl bg-gradient-to-br from-[#223945] to-blue-600 flex items-center justify-center shadow-lg"
                   >
-                    <Icon className="w-6 h-6 text-white" />
+                    <Icon className="w-5 h-5 text-white" />
                   </motion.div>
                 )}
 
                 {/* Text content */}
-                <div className="flex-1 min-w-0 pt-1">
-                  <h3 className="text-lg font-bold text-[#223945] mb-1">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-base font-bold text-[#223945] mb-0.5">
                     {step.title}
                   </h3>
-                  <p className="text-neutral-600 text-sm leading-relaxed">
+                  <p className="text-neutral-600 text-sm leading-snug">
                     {step.description}
                   </p>
                 </div>
               </div>
 
-              {/* Progress + Actions row */}
-              <div className="mt-5 flex items-center justify-between gap-4">
-                {/* Progress dots - Smaller */}
-                <div className="flex-shrink-0">
+              {/* Progress + Actions - Stack on very small screens */}
+              <div className="mt-4 flex flex-col gap-3">
+                {/* Progress dots centered */}
+                <div className="flex justify-center">
                   <TourProgress currentStep={currentStepIndex} totalSteps={totalSteps} />
                 </div>
 
-                {/* Actions */}
-                <div className="flex items-center gap-2">
+                {/* Actions row */}
+                <div className="flex items-center justify-between">
                   {isFirstStep ? (
                     <button
                       onClick={onSkip}
@@ -329,7 +329,7 @@ export default function TourTooltip({
                   <motion.button
                     onClick={onNext}
                     whileTap={{ scale: 0.97 }}
-                    className="flex items-center gap-1.5 px-5 py-2.5 bg-gradient-to-r from-[#223945] to-blue-600 text-white text-sm font-bold rounded-xl shadow-lg"
+                    className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-[#223945] to-blue-600 text-white text-sm font-bold rounded-xl shadow-lg"
                   >
                     {isLastStep ? 'Finalizar' : 'Siguiente'}
                     {!isLastStep && <ChevronRight className="w-4 h-4" />}
