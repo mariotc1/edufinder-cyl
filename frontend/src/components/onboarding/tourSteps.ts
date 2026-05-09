@@ -7,9 +7,11 @@ export interface TourStep {
   placement: 'top' | 'bottom' | 'left' | 'right' | 'center';
   placementMobile?: 'top' | 'bottom' | 'left' | 'right' | 'center';
   spotlightPadding?: number;
-  icon?: 'sparkles' | 'search' | 'heart' | 'map' | 'hand-wave';
+  icon?: 'sparkles' | 'search' | 'heart' | 'map' | 'hand-wave' | 'party';
   // Actions to perform before showing this step
   requiresMobileMenu?: boolean; // Open mobile menu before this step
+  // Special styling for final step
+  isFinalStep?: boolean;
 }
 
 export const tourSteps: TourStep[] = [
@@ -68,5 +70,14 @@ export const tourSteps: TourStep[] = [
     spotlightPadding: 8,
     icon: 'map',
     requiresMobileMenu: true,
+  },
+  {
+    id: 'finish',
+    targetSelector: '',
+    title: '¡Ya estás listo!',
+    description: 'Con una cuenta podrás sincronizar tus búsquedas y acceder desde cualquier dispositivo.',
+    placement: 'center',
+    icon: 'party',
+    isFinalStep: true,
   },
 ];
