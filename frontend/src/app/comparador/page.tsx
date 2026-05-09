@@ -19,7 +19,7 @@ export async function generateMetadata({
   const centrosParam = params.centros;
 
   // URL base para OG images
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://edufinder.es';
+  const baseUrl = 'https://edufinder-cyl.vercel.app';
 
   // Si no hay centros en la URL, devolver metadata por defecto
   if (!centrosParam || typeof centrosParam !== 'string') {

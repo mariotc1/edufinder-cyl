@@ -12,7 +12,7 @@ const inter = Inter({
 });
 
 // URL base para Open Graph
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://edufinder.es';
+const baseUrl = 'https://edufinder-cyl.vercel.app';
 
 // METADATOS GLOBALES DE LA APLICACIÓN
 // Configuración SEO y PWA para todas las páginas
@@ -42,24 +42,17 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'es_ES',
-    url: baseUrl,
+    url: 'https://edufinder-cyl.vercel.app',
     siteName: 'EduFinder CyL',
-    title: 'EduFinder CyL - Encuentra tu centro educativo ideal',
-    description: 'Busca y compara centros educativos y ciclos de FP en Castilla y León. Información actualizada de colegios, institutos y formación profesional.',
-    images: [
-      {
-        url: `${baseUrl}/api/og`,
-        width: 1200,
-        height: 630,
-        alt: 'EduFinder CyL - Encuentra tu centro educativo ideal',
-      },
-    ],
+    title: 'EduFinder CyL - Encuentra tu centro educativo ideal en Castilla y León',
+    description: 'Plataforma para buscar y comparar centros educativos y ciclos de Formación Profesional en Castilla y León. Encuentra colegios, institutos, grados medios y superiores.',
+    images: ['https://edufinder-cyl.vercel.app/api/og'],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'EduFinder CyL - Encuentra tu centro educativo ideal',
-    description: 'Busca y compara centros educativos y ciclos de FP en Castilla y León.',
-    images: [`${baseUrl}/api/og`],
+    title: 'EduFinder CyL - Encuentra tu centro educativo ideal en Castilla y León',
+    description: 'Plataforma para buscar y comparar centros educativos y ciclos de Formación Profesional en Castilla y León. Encuentra colegios, institutos, grados medios y superiores.',
+    images: ['https://edufinder-cyl.vercel.app/api/og'],
   },
   robots: {
     index: true,
