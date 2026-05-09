@@ -57,9 +57,11 @@ function ComparadorPage() {
     const [isHydrated, setIsHydrated] = useState(false);
     const [loadedFromUrl, setLoadedFromUrl] = useState(false);
 
-    // Evitar problemas de hidratación
+    // Evitar problemas de hidratación y scroll to top al montar
     useEffect(() => {
         setIsHydrated(true);
+        // Scroll to top cuando se navega a la página
+        window.scrollTo({ top: 0, behavior: 'instant' });
     }, []);
 
     // Load centers from URL params (for shared links)
