@@ -5,6 +5,7 @@ import Navbar from './Navbar';
 import ConditionalFooter from './ConditionalFooter';
 import ComparisonTray from './ComparisonTray';
 import ScrollToTop from './ScrollToTop';
+import OnboardingTour from './onboarding/OnboardingTour';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -25,6 +26,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {!isAdmin && <ConditionalFooter />}
       <ComparisonTray />
       <ScrollToTop />
+
+      {/* Onboarding Tour */}
+      <OnboardingTour />
     </>
   );
 }

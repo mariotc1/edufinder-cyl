@@ -10,6 +10,7 @@ interface AIWizardTriggerButtonProps {
 export default function AIWizardTriggerButton({ onClick }: AIWizardTriggerButtonProps) {
     return (
         <motion.button
+            data-tour="ai-wizard"
             onClick={onClick}
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.98 }}

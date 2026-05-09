@@ -4,11 +4,12 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import api from '@/lib/axios';
 import { getSavedSearches, deleteSavedSearch } from '@/services/api';
 import { SavedSearch } from '@/types';
-import { User, MapPin, Heart, Lock, Camera, LogOut, Eye, EyeOff, ChevronLeft, Trash, AlertCircle, CheckCircle, Bookmark, Search, X, Calendar, Building2, GraduationCap, Filter } from 'lucide-react';
+import { User, MapPin, Heart, Lock, Camera, LogOut, Eye, EyeOff, ChevronLeft, Trash, AlertCircle, CheckCircle, Bookmark, Search, X, Calendar, Building2, GraduationCap, Filter, RotateCcw } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import LogoutConfirmationModal from '@/components/auth/LogoutConfirmationModal';
 import { AnimatePresence } from 'framer-motion';
+import { useOnboarding } from '@/context/OnboardingContext';
 
 interface UserData {
     name: string;
@@ -36,6 +37,7 @@ export default function ProfileContent() {
     const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
     const router = useRouter();
     const searchParams = useSearchParams();
+    const { restartTour } = useOnboarding();
 
     const [name, setName] = useState('');
     const [passwordData, setPasswordData] = useState({ current: '', new: '', confirm: '' });
@@ -524,7 +526,20 @@ export default function ProfileContent() {
                                     <span>Búsquedas Guardadas</span>
                                 </button>
 
-                                <div className="pt-8 mt-4 border-t border-neutral-100">
+                                <div className="pt-6 mt-4 border-t border-neutral-100">
+                                    <button
+                                        onClick={() => {
+                                            restartTour();
+                                            router.push('/');
+                                        }}
+                                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-blue-600 hover:bg-blue-50 transition-colors"
+                                    >
+                                        <RotateCcw className="w-4 h-4" />
+                                        <span>Repetir Tour</span>
+                                    </button>
+                                </div>
+
+                                <div className="pt-2">
                                     <button onClick={handleLogoutClick} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 transition-colors">
                                         <LogOut className="w-4 h-4" /> Cerrar Sesión
                                     </button>
