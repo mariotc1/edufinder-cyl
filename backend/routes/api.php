@@ -16,20 +16,28 @@ RUTAS API
   - Estas rutas son cargadas por el RouteServiceProvider y asignadas al grupo api
 */
 
-// AUTENTICACIÓN BÁSICA
-// Rutas públicas para registro e inicio de sesión de usuarios
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
+// ============================================
+// AUTENTICACIÓN BÁSICA (PROTEGIDA)
+// Rate limiting + Honeypot para prevenir bots y ataques de fuerza bruta
+// ============================================
+Route::middleware(['throttle:register', 'honeypot'])->group(function () {
+    Route::post('/register', [AuthController::class, 'register']);
+});
+
+Route::middleware(['throttle:login'])->group(function () {
+    Route::post('/login', [AuthController::class, 'login']);
+});
 
 // AUTENTICACIÓN SOCIAL (OAuth)
 // Rutas para manejar el inicio de sesión con proveedores externos (Google, etc.)
 Route::get('/auth/{provider}/redirect', [App\Http\Controllers\SocialAuthController::class, 'redirectToProvider']);
 Route::get('/auth/{provider}/callback', [App\Http\Controllers\SocialAuthController::class, 'handleProviderCallback']);
 
-// RECUPERACIÓN DE CONTRASEÑA
-// Endpoints para solicitar el enlace de reseteo y establecer una nueva contraseña.
-Route::post('/forgot-password', [AuthController::class, 'sendResetLinkEmail']);
-Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+// RECUPERACIÓN DE CONTRASEÑA (con rate limiting estricto para evitar spam de emails)
+Route::middleware(['throttle:password-reset'])->group(function () {
+    Route::post('/forgot-password', [AuthController::class, 'sendResetLinkEmail']);
+    Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+});
 
 // UTILIDADES Y DEPURACIÓN
 // Ruta temporal para verificar el estado de la cola de trabajos y configuración de correo.
@@ -55,67 +63,71 @@ Route::get('/debug-queue', function () {
 });
 
 
+// ============================================
 // GESTIÓN DE CENTROS EDUCATIVOS
-// Rutas públicas para consultar información sobre centros y sus ciclos formativos
-Route::get('/centros/sugerencias', [CentroController::class, 'suggestions']);
-Route::get('/centros', [CentroController::class, 'index']);
-Route::get('/centros/{id}', [CentroController::class, 'show']);
-Route::get('/centros/{id}/ciclos', [CentroController::class, 'ciclos']);
+// Rate limiting para prevenir scraping masivo
+// ============================================
+Route::middleware(['throttle:search'])->group(function () {
+    Route::get('/centros/sugerencias', [CentroController::class, 'suggestions']);
+    Route::get('/centros', [CentroController::class, 'index']);
+    Route::get('/centros/{id}', [CentroController::class, 'show']);
+    Route::get('/centros/{id}/ciclos', [CentroController::class, 'ciclos']);
 
-// BÚSQUEDA GENERAL
-// Endpoint para realizar búsquedas globales en la plataforma
-Route::get('/busqueda', [App\Http\Controllers\SearchController::class, 'index']);
+    // BÚSQUEDA GENERAL
+    Route::get('/busqueda', [App\Http\Controllers\SearchController::class, 'index']);
 
-// RECOMENDACIONES IA
-// Endpoint público para búsqueda guiada del wizard
-Route::get('/recommendations/wizard', [RecommendationController::class, 'fromWizard']);
+    // RECOMENDACIONES IA
+    Route::get('/recommendations/wizard', [RecommendationController::class, 'fromWizard']);
 
-// GESTIÓN DE CICLOS FORMATIVOS
-// Rutas para listar y obtener sugerencias de ciclos de FP
-Route::get('/ciclos/sugerencias', [CicloFpController::class, 'suggestions']);
-Route::get('/ciclos', [CicloFpController::class, 'index']);
+    // GESTIÓN DE CICLOS FORMATIVOS
+    Route::get('/ciclos/sugerencias', [CicloFpController::class, 'suggestions']);
+    Route::get('/ciclos', [CicloFpController::class, 'index']);
+});
 
+// ============================================
 // RUTAS PROTEGIDAS
 // Todas las rutas dentro de este grupo requieren un token válido (Sanctum)
+// ============================================
 Route::middleware('auth:sanctum')->group(function () {
     // Cerrar sesión (invalida el token actual)
     Route::post('/logout', [AuthController::class, 'logout']);
 
     // PERFIL DE USUARIO
-    // Rutas para ver y editar la información del perfil del usuario autenticado
     Route::get('/me', [AuthController::class, 'user']);
     Route::put('/me', [AuthController::class, 'updateProfile']);
-    Route::post('/me/photo', [AuthController::class, 'updateProfilePhoto']);
-    Route::delete('/me/photo', [AuthController::class, 'deleteProfilePhoto']);
     Route::put('/me/password', [AuthController::class, 'updatePassword']);
 
-    // SISTEMA DE FAVORITOS (CENTROS)
-    // Gestión de los centros guardados como favoritos por el usuario
-    Route::get('/favoritos', [FavoritoController::class, 'index']);
-    Route::post('/favoritos/{id}', [FavoritoController::class, 'store']);
-    Route::delete('/favoritos/{id}', [FavoritoController::class, 'destroy']);
+    // Subida de fotos con rate limiting específico (5/min)
+    Route::middleware(['throttle:uploads'])->group(function () {
+        Route::post('/me/photo', [AuthController::class, 'updateProfilePhoto']);
+    });
+    Route::delete('/me/photo', [AuthController::class, 'deleteProfilePhoto']);
 
-    // SISTEMA DE FAVORITOS (CICLOS)
-    // Gestión de ciclos específicos marcados como favoritos
-    Route::get('/ciclos-favoritos', [CicloFavoritoController::class, 'index']);
-    Route::get('/ciclos-favoritos/ids', [CicloFavoritoController::class, 'ids']);
-    Route::get('/ciclos-favoritos/centro/{centroId}', [CicloFavoritoController::class, 'byCentro']);
-    Route::post('/ciclos-favoritos/{cicloId}/toggle', [CicloFavoritoController::class, 'toggle']);
-    Route::get('/ciclos-favoritos/{cicloId}/check', [CicloFavoritoController::class, 'check']);
+    // SISTEMA DE FAVORITOS (con rate limiting para evitar spam)
+    Route::middleware(['throttle:favorites'])->group(function () {
+        // Favoritos de centros
+        Route::get('/favoritos', [FavoritoController::class, 'index']);
+        Route::post('/favoritos/{id}', [FavoritoController::class, 'store']);
+        Route::delete('/favoritos/{id}', [FavoritoController::class, 'destroy']);
+
+        // Favoritos de ciclos
+        Route::get('/ciclos-favoritos', [CicloFavoritoController::class, 'index']);
+        Route::get('/ciclos-favoritos/ids', [CicloFavoritoController::class, 'ids']);
+        Route::get('/ciclos-favoritos/centro/{centroId}', [CicloFavoritoController::class, 'byCentro']);
+        Route::post('/ciclos-favoritos/{cicloId}/toggle', [CicloFavoritoController::class, 'toggle']);
+        Route::get('/ciclos-favoritos/{cicloId}/check', [CicloFavoritoController::class, 'check']);
+    });
 
     // RECOMENDACIONES PERSONALIZADAS
-    // Recomendaciones basadas en los favoritos del usuario
     Route::get('/recommendations/favorites', [RecommendationController::class, 'fromFavorites']);
 
     // BÚSQUEDAS GUARDADAS
-    // Gestión de combinaciones de filtros guardadas por el usuario
     Route::get('/saved-searches', [SavedSearchController::class, 'index']);
     Route::post('/saved-searches', [SavedSearchController::class, 'store']);
     Route::put('/saved-searches/{id}', [SavedSearchController::class, 'update']);
     Route::delete('/saved-searches/{id}', [SavedSearchController::class, 'destroy']);
 
     // HISTORIAL DE BÚSQUEDAS DE CENTROS
-    // Gestión del historial de búsquedas por nombre de centro
     Route::get('/search-history', [SearchHistoryController::class, 'index']);
     Route::post('/search-history', [SearchHistoryController::class, 'store']);
     Route::post('/search-history/sync', [SearchHistoryController::class, 'sync']);
@@ -123,7 +135,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/search-history', [SearchHistoryController::class, 'clear']);
 
     // HISTORIAL DE BÚSQUEDAS DE CICLOS FP
-    // Gestión del historial de búsquedas por nombre de ciclo
     Route::get('/cycle-search-history', [CycleSearchHistoryController::class, 'index']);
     Route::post('/cycle-search-history', [CycleSearchHistoryController::class, 'store']);
     Route::post('/cycle-search-history/sync', [CycleSearchHistoryController::class, 'sync']);
@@ -131,15 +142,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/cycle-search-history', [CycleSearchHistoryController::class, 'clear']);
 
     // HISTORIAL DE CENTROS VISITADOS
-    // Obtener los centros visitados por el usuario autenticado
     Route::get('/visited-centers', [CentroController::class, 'visitedCenters']);
     Route::delete('/visited-centers/{centroId}', [CentroController::class, 'removeVisitedCenter']);
     Route::delete('/visited-centers', [CentroController::class, 'clearVisitedCenters']);
 });
 
+// ============================================
 // PANEL DE ADMINISTRACIÓN
 // Rutas protegidas exclusivamente para administradores
-Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
+// Rate limiting específico para admin (100/min)
+// ============================================
+Route::middleware(['auth:sanctum', 'admin', 'throttle:admin'])->prefix('admin')->group(function () {
     // Basic CRUD (Legacy/Existing)
     Route::get('/users', [App\Http\Controllers\AdminController::class, 'index']);
     Route::put('/users/{id}/role', [App\Http\Controllers\AdminController::class, 'updateRole']);
