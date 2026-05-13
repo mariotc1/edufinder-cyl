@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import api from '@/lib/axios';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -12,15 +12,24 @@ export default function RegisterContent() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [passwordConfirmation, setPasswordConfirmation] = useState('');
-    
+
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    
+
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    
+
+    // Honeypot: token de tiempo para detectar bots (envío instantáneo)
+    const [formToken, setFormToken] = useState('');
+
     const { login } = useAuth();
     const router = useRouter();
+
+    // Generar token de tiempo al montar el componente
+    useEffect(() => {
+        const timestamp = Math.floor(Date.now() / 1000);
+        setFormToken(btoa(timestamp.toString()));
+    }, []);
 
 
     const passwordRequirements = useMemo(() => {
@@ -52,6 +61,8 @@ export default function RegisterContent() {
                 email,
                 password,
                 password_confirmation: passwordConfirmation,
+                // Honeypot: token de tiempo para verificar que no es un bot
+                _form_token: formToken,
             });
 
             login(res.data.user, res.data.access_token);
@@ -108,6 +119,26 @@ export default function RegisterContent() {
                     )}
 
                     <form onSubmit={handleSubmit} className="space-y-5">
+                        {/* Honeypot fields - invisibles para usuarios, bots los rellenan */}
+                        <div className="absolute -left-[9999px] opacity-0 h-0 w-0 overflow-hidden" aria-hidden="true">
+                            <label htmlFor="website">Website</label>
+                            <input
+                                type="text"
+                                id="website"
+                                name="website"
+                                tabIndex={-1}
+                                autoComplete="off"
+                            />
+                            <label htmlFor="company_url">Company URL</label>
+                            <input
+                                type="text"
+                                id="company_url"
+                                name="company_url"
+                                tabIndex={-1}
+                                autoComplete="off"
+                            />
+                        </div>
+
                        <div className="space-y-2">
                             <label className="flex items-center gap-2 text-xs font-bold text-[#223945] uppercase tracking-wider ml-1">
                                 <User className="w-3.5 h-3.5" />

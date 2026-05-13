@@ -127,6 +127,15 @@ return [
             'path' => storage_path('logs/laravel.log'),
         ],
 
+        // Canal dedicado para logs de seguridad
+        'security' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/security.log'),
+            'level' => 'debug',
+            'days' => 30, // Mantener 30 días de logs de seguridad
+            'replace_placeholders' => true,
+        ],
+
     ],
 
 ];
