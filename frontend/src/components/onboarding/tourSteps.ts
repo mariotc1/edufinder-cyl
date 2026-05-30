@@ -59,17 +59,14 @@ export const tourSteps: TourStep[] = [
   },
   {
     id: 'map',
-    // Desktop: link del mapa en navbar
     targetSelector: '[data-tour="map"]',
-    // Móvil: necesita abrir el menú hamburguesa primero
     targetSelectorMobile: '[data-tour="map-mobile"]',
     title: 'Explora en el Mapa',
     description: 'Visualiza todos los centros educativos de Castilla y León en un mapa interactivo.',
     placement: 'bottom',
-    placementMobile: 'bottom',
+    placementMobile: 'top',
     spotlightPadding: 8,
     icon: 'map',
-    requiresMobileMenu: true,
   },
   {
     id: 'finish',

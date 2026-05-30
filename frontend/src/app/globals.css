@@ -3,6 +3,27 @@
 :root {
   --background: #ffffff;
   --foreground: #111827;
+  /* Desktop top navbar height */
+  --navbar-height: 5rem;
+  /* Mobile bottom nav height (accounts for iOS home indicator / Dynamic Island) */
+  --bottom-nav-height: calc(4rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* Mobile: pad content below the bottom nav */
+@media (max-width: 767px) {
+  .mobile-bottom-safe {
+    padding-bottom: var(--bottom-nav-height);
+  }
+
+  /* Match safe-area / overscroll color with page background */
+  html {
+    background-color: #dbeafe;
+  }
+
+  /* Ensure the safe-area-inset-top area (notch / Dynamic Island) is covered */
+  .mobile-safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
 }
 
 * {

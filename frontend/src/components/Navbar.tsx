@@ -5,7 +5,7 @@ import React, { Suspense } from 'react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { Menu, X, MapPin, Heart, LogIn, UserPlus, User as UserMenuIcon, LogOut as LogOutIcon, LayoutDashboard, Download } from 'lucide-react';
+import { Menu, X, MapPin, Heart, LogIn, UserPlus, User as UserMenuIcon, LogOut as LogOutIcon, ShieldCheck, Download } from 'lucide-react';
 import Logo from './Logo';
 import UserMenu from './UserMenu';
 import { useAuth } from '@/context/AuthContext';
@@ -18,7 +18,7 @@ import LogoutConfirmationModal from './auth/LogoutConfirmationModal';
 // Utiliza Suspense para cargar contenido dependiente del cliente (useSearchParams)
 export default function Navbar() {
   return (
-    <Suspense fallback={<nav className="fixed top-0 left-0 w-full z-[100] bg-white/95 h-20 border-b border-neutral-200" />}>
+    <Suspense fallback={<nav className="hidden md:block fixed top-0 left-0 w-full z-[100] bg-white/95 h-20 border-b border-neutral-200" />}>
       <NavbarContent />
     </Suspense>
   );
@@ -67,7 +67,7 @@ function NavbarContent() {
   const redirectParam = getRedirectUrl();
 
   return (
-    <nav className="fixed top-0 left-0 w-full z-[100] bg-white border-b border-neutral-200 shadow-sm">
+    <nav className="hidden md:block fixed top-0 left-0 w-full z-[100] bg-white border-b border-neutral-200 shadow-sm">
       {/* Decorative top gradient - matching other components */}
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300"></div>
 
@@ -120,11 +120,11 @@ function NavbarContent() {
                 </Link>
 
                 {user.role === 'admin' && (
-                  <Link 
-                    href="/admin" 
+                  <Link
+                    href="/admin"
                     className="group flex items-center gap-2 px-4 py-2 rounded-full text-[#223945] font-bold text-sm uppercase tracking-wide border border-transparent hover:border-neutral-200 hover:bg-white hover:shadow-sm transition-all duration-300"
                   >
-                    <LayoutDashboard className="w-4 h-4 text-neutral-400 group-hover:text-blue-600 transition-colors" />
+                    <ShieldCheck className="w-4 h-4 text-neutral-400 group-hover:text-blue-600 transition-colors" />
                     Panel Admin
                   </Link>
                 )}
@@ -221,7 +221,6 @@ function NavbarContent() {
 
             <Link
               href="/mapa"
-              data-tour="map-mobile"
               className="flex items-center gap-4 px-4 py-3 rounded-xl bg-neutral-50 text-neutral-700 font-bold hover:bg-blue-50 hover:text-blue-700 transition-all"
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -235,7 +234,6 @@ function NavbarContent() {
               <>
                 <Link
                   href="/favoritos"
-                  data-tour="favorites-mobile"
                   className="flex items-center gap-4 px-4 py-3 rounded-xl bg-neutral-50 text-neutral-700 font-bold hover:bg-red-50 hover:text-red-600 transition-all"
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -246,13 +244,13 @@ function NavbarContent() {
                 </Link>
 
                 {user.role === 'admin' && (
-                  <Link 
-                    href="/admin" 
+                  <Link
+                    href="/admin"
                     className="flex items-center gap-4 px-4 py-3 rounded-xl bg-neutral-50 text-neutral-700 font-bold hover:bg-blue-50 hover:text-blue-600 transition-all"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     <div className="w-8 h-8 rounded-full bg-white text-blue-500 shadow-sm flex items-center justify-center">
-                        <LayoutDashboard className="w-4 h-4" />
+                        <ShieldCheck className="w-4 h-4" />
                     </div>
                     Panel Admin
                   </Link>

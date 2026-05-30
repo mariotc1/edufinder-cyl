@@ -254,8 +254,8 @@ export default function TourTooltip({
           initial="initial"
           animate="animate"
           exit="exit"
-          className="fixed z-[201] inset-x-0 bottom-0 px-3 pb-3 pointer-events-auto"
-          style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
+          className="fixed z-[201] inset-x-0 px-3 pb-3 pointer-events-auto"
+          style={{ bottom: 'var(--bottom-nav-height)' }}
         >
           <div className="relative bg-white rounded-2xl shadow-2xl border border-neutral-200 overflow-hidden max-w-lg mx-auto">
             {/* Gradient top bar */}

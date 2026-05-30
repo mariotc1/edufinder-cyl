@@ -26,7 +26,7 @@ export default function ComparisonTray() {
                 animate={{ y: 0, opacity: 1, x: '-50%' }}
                 exit={{ y: 100, opacity: 0, x: '-50%' }}
                 transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                className="fixed bottom-4 sm:bottom-6 left-1/2 z-50 w-[calc(100%-2rem)] max-w-md"
+                className="fixed bottom-[5.5rem] md:bottom-6 left-1/2 z-50 w-[calc(100%-2rem)] max-w-md"
             >
                 {/* Expanded view - list of centers */}
                 <AnimatePresence>

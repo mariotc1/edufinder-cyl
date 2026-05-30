@@ -10,6 +10,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import LogoutConfirmationModal from '@/components/auth/LogoutConfirmationModal';
 import { AnimatePresence } from 'framer-motion';
 import { useOnboarding } from '@/context/OnboardingContext';
+import { useAuth } from '@/context/AuthContext';
 
 interface UserData {
     name: string;
@@ -38,6 +39,7 @@ export default function ProfileContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { restartTour } = useOnboarding();
+    const { logout: authLogout } = useAuth();
 
     const [name, setName] = useState('');
     const [passwordData, setPasswordData] = useState({ current: '', new: '', confirm: '' });
@@ -295,12 +297,10 @@ export default function ProfileContent() {
 
     const handleLogoutConfirm = async () => {
         setIsLoggingOut(true);
-        await api.post('/logout');
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        await authLogout(); // limpia AuthContext (setUser null) + localStorage + API call
         setIsLoggingOut(false);
         setShowLogoutModal(false);
-        router.push('/login');
+        window.location.href = '/login'; // hard redirect para limpiar estado React completamente
     };
 
     if (loading) return <div className="p-8 text-center">Cargando...</div>;

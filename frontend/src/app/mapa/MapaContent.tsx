@@ -100,7 +100,7 @@ export default function MapaContent() {
     }
 
     return (
-        <div className="h-[calc(100vh-80px)] w-full relative bg-neutral-100 overflow-hidden">
+        <div className="h-[calc(100dvh-var(--bottom-nav-height))] md:h-[calc(100vh-80px)] w-full relative bg-neutral-100 overflow-hidden">
             {/* Sidebar Controls */}
             <MapSidebar 
                 radius={radius} 
