@@ -68,9 +68,9 @@ export default function TourSpotlight({
 
     if (!isVisible) {
       isScrollingRef.current = true;
-      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Smooth scroll on desktop (polished UX); instant on mobile (browsers animate slowly)
+      element.scrollIntoView({ behavior: isMobile ? 'instant' : 'smooth', block: 'center' });
 
-      // After scroll animation completes, lock is released and rect recalculated
       setTimeout(() => {
         isScrollingRef.current = false;
         const newRect = element.getBoundingClientRect();
@@ -80,7 +80,7 @@ export default function TourSpotlight({
           width: newRect.width + padding * 2,
           height: newRect.height + padding * 2,
         });
-      }, 500);
+      }, isMobile ? 80 : 500);
       return;
     }
 
