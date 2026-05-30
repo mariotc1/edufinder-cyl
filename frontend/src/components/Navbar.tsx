@@ -18,7 +18,7 @@ import LogoutConfirmationModal from './auth/LogoutConfirmationModal';
 // Utiliza Suspense para cargar contenido dependiente del cliente (useSearchParams)
 export default function Navbar() {
   return (
-    <Suspense fallback={<nav className="fixed top-0 left-0 w-full z-[100] bg-white/95 h-20 border-b border-neutral-200" />}>
+    <Suspense fallback={<nav className="hidden md:block fixed top-0 left-0 w-full z-[100] bg-white/95 h-20 border-b border-neutral-200" />}>
       <NavbarContent />
     </Suspense>
   );
@@ -67,7 +67,7 @@ function NavbarContent() {
   const redirectParam = getRedirectUrl();
 
   return (
-    <nav className="fixed top-0 left-0 w-full z-[100] bg-white border-b border-neutral-200 shadow-sm">
+    <nav className="hidden md:block fixed top-0 left-0 w-full z-[100] bg-white border-b border-neutral-200 shadow-sm">
       {/* Decorative top gradient - matching other components */}
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300"></div>
 

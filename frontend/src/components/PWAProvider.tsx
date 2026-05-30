@@ -213,7 +213,7 @@ export default function PWAProvider({ children }: { children: React.ReactNode })
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 z-[100]"
+            className="fixed bottom-[5.5rem] md:bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 z-[100]"
           >
             <div className="bg-white rounded-2xl shadow-2xl border border-neutral-100 overflow-hidden">
               <div className="bg-gradient-to-r from-[#223945] to-blue-600 px-4 py-3 flex items-center gap-3">
@@ -290,7 +290,7 @@ export default function PWAProvider({ children }: { children: React.ReactNode })
             initial={{ y: 50, opacity: 0, scale: 0.9 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 50, opacity: 0, scale: 0.9 }}
-            className="fixed bottom-4 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-auto z-[100]"
+            className="fixed bottom-[5.5rem] md:bottom-4 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-auto z-[100]"
           >
             <div className="bg-green-600 text-white px-6 py-4 rounded-xl shadow-lg flex items-center gap-3">
               <CheckCircle className="w-6 h-6" />
