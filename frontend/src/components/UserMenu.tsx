@@ -51,17 +51,17 @@ export default function UserMenu() {
         `}
       >
         {user.foto_perfil ? (
-             <img 
-                src={user.foto_perfil} 
-                alt={user.name} 
-                className="w-9 h-9 rounded-full object-cover border-2 border-white shadow-sm group-hover:scale-105 transition-transform" 
+             <img
+                src={user.foto_perfil}
+                alt={user.name}
+                className="w-9 h-9 rounded-full object-cover border-2 border-white shadow-sm group-hover:scale-105 transition-transform"
              />
         ) : (
             <div className="w-9 h-9 bg-gradient-to-br from-[#223945] to-blue-600 text-white rounded-full flex items-center justify-center font-bold border-2 border-white shadow-sm group-hover:scale-105 transition-transform">
                 {user.name.charAt(0)}
             </div>
         )}
-        
+
         <div className="flex flex-col items-start text-left">
             <span className="text-sm font-bold text-[#223945] leading-tight group-hover:text-blue-900 transition-colors">
                 {user.name.split(' ')[0]}

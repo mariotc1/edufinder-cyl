@@ -45,13 +45,20 @@ export default function TourSpotlight({
     if (element) {
       const rect = element.getBoundingClientRect();
 
-      // On mobile, we need to leave space for the bottom sheet tooltip
-      // So we only highlight if the element is in the visible area
-      const bottomSheetHeight = isMobile ? 200 : 0;
+      // On mobile, leave space for both bottom nav and the tooltip sheet above it
+      const bottomSheetHeight = isMobile ? 280 : 0;
       const visibleHeight = window.innerHeight - bottomSheetHeight;
 
+      // Elements inside fixed containers (e.g. bottom nav tabs) are always "visible" — skip scroll logic
+      let el: Element | null = element;
+      let isInFixedContainer = false;
+      while (el) {
+        if (window.getComputedStyle(el).position === 'fixed') { isInFixedContainer = true; break; }
+        el = el.parentElement;
+      }
+
       // Check if element is reasonably visible
-      const isVisible = rect.top >= 0 && rect.top < visibleHeight;
+      const isVisible = isInFixedContainer || (rect.top >= 0 && rect.top < visibleHeight);
 
       if (!isVisible && isMobile) {
         // Try to scroll element into view

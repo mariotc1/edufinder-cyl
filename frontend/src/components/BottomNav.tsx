@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, MapPin, Heart, UserCircle2, LayoutDashboard, Download } from 'lucide-react';
+import { Home, MapPin, Heart, UserCircle2, Download, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useFavoritesAnimation } from '@/context/FavoritesAnimationContext';
 import { usePWA } from '@/components/PWAProvider';
@@ -86,7 +86,7 @@ export default function BottomNav() {
                 href="/admin"
                 label="Admin"
                 active={isActive('/admin')}
-                icon={<LayoutDashboard className="w-[22px] h-[22px]" />}
+                icon={<ShieldCheck className="w-[22px] h-[22px]" />}
               />
             )}
             {/* Profile tab con avatar */}
