@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface TourSpotlightProps {
@@ -23,78 +23,83 @@ export default function TourSpotlight({
 }: TourSpotlightProps) {
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const isScrollingRef = useRef(false);
 
-  // Detect mobile
   useEffect(() => {
     if (typeof window === 'undefined') return;
-
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
-
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   const updateTargetRect = useCallback(() => {
+    // While a scroll-into-view animation is in progress, don't interfere
+    if (isScrollingRef.current) return;
+
     if (!targetSelector) {
       setTargetRect(null);
       return;
     }
 
     const element = document.querySelector(targetSelector);
-    if (element) {
-      const rect = element.getBoundingClientRect();
-
-      // On mobile, leave space for both bottom nav and the tooltip sheet above it
-      const bottomSheetHeight = isMobile ? 280 : 0;
-      const visibleHeight = window.innerHeight - bottomSheetHeight;
-
-      // Elements inside fixed containers (e.g. bottom nav tabs) are always "visible" — skip scroll logic
-      let el: Element | null = element;
-      let isInFixedContainer = false;
-      while (el) {
-        if (window.getComputedStyle(el).position === 'fixed') { isInFixedContainer = true; break; }
-        el = el.parentElement;
-      }
-
-      // Check if element is reasonably visible
-      const isVisible = isInFixedContainer || (rect.top >= 0 && rect.top < visibleHeight);
-
-      if (!isVisible && isMobile) {
-        // Try to scroll element into view
-        element.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center',
-        });
-
-        // Recalculate after scroll
-        setTimeout(() => {
-          const newRect = element.getBoundingClientRect();
-          setTargetRect({
-            top: newRect.top - padding,
-            left: newRect.left - padding,
-            width: newRect.width + padding * 2,
-            height: newRect.height + padding * 2,
-          });
-        }, 400);
-        return;
-      }
-
-      setTargetRect({
-        top: rect.top - padding,
-        left: rect.left - padding,
-        width: rect.width + padding * 2,
-        height: rect.height + padding * 2,
-      });
-    } else {
+    if (!element) {
       setTargetRect(null);
+      return;
     }
+
+    const rect = element.getBoundingClientRect();
+
+    // Elements inside fixed containers (e.g. bottom nav tabs) are always "visible"
+    let el: Element | null = element;
+    let isInFixedContainer = false;
+    while (el) {
+      if (window.getComputedStyle(el).position === 'fixed') {
+        isInFixedContainer = true;
+        break;
+      }
+      el = el.parentElement;
+    }
+
+    // On mobile leave space for bottom nav + tooltip sheet above it
+    const bottomSheetHeight = isMobile ? 280 : 0;
+    const visibleHeight = window.innerHeight - bottomSheetHeight;
+    const isVisible = isInFixedContainer || (rect.top >= 0 && rect.top < visibleHeight);
+
+    if (!isVisible) {
+      isScrollingRef.current = true;
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      // After scroll animation completes, lock is released and rect recalculated
+      setTimeout(() => {
+        isScrollingRef.current = false;
+        const newRect = element.getBoundingClientRect();
+        setTargetRect({
+          top: newRect.top - padding,
+          left: newRect.left - padding,
+          width: newRect.width + padding * 2,
+          height: newRect.height + padding * 2,
+        });
+      }, 500);
+      return;
+    }
+
+    setTargetRect({
+      top: rect.top - padding,
+      left: rect.left - padding,
+      width: rect.width + padding * 2,
+      height: rect.height + padding * 2,
+    });
   }, [targetSelector, padding, isMobile]);
+
+  // Reset scroll guard when step changes
+  useEffect(() => {
+    isScrollingRef.current = false;
+  }, [targetSelector]);
 
   useEffect(() => {
     if (!isActive) return;
 
-    // Initial calculation after DOM is ready
     const timer = setTimeout(updateTargetRect, 150);
 
     const handleResize = () => updateTargetRect();
@@ -103,14 +108,9 @@ export default function TourSpotlight({
     window.addEventListener('resize', handleResize);
     window.addEventListener('scroll', handleScroll, true);
 
-    // ResizeObserver for dynamic content
     const resizeObserver = new ResizeObserver(updateTargetRect);
-    if (targetSelector) {
-      const element = document.querySelector(targetSelector);
-      if (element) {
-        resizeObserver.observe(element);
-      }
-    }
+    const element = targetSelector ? document.querySelector(targetSelector) : null;
+    if (element) resizeObserver.observe(element);
 
     return () => {
       clearTimeout(timer);
@@ -122,7 +122,6 @@ export default function TourSpotlight({
 
   if (!isActive) return null;
 
-  // For center placement (welcome step) or no target
   const showFullOverlay = !targetSelector;
 
   return (
@@ -136,10 +135,8 @@ export default function TourSpotlight({
         aria-hidden="true"
       >
         {showFullOverlay ? (
-          // Simple dark overlay for centered modals
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
         ) : targetRect ? (
-          // SVG mask with cutout for spotlight effect
           <>
             <svg
               className="absolute inset-0 w-full h-full"
@@ -160,7 +157,6 @@ export default function TourSpotlight({
                   />
                 </mask>
               </defs>
-
               <rect
                 x="0"
                 y="0"
@@ -171,7 +167,6 @@ export default function TourSpotlight({
               />
             </svg>
 
-            {/* Glowing border around target */}
             <motion.div
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -193,16 +188,11 @@ export default function TourSpotlight({
                     '0 0 0 2px rgba(59, 130, 246, 0.6), 0 0 15px 3px rgba(59, 130, 246, 0.3)',
                   ],
                 }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
               />
             </motion.div>
           </>
         ) : (
-          // Fallback dark overlay if element not found
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
         )}
       </motion.div>
