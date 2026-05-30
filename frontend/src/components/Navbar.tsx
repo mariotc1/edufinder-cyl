@@ -221,7 +221,6 @@ function NavbarContent() {
 
             <Link
               href="/mapa"
-              data-tour="map-mobile"
               className="flex items-center gap-4 px-4 py-3 rounded-xl bg-neutral-50 text-neutral-700 font-bold hover:bg-blue-50 hover:text-blue-700 transition-all"
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -235,7 +234,6 @@ function NavbarContent() {
               <>
                 <Link
                   href="/favoritos"
-                  data-tour="favorites-mobile"
                   className="flex items-center gap-4 px-4 py-3 rounded-xl bg-neutral-50 text-neutral-700 font-bold hover:bg-red-50 hover:text-red-600 transition-all"
                   onClick={() => setMobileMenuOpen(false)}
                 >

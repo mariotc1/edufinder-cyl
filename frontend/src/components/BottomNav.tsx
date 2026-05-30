@@ -141,7 +141,6 @@ function Tab({
   return (
     <Link
       href={href}
-      data-tour={dataTour}
       className="flex-1 flex flex-col items-center justify-center gap-1 relative select-none"
     >
       {/* Indicador activo — barra en la parte superior */}
@@ -158,24 +157,26 @@ function Tab({
         )}
       </AnimatePresence>
 
-      {/* Icono con escala animada al pulsar */}
-      <motion.div
-        animate={pulse ? { scale: [1, 1.3, 1] } : active ? { scale: [1, 1.08, 1] } : {}}
-        transition={{ duration: 0.25 }}
-        className={`transition-colors duration-200 ${
-          active ? 'text-[#223945]' : 'text-neutral-400'
-        }`}
-      >
-        {icon}
-      </motion.div>
+      {/* Contenido: icono + label — data-tour aquí para spotlight ajustado */}
+      <div data-tour={dataTour} className="flex flex-col items-center gap-1">
+        <motion.div
+          animate={pulse ? { scale: [1, 1.3, 1] } : active ? { scale: [1, 1.08, 1] } : {}}
+          transition={{ duration: 0.25 }}
+          className={`transition-colors duration-200 ${
+            active ? 'text-[#223945]' : 'text-neutral-400'
+          }`}
+        >
+          {icon}
+        </motion.div>
 
-      <span
-        className={`text-[10px] leading-none transition-all duration-200 ${
-          active ? 'font-bold text-[#223945]' : 'font-medium text-neutral-400'
-        }`}
-      >
-        {label}
-      </span>
+        <span
+          className={`text-[10px] leading-none transition-all duration-200 ${
+            active ? 'font-bold text-[#223945]' : 'font-medium text-neutral-400'
+          }`}
+        >
+          {label}
+        </span>
+      </div>
     </Link>
   );
 }
