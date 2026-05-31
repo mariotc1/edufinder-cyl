@@ -47,7 +47,7 @@ export default function LoginContent() {
                 {/* Back Link - Breadcrumb style */}
                 <Link
                     href="/"
-                    className="inline-flex items-center gap-2 text-neutral-500 hover:text-[#223945] font-bold mb-6 transition-colors text-sm uppercase tracking-wide group"
+                    className="hidden md:inline-flex items-center gap-2 text-neutral-500 hover:text-[#223945] font-bold mb-6 transition-colors text-sm uppercase tracking-wide group"
                 >
                     <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                     Volver al inicio

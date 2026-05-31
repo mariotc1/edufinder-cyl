@@ -43,9 +43,9 @@ export default function ForgotPassword() {
         <div className="min-h-screen bg-brand-gradient flex flex-col items-center justify-start p-4 pt-12 md:pt-16">
             <div className="w-full max-w-md">
                 {/* Back Link */}
-                <Link 
-                    href="/login" 
-                    className="inline-flex items-center gap-2 text-neutral-500 hover:text-[#223945] font-bold mb-6 transition-colors text-sm uppercase tracking-wide group"
+                <Link
+                    href="/login"
+                    className="hidden md:inline-flex items-center gap-2 text-neutral-500 hover:text-[#223945] font-bold mb-6 transition-colors text-sm uppercase tracking-wide group"
                 >
                     <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                     Volver al login

@@ -423,7 +423,7 @@ function ComparadorPage() {
     return (
         <div className="min-h-screen bg-brand-gradient pt-20 pb-12 px-4 sm:px-6">
             <div className="max-w-7xl mx-auto"> 
-                <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-neutral-500 hover:text-[#223945] mb-8 font-bold transition-colors text-sm uppercase tracking-wide group">
+                <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-neutral-500 hover:text-[#223945] mb-8 font-semibold transition-colors text-sm md:font-bold md:uppercase md:tracking-wide group">
                     <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
                     Volver
                 </button>
