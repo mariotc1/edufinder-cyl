@@ -100,7 +100,27 @@ export default function MapaContent() {
     }
 
     return (
-        <div className="h-[calc(100dvh-var(--bottom-nav-height))] md:h-[calc(100vh-80px)] w-full relative bg-neutral-100 overflow-hidden">
+        <div className="h-[calc(100dvh-var(--bottom-nav-height)-var(--mobile-header-height))] md:h-[calc(100vh-80px)] w-full relative bg-neutral-100 overflow-hidden">
+
+            {/* Initial load overlay — shown while fetching all centers for the first time */}
+            {isLoading && !data && (
+                <div className="absolute inset-0 z-[500] bg-neutral-100 flex flex-col items-center justify-center gap-4">
+                    <div className="w-14 h-14 border-4 border-[#223945]/20 border-t-[#223945] rounded-full animate-spin" />
+                    <div className="text-center px-8">
+                        <p className="font-bold text-[#223945] text-base">Cargando el mapa</p>
+                        <p className="text-neutral-500 text-sm mt-1.5">Preparando más de 2.400 centros educativos</p>
+                    </div>
+                </div>
+            )}
+
+            {/* Filter update pill — shown while reloading with existing data visible */}
+            {isLoading && data && (
+                <div className="absolute top-3 right-3 z-[500] bg-white/95 shadow-md rounded-full px-3 py-1.5 flex items-center gap-2 pointer-events-none">
+                    <div className="w-3.5 h-3.5 border-2 border-[#223945]/30 border-t-[#223945] rounded-full animate-spin" />
+                    <span className="text-xs font-bold text-[#223945]">Actualizando...</span>
+                </div>
+            )}
+
             {/* Sidebar Controls */}
             <MapSidebar 
                 radius={radius} 

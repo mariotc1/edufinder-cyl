@@ -6,7 +6,7 @@ import MapaContent from './MapaContent';
 export default function MapaPage() {
     return (
         <Suspense fallback={
-            <div className="h-[calc(100dvh-var(--bottom-nav-height))] md:h-[calc(100vh-80px)] w-full flex items-center justify-center bg-neutral-100">
+            <div className="h-[calc(100dvh-var(--bottom-nav-height)-var(--mobile-header-height))] md:h-[calc(100vh-80px)] w-full flex items-center justify-center bg-neutral-100">
                 <div className="flex flex-col items-center gap-4">
                     <div className="w-12 h-12 border-4 border-[#223945]/20 border-t-[#223945] rounded-full animate-spin"></div>
                     <p className="font-bold text-[#223945] animate-pulse">Cargando Mapa...</p>
