@@ -407,9 +407,9 @@ export default function CentroDetailContent() {
                 {/* Back Button */}
                 <button
                     onClick={() => router.back()}
-                    className="inline-flex items-center gap-2 text-neutral-500 hover:text-[#223945] font-bold mb-8 transition-colors text-sm uppercase tracking-wide cursor-pointer"
+                    className="inline-flex items-center gap-2 text-neutral-500 hover:text-[#223945] font-semibold mb-8 transition-colors text-sm md:font-bold md:uppercase md:tracking-wide cursor-pointer group"
                 >
-                    <ChevronLeft className="w-4 h-4" />
+                    <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
                     Volver
                 </button>
 

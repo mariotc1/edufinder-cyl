@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import useSWR from 'swr';
 import { useSearchParams } from 'next/navigation';
 import { School, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
@@ -15,11 +15,37 @@ import AIWizardModal from '@/components/ai-wizard/AIWizardModal';
 import AIWizardTriggerButton from '@/components/ai-wizard/AIWizardTriggerButton';
 import { motion } from 'framer-motion';
 
+// ─── Session persistence helpers ────────────────────────────────────────────
+// Stores search state across SPA navigations (BottomNav, internal links).
+// URL params always take priority (bookmarks / shared links).
+const SESSION_KEY = 'home-search-state';
+
+type SessionState = { filters: FilterOptions; page: number; scrollY: number };
+
+function saveSession(partial: Partial<SessionState>) {
+  try {
+    const prev: Partial<SessionState> = JSON.parse(sessionStorage.getItem(SESSION_KEY) || '{}');
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ ...prev, ...partial }));
+  } catch {}
+}
+
+function readSession(): SessionState | null {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+// ────────────────────────────────────────────────────────────────────────────
+
 export default function SearchContent() {
   const searchParams = useSearchParams();
   const [isWizardOpen, setIsWizardOpen] = useState(false);
+  const scrollRestored = useRef(false);
 
-  const [filters, setFilters] = useState<FilterOptions>({
+  // Collect URL params — these take priority over session state
+  const urlFilters: FilterOptions = {
     q: searchParams.get('q') || '',
     provincia: searchParams.get('provincia') || '',
     tipo: searchParams.get('tipo') || '',
@@ -30,9 +56,33 @@ export default function SearchContent() {
     radio: searchParams.get('radio') ? Number(searchParams.get('radio')) : undefined,
     lat: searchParams.get('lat') ? Number(searchParams.get('lat')) : undefined,
     lng: searchParams.get('lng') ? Number(searchParams.get('lng')) : undefined,
+  };
+  const urlPage = searchParams.get('page') ? Number(searchParams.get('page')) : null;
+  const hasUrlParams =
+    Object.values(urlFilters).some(v => v !== '' && v !== undefined) || urlPage !== null;
+
+  // Initialize from URL params (priority) → sessionStorage (fallback) → defaults
+  const [filters, setFilters] = useState<FilterOptions>(() => {
+    if (hasUrlParams) return urlFilters;
+    return readSession()?.filters ?? urlFilters;
   });
 
-  const [page, setPage] = useState(searchParams.get('page') ? Number(searchParams.get('page')) : 1);
+  const [page, setPage] = useState<number>(() => {
+    if (urlPage !== null) return urlPage;
+    return readSession()?.page ?? 1;
+  });
+
+  // Persist filters + page to sessionStorage on every change
+  useEffect(() => {
+    saveSession({ filters, page });
+  }, [filters, page]);
+
+  // Save exact scroll position when navigating away (component unmounts)
+  useEffect(() => {
+    return () => {
+      saveSession({ scrollY: window.scrollY });
+    };
+  }, []);
 
   const swrKey = JSON.stringify({ ...filters, page });
 
@@ -41,10 +91,23 @@ export default function SearchContent() {
     revalidateOnFocus: false
   });
 
+  // Restore scroll position after the first data load on this mount
+  useEffect(() => {
+    if (!isLoading && data && !scrollRestored.current) {
+      const saved = readSession();
+      if (saved?.scrollY && saved.scrollY > 100) {
+        scrollRestored.current = true;
+        requestAnimationFrame(() => {
+          window.scrollTo({ top: saved.scrollY, behavior: 'instant' });
+        });
+      }
+    }
+  }, [isLoading, data]);
+
   const { data: favoritesData } = useSWR('/favoritos', async (url) => {
     return (await import('@/lib/axios')).default.get(url).then(res => res.data);
   }, {
-    shouldRetryOnError: false, 
+    shouldRetryOnError: false,
     errorRetryCount: 0
   });
 
@@ -85,7 +148,7 @@ export default function SearchContent() {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative py-20 px-4 sm:px-6 lg:px-8">
+      <section className="relative pt-6 pb-20 md:py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto relative z-50">
           <div className="text-center mb-12">
             <h1 className="text-5xl sm:text-6xl lg:text-7xl mb-3 tracking-tight font-bold flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
@@ -105,7 +168,7 @@ export default function SearchContent() {
 
           {/* Filter Bar Component */}
           <div className="max-w-[1050px] mx-auto">
-            <FilterBar onFilterChange={handleFilterChange} isLoading={isLoading} page={page} />
+            <FilterBar onFilterChange={handleFilterChange} isLoading={isLoading} page={page} initialFilters={filters} />
           </div>
         </div>
       </section>

@@ -141,10 +141,12 @@ function HomeTab({ active }: { active: boolean }) {
   const content = (
     <>
       {active && <ActiveBar />}
-      <Home className={`w-[22px] h-[22px] transition-colors duration-200 ${active ? 'text-[#223945]' : 'text-neutral-400'}`} />
-      <span className={`text-[10px] leading-none transition-colors duration-200 ${active ? 'font-bold text-[#223945]' : 'font-medium text-neutral-400'}`}>
-        Inicio
-      </span>
+      <div className="flex flex-col items-center gap-1">
+        <Home className={`w-[22px] h-[22px] transition-colors duration-200 ${active ? 'text-[#223945]' : 'text-neutral-400'}`} />
+        <span className={`text-[10px] leading-none transition-colors duration-200 ${active ? 'font-bold text-[#223945]' : 'font-medium text-neutral-400'}`}>
+          Inicio
+        </span>
+      </div>
     </>
   );
 
@@ -197,21 +199,23 @@ function ProfileTab({ href, label, active, name, avatar }: {
   const content = (
     <>
       {active && <ActiveBar />}
-      {avatar && !imgError ? (
-        <img
-          src={avatar}
-          alt={name}
-          className={`w-6 h-6 rounded-full object-cover transition-all duration-200 ${active ? 'ring-2 ring-[#223945] ring-offset-[1.5px]' : 'ring-1 ring-neutral-200'}`}
-          onError={() => setImgError(true)}
-        />
-      ) : (
-        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold transition-all duration-200 ${active ? 'bg-[#223945] text-white' : 'bg-neutral-200 text-neutral-500'}`}>
-          {name.charAt(0).toUpperCase()}
-        </div>
-      )}
-      <span className={`text-[10px] leading-none transition-colors duration-200 ${active ? 'font-bold text-[#223945]' : 'font-medium text-neutral-400'}`}>
-        {label}
-      </span>
+      <div className="flex flex-col items-center gap-1">
+        {avatar && !imgError ? (
+          <img
+            src={avatar}
+            alt={name}
+            className={`w-[22px] h-[22px] rounded-full object-cover transition-all duration-200 ${active ? 'ring-2 ring-[#223945] ring-offset-[1.5px]' : 'ring-1 ring-neutral-200'}`}
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          <div className={`w-[22px] h-[22px] rounded-full flex items-center justify-center text-[11px] font-bold transition-all duration-200 ${active ? 'bg-[#223945] text-white' : 'bg-neutral-200 text-neutral-500'}`}>
+            {name.charAt(0).toUpperCase()}
+          </div>
+        )}
+        <span className={`text-[10px] leading-none transition-colors duration-200 ${active ? 'font-bold text-[#223945]' : 'font-medium text-neutral-400'}`}>
+          {label}
+        </span>
+      </div>
     </>
   );
 
@@ -230,10 +234,12 @@ function AccountTab({ active }: { active: boolean }) {
   return (
     <Link href="/login" style={TAB_STYLE} className={BASE_CLASS}>
       {active && <ActiveBar />}
-      <UserCircle2 className={`w-[22px] h-[22px] transition-colors duration-200 ${active ? 'text-[#223945]' : 'text-neutral-400'}`} />
-      <span className={`text-[10px] leading-none transition-colors duration-200 ${active ? 'font-bold text-[#223945]' : 'font-medium text-neutral-400'}`}>
-        Acceder
-      </span>
+      <div className="flex flex-col items-center gap-1">
+        <UserCircle2 className={`w-[22px] h-[22px] transition-colors duration-200 ${active ? 'text-[#223945]' : 'text-neutral-400'}`} />
+        <span className={`text-[10px] leading-none transition-colors duration-200 ${active ? 'font-bold text-[#223945]' : 'font-medium text-neutral-400'}`}>
+          Acceder
+        </span>
+      </div>
     </Link>
   );
 }

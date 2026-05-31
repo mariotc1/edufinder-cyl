@@ -9,5 +9,9 @@ export default function ConditionalFooter() {
 
     if (isMapPage) return null;
 
-    return <Footer />;
+    return (
+        <div className="hidden md:block">
+            <Footer />
+        </div>
+    );
 }

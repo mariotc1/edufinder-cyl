@@ -16,34 +16,50 @@ interface FilterBarProps {
   onFilterChange: (filters: FilterOptions) => void;
   isLoading: boolean;
   page?: number;
+  initialFilters?: FilterOptions;
 }
 
 // COMPONENTE DE BARRA DE FILTROS AVANZADA
 // Gestiona el estado de los filtros, autocompletado y geolocalización
-export default function FilterBar({ onFilterChange, isLoading, page = 1 }: FilterBarProps) {
+export default function FilterBar({ onFilterChange, isLoading, page = 1, initialFilters }: FilterBarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { user, openLoginModal } = useAuth();
 
-  // Estado inicial de filtros: sincronizado con URL Params para persistencia
-  const [filters, setFilters] = useState<FilterOptions>({
-    q: searchParams.get('q') || '',
-    provincia: searchParams.get('provincia') || '',
-    tipo: searchParams.get('tipo') || '',
-    naturaleza: searchParams.get('naturaleza') || '',
-    familia: searchParams.get('familia') || '',
-    ciclo: searchParams.get('ciclo') || '',
-    nivel: searchParams.get('nivel') || '',
-    modalidad: searchParams.get('modalidad') || '',
-    radio: Number(searchParams.get('radio')) || 10,
-    lat: searchParams.get('lat') ? Number(searchParams.get('lat')) : undefined,
-    lng: searchParams.get('lng') ? Number(searchParams.get('lng')) : undefined,
-    locationName: searchParams.get('locationName') || '',
+  // Estado inicial: initialFilters (sessionStorage vía SearchContent) > URL params > defaults
+  const [filters, setFilters] = useState<FilterOptions>(() => {
+    if (initialFilters && Object.values(initialFilters).some(v => v !== '' && v !== undefined)) {
+      return { radio: 10, ...initialFilters };
+    }
+    return {
+      q: searchParams.get('q') || '',
+      provincia: searchParams.get('provincia') || '',
+      tipo: searchParams.get('tipo') || '',
+      naturaleza: searchParams.get('naturaleza') || '',
+      familia: searchParams.get('familia') || '',
+      ciclo: searchParams.get('ciclo') || '',
+      nivel: searchParams.get('nivel') || '',
+      modalidad: searchParams.get('modalidad') || '',
+      radio: Number(searchParams.get('radio')) || 10,
+      lat: searchParams.get('lat') ? Number(searchParams.get('lat')) : undefined,
+      lng: searchParams.get('lng') ? Number(searchParams.get('lng')) : undefined,
+      locationName: searchParams.get('locationName') || '',
+    };
   });
 
-  const [geolocationStatus, setGeolocationStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [isUsingMyLocation, setIsUsingMyLocation] = useState(false);
+  const [geolocationStatus, setGeolocationStatus] = useState<'idle' | 'loading' | 'success' | 'error'>(() => {
+    const hasLocation =
+      (initialFilters?.lat && initialFilters?.lng) ||
+      (searchParams.get('lat') && searchParams.get('lng'));
+    return hasLocation ? 'success' : 'idle';
+  });
+
+  const [isUsingMyLocation, setIsUsingMyLocation] = useState(() => {
+    if (initialFilters?.lat && initialFilters?.lng) return !initialFilters.locationName;
+    if (searchParams.get('lat') && searchParams.get('lng')) return !searchParams.get('locationName');
+    return false;
+  });
   const [copied, setCopied] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const shareMenuRef = useRef<HTMLDivElement>(null);

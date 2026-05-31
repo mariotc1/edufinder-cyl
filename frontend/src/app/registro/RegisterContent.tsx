@@ -2,57 +2,49 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import api from '@/lib/axios';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import { UserPlus, User, Mail, Lock, Eye, EyeOff, Loader2, ChevronLeft, CheckCircle, XCircle } from 'lucide-react';
+import { UserPlus, User, Mail, Lock, Eye, EyeOff, Loader2, ChevronLeft, CheckCircle } from 'lucide-react';
+
+const GOOGLE_URL = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/auth/google/redirect`;
+const GITHUB_URL = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/auth/github/redirect`;
 
 export default function RegisterContent() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [passwordConfirmation, setPasswordConfirmation] = useState('');
-
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-
-    // Honeypot: token de tiempo para detectar bots (envío instantáneo)
     const [formToken, setFormToken] = useState('');
 
     const { login } = useAuth();
     const router = useRouter();
 
-    // Generar token de tiempo al montar el componente
     useEffect(() => {
         const timestamp = Math.floor(Date.now() / 1000);
         setFormToken(btoa(timestamp.toString()));
     }, []);
 
-
-    const passwordRequirements = useMemo(() => {
-        return [
-            { text: "Mínimo 8 caracteres", met: password.length >= 8 },
-            { text: "Al menos una mayúscula", met: /[A-Z]/.test(password) },
-            { text: "Al menos un número", met: /[0-9]/.test(password) },
-            { text: "Coinciden", met: password && password === passwordConfirmation },
-        ];
-    }, [password, passwordConfirmation]);
+    const passwordRequirements = useMemo(() => [
+        { text: '8 caracteres', met: password.length >= 8 },
+        { text: 'Mayúscula', met: /[A-Z]/.test(password) },
+        { text: 'Número', met: /[0-9]/.test(password) },
+        { text: 'Coinciden', met: password.length > 0 && password === passwordConfirmation },
+    ], [password, passwordConfirmation]);
 
     const isPasswordValid = passwordRequirements.every(req => req.met) && password.length > 0;
-
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (isLoading) return;
-        
         if (!isPasswordValid) {
             setError('Por favor cumple todos los requisitos de la contraseña');
             return;
         }
-
         setError('');
         setIsLoading(true);
         try {
@@ -61,19 +53,15 @@ export default function RegisterContent() {
                 email,
                 password,
                 password_confirmation: passwordConfirmation,
-                // Honeypot: token de tiempo para verificar que no es un bot
                 _form_token: formToken,
             });
-
             login(res.data.user, res.data.access_token);
             router.push('/');
-
         } catch (err: any) {
-            console.error('Registration error:', err);
-            const msg = err.response?.data?.message 
-                || err.response?.data?.error 
+            const msg = err.response?.data?.message
+                || err.response?.data?.error
                 || JSON.stringify(err.response?.data)
-                || err.message 
+                || err.message
                 || 'Error al registrar usuario';
             setError(msg);
             setIsLoading(false);
@@ -81,65 +69,51 @@ export default function RegisterContent() {
     };
 
     return (
-        <div className="min-h-screen bg-brand-gradient flex flex-col items-center justify-start p-4 pt-12 md:pt-16">
-            <div className="w-full max-w-lg">
+        <div className="min-h-screen bg-brand-gradient flex flex-col items-center justify-start p-4 pt-6 md:pt-16">
+            <div className="w-full max-w-sm md:max-w-lg">
                 <Link
                     href="/"
-                    className="inline-flex items-center gap-2 text-neutral-500 hover:text-[#223945] font-bold mb-6 transition-colors text-sm uppercase tracking-wide group"
+                    className="hidden md:inline-flex items-center gap-2 text-neutral-500 hover:text-[#223945] font-bold mb-6 transition-colors text-sm uppercase tracking-wide group"
                 >
                     <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                     Volver
                 </Link>
 
-                <div className="relative bg-white/90 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/50 overflow-hidden p-8">
-                     {/* Decorative Top Gradient */}
-                     <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300"></div>
+                <div className="relative bg-white/90 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/50 overflow-hidden p-5 md:p-8">
+                    <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300" />
 
-                    <div className="text-center mb-8">
-                        <div className="mb-6 relative inline-block">
-                            <div className="absolute inset-0 bg-blue-400 rounded-full blur-xl opacity-20 animate-pulse"></div>
-                            <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-white border border-neutral-100 shadow-md">
+                    {/* Honeypot - invisible to users */}
+                    <div className="absolute -left-[9999px] opacity-0 h-0 w-0 overflow-hidden" aria-hidden="true">
+                        <input type="text" id="website" name="website" tabIndex={-1} autoComplete="off" />
+                        <input type="text" id="company_url" name="company_url" tabIndex={-1} autoComplete="off" />
+                    </div>
+
+                    <div className="text-center mb-4 md:mb-8">
+                        {/* Icon — desktop only */}
+                        <div className="hidden md:block mb-6 relative">
+                            <div className="absolute inset-0 bg-blue-400 rounded-full blur-xl opacity-20 animate-pulse" />
+                            <div className="relative mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-white border border-neutral-100 shadow-md">
                                 <UserPlus className="w-8 h-8 text-[#223945]" />
                             </div>
                         </div>
 
-                        <h2 className="text-3xl font-bold text-[#223945] mb-2 tracking-tight">
+                        <h2 className="text-xl md:text-3xl font-bold text-[#223945] mb-1 md:mb-2 tracking-tight">
                             Crear Cuenta
                         </h2>
-                        <p className="text-neutral-500 font-medium">
+                        <p className="text-neutral-500 text-sm font-medium">
                             Únete a EduFinder CYL totalmente gratis
                         </p>
                     </div>
 
                     {error && (
-                         <div className="bg-red-50 border border-red-100 text-red-600 p-4 rounded-xl mb-6 text-sm font-medium flex items-center justify-center gap-2 animate-in fade-in slide-in-from-top-2">
+                        <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl mb-4 text-sm font-medium flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
                             <div className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
                             {error}
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-5">
-                        {/* Honeypot fields - invisibles para usuarios, bots los rellenan */}
-                        <div className="absolute -left-[9999px] opacity-0 h-0 w-0 overflow-hidden" aria-hidden="true">
-                            <label htmlFor="website">Website</label>
-                            <input
-                                type="text"
-                                id="website"
-                                name="website"
-                                tabIndex={-1}
-                                autoComplete="off"
-                            />
-                            <label htmlFor="company_url">Company URL</label>
-                            <input
-                                type="text"
-                                id="company_url"
-                                name="company_url"
-                                tabIndex={-1}
-                                autoComplete="off"
-                            />
-                        </div>
-
-                       <div className="space-y-2">
+                    <form onSubmit={handleSubmit} className="space-y-3 md:space-y-5">
+                        <div className="space-y-1.5">
                             <label className="flex items-center gap-2 text-xs font-bold text-[#223945] uppercase tracking-wider ml-1">
                                 <User className="w-3.5 h-3.5" />
                                 Nombre Completo
@@ -155,8 +129,8 @@ export default function RegisterContent() {
                             />
                         </div>
 
-                        <div className="space-y-2">
-                             <label className="flex items-center gap-2 text-xs font-bold text-[#223945] uppercase tracking-wider ml-1">
+                        <div className="space-y-1.5">
+                            <label className="flex items-center gap-2 text-xs font-bold text-[#223945] uppercase tracking-wider ml-1">
                                 <Mail className="w-3.5 h-3.5" />
                                 Correo electrónico
                             </label>
@@ -171,17 +145,18 @@ export default function RegisterContent() {
                             />
                         </div>
 
-                        <div className="grid md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
+                        {/* Password fields — 2 columns always to save vertical space */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
                                 <label className="flex items-center gap-2 text-xs font-bold text-[#223945] uppercase tracking-wider ml-1">
                                     <Lock className="w-3.5 h-3.5" />
                                     Contraseña
                                 </label>
                                 <div className="relative">
                                     <input
-                                        type={showPassword ? "text" : "password"}
+                                        type={showPassword ? 'text' : 'password'}
                                         required
-                                        className="w-full px-4 py-3 rounded-xl bg-neutral-50 border-2 border-transparent focus:bg-white focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 outline-none transition-all font-medium text-neutral-700 placeholder:text-neutral-400 pr-10"
+                                        className="w-full px-3 py-3 rounded-xl bg-neutral-50 border-2 border-transparent focus:bg-white focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 outline-none transition-all font-medium text-neutral-700 pr-8"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         disabled={isLoading}
@@ -189,24 +164,24 @@ export default function RegisterContent() {
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-[#223945] transition-colors"
+                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-[#223945] transition-colors"
                                         disabled={isLoading}
                                     >
-                                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                        {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                                     </button>
                                 </div>
                             </div>
 
-                            <div className="space-y-2">
+                            <div className="space-y-1.5">
                                 <label className="flex items-center gap-2 text-xs font-bold text-[#223945] uppercase tracking-wider ml-1">
                                     <Lock className="w-3.5 h-3.5" />
                                     Confirmar
                                 </label>
                                 <div className="relative">
                                     <input
-                                        type={showConfirmPassword ? "text" : "password"}
+                                        type={showConfirmPassword ? 'text' : 'password'}
                                         required
-                                        className="w-full px-4 py-3 rounded-xl bg-neutral-50 border-2 border-transparent focus:bg-white focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 outline-none transition-all font-medium text-neutral-700 placeholder:text-neutral-400 pr-10"
+                                        className="w-full px-3 py-3 rounded-xl bg-neutral-50 border-2 border-transparent focus:bg-white focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 outline-none transition-all font-medium text-neutral-700 pr-8"
                                         value={passwordConfirmation}
                                         onChange={(e) => setPasswordConfirmation(e.target.value)}
                                         disabled={isLoading}
@@ -214,43 +189,48 @@ export default function RegisterContent() {
                                     <button
                                         type="button"
                                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-[#223945] transition-colors"
+                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-[#223945] transition-colors"
                                         disabled={isLoading}
                                     >
-                                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                        {showConfirmPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                                     </button>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Password Requirements Indicator */}
-                        <div className="bg-neutral-50 p-4 rounded-xl border border-neutral-100 grid grid-cols-2 gap-x-4 gap-y-2">
-                            {passwordRequirements.map((req, idx) => (
-                                <div key={idx} className={`flex items-center gap-2 text-xs font-bold transition-colors ${req.met ? 'text-green-600' : 'text-neutral-400'}`}>
-                                    {req.met ? <CheckCircle className="w-3.5 h-3.5" /> : <div className="w-3.5 h-3.5 rounded-full border-2 border-neutral-300" />}
-                                    {req.text}
-                                </div>
-                            ))}
-                        </div>
+                        {/* Requirements — appear only once user starts typing */}
+                        {password.length > 0 && (
+                            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 px-1">
+                                {passwordRequirements.map((req, idx) => (
+                                    <div key={idx} className={`flex items-center gap-1.5 text-xs font-bold transition-colors ${req.met ? 'text-green-600' : 'text-neutral-400'}`}>
+                                        {req.met
+                                            ? <CheckCircle className="w-3.5 h-3.5 shrink-0" />
+                                            : <div className="w-3.5 h-3.5 rounded-full border-2 border-neutral-300 shrink-0" />
+                                        }
+                                        {req.text}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
 
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className={`w-full bg-[#223945] text-white px-8 py-3.5 rounded-xl font-bold shadow-lg shadow-[#223945]/20 hover:shadow-[#223945]/40 hover:-translate-y-0.5 transition-all text-sm uppercase tracking-wide flex items-center justify-center gap-2 group ${isLoading ? 'opacity-80 cursor-wait transform-none' : ''}`}
+                            className={`w-full bg-[#223945] text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-[#223945]/20 hover:shadow-[#223945]/40 hover:-translate-y-0.5 transition-all text-sm uppercase tracking-wide flex items-center justify-center gap-2 group ${isLoading ? 'opacity-80 cursor-wait transform-none' : ''}`}
                         >
-                             {isLoading ? (
+                            {isLoading ? (
                                 <>
-                                    <Loader2 className="w-5 h-5 animate-spin" />
-                                    <span>Creando cuenta...</span>
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    Creando cuenta...
                                 </>
                             ) : (
                                 <span className="group-hover:translate-x-0.5 transition-transform">Crear Cuenta</span>
                             )}
                         </button>
 
-                        <div className="relative my-6">
+                        <div className="relative my-3 md:my-6">
                             <div className="absolute inset-0 flex items-center">
-                                <div className="w-full border-t border-neutral-200"></div>
+                                <div className="w-full border-t border-neutral-200" />
                             </div>
                             <div className="relative flex justify-center text-xs uppercase">
                                 <span className="bg-white px-2 text-neutral-400 font-bold tracking-wider">O regístrate con</span>
@@ -258,11 +238,11 @@ export default function RegisterContent() {
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">
-                            <a 
-                                href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/auth/google/redirect`}
+                            <a
+                                href={GOOGLE_URL}
                                 className="flex items-center justify-center gap-2 bg-white border border-neutral-200 text-neutral-700 py-2.5 rounded-xl hover:bg-neutral-50 hover:border-neutral-300 transition-all font-bold text-sm shadow-sm"
                             >
-                                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                                <svg className="w-4 h-4" viewBox="0 0 24 24">
                                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
                                     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
                                     <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
@@ -270,26 +250,22 @@ export default function RegisterContent() {
                                 </svg>
                                 Google
                             </a>
-
-                            <a 
-                                href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/auth/github/redirect`}
-                                className="flex items-center justify-center gap-2 bg-[#24292e] text-white py-2.5 rounded-xl hover:bg-[#000000] transition-all font-bold text-sm shadow-sm"
+                            <a
+                                href={GITHUB_URL}
+                                className="flex items-center justify-center gap-2 bg-[#24292e] text-white py-2.5 rounded-xl hover:bg-black transition-all font-bold text-sm shadow-sm"
                             >
-                                <svg className="w-5 h-5 fill-current" viewBox="0 0 16 16">
-                                    <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+                                <svg className="w-4 h-4 fill-current" viewBox="0 0 16 16">
+                                    <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
                                 </svg>
                                 GitHub
                             </a>
                         </div>
                     </form>
 
-                    <div className="mt-8 text-center pt-6 border-t border-neutral-100">
+                    <div className="mt-4 pt-4 md:mt-8 md:pt-6 text-center border-t border-neutral-100">
                         <p className="text-sm text-neutral-600 font-medium">
                             ¿Ya tienes cuenta?{' '}
-                            <Link
-                                href="/login"
-                                className="text-[#223945] hover:text-black font-bold hover:underline decoration-2 underline-offset-4 transition-all"
-                            >
+                            <Link href="/login" className="text-[#223945] hover:text-black font-bold hover:underline decoration-2 underline-offset-4 transition-all">
                                 Inicia Sesión
                             </Link>
                         </p>
