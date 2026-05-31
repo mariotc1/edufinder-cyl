@@ -19,6 +19,13 @@ import LogoutConfirmationModal from './auth/LogoutConfirmationModal';
 export default function Navbar() {
   return (
     <>
+      {/* Explicit safe-area cover — fills Dynamic Island / notch area with solid white in PWA */}
+      <div
+        className="md:hidden fixed top-0 left-0 right-0 bg-white z-[102]"
+        style={{ height: 'env(safe-area-inset-top, 0px)' }}
+        aria-hidden="true"
+      />
+
       {/* Header móvil — solo logo/marca, sin links de navegación */}
       <header
         style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}

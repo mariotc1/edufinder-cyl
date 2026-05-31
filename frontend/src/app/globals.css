@@ -19,7 +19,12 @@
     padding-top: var(--mobile-header-height);
   }
 
+  /* html=blanco: el overscroll superior y la zona del notch/Dynamic Island muestran blanco
+     body=#dbeafe: el overscroll inferior sigue mostrando el color del degradado */
   html {
+    background-color: #ffffff;
+  }
+  body {
     background-color: #dbeafe;
   }
 }
