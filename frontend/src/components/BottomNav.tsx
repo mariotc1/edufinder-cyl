@@ -1,8 +1,9 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, MapPin, Heart, UserCircle2, Download, ShieldCheck } from 'lucide-react';
+import { Home, MapPin, Heart, UserCircle2, Download, ShieldCheck, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useFavoritesAnimation } from '@/context/FavoritesAnimationContext';
 import { usePWA } from '@/components/PWAProvider';
@@ -17,11 +18,29 @@ export default function BottomNav() {
   const { favoritesPulse } = useFavoritesAnimation();
   const { isInstallable, isInstalled, isIOS, installApp, showIOSInstallGuide } = usePWA();
   const pathname = usePathname();
+  const [stripDismissed, setStripDismissed] = useState(false);
+
+  useEffect(() => {
+    const dismissed = localStorage.getItem('pwa-strip-dismissed');
+    if (dismissed) {
+      const weekInMs = 7 * 24 * 60 * 60 * 1000;
+      if (Date.now() - parseInt(dismissed) < weekInMs) {
+        setStripDismissed(true);
+      }
+    }
+  }, []);
+
+  const dismissStrip = () => {
+    setStripDismissed(true);
+    localStorage.setItem('pwa-strip-dismissed', Date.now().toString());
+  };
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';
     return pathname?.startsWith(href) ?? false;
   };
+
+  const showInstallStrip = (isInstallable || isIOS) && !isInstalled && !stripDismissed;
 
   return (
     <nav
@@ -30,19 +49,31 @@ export default function BottomNav() {
     >
       {/* PWA install strip */}
       <AnimatePresence>
-        {(isInstallable || isIOS) && !isInstalled && (
-          <motion.button
+        {showInstallStrip && (
+          <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.25 }}
-            onClick={isIOS ? showIOSInstallGuide : installApp}
-            style={TAB_STYLE}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#223945] to-blue-600 text-white text-xs font-semibold overflow-hidden"
+            className="w-full flex items-center bg-gradient-to-r from-[#223945] to-blue-600 text-white overflow-hidden"
           >
-            <Download className="w-3.5 h-3.5 shrink-0" />
-            <span>Instala EduFinder para mejor experiencia</span>
-          </motion.button>
+            <button
+              onClick={isInstallable ? installApp : showIOSInstallGuide}
+              style={TAB_STYLE}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-semibold"
+            >
+              <Download className="w-3.5 h-3.5 shrink-0" />
+              <span>Instala EduFinder para mejor experiencia</span>
+            </button>
+            <button
+              onClick={dismissStrip}
+              style={TAB_STYLE}
+              className="pr-3 pl-1 py-2.5 opacity-70 hover:opacity-100 transition-opacity"
+              aria-label="Cerrar"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -53,7 +84,7 @@ export default function BottomNav() {
             <Tab href="/mapa" label="Mapa" active={isActive('/mapa')} dataTour="map-mobile">
               <MapPin className="w-[22px] h-[22px]" />
             </Tab>
-            <Tab href="/favoritos" label="Favoritos" active={isActive('/favoritos')} dataTour="favorites-mobile">
+            <Tab href="/favoritos" label="Favoritos" active={isActive('/favoritos')} scrollOnActive dataTour="favorites-mobile">
               <div className="relative">
                 <Heart className="w-[22px] h-[22px]" />
                 <AnimatePresence>
@@ -70,7 +101,7 @@ export default function BottomNav() {
               </div>
             </Tab>
             {user.role === 'admin' && (
-              <Tab href="/admin" label="Admin" active={isActive('/admin')}>
+              <Tab href="/admin" label="Admin" active={isActive('/admin')} scrollOnActive>
                 <ShieldCheck className="w-[22px] h-[22px]" />
               </Tab>
             )}
@@ -136,22 +167,24 @@ function HomeTab({ active }: { active: boolean }) {
   );
 }
 
-// ── Tab genérico ────────────────────────────────────────────────
+// ── Tab genérico — scrollOnActive: si ya estás en la tab, toca y sube arriba ──
 function Tab({
   href,
   label,
   active,
+  scrollOnActive,
   dataTour,
   children,
 }: {
   href: string;
   label: string;
   active: boolean;
+  scrollOnActive?: boolean;
   dataTour?: string;
   children: React.ReactNode;
 }) {
-  return (
-    <Link href={href} style={TAB_STYLE} className={BASE_CLASS}>
+  const content = (
+    <>
       <AnimatePresence>
         {active && (
           <motion.span
@@ -165,7 +198,7 @@ function Tab({
         )}
       </AnimatePresence>
 
-      {/* pointer-events-none: los toques pasan al Link padre; data-tour solo para querySelector del tour */}
+      {/* pointer-events-none: los toques pasan al padre; data-tour solo para querySelector del tour */}
       <div data-tour={dataTour} className="flex flex-col items-center gap-1 pointer-events-none">
         <span className={`transition-colors duration-200 ${active ? 'text-[#223945]' : 'text-neutral-400'}`}>
           {children}
@@ -174,16 +207,34 @@ function Tab({
           {label}
         </span>
       </div>
+    </>
+  );
+
+  if (active && scrollOnActive) {
+    return (
+      <button
+        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        style={TAB_STYLE}
+        className={BASE_CLASS}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <Link href={href} style={TAB_STYLE} className={BASE_CLASS}>
+      {content}
     </Link>
   );
 }
 
-// ── Tab perfil con avatar ───────────────────────────────────────
+// ── Tab perfil con avatar — scroll-to-top si ya estás en /perfil ───────────────
 function ProfileTab({ href, label, active, name, avatar }: {
   href: string; label: string; active: boolean; name: string; avatar: string | null;
 }) {
-  return (
-    <Link href={href} style={TAB_STYLE} className={BASE_CLASS}>
+  const content = (
+    <>
       <AnimatePresence>
         {active && (
           <motion.span
@@ -212,6 +263,24 @@ function ProfileTab({ href, label, active, name, avatar }: {
       <span className={`text-[10px] leading-none transition-colors duration-200 ${active ? 'font-bold text-[#223945]' : 'font-medium text-neutral-400'}`}>
         {label}
       </span>
+    </>
+  );
+
+  if (active) {
+    return (
+      <button
+        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        style={TAB_STYLE}
+        className={BASE_CLASS}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <Link href={href} style={TAB_STYLE} className={BASE_CLASS}>
+      {content}
     </Link>
   );
 }
