@@ -307,7 +307,7 @@ export default function ProfileContent() {
     if (loading) return <div className="p-8 text-center">Cargando...</div>;
 
     return (
-        <div className="min-h-screen bg-brand-gradient pt-20 pb-12 px-4 sm:px-6">
+        <div className="min-h-screen bg-brand-gradient pt-6 md:pt-20 pb-12 px-4 sm:px-6">
             <div className="max-w-5xl mx-auto">
                 {/* Back Link */}
                 <button

@@ -45,7 +45,7 @@ export default function FavoritosContent() {
     const router = useRouter();
 
     return (
-        <div className="min-h-screen bg-brand-gradient pt-20 pb-12 px-4 sm:px-6">
+        <div className="min-h-screen bg-brand-gradient pt-6 md:pt-20 pb-12 px-4 sm:px-6">
              <div className="max-w-7xl mx-auto">
                 <button
                     onClick={() => router.back()}

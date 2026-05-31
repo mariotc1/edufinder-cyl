@@ -85,7 +85,7 @@ export default function SearchContent() {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative py-20 px-4 sm:px-6 lg:px-8">
+      <section className="relative pt-6 pb-20 md:py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto relative z-50">
           <div className="text-center mb-12">
             <h1 className="text-5xl sm:text-6xl lg:text-7xl mb-3 tracking-tight font-bold flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
