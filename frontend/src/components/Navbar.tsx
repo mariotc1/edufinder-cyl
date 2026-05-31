@@ -18,9 +18,30 @@ import LogoutConfirmationModal from './auth/LogoutConfirmationModal';
 // Utiliza Suspense para cargar contenido dependiente del cliente (useSearchParams)
 export default function Navbar() {
   return (
-    <Suspense fallback={<nav className="hidden md:block fixed top-0 left-0 w-full z-[100] bg-white/95 h-20 border-b border-neutral-200" />}>
-      <NavbarContent />
-    </Suspense>
+    <>
+      {/* Explicit safe-area cover — fills Dynamic Island / notch area with solid white in PWA */}
+      <div
+        className="md:hidden fixed top-0 left-0 right-0 bg-white z-[102]"
+        style={{ height: 'env(safe-area-inset-top, 0px)' }}
+        aria-hidden="true"
+      />
+
+      {/* Header móvil — solo logo/marca, sin links de navegación */}
+      <header
+        style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
+        className="md:hidden fixed top-0 left-0 right-0 z-[100] bg-white border-b border-neutral-200 shadow-sm"
+      >
+        <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300" />
+        <div className="h-14 flex items-center justify-center px-4">
+          <Logo />
+        </div>
+      </header>
+
+      {/* Navbar desktop completo */}
+      <Suspense fallback={<nav className="hidden md:block fixed top-0 left-0 w-full z-[100] bg-white/95 h-20 border-b border-neutral-200" />}>
+        <NavbarContent />
+      </Suspense>
+    </>
   );
 }
 
