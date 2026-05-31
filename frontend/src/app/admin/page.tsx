@@ -18,7 +18,7 @@ export default function AdminDashboard() {
   const { data: stats, error, isLoading } = useSWR('/admin/dashboard/stats', fetcher);
 
   if (isLoading) return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center py-32">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#223945]"></div>
       </div>
   );
