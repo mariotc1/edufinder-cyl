@@ -3,6 +3,7 @@
 import React, { Suspense } from 'react';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Menu, X, MapPin, Heart, LogIn, UserPlus, User as UserMenuIcon, LogOut as LogOutIcon, ShieldCheck, Download } from 'lucide-react';
@@ -32,8 +33,25 @@ export default function Navbar() {
         className="md:hidden fixed top-0 left-0 right-0 z-[100] bg-white border-b border-neutral-200 shadow-sm"
       >
         <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300" />
-        <div className="h-14 flex items-center justify-center px-4">
-          <Logo />
+        <div className="h-14 flex items-center px-4">
+          <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity duration-200">
+            <Image
+              src="/img/logo-edufinderCYL.png"
+              alt="EduFinder CYL Logo"
+              width={38}
+              height={38}
+              className="object-contain shrink-0"
+              priority
+            />
+            <div className="flex flex-col">
+              <span className="text-[17px] font-bold bg-gradient-to-r from-[#223945] via-blue-600 to-blue-400 bg-clip-text text-transparent leading-tight">
+                EduFinder CYL
+              </span>
+              <span className="text-[10px] text-neutral-600 font-medium leading-tight">
+                Educación en Castilla y León
+              </span>
+            </div>
+          </Link>
         </div>
       </header>
 
