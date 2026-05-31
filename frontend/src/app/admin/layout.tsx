@@ -11,11 +11,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import LogoutConfirmationModal from '@/components/auth/LogoutConfirmationModal';
 
 const NAV_ITEMS = [
-  { name: 'Dashboard', mobileLabel: 'Dashboard', href: '/admin',          icon: LayoutDashboard },
-  { name: 'Usuarios',  mobileLabel: 'Usuarios',  href: '/admin/users',    icon: Users },
-  { name: 'Centros',   mobileLabel: 'Centros',   href: '/admin/centros',  icon: School },
-  { name: 'Configuración', mobileLabel: 'Config', href: '/admin/settings', icon: Settings },
+  { name: 'Dashboard',     mobileLabel: 'Dashboard', href: '/admin',          icon: LayoutDashboard },
+  { name: 'Usuarios',      mobileLabel: 'Usuarios',  href: '/admin/users',    icon: Users },
+  { name: 'Centros',       mobileLabel: 'Centros',   href: '/admin/centros',  icon: School },
+  { name: 'Configuración', mobileLabel: 'Config',    href: '/admin/settings', icon: Settings },
 ];
+
+const TAB_STYLE: React.CSSProperties = { touchAction: 'manipulation' };
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -43,13 +45,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div
           aria-hidden="true"
           className="md:hidden fixed top-0 left-0 right-0 bg-white z-[102]"
-          style={{ height: 'env(safe-area-inset-top, 0px)' }}
+          style={{ height: 'env(safe-area-inset-top, 0px)', transform: 'translateZ(0)' }}
         />
         {/* Gradient accent line — appears just below the safe area */}
         <div
           aria-hidden="true"
           className="md:hidden fixed left-0 right-0 h-[3px] bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300 z-[102]"
-          style={{ top: 'env(safe-area-inset-top, 0px)' }}
+          style={{ top: 'env(safe-area-inset-top, 0px)', transform: 'translateZ(0)' }}
         />
 
         {/* Mobile top bar */}
@@ -105,13 +107,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="flex h-16">
             {NAV_ITEMS.map((item) => {
               const active = isActive(item.href);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  style={{ touchAction: 'manipulation' }}
-                  className="flex-1 h-full flex flex-col items-center justify-center relative"
-                >
+              const tabContent = (
+                <>
                   {active && (
                     <motion.span
                       layoutId="adminActiveBar"
@@ -132,6 +129,29 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                       {item.mobileLabel}
                     </span>
                   </div>
+                </>
+              );
+
+              if (active) {
+                return (
+                  <button
+                    key={item.href}
+                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                    style={TAB_STYLE}
+                    className="flex-1 h-full flex flex-col items-center justify-center relative"
+                  >
+                    {tabContent}
+                  </button>
+                );
+              }
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  style={TAB_STYLE}
+                  className="flex-1 h-full flex flex-col items-center justify-center relative"
+                >
+                  {tabContent}
                 </Link>
               );
             })}
@@ -223,7 +243,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </aside>
 
         {/* ── MAIN CONTENT ──────────────────────────────────────────────── */}
-        <main className="md:ml-72 min-h-screen admin-main">
+        <main className="md:ml-72 min-h-screen">
+          {/* Mobile top spacer: safe area + gradient line (3px) + top bar (3.5rem = h-14) */}
+          <div
+            aria-hidden="true"
+            className="md:hidden"
+            style={{ height: 'calc(env(safe-area-inset-top, 0px) + 3px + 3.5rem)' }}
+          />
+
           <AnimatePresence mode="wait">
             <motion.div
               key={pathname}
@@ -236,6 +263,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               {children}
             </motion.div>
           </AnimatePresence>
+
+          {/* Mobile bottom spacer: bottom tabs (h-16 = 4rem) + safe area */}
+          <div
+            aria-hidden="true"
+            className="md:hidden"
+            style={{ height: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}
+          />
         </main>
 
         <LogoutConfirmationModal

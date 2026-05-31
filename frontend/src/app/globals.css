@@ -7,8 +7,6 @@
   --bottom-nav-height: calc(4rem + env(safe-area-inset-bottom, 0px));
   /* Mobile top header: 3.5rem content + safe-area para notch/Dynamic Island */
   --mobile-header-height: calc(3.5rem + env(safe-area-inset-top, 0px));
-  /* Admin mobile header: igual que mobile-header-height + 3px línea gradiente */
-  --admin-header-height: calc(env(safe-area-inset-top, 0px) + 3px + 3.5rem);
 }
 
 @media (max-width: 767px) {
@@ -19,12 +17,6 @@
   /* Offset para el header fijo móvil (incluye safe-area-top) */
   .mobile-safe-top {
     padding-top: var(--mobile-header-height);
-  }
-
-  /* Admin: padding top (header + gradiente) + bottom (bottom tabs) */
-  .admin-main {
-    padding-top: var(--admin-header-height);
-    padding-bottom: var(--bottom-nav-height);
   }
 
   /* html=blanco: el overscroll superior y la zona del notch/Dynamic Island muestran blanco
