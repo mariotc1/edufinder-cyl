@@ -9,9 +9,22 @@ import { useFavoritesAnimation } from '@/context/FavoritesAnimationContext';
 import { usePWA } from '@/components/PWAProvider';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// touch-action: manipulation — elimina el delay de 300ms en iOS/Android y el double-tap zoom
 const TAB_STYLE: React.CSSProperties = { touchAction: 'manipulation' };
 const BASE_CLASS = 'flex-1 h-full flex flex-col items-center justify-center relative';
+
+// Barra de selección activa — degradado lineal, igual en todos los tabs
+const ActiveBar = () => (
+  <AnimatePresence>
+    <motion.span
+      key="bar"
+      initial={{ scaleX: 0, opacity: 0 }}
+      animate={{ scaleX: 1, opacity: 1 }}
+      exit={{ scaleX: 0, opacity: 0 }}
+      transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+      className="absolute top-0 w-8 h-[3px] rounded-b-full bg-gradient-to-r from-[#223945] to-blue-500"
+    />
+  </AnimatePresence>
+);
 
 export default function BottomNav() {
   const { user } = useAuth();
@@ -121,26 +134,11 @@ export default function BottomNav() {
   );
 }
 
-// ── Inicio: button cuando ya estás en "/" (scroll-to-top fiable), Link cuando no ──
+// ── Inicio ──────────────────────────────────────────────────────
 function HomeTab({ active }: { active: boolean }) {
-  const bar = (
-    <AnimatePresence>
-      {active && (
-        <motion.span
-          key="bar"
-          initial={{ scaleX: 0, opacity: 0 }}
-          animate={{ scaleX: 1, opacity: 1 }}
-          exit={{ scaleX: 0, opacity: 0 }}
-          transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
-          className="absolute top-0 w-8 h-[3px] rounded-b-full bg-[#223945]"
-        />
-      )}
-    </AnimatePresence>
-  );
-
   const content = (
     <>
-      {bar}
+      {active && <ActiveBar />}
       <Home className={`w-[22px] h-[22px] transition-colors duration-200 ${active ? 'text-[#223945]' : 'text-neutral-400'}`} />
       <span className={`text-[10px] leading-none transition-colors duration-200 ${active ? 'font-bold text-[#223945]' : 'font-medium text-neutral-400'}`}>
         Inicio
@@ -150,55 +148,23 @@ function HomeTab({ active }: { active: boolean }) {
 
   if (active) {
     return (
-      <button
-        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        style={TAB_STYLE}
-        className={BASE_CLASS}
-      >
+      <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={TAB_STYLE} className={BASE_CLASS}>
         {content}
       </button>
     );
   }
-
-  return (
-    <Link href="/" style={TAB_STYLE} className={BASE_CLASS}>
-      {content}
-    </Link>
-  );
+  return <Link href="/" style={TAB_STYLE} className={BASE_CLASS}>{content}</Link>;
 }
 
-// ── Tab genérico — scrollOnActive: si ya estás en la tab, toca y sube arriba ──
+// ── Tab genérico ─────────────────────────────────────────────────
 function Tab({
-  href,
-  label,
-  active,
-  scrollOnActive,
-  dataTour,
-  children,
+  href, label, active, scrollOnActive, dataTour, children,
 }: {
-  href: string;
-  label: string;
-  active: boolean;
-  scrollOnActive?: boolean;
-  dataTour?: string;
-  children: React.ReactNode;
+  href: string; label: string; active: boolean; scrollOnActive?: boolean; dataTour?: string; children: React.ReactNode;
 }) {
   const content = (
     <>
-      <AnimatePresence>
-        {active && (
-          <motion.span
-            key="bar"
-            initial={{ scaleX: 0, opacity: 0 }}
-            animate={{ scaleX: 1, opacity: 1 }}
-            exit={{ scaleX: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
-            className="absolute top-0 w-8 h-[3px] rounded-b-full bg-[#223945]"
-          />
-        )}
-      </AnimatePresence>
-
-      {/* pointer-events-none: los toques pasan al padre; data-tour solo para querySelector del tour */}
+      {active && <ActiveBar />}
       <div data-tour={dataTour} className="flex flex-col items-center gap-1 pointer-events-none">
         <span className={`transition-colors duration-200 ${active ? 'text-[#223945]' : 'text-neutral-400'}`}>
           {children}
@@ -212,54 +178,35 @@ function Tab({
 
   if (active && scrollOnActive) {
     return (
-      <button
-        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        style={TAB_STYLE}
-        className={BASE_CLASS}
-      >
+      <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={TAB_STYLE} className={BASE_CLASS}>
         {content}
       </button>
     );
   }
-
-  return (
-    <Link href={href} style={TAB_STYLE} className={BASE_CLASS}>
-      {content}
-    </Link>
-  );
+  return <Link href={href} style={TAB_STYLE} className={BASE_CLASS}>{content}</Link>;
 }
 
-// ── Tab perfil con avatar — scroll-to-top si ya estás en /perfil ───────────────
+// ── Tab perfil con avatar ────────────────────────────────────────
 function ProfileTab({ href, label, active, name, avatar }: {
   href: string; label: string; active: boolean; name: string; avatar: string | null;
 }) {
+  const [imgError, setImgError] = useState(false);
+
   const content = (
     <>
-      <AnimatePresence>
-        {active && (
-          <motion.span
-            key="bar"
-            initial={{ scaleX: 0, opacity: 0 }}
-            animate={{ scaleX: 1, opacity: 1 }}
-            exit={{ scaleX: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
-            className="absolute top-0 w-8 h-[3px] rounded-b-full bg-[#223945]"
-          />
-        )}
-      </AnimatePresence>
-
-      {avatar ? (
+      {active && <ActiveBar />}
+      {avatar && !imgError ? (
         <img
           src={avatar}
           alt={name}
           className={`w-6 h-6 rounded-full object-cover transition-all duration-200 ${active ? 'ring-2 ring-[#223945] ring-offset-[1.5px]' : 'ring-1 ring-neutral-200'}`}
+          onError={() => setImgError(true)}
         />
       ) : (
         <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold transition-all duration-200 ${active ? 'bg-[#223945] text-white' : 'bg-neutral-200 text-neutral-500'}`}>
           {name.charAt(0).toUpperCase()}
         </div>
       )}
-
       <span className={`text-[10px] leading-none transition-colors duration-200 ${active ? 'font-bold text-[#223945]' : 'font-medium text-neutral-400'}`}>
         {label}
       </span>
@@ -268,45 +215,21 @@ function ProfileTab({ href, label, active, name, avatar }: {
 
   if (active) {
     return (
-      <button
-        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        style={TAB_STYLE}
-        className={BASE_CLASS}
-      >
+      <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={TAB_STYLE} className={BASE_CLASS}>
         {content}
       </button>
     );
   }
-
-  return (
-    <Link href={href} style={TAB_STYLE} className={BASE_CLASS}>
-      {content}
-    </Link>
-  );
+  return <Link href={href} style={TAB_STYLE} className={BASE_CLASS}>{content}</Link>;
 }
 
-// ── Tab acceso (no autenticado) ─────────────────────────────────
+// ── Tab acceso (no autenticado) — sin pill, igual que el resto ──
 function AccountTab({ active }: { active: boolean }) {
   return (
     <Link href="/login" style={TAB_STYLE} className={BASE_CLASS}>
-      <AnimatePresence>
-        {active && (
-          <motion.span
-            key="bar"
-            initial={{ scaleX: 0, opacity: 0 }}
-            animate={{ scaleX: 1, opacity: 1 }}
-            exit={{ scaleX: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="absolute top-0 w-8 h-[3px] rounded-b-full bg-[#223945]"
-          />
-        )}
-      </AnimatePresence>
-
-      <div className={`w-10 h-[28px] rounded-xl flex items-center justify-center transition-all duration-200 ${active ? 'bg-[#223945]' : 'bg-gradient-to-r from-[#223945] to-blue-600 shadow-sm shadow-blue-900/20'}`}>
-        <UserCircle2 className="w-4 h-4 text-white" />
-      </div>
-
-      <span className={`text-[10px] leading-none font-bold ${active ? 'text-[#223945]' : 'text-[#223945]/80'}`}>
+      {active && <ActiveBar />}
+      <UserCircle2 className={`w-[22px] h-[22px] transition-colors duration-200 ${active ? 'text-[#223945]' : 'text-neutral-400'}`} />
+      <span className={`text-[10px] leading-none transition-colors duration-200 ${active ? 'font-bold text-[#223945]' : 'font-medium text-neutral-400'}`}>
         Acceder
       </span>
     </Link>

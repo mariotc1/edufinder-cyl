@@ -39,7 +39,7 @@ export default function ProfileContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { restartTour } = useOnboarding();
-    const { logout: authLogout } = useAuth();
+    const { logout: authLogout, updateUser, user: authUser } = useAuth();
 
     const [name, setName] = useState('');
     const [passwordData, setPasswordData] = useState({ current: '', new: '', confirm: '' });
@@ -166,11 +166,12 @@ export default function ProfileContent() {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 
-            setUser(prev => prev ? { ...prev, foto_perfil: res.data.user.foto_perfil } : null);
+            const newFoto = res.data.user.foto_perfil;
+            setUser(prev => prev ? { ...prev, foto_perfil: newFoto } : null);
             setMessage({ text: 'Foto actualizada correctamente', type: 'success' });
 
-            const stored = JSON.parse(localStorage.getItem('user') || '{}');
-            localStorage.setItem('user', JSON.stringify({ ...stored, foto_perfil: res.data.user.foto_perfil }));
+            // Sincronizar AuthContext para que Navbar/BottomNav actualicen el avatar sin reload
+            if (authUser) updateUser({ ...authUser, foto_perfil: newFoto });
 
         } catch (error) {
             setMessage({ text: 'Error al subir la imagen', type: 'error' });
@@ -187,8 +188,8 @@ export default function ProfileContent() {
             setUser(prev => prev ? { ...prev, foto_perfil: undefined } : null);
             setMessage({ text: 'Foto eliminada correctamente', type: 'success' });
 
-            const stored = JSON.parse(localStorage.getItem('user') || '{}');
-            localStorage.setItem('user', JSON.stringify({ ...stored, foto_perfil: null }));
+            // Sincronizar AuthContext
+            if (authUser) updateUser({ ...authUser, foto_perfil: undefined });
 
         } catch (error: any) {
             const errorMsg = error.response?.data?.message || 'Error al eliminar la foto';
@@ -335,6 +336,7 @@ export default function ProfileContent() {
                                                 src={user.foto_perfil}
                                                 alt={user.name}
                                                 className="w-16 h-16 rounded-full object-cover border-2 border-white/30 shadow-lg bg-white"
+                                                onError={() => setUser(prev => prev ? { ...prev, foto_perfil: undefined } : null)}
                                             />
                                         ) : (
                                             <div className="w-16 h-16 rounded-full bg-white/20 text-white flex items-center justify-center text-2xl font-bold border-2 border-white/30">
@@ -456,6 +458,7 @@ export default function ProfileContent() {
                                             src={user.foto_perfil}
                                             alt={user.name}
                                             className="w-28 h-28 rounded-full object-cover border-4 border-white shadow-xl relative z-10 bg-white"
+                                            onError={() => setUser(prev => prev ? { ...prev, foto_perfil: undefined } : null)}
                                         />
                                     ) : (
                                         <div className="w-28 h-28 rounded-full bg-[#223945] text-white flex items-center justify-center text-4xl font-bold shadow-xl relative z-10 border-4 border-white">
