@@ -76,17 +76,17 @@ export default function CentrosPage() {
         )}
       </AnimatePresence>
 
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-           <h1 className="text-3xl font-bold text-[#223945] tracking-tight">Gestión de Centros</h1>
-           <p className="text-slate-500 text-sm mt-1">Consulta y gestiona los centros educativos registrados.</p>
+           <h1 className="text-xl sm:text-3xl font-bold text-[#223945] tracking-tight">Gestión de Centros</h1>
+           <p className="hidden sm:block text-slate-500 text-sm mt-1">Consulta y gestiona los centros educativos registrados.</p>
         </div>
         <div className="relative group w-full sm:w-auto">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 group-focus-within:text-blue-500 transition-colors" />
-            <input 
-                type="text" 
-                placeholder="Buscar por nombre, localidad..." 
-                className="pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#223945]/20 focus:border-[#223945] outline-none w-full sm:w-72 transition-all bg-white shadow-sm"
+            <input
+                type="text"
+                placeholder="Buscar por nombre, localidad..."
+                className="pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#223945]/20 focus:border-[#223945] outline-none w-full sm:w-72 transition-all bg-white shadow-sm"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
             />

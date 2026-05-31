@@ -144,7 +144,7 @@ export default function QuickActions() {
         <AnimatePresence>
             {/* EXPORT MODAL */}
             {showExportModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100 scale-100 animate-in zoom-in-95 duration-200">
                         <div className="p-6 text-center">
                             <div className="mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-blue-50 text-blue-500">
@@ -171,7 +171,7 @@ export default function QuickActions() {
 
             {/* CACHE MODAL */}
             {showCacheModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100 scale-100 animate-in zoom-in-95 duration-200">
                         <div className="p-6 text-center">
                             <div className="mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-orange-50 text-orange-500">
@@ -198,7 +198,7 @@ export default function QuickActions() {
 
             {/* STATUS MODAL */}
             {showStatusModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100 scale-100 animate-in zoom-in-95 duration-200">
                         <div className="p-6">
                             <div className="flex justify-between items-center mb-6">
@@ -275,7 +275,7 @@ export default function QuickActions() {
 
             {/* LOGS MODAL */}
             {showLogsModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-100 scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[80vh]">
                         <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                             <div>
