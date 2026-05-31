@@ -27,6 +27,20 @@
   body {
     background-color: #dbeafe;
   }
+
+  /* Garantiza que el fondo blanco cubre el safe-area inferior en todos los navegadores móviles */
+  body::after {
+    content: '';
+    display: block;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: env(safe-area-inset-bottom, 0px);
+    background-color: #ffffff;
+    z-index: 99;
+    pointer-events: none;
+  }
 }
 
 * {

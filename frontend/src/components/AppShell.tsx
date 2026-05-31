@@ -27,7 +27,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         - Admin: no padding (AdminLayout controls its own layout)
       */}
       <main
-        className={isAdmin ? 'min-h-screen' : 'md:pt-20 min-h-screen mobile-bottom-safe mobile-safe-top'}
+        className={isAdmin ? 'min-h-screen' : 'md:pt-20 min-h-screen min-h-dvh mobile-bottom-safe mobile-safe-top'}
       >
         {children}
       </main>

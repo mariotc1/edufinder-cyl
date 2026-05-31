@@ -57,9 +57,11 @@ export default function BottomNav() {
 
   return (
     <nav
-      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
-      className="md:hidden fixed bottom-0 left-0 right-0 z-[100] bg-white/96 backdrop-blur-xl border-t border-neutral-100 shadow-[0_-4px_24px_rgba(0,0,0,0.08)]"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)', transform: 'translateZ(0)' }}
+      className="md:hidden fixed bottom-0 left-0 right-0 z-[100] bg-white border-t border-neutral-200 shadow-[0_-2px_12px_rgba(0,0,0,0.08)]"
     >
+      {/* Suelo blanco: cubre el hueco que aparece en Chrome iOS cuando la barra del navegador colapsa y el viewport crece */}
+      <div aria-hidden="true" className="absolute left-0 right-0 bg-white pointer-events-none" style={{ top: '100%', height: '200px' }} />
       {/* PWA install strip */}
       <AnimatePresence>
         {showInstallStrip && (
