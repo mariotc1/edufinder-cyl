@@ -765,15 +765,12 @@ export default function ProfileContent() {
                                             ))}
                                         </div>
                                     ) : (
-                                        <div className="text-center py-12 sm:py-16 bg-gradient-to-b from-neutral-50/50 to-white rounded-2xl border border-dashed border-neutral-200">
-                                            <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 bg-gradient-to-br from-neutral-100 to-neutral-50 rounded-full flex items-center justify-center">
-                                                <Heart className="w-8 h-8 sm:w-10 sm:h-10 text-neutral-300" />
-                                            </div>
+                                        <div className="text-center py-12 sm:py-16 bg-neutral-50/50 rounded-2xl border border-dashed border-neutral-200">
+                                            <Heart className="w-16 h-16 mx-auto text-neutral-300 mb-4" />
                                             <h4 className="text-lg font-bold text-neutral-900">No tienes favoritos</h4>
-                                            <p className="text-neutral-500 text-sm mt-1 px-4">Explora el mapa para añadir centros a tu lista.</p>
-                                            <a href="/mapa" className="inline-flex items-center gap-2 mt-6 bg-[#223945] text-white px-6 py-2.5 rounded-xl font-bold text-sm shadow-md shadow-[#223945]/20 hover:shadow-lg hover:-translate-y-0.5 transition-all">
-                                                <MapPin className="w-4 h-4" />
-                                                Ir al Mapa
+                                            <p className="text-neutral-500 text-sm mt-1 max-w-sm mx-auto">Guarda centros para no perderlos y recibir sugerencias personalizadas basadas en tus intereses.</p>
+                                            <a href="/" className="inline-block mt-6 bg-[#223945] text-white px-6 py-2.5 rounded-full font-bold text-sm shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all">
+                                                Ir a Buscar
                                             </a>
                                         </div>
                                     )}
