@@ -50,6 +50,7 @@ export default function ProfileContent() {
     const [uploading, setUploading] = useState(false);
     const [updatingPassword, setUpdatingPassword] = useState(false);
     const [sendingRecovery, setSendingRecovery] = useState(false);
+    const [passwordFailed, setPasswordFailed] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [showPhotoMenu, setShowPhotoMenu] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -125,7 +126,8 @@ export default function ProfileContent() {
     const handleUpdatePassword = async (e: React.FormEvent) => {
         e.preventDefault();
         setMessage(null);
-        
+        setPasswordFailed(false);
+
         if (!isPasswordValid) {
             setMessage({ text: 'Por favor cumple todos los requisitos de la contraseña', type: 'error' });
             return;
@@ -143,6 +145,7 @@ export default function ProfileContent() {
 
         } catch (error: any) {
             setMessage({ text: error.response?.data?.message || 'Error al cambiar contraseña', type: 'error' });
+            setPasswordFailed(true);
 
         } finally {
             setUpdatingPassword(false);
@@ -580,7 +583,7 @@ export default function ProfileContent() {
                                                 <input
                                                     type={showCurrentPass ? "text" : "password"}
                                                     value={passwordData.current}
-                                                    onChange={e => setPasswordData({ ...passwordData, current: e.target.value })}
+                                                    onChange={e => { setPasswordData({ ...passwordData, current: e.target.value }); setPasswordFailed(false); }}
                                                     className="w-full px-4 py-3 rounded-xl bg-neutral-50 border-2 border-transparent focus:bg-white focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 outline-none transition-all font-medium text-neutral-700 pr-10"
                                                 />
                                                 <button
@@ -643,7 +646,7 @@ export default function ProfileContent() {
                                             ))}
                                         </div>
 
-                                        <div className="pt-2">
+                                        <div className="pt-2 flex flex-col gap-3 items-start">
                                             <button
                                                 type="submit"
                                                 disabled={!passwordData.current || !isPasswordValid || updatingPassword}
@@ -662,40 +665,31 @@ export default function ProfileContent() {
                                                     'Actualizar Contraseña'
                                                 )}
                                             </button>
+
+                                            {passwordFailed && (
+                                                <button
+                                                    type="button"
+                                                    onClick={async () => {
+                                                        if (sendingRecovery) return;
+                                                        setSendingRecovery(true);
+                                                        try {
+                                                            await api.post('/forgot-password', { email: user?.email });
+                                                            setPasswordFailed(false);
+                                                            setMessage({ text: 'Email de recuperación enviado a ' + user?.email, type: 'success' });
+                                                        } catch (e) {
+                                                            setMessage({ text: 'Error al enviar email', type: 'error' });
+                                                        } finally {
+                                                            setSendingRecovery(false);
+                                                        }
+                                                    }}
+                                                    disabled={sendingRecovery}
+                                                    className="text-xs text-neutral-400 hover:text-[#223945] transition-colors animate-in fade-in slide-in-from-top-1 duration-300 w-fit"
+                                                >
+                                                    {sendingRecovery ? 'Enviando enlace…' : '¿Olvidaste tu contraseña? Recibir enlace de recuperación →'}
+                                                </button>
+                                            )}
                                         </div>
                                     </form>
-
-                                    <div className="mt-8 pt-8 border-t border-neutral-100">
-                                        <div className="p-4 bg-neutral-50 rounded-xl border border-neutral-100">
-                                            <div className="flex items-center gap-3 mb-3">
-                                                <div className="bg-red-100 p-2 rounded-lg text-red-600 flex-shrink-0">
-                                                    <Lock className="w-5 h-5" />
-                                                </div>
-                                                <div>
-                                                    <h3 className="text-sm font-bold text-neutral-900">¿Olvidaste tu contraseña?</h3>
-                                                    <p className="text-xs text-neutral-500 mt-0.5">Te enviaremos un enlace a tu correo para restablecerla.</p>
-                                                </div>
-                                            </div>
-                                            <button
-                                                onClick={async () => {
-                                                    if (sendingRecovery) return;
-                                                    setSendingRecovery(true);
-                                                    try {
-                                                        await api.post('/forgot-password', { email: user?.email });
-                                                        setMessage({ text: 'Email de recuperación enviado', type: 'success' });
-                                                    } catch (e) {
-                                                        setMessage({ text: 'Error al enviar email', type: 'error' });
-                                                    } finally {
-                                                        setSendingRecovery(false);
-                                                    }
-                                                }}
-                                                disabled={sendingRecovery}
-                                                className={`w-full py-2.5 rounded-xl text-sm font-bold border-2 border-[#223945] text-[#223945] hover:bg-[#223945] hover:text-white transition-all ${sendingRecovery ? 'opacity-50 cursor-wait' : ''}`}
-                                            >
-                                                {sendingRecovery ? 'Enviando…' : 'Enviar email de recuperación'}
-                                            </button>
-                                        </div>
-                                    </div>
                                 </div>
                             )}
 
