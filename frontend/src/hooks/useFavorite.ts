@@ -4,7 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useFavoritesAnimation } from '@/context/FavoritesAnimationContext';
 import { addFavorite, removeFavorite } from '@/services/api';
 import { Centro } from '@/types';
-import { hapticFeedback } from '@/lib/haptics';
+import { haptic } from '@/lib/haptics';
 
 interface UseFavoriteProps {
     centro: Centro;
@@ -40,9 +40,11 @@ export function useFavorite({ centro, initialIsFavorite = false, onToggle }: Use
         setIsFavorite(newStatus);
         if (onToggle) onToggle(newStatus);
 
-        // Dispara la animación de "vuelo" hacia el icono de favoritos si se añade
+        // Haptic: distinct pattern for add vs remove
+        haptic(newStatus ? 'impact-light' : 'impact-medium');
+
+        // Fly-to-nav animation only when adding and elementRef is available
         if (newStatus && elementRef) {
-            hapticFeedback('light'); // Vibración sutil al añadir favorito
             const rect = elementRef.getBoundingClientRect();
             triggerAnimation(rect, {
                 title: centro.nombre,
