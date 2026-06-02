@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import api from '@/lib/axios';
 import { getSavedSearches, deleteSavedSearch } from '@/services/api';
+import PullToRefresh from '@/components/PullToRefresh';
 import { SavedSearch } from '@/types';
 import { User, Heart, Lock, Camera, LogOut, Eye, EyeOff, ChevronLeft, Trash, AlertCircle, CheckCircle, Bookmark, Search, X, Calendar, Building2, GraduationCap, Filter, MapPin, RotateCcw } from 'lucide-react';
 import Link from 'next/link';
@@ -277,8 +278,11 @@ export default function ProfileContent() {
 
     if (loading) return <div className="p-8 text-center">Cargando...</div>;
 
+    const handleRefresh = useCallback(async () => { await fetchData(); }, []);
+
     return (
         <div className="min-h-screen bg-brand-gradient pt-6 md:pt-20 pb-12 px-4 sm:px-6">
+        <PullToRefresh onRefresh={handleRefresh} />
             <div className="max-w-5xl mx-auto">
                 {/* Back Link */}
                 <button
