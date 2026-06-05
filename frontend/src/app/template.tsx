@@ -62,13 +62,15 @@ export default function Template({ children }: { children: React.ReactNode }) {
   const { initial, animate, duration } = getAnim(direction, pathname);
 
   return (
-    <motion.div
-      key={pathname}
-      initial={initial}
-      animate={animate}
-      transition={{ duration, ease: EASE_OUT }}
-    >
-      {children}
-    </motion.div>
+    <div style={{ overflowX: 'hidden', width: '100%' }}>
+      <motion.div
+        key={pathname}
+        initial={initial}
+        animate={animate}
+        transition={{ duration, ease: EASE_OUT }}
+      >
+        {children}
+      </motion.div>
+    </div>
   );
 }
