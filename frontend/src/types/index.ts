@@ -17,6 +17,12 @@ export interface MatchReason {
   priority?: number;
 }
 
+export interface InterestBadge {
+  type: 'favorites' | 'views' | 'trending' | 'province';
+  value?: number;
+  label: string;
+}
+
 export interface Centro {
   id: number;
   codigo: string;
@@ -35,10 +41,13 @@ export interface Centro {
   longitud: string;
   distancia?: number;
   distancia_km?: number;
+  distance?: number;
   ciclos?: CicloFP[];
   match_reasons?: MatchReason[];
   relevance_score?: number;
   favorite_affinity?: number;
+  interest_badges?: InterestBadge[];
+  favorites_count?: number;
 }
 
 export interface FilterOptions {

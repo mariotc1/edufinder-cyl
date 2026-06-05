@@ -298,6 +298,12 @@ export default function CentroCard({
                   {parseFloat(centro.distancia.toString()).toFixed(1)} km
                 </span>
               )}
+              {(centro.favorites_count ?? 0) >= 3 && (
+                <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium bg-rose-50 text-rose-600 border border-rose-100">
+                  <Heart className="w-2.5 h-2.5 fill-rose-500 text-rose-500" />
+                  {centro.favorites_count}
+                </span>
+              )}
            </div>
         </div>
 

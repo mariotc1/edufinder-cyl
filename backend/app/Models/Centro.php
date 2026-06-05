@@ -10,6 +10,9 @@
 
         use HasFactory;
 
+        public ?array $interestBadges = null;
+        public int $favoritesCount = 0;
+
         protected $fillable = [
             'codigo',
             'nombre',

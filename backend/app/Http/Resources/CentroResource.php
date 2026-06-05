@@ -29,7 +29,11 @@
                 
                 // incluye la distancia solo si fue calculada
                 'distance' => $this->when(isset($this->distance), fn() => round($this->distance, 2)),
-                
+
+                // interés social (badges e indicadores)
+                'interest_badges' => $this->interestBadges ?? [],
+                'favorites_count' => $this->favoritedBy_count ?? $this->favoritesCount ?? 0,
+
                 // incluye los ciclos solo si fueron cargados para evitar queries N+1
                 'ciclos' => CicloFpResource::collection($this->whenLoaded('ciclos')),
             ];

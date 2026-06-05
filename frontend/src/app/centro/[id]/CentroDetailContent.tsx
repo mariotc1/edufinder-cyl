@@ -12,6 +12,7 @@ import { useVisitedCenters } from '@/hooks/useVisitedCenters';
 import { useFavoritesAnimation } from '@/context/FavoritesAnimationContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import CentroDetailSkeleton from '@/components/CentroDetailSkeleton';
+import InterestBadges from '@/components/InterestBadges';
 import { CicloFP } from '@/types';
 
 
@@ -434,7 +435,10 @@ export default function CentroDetailContent() {
                                     <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#111827] mb-2 font-heading leading-tight">
                                         {c.nombre}
                                     </h1>
-                                    <p className="text-base md:text-lg text-neutral-500 font-medium">{c.denominacion_generica}</p>
+                                    <p className="text-base md:text-lg text-neutral-500 font-medium mb-3">{c.denominacion_generica}</p>
+                                    {c.interest_badges && c.interest_badges.length > 0 && (
+                                        <InterestBadges badges={c.interest_badges} size="md" />
+                                    )}
                                 </div>
 
                                 {/* Botones de acción */}
