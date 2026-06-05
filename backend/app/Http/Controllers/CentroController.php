@@ -5,6 +5,7 @@ use App\Models\Centro;
 use App\Models\CentroVisit;
 use App\Http\Resources\CentroResource;
 use App\Http\Resources\CicloFpResource;
+use App\Services\InterestBadgeService;
 use Illuminate\Http\Request;
 
 // CONTROLADOR DE CENTROS EDUCATIVOS
@@ -125,12 +126,13 @@ class CentroController extends Controller
             $query->orderBy('nombre');
         }
 
-        return CentroResource::collection($query->paginate(20));
+        $paginated = $query->withCount('favoritedBy')->paginate(20);
+        return CentroResource::collection($paginated);
     }
 
     // DETALLE DE UN CENTRO
     // Devuelve la información completa de un centro específico, incluyendo sus ciclos
-    public function show(Request $request, $id)
+    public function show(Request $request, $id, InterestBadgeService $badgeService)
     {
         $centro = Centro::with('ciclos')->findOrFail($id);
 
@@ -145,6 +147,10 @@ class CentroController extends Controller
         } catch (\Exception $e) {
             // Fail silently
         }
+
+        // Attach interest badges (cached 1h)
+        $centro->interestBadges = $badgeService->getBadges($centro);
+        $centro->favoritesCount = $badgeService->getFavoritesCount($centro);
 
         return new CentroResource($centro);
     }
