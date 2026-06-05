@@ -2,6 +2,8 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import useSWR from 'swr';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import PullToRefreshIndicator from '@/components/PullToRefreshIndicator';
 import { useSearchParams } from 'next/navigation';
 import { School, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { searchCentros } from '@/services/api';
@@ -86,10 +88,16 @@ export default function SearchContent() {
 
   const swrKey = JSON.stringify({ ...filters, page });
 
-  const { data, error, isLoading } = useSWR(swrKey, () => searchCentros({ ...filters, page }), {
+  const { data, error, isLoading, mutate } = useSWR(swrKey, () => searchCentros({ ...filters, page }), {
     keepPreviousData: true,
     revalidateOnFocus: false
   });
+
+  const handlePullRefresh = useCallback(async () => {
+    // undefined first → clears cached data so isLoading goes true → skeletons show
+    await mutate(undefined, { revalidate: true });
+  }, [mutate]);
+  const { pullDistance, isRefreshing, isPulling } = usePullToRefresh({ onRefresh: handlePullRefresh });
 
   // Restore scroll position after the first data load on this mount
   useEffect(() => {
@@ -147,6 +155,12 @@ export default function SearchContent() {
 
   return (
     <>
+      <PullToRefreshIndicator
+        pullDistance={pullDistance}
+        isRefreshing={isRefreshing}
+        isPulling={isPulling}
+      />
+
       {/* Hero Section */}
       <section className="relative pt-6 pb-20 md:py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto relative z-50">
@@ -199,7 +213,7 @@ export default function SearchContent() {
             )}
           </div>
 
-          {isLoading ? (
+          {isLoading || isRefreshing ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[...Array(6)].map((_, i) => (
                 <CentroCardSkeleton key={`skeleton-${i}`} />

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { mutate } from 'swr';
 import { useAuth } from '@/context/AuthContext';
 import { toggleCicloFavorite, getCiclosFavoritosByCentro } from '@/services/api';
+import { haptic } from '@/lib/haptics';
 
 interface UseCicloFavoriteProps {
     centroId: number;
@@ -60,6 +61,7 @@ export function useCicloFavorite({ centroId }: UseCicloFavoriteProps): UseCicloF
             ? ciclosFavoritosIds.filter(id => id !== cicloId)
             : [...ciclosFavoritosIds, cicloId];
 
+        haptic(wasLiked ? 'impact-medium' : 'impact-light');
         setCiclosFavoritosIds(newIds);
         setLoadingCicloId(cicloId);
 

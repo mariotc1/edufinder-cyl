@@ -8,6 +8,7 @@ import { Heart, School, ArrowRight, Loader2, ChevronLeft } from 'lucide-react';
 import CentroCard from '@/components/CentroCard';
 import CentroCardSkeleton from '@/components/CentroCardSkeleton';
 import RecommendationsSection from '@/components/recommendations/RecommendationsSection';
+import PullToRefresh from '@/components/PullToRefresh';
 import { Centro } from '@/types';
 import axios from '@/lib/axios';
 
@@ -44,8 +45,11 @@ export default function FavoritosContent() {
 
     const router = useRouter();
 
+    const handleRefresh = useCallback(async () => { await mutate(); }, [mutate]);
+
     return (
         <div className="min-h-screen bg-brand-gradient pt-6 md:pt-20 pb-12 px-4 sm:px-6">
+        <PullToRefresh onRefresh={handleRefresh} />
              <div className="max-w-7xl mx-auto">
                 <button
                     onClick={() => router.back()}

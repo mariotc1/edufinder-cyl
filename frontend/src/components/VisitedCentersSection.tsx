@@ -60,9 +60,48 @@ export default function VisitedCentersSection() {
         });
     };
 
-    // No mostrar si no hay historial o está cargando
-    if (loading || visitedCenters.length === 0) {
-        return null;
+    if (!loading && visitedCenters.length === 0) return null;
+
+    // Skeleton mientras se hidrata desde localStorage
+    if (loading) {
+        return (
+            <section className="py-8 sm:py-10">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    {/* Header skeleton */}
+                    <div className="flex items-center justify-between mb-5">
+                        <div className="flex items-center gap-3 sm:gap-4">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-neutral-200 animate-pulse" />
+                            <div className="space-y-2">
+                                <div className="h-5 w-48 bg-neutral-200 rounded-md animate-pulse" />
+                                <div className="h-3.5 w-32 bg-neutral-100 rounded-md animate-pulse" />
+                            </div>
+                        </div>
+                        <div className="h-9 w-24 bg-neutral-100 rounded-xl animate-pulse hidden sm:block" />
+                    </div>
+                    {/* Cards skeleton */}
+                    <div className="flex gap-4 overflow-hidden">
+                        {[...Array(3)].map((_, i) => (
+                            <div
+                                key={i}
+                                className="flex-shrink-0 w-[280px] sm:w-[320px] h-[140px] sm:h-[150px] bg-white rounded-xl border border-neutral-100 overflow-hidden"
+                                style={{ opacity: 1 - i * 0.25 }}
+                            >
+                                <div className="h-1.5 bg-neutral-200 animate-pulse" />
+                                <div className="p-3 sm:p-4 pt-3 space-y-2.5">
+                                    <div className="flex gap-2">
+                                        <div className="h-4 w-14 bg-neutral-200 rounded-full animate-pulse" />
+                                        <div className="h-4 w-20 bg-neutral-100 rounded-full animate-pulse" />
+                                    </div>
+                                    <div className="h-3.5 w-full bg-neutral-200 rounded animate-pulse" />
+                                    <div className="h-3.5 w-2/3 bg-neutral-200 rounded animate-pulse" />
+                                    <div className="h-3 w-28 bg-neutral-100 rounded animate-pulse mt-1" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+        );
     }
 
     const getNaturalezaColor = (naturaleza: string) => {

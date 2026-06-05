@@ -76,9 +76,46 @@ export default function RecommendationsSection() {
         });
     };
 
-    // No mostrar si no hay usuario, está cargando sin datos, hay error, o no hay recomendaciones
-    if (!user || isLoading || error || recommendations.length === 0) {
-        return null;
+    if (!user) return null;
+    if (error || (!isLoading && recommendations.length === 0)) return null;
+
+    // Skeleton mientras carga la API
+    if (isLoading) {
+        return (
+            <section className="py-8 sm:py-10">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    {/* Header skeleton */}
+                    <div className="flex items-center gap-3 sm:gap-4 mb-5">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-purple-100 animate-pulse" />
+                        <div className="space-y-2">
+                            <div className="h-5 w-44 bg-neutral-200 rounded-md animate-pulse" />
+                            <div className="h-3.5 w-36 bg-neutral-100 rounded-md animate-pulse" />
+                        </div>
+                    </div>
+                    {/* Cards skeleton */}
+                    <div className="flex gap-4 overflow-hidden">
+                        {[...Array(4)].map((_, i) => (
+                            <div
+                                key={i}
+                                className="flex-shrink-0 w-[280px] sm:w-[320px] h-[140px] sm:h-[150px] bg-white rounded-xl border border-neutral-100 overflow-hidden"
+                                style={{ opacity: 1 - i * 0.18 }}
+                            >
+                                <div className="h-1.5 bg-neutral-200 animate-pulse" />
+                                <div className="p-3 sm:p-4 pt-3 space-y-2.5">
+                                    <div className="flex gap-2">
+                                        <div className="h-4 w-14 bg-neutral-200 rounded-full animate-pulse" />
+                                        <div className="h-4 w-20 bg-neutral-100 rounded-full animate-pulse" />
+                                    </div>
+                                    <div className="h-3.5 w-full bg-neutral-200 rounded animate-pulse" />
+                                    <div className="h-3.5 w-3/4 bg-neutral-200 rounded animate-pulse" />
+                                    <div className="h-3 w-28 bg-neutral-100 rounded animate-pulse mt-1" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+        );
     }
 
     return (
