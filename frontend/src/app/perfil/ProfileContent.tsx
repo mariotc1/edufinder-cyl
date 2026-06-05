@@ -276,9 +276,9 @@ export default function ProfileContent() {
         window.location.href = '/login'; // hard redirect para limpiar estado React completamente
     };
 
-    if (loading) return <div className="p-8 text-center">Cargando...</div>;
-
     const handleRefresh = useCallback(async () => { await fetchData(); }, []);
+
+    if (loading) return <div className="p-8 text-center">Cargando...</div>;
 
     return (
         <div className="min-h-screen bg-brand-gradient pt-6 md:pt-20 pb-12 px-4 sm:px-6">
