@@ -23,6 +23,7 @@
      body=#dbeafe: el overscroll inferior sigue mostrando el color del degradado */
   html {
     background-color: #ffffff;
+    overflow-x: hidden;
   }
   body {
     background-color: #dbeafe;
