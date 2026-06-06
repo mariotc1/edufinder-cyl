@@ -4,7 +4,7 @@ import { fetchCycleSuggestions, fetchCentroSuggestions, getSavedSearches, create
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { Search, MapPin, Building2, SlidersHorizontal, Trash2, X, Check, Bookmark, ChevronRight, RefreshCw, Share2, Copy, Clock, History } from 'lucide-react';
+import { Search, MapPin, Building2, SlidersHorizontal, Trash2, X, Check, Bookmark, ChevronRight, RefreshCw, Share2, Copy, Clock, History, Sparkles } from 'lucide-react';
 import { FilterOptions, SavedSearch } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import useSWR, { mutate } from 'swr';
@@ -17,11 +17,12 @@ interface FilterBarProps {
   isLoading: boolean;
   page?: number;
   initialFilters?: FilterOptions;
+  onOpenWizard?: () => void;
 }
 
 // COMPONENTE DE BARRA DE FILTROS AVANZADA
 // Gestiona el estado de los filtros, autocompletado y geolocalización
-export default function FilterBar({ onFilterChange, isLoading, page = 1, initialFilters }: FilterBarProps) {
+export default function FilterBar({ onFilterChange, isLoading, page = 1, initialFilters, onOpenWizard }: FilterBarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -1094,21 +1095,31 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1, initial
             </div>
           )}
 
-        {/* Eliminar filtros - Al final del card */}
-        {hasActiveFilters && (
-          <div className="flex justify-center py-3 -mb-3 border-t border-neutral-100">
+        {/* Pie del card: IA helper + limpiar filtros */}
+        <div className="flex items-center justify-between pt-4 -mb-3 border-t border-neutral-100">
+          {onOpenWizard ? (
             <button
-                onClick={clearAll}
-                className="flex items-center gap-2 px-4 py-2 text-neutral-400 hover:text-red-500 transition-colors group"
-                title="Eliminar todos los filtros"
+              onClick={onOpenWizard}
+              className="flex items-center gap-2 text-neutral-400 hover:text-[#223945] transition-colors py-2 px-1 group"
             >
-                <span className="text-sm font-medium">
-                  Eliminar {activeFilterCount} {activeFilterCount === 1 ? 'filtro' : 'filtros'}
-                </span>
-                <X className="w-4 h-4 group-hover:rotate-90 transition-transform" />
+              <Sparkles className="w-4 h-4 group-hover:text-blue-500 transition-colors" />
+              <span className="text-sm font-medium">Filtra más rápido con IA</span>
             </button>
-          </div>
-        )}
+          ) : <div />}
+
+          {hasActiveFilters && (
+            <button
+              onClick={clearAll}
+              className="flex items-center gap-2 px-4 py-2 text-neutral-400 hover:text-red-500 transition-colors group"
+              title="Eliminar todos los filtros"
+            >
+              <span className="text-sm font-medium">
+                Eliminar {activeFilterCount} {activeFilterCount === 1 ? 'filtro' : 'filtros'}
+              </span>
+              <X className="w-4 h-4 group-hover:rotate-90 transition-transform" />
+            </button>
+          )}
+        </div>
 
       </div>
 

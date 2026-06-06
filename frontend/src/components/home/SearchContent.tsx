@@ -15,7 +15,6 @@ import CentroCardSkeleton from '@/components/CentroCardSkeleton';
 import VisitedCentersSection from '@/components/VisitedCentersSection';
 import RecommendationsSection from '@/components/recommendations/RecommendationsSection';
 import AIWizardModal from '@/components/ai-wizard/AIWizardModal';
-import AIWizardTriggerButton from '@/components/ai-wizard/AIWizardTriggerButton';
 import { motion } from 'framer-motion';
 
 // ─── Session persistence helpers ────────────────────────────────────────────
@@ -165,7 +164,7 @@ export default function SearchContent() {
       {/* Hero Section */}
       <section className="relative pt-6 pb-20 md:py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto relative z-50">
-          <div className="text-center mb-12">
+          <div className="text-center mb-10">
             <h1 className="text-5xl sm:text-6xl lg:text-7xl mb-3 tracking-tight font-bold flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
               <span className="bg-gradient-to-r from-[#223945] via-blue-600 to-blue-400 bg-clip-text text-transparent text-center leading-tight py-2">
                 Excelencia educativa a tu alcance
@@ -175,32 +174,51 @@ export default function SearchContent() {
               Encuentra tu centro ideal en <span className="font-semibold text-[#223945]">Castilla y León</span> con nuestra búsqueda inteligente.
             </p>
 
-            {/* Botón AI Wizard */}
-            <div className="mt-6">
-              <AIWizardTriggerButton onClick={() => setIsWizardOpen(true)} />
+            {/* Descubre tu FP — eyebrow + pill estilo wizard, branding azul */}
+            <div className="mt-6 flex flex-col items-center gap-2.5">
+              <p className="text-sm text-neutral-500">¿No sabes qué estudiar?</p>
+              <Link href="/descubre-tu-fp">
+                <motion.span
+                  data-tour="descubre-fp"
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="group relative inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#223945] to-blue-600 text-white text-sm font-medium rounded-full shadow-md hover:shadow-lg transition-all overflow-hidden cursor-pointer"
+                >
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12"
+                    initial={{ x: '-100%' }}
+                    animate={{ x: '200%' }}
+                    transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut', repeatDelay: 2 }}
+                  />
+                  <Compass className="w-4 h-4 text-blue-300 relative z-10" />
+                  <span className="relative z-10">Descubre tu FP</span>
+                  <motion.span
+                    className="relative z-10 px-2 py-0.5 bg-gradient-to-r from-blue-500 to-blue-400 rounded-md text-[10px] font-bold tracking-wider"
+                    animate={{
+                      boxShadow: [
+                        '0 0 8px 2px rgba(59,130,246,0.4)',
+                        '0 0 20px 4px rgba(59,130,246,0.6)',
+                        '0 0 8px 2px rgba(59,130,246,0.4)',
+                      ],
+                    }}
+                    transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                  >
+                    FP
+                  </motion.span>
+                </motion.span>
+              </Link>
             </div>
-          </div>
-
-          {/* Descubre tu FP — Banner promotional */}
-          <div className="max-w-[1050px] mx-auto mb-6">
-            <Link
-              href="/descubre-tu-fp"
-              className="group flex items-center gap-4 w-full bg-gradient-to-r from-secondary-500 to-secondary-400 hover:from-secondary-600 hover:to-secondary-500 text-white rounded-2xl px-5 py-4 shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30 transition-all active:scale-[0.99]"
-            >
-              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-                <Compass className="w-5 h-5 text-white" />
-              </div>
-              <div className="flex-1 min-w-0 text-left">
-                <p className="font-extrabold text-sm leading-tight">¿No sabes qué estudiar?</p>
-                <p className="text-white/80 text-xs mt-0.5">Descubre tu FP en 3 minutos · Gratuito · Personalizado</p>
-              </div>
-              <ArrowRight className="w-5 h-5 text-white/70 group-hover:translate-x-1 transition-transform shrink-0" />
-            </Link>
           </div>
 
           {/* Filter Bar Component */}
           <div className="max-w-[1050px] mx-auto">
-            <FilterBar onFilterChange={handleFilterChange} isLoading={isLoading} page={page} initialFilters={filters} />
+            <FilterBar
+              onFilterChange={handleFilterChange}
+              isLoading={isLoading}
+              page={page}
+              initialFilters={filters}
+              onOpenWizard={() => setIsWizardOpen(true)}
+            />
           </div>
         </div>
       </section>
