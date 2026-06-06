@@ -496,7 +496,20 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1, initial
 
        
       <div className="flex flex-col gap-6 pt-2">
-        
+
+        {/* IA helper — visible antes de interactuar con los filtros */}
+        {onOpenWizard && (
+          <button
+            onClick={onOpenWizard}
+            className="flex items-center gap-2 self-start group -mt-1"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+            <span className="text-sm font-medium text-[#223945] group-hover:text-blue-600 transition-colors">
+              Filtra más rápido con IA
+            </span>
+          </button>
+        )}
+
         {/* Top Row: Search & Location */}
         <div className="flex flex-col md:flex-row gap-4 items-stretch">
           <div className="flex-1 md:flex-[1] relative group" ref={wrapperCentroRef}>
@@ -1095,31 +1108,21 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1, initial
             </div>
           )}
 
-        {/* Pie del card: IA helper + limpiar filtros */}
-        <div className="flex items-center justify-between pt-4 -mb-3 border-t border-neutral-100">
-          {onOpenWizard ? (
-            <button
-              onClick={onOpenWizard}
-              className="flex items-center gap-2 text-neutral-400 hover:text-[#223945] transition-colors py-2 px-1 group"
-            >
-              <Sparkles className="w-4 h-4 group-hover:text-blue-500 transition-colors" />
-              <span className="text-sm font-medium">Filtra más rápido con IA</span>
-            </button>
-          ) : <div />}
-
-          {hasActiveFilters && (
+        {/* Pie del card: solo limpiar filtros cuando hay activos */}
+        {hasActiveFilters && (
+          <div className="flex justify-center pt-3 -mb-3 border-t border-neutral-100">
             <button
               onClick={clearAll}
               className="flex items-center gap-2 px-4 py-2 text-neutral-400 hover:text-red-500 transition-colors group"
               title="Eliminar todos los filtros"
             >
-              <span className="text-sm font-medium">
+              <span className="text-sm font-medium whitespace-nowrap">
                 Eliminar {activeFilterCount} {activeFilterCount === 1 ? 'filtro' : 'filtros'}
               </span>
-              <X className="w-4 h-4 group-hover:rotate-90 transition-transform" />
+              <X className="w-4 h-4 shrink-0 group-hover:rotate-90 transition-transform" />
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
       </div>
 

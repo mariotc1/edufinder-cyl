@@ -176,7 +176,7 @@ export default function SearchContent() {
 
             {/* Descubre tu FP — eyebrow + pill estilo wizard, branding azul */}
             <div className="mt-6 flex flex-col items-center gap-2.5">
-              <p className="text-sm text-neutral-500">¿No sabes qué estudiar?</p>
+              <p className="text-sm font-semibold text-neutral-600">¿No sabes qué estudiar?</p>
               <Link href="/descubre-tu-fp">
                 <motion.span
                   data-tour="descubre-fp"
