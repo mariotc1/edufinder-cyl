@@ -1,0 +1,674 @@
+'use client';
+
+import { useState, useCallback, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
+import {
+  ArrowRight,
+  ArrowLeft,
+  ChevronDown,
+  ChevronUp,
+  ExternalLink,
+  RotateCcw,
+  CheckCircle2,
+  Sparkles,
+  Clock,
+  Target,
+  BookOpen,
+  Briefcase,
+  TrendingUp,
+  MapPin,
+} from 'lucide-react';
+import { QUESTIONS } from '@/lib/descubre-fp/data';
+import { runQuiz, getTotalQuestions } from '@/lib/descubre-fp/engine';
+import {
+  QuizResult,
+  FamilyMatch,
+  AttributeKey,
+  ATTRIBUTE_LABELS,
+  ATTRIBUTE_EMOJIS,
+} from '@/lib/descubre-fp/types';
+
+const STORAGE_KEY = 'edufinder_descubre_fp_result';
+
+type Screen = 'intro' | 'question' | 'processing' | 'results';
+
+const PROCESSING_MESSAGES = [
+  'Analizando tus respuestas...',
+  'Comparando con 14 familias profesionales...',
+  'Detectando tus puntos fuertes...',
+  'Construyendo tu perfil único...',
+  'Casi listo...',
+];
+
+// ─── Intro ───────────────────────────────────────────────────────────────────
+
+function IntroScreen({ onStart }: { onStart: () => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="flex flex-col items-center text-center px-6 pt-8 pb-12 max-w-lg mx-auto"
+    >
+      {/* Badge */}
+      <motion.div
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.1 }}
+        className="inline-flex items-center gap-2 bg-secondary-100 text-secondary-700 text-xs font-bold px-4 py-1.5 rounded-full mb-6 uppercase tracking-wide"
+      >
+        <Sparkles className="w-3.5 h-3.5" />
+        Nuevo en EduFinder
+      </motion.div>
+
+      {/* Emoji grande */}
+      <motion.div
+        initial={{ scale: 0, rotate: -10 }}
+        animate={{ scale: 1, rotate: 0 }}
+        transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+        className="text-7xl mb-6"
+      >
+        🎯
+      </motion.div>
+
+      <h1 className="text-3xl sm:text-4xl font-extrabold text-[#223945] mb-3 leading-tight">
+        Descubre tu FP
+      </h1>
+      <p className="text-neutral-600 text-base sm:text-lg leading-relaxed mb-8 max-w-sm">
+        12 preguntas para descubrir qué familias profesionales encajan mejor con tu forma de ser y tus intereses.
+      </p>
+
+      {/* Stats */}
+      <div className="flex items-center justify-center gap-6 mb-10 text-sm text-neutral-500">
+        <div className="flex items-center gap-1.5">
+          <Clock className="w-4 h-4 text-secondary-500" />
+          <span>~3 minutos</span>
+        </div>
+        <div className="w-1 h-1 rounded-full bg-neutral-300" />
+        <div className="flex items-center gap-1.5">
+          <Target className="w-4 h-4 text-secondary-500" />
+          <span>Personalizado</span>
+        </div>
+        <div className="w-1 h-1 rounded-full bg-neutral-300" />
+        <div className="flex items-center gap-1.5">
+          <CheckCircle2 className="w-4 h-4 text-secondary-500" />
+          <span>Gratuito</span>
+        </div>
+      </div>
+
+      {/* CTA */}
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={onStart}
+        className="w-full max-w-xs flex items-center justify-center gap-3 bg-gradient-to-r from-[#223945] to-blue-600 text-white font-bold text-lg px-8 py-4 rounded-2xl shadow-xl shadow-blue-900/20 hover:shadow-blue-900/30 transition-all"
+      >
+        Empezar ahora
+        <ArrowRight className="w-5 h-5" />
+      </motion.button>
+
+      <p className="text-xs text-neutral-400 mt-4">
+        Sin registro. Sin datos personales. Sin coste.
+      </p>
+    </motion.div>
+  );
+}
+
+// ─── Question ────────────────────────────────────────────────────────────────
+
+interface QuestionScreenProps {
+  questionIndex: number;
+  answers: Record<number, string>;
+  onAnswer: (optionId: string) => void;
+  onBack: () => void;
+}
+
+function QuestionScreen({ questionIndex, answers, onAnswer, onBack }: QuestionScreenProps) {
+  const question = QUESTIONS[questionIndex];
+  const total = getTotalQuestions();
+  const progress = ((questionIndex) / total) * 100;
+  const selected = answers[question.id];
+
+  const handleSelect = (optionId: string) => {
+    onAnswer(optionId);
+  };
+
+  return (
+    <motion.div
+      key={question.id}
+      initial={{ opacity: 0, x: 30 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -30 }}
+      transition={{ duration: 0.25 }}
+      className="flex flex-col px-5 pt-4 pb-8 max-w-lg mx-auto min-h-[70vh]"
+    >
+      {/* Progress */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between text-xs text-neutral-500 font-medium mb-2">
+          <span className="text-secondary-600 font-bold uppercase tracking-wide text-[11px]">
+            {question.category}
+          </span>
+          <span>
+            {questionIndex + 1} / {total}
+          </span>
+        </div>
+        <div className="w-full h-1.5 bg-neutral-100 rounded-full overflow-hidden">
+          <motion.div
+            className="h-full bg-gradient-to-r from-[#223945] to-blue-500 rounded-full"
+            initial={{ width: 0 }}
+            animate={{ width: `${progress}%` }}
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+          />
+        </div>
+      </div>
+
+      {/* Question */}
+      <h2 className="text-xl sm:text-2xl font-bold text-[#223945] mb-6 leading-snug">
+        {question.text}
+      </h2>
+
+      {/* Options */}
+      <div className="flex flex-col gap-3 flex-1">
+        {question.options.map((option, i) => {
+          const isSelected = selected === option.id;
+          return (
+            <motion.button
+              key={option.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => handleSelect(option.id)}
+              className={`
+                w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all duration-200
+                ${isSelected
+                  ? 'border-[#223945] bg-gradient-to-r from-[#223945] to-blue-600 text-white shadow-lg shadow-blue-900/20'
+                  : 'border-neutral-200 bg-white hover:border-neutral-300 hover:bg-neutral-50 text-neutral-700'}
+              `}
+            >
+              <span className="text-2xl shrink-0">{option.emoji}</span>
+              <span className="font-medium text-sm sm:text-base leading-snug">
+                {option.text}
+              </span>
+              {isSelected && (
+                <CheckCircle2 className="w-5 h-5 shrink-0 ml-auto opacity-80" />
+              )}
+            </motion.button>
+          );
+        })}
+      </div>
+
+      {/* Back */}
+      {questionIndex > 0 && (
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          onClick={onBack}
+          className="mt-6 flex items-center gap-1.5 text-neutral-400 hover:text-neutral-600 transition-colors text-sm font-medium mx-auto"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Pregunta anterior
+        </motion.button>
+      )}
+    </motion.div>
+  );
+}
+
+// ─── Processing ──────────────────────────────────────────────────────────────
+
+function ProcessingScreen() {
+  const [msgIdx, setMsgIdx] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setMsgIdx(prev => (prev + 1) % PROCESSING_MESSAGES.length);
+    }, 700);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="flex flex-col items-center justify-center px-6 py-20 min-h-[70vh]"
+    >
+      {/* Animated rings */}
+      <div className="relative w-20 h-20 mb-8">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
+          className="absolute inset-0 rounded-full border-4 border-transparent border-t-[#223945] border-r-blue-400"
+        />
+        <motion.div
+          animate={{ rotate: -360 }}
+          transition={{ duration: 1.8, repeat: Infinity, ease: 'linear' }}
+          className="absolute inset-2 rounded-full border-4 border-transparent border-b-secondary-500 border-l-secondary-300"
+        />
+        <div className="absolute inset-0 flex items-center justify-center text-2xl">🎯</div>
+      </div>
+
+      <AnimatePresence mode="wait">
+        <motion.p
+          key={msgIdx}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.3 }}
+          className="text-[#223945] font-semibold text-lg text-center"
+        >
+          {PROCESSING_MESSAGES[msgIdx]}
+        </motion.p>
+      </AnimatePresence>
+
+      <p className="text-neutral-400 text-sm mt-3 text-center">
+        Comparando tu perfil con los de cada familia profesional
+      </p>
+    </motion.div>
+  );
+}
+
+// ─── Results ─────────────────────────────────────────────────────────────────
+
+interface ResultsScreenProps {
+  result: QuizResult;
+  onRestart: () => void;
+}
+
+function TraitBadge({ attr }: { attr: AttributeKey }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 bg-white border border-neutral-200 text-neutral-700 text-xs font-semibold px-3 py-1.5 rounded-full shadow-sm">
+      <span>{ATTRIBUTE_EMOJIS[attr]}</span>
+      {ATTRIBUTE_LABELS[attr]}
+    </span>
+  );
+}
+
+function FamilyCard({ match, rank }: { match: FamilyMatch; rank: number }) {
+  const [expanded, setExpanded] = useState(rank === 1);
+  const { family, score, matchedTraits, justification } = match;
+  const isPrimary = rank === 1;
+
+  const searchUrl = `/?tipo=FP&familia=${encodeURIComponent(family.queryParam)}`;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: rank * 0.1 }}
+      className={`rounded-2xl overflow-hidden shadow-card border border-neutral-200 ${isPrimary ? 'ring-2 ring-[#223945]/20' : ''}`}
+    >
+      {/* Header */}
+      <div
+        className="relative p-5 cursor-pointer select-none"
+        style={{ background: `linear-gradient(135deg, ${family.colorFrom}, ${family.colorTo})` }}
+        onClick={() => setExpanded(e => !e)}
+      >
+        {isPrimary && (
+          <div className="absolute top-3 right-3">
+            <span className="inline-flex items-center gap-1 bg-secondary-400 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">
+              <Sparkles className="w-2.5 h-2.5" />
+              Mejor coincidencia
+            </span>
+          </div>
+        )}
+
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-2xl shrink-0">
+            {family.emoji}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-white/60 text-xs font-bold">#{rank}</span>
+              <div className="h-3 w-px bg-white/30" />
+              <span className="text-white/60 text-xs">{score}% de compatibilidad</span>
+            </div>
+            <h3 className="text-white font-extrabold text-lg leading-tight mb-1">
+              {family.nombre}
+            </h3>
+            <p className="text-white/80 text-xs font-medium">{family.tagline}</p>
+          </div>
+          <div className="shrink-0 text-white/60 mt-1">
+            {expanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+          </div>
+        </div>
+
+        {/* Match bar */}
+        <div className="mt-4">
+          <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full bg-white/80 rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: `${score}%` }}
+              transition={{ delay: 0.4 + rank * 0.1, duration: 0.8, ease: 'easeOut' }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Body */}
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="overflow-hidden"
+          >
+            <div className="p-5 bg-white space-y-5">
+              {/* Justification */}
+              <div className="bg-neutral-50 rounded-xl p-4 border border-neutral-100">
+                <p className="text-neutral-700 text-sm leading-relaxed">
+                  <span className="font-bold text-[#223945]">¿Por qué encaja contigo? </span>
+                  {justification}
+                </p>
+                {matchedTraits.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-3">
+                    {matchedTraits.map(attr => (
+                      <TraitBadge key={attr} attr={attr} />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Descripcion */}
+              <p className="text-neutral-600 text-sm leading-relaxed">{family.descripcion}</p>
+
+              {/* Qué aprenderás */}
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <BookOpen className="w-4 h-4 text-[#223945]" />
+                  <h4 className="font-bold text-[#223945] text-sm">Qué aprenderás</h4>
+                </div>
+                <ul className="space-y-1.5">
+                  {family.queAprenderas.map(item => (
+                    <li key={item} className="flex items-start gap-2 text-sm text-neutral-600">
+                      <span className="text-success-500 mt-0.5 shrink-0">✓</span>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Salidas profesionales */}
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Briefcase className="w-4 h-4 text-[#223945]" />
+                  <h4 className="font-bold text-[#223945] text-sm">Salidas profesionales</h4>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {family.salidasProfesionales.map(s => (
+                    <span
+                      key={s}
+                      className="text-xs bg-neutral-100 text-neutral-700 px-2.5 py-1 rounded-full font-medium"
+                    >
+                      {s}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Ciclos destacados */}
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <TrendingUp className="w-4 h-4 text-[#223945]" />
+                  <h4 className="font-bold text-[#223945] text-sm">Ciclos destacados en CyL</h4>
+                </div>
+                <ul className="space-y-1.5">
+                  {family.ciclosDestacados.map(c => (
+                    <li key={c} className="flex items-start gap-2 text-sm text-neutral-600">
+                      <span className="text-blue-400 mt-0.5 shrink-0">→</span>
+                      {c}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Ventajas */}
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
+                <h4 className="font-bold text-[#223945] text-sm mb-2">Ventajas de este camino</h4>
+                <ul className="space-y-1">
+                  {family.ventajas.map(v => (
+                    <li key={v} className="flex items-start gap-2 text-xs text-neutral-600">
+                      <span className="text-secondary-500 mt-0.5 shrink-0">★</span>
+                      {v}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Nivel recomendado */}
+              <div className="flex items-center gap-2 text-sm text-neutral-500">
+                <span className="font-medium text-neutral-700">Nivel recomendado:</span>
+                <span className="bg-secondary-100 text-secondary-700 text-xs font-bold px-2.5 py-1 rounded-full">
+                  {family.nivelRecomendado}
+                </span>
+              </div>
+
+              {/* CTA */}
+              <Link
+                href={searchUrl}
+                className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-[#223945] to-blue-600 text-white font-bold text-sm py-3.5 rounded-xl hover:opacity-90 active:scale-[0.98] transition-all shadow-md"
+              >
+                <MapPin className="w-4 h-4" />
+                Ver centros que imparten esta familia
+                <ExternalLink className="w-3.5 h-3.5 opacity-70" />
+              </Link>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+function ResultsScreen({ result, onRestart }: ResultsScreenProps) {
+  const { userProfile, matches } = result;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="max-w-lg mx-auto px-4 pb-12"
+    >
+      {/* Header perfil */}
+      <div className="pt-6 pb-5 text-center">
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
+          className="text-4xl mb-3"
+        >
+          ✨
+        </motion.div>
+        <h2 className="text-2xl font-extrabold text-[#223945] mb-1">Tu perfil</h2>
+        <p className="text-secondary-600 font-semibold text-sm">{userProfile.profileLabel}</p>
+      </div>
+
+      {/* Descripción del perfil */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="bg-gradient-to-br from-[#223945] to-blue-700 rounded-2xl p-5 mb-5 text-white shadow-xl shadow-blue-900/20"
+      >
+        <p className="text-sm leading-relaxed mb-3 text-white/90">
+          Hemos detectado que{' '}
+          {userProfile.profileSentences.length > 0
+            ? userProfile.profileSentences
+                .map((s, i) =>
+                  i < userProfile.profileSentences.length - 1 ? s : `y ${s}`
+                )
+                .join(', ')
+            : 'tienes un perfil muy versátil'
+          }.
+        </p>
+        <p className="text-white/80 text-xs">
+          Trabajarías mejor en{' '}
+          <span className="text-white font-semibold">{userProfile.workEnvironment}</span>.
+        </p>
+      </motion.div>
+
+      {/* Top traits */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="mb-6"
+      >
+        <p className="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-3">
+          Rasgos dominantes de tu perfil
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {userProfile.topAttributes.map(attr => (
+            <TraitBadge key={attr} attr={attr} />
+          ))}
+        </div>
+      </motion.div>
+
+      {/* Separator */}
+      <div className="flex items-center gap-3 mb-6">
+        <div className="h-px flex-1 bg-neutral-200" />
+        <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest whitespace-nowrap">
+          Nuestras recomendaciones
+        </span>
+        <div className="h-px flex-1 bg-neutral-200" />
+      </div>
+
+      {/* Family cards */}
+      <div className="space-y-4 mb-8">
+        {matches.map((match, i) => (
+          <FamilyCard key={match.family.codigo} match={match} rank={i + 1} />
+        ))}
+      </div>
+
+      {/* Descargo */}
+      <div className="bg-neutral-50 rounded-xl p-4 border border-neutral-100 mb-6">
+        <p className="text-xs text-neutral-400 leading-relaxed text-center">
+          Estas recomendaciones se basan en tus respuestas y en los perfiles de cada familia
+          profesional. Son orientativas y complementarias a la orientación de tu centro educativo.
+        </p>
+      </div>
+
+      {/* Restart */}
+      <button
+        onClick={onRestart}
+        className="flex items-center justify-center gap-2 w-full border-2 border-neutral-200 text-neutral-600 font-semibold text-sm py-3 rounded-xl hover:border-neutral-300 hover:bg-neutral-50 active:scale-[0.98] transition-all"
+      >
+        <RotateCcw className="w-4 h-4" />
+        Repetir el test
+      </button>
+    </motion.div>
+  );
+}
+
+// ─── Orchestrator ────────────────────────────────────────────────────────────
+
+export default function DescubreFPClient() {
+  const [screen, setScreen] = useState<Screen>('intro');
+  const [questionIndex, setQuestionIndex] = useState(0);
+  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [result, setResult] = useState<QuizResult | null>(null);
+
+  // Restore saved result on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as QuizResult;
+        if (parsed?.matches && parsed?.userProfile) {
+          setResult(parsed);
+          setScreen('results');
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const handleStart = useCallback(() => {
+    setScreen('question');
+    setQuestionIndex(0);
+  }, []);
+
+  const handleAnswer = useCallback(
+    (optionId: string) => {
+      const question = QUESTIONS[questionIndex];
+      const newAnswers = { ...answers, [question.id]: optionId };
+      setAnswers(newAnswers);
+
+      // Auto-advance after brief highlight
+      setTimeout(() => {
+        if (questionIndex < QUESTIONS.length - 1) {
+          setQuestionIndex(i => i + 1);
+        } else {
+          // All answered — calculate
+          setScreen('processing');
+          setTimeout(() => {
+            const quizResult = runQuiz(newAnswers);
+            setResult(quizResult);
+            try {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(quizResult));
+            } catch {
+              // ignore
+            }
+            setScreen('results');
+          }, 3000);
+        }
+      }, 350);
+    },
+    [questionIndex, answers]
+  );
+
+  const handleBack = useCallback(() => {
+    if (questionIndex > 0) {
+      setQuestionIndex(i => i - 1);
+    } else {
+      setScreen('intro');
+    }
+  }, [questionIndex]);
+
+  const handleRestart = useCallback(() => {
+    setAnswers({});
+    setResult(null);
+    setQuestionIndex(0);
+    setScreen('intro');
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-[#dbeafe] via-white to-white">
+      {/* Top decorative bar */}
+      <div className="h-1 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300" />
+
+      <div className="max-w-lg mx-auto">
+        <AnimatePresence mode="wait">
+          {screen === 'intro' && (
+            <IntroScreen key="intro" onStart={handleStart} />
+          )}
+          {screen === 'question' && (
+            <QuestionScreen
+              key={`q-${questionIndex}`}
+              questionIndex={questionIndex}
+              answers={answers}
+              onAnswer={handleAnswer}
+              onBack={handleBack}
+            />
+          )}
+          {screen === 'processing' && (
+            <ProcessingScreen key="processing" />
+          )}
+          {screen === 'results' && result && (
+            <ResultsScreen key="results" result={result} onRestart={handleRestart} />
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}

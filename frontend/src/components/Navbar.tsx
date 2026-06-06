@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { Menu, X, MapPin, Heart, LogIn, UserPlus, User as UserMenuIcon, LogOut as LogOutIcon, ShieldCheck, Download } from 'lucide-react';
+import { Menu, X, MapPin, Heart, LogIn, UserPlus, User as UserMenuIcon, LogOut as LogOutIcon, ShieldCheck, Download, Compass } from 'lucide-react';
 import Logo from './Logo';
 import UserMenu from './UserMenu';
 import { useAuth } from '@/context/AuthContext';
@@ -135,6 +135,14 @@ function NavbarContent() {
             >
               <MapPin className="w-4 h-4 text-neutral-400 group-hover:text-blue-600 transition-colors" />
               Mapa
+            </Link>
+
+            <Link
+              href="/descubre-tu-fp"
+              className="group flex items-center gap-2 px-4 py-2 rounded-full font-bold text-sm uppercase tracking-wide bg-gradient-to-r from-secondary-500 to-secondary-400 text-white shadow-md shadow-amber-500/20 hover:shadow-amber-500/30 hover:-translate-y-0.5 transition-all duration-300"
+            >
+              <Compass className="w-4 h-4" />
+              Descubre tu FP
             </Link>
             
             {user ? (
@@ -267,6 +275,17 @@ function NavbarContent() {
                   <MapPin className="w-4 h-4" />
               </div>
               Mapa
+            </Link>
+
+            <Link
+              href="/descubre-tu-fp"
+              className="flex items-center gap-4 px-4 py-3 rounded-xl bg-gradient-to-r from-secondary-500 to-secondary-400 text-white font-bold shadow-md transition-all active:scale-[0.98]"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+                <Compass className="w-4 h-4 text-white" />
+              </div>
+              Descubre tu FP
             </Link>
             
             {user ? (

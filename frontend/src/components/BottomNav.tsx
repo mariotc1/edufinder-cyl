@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, MapPin, Heart, UserCircle2, Download, ShieldCheck, X } from 'lucide-react';
+import { Home, MapPin, Heart, UserCircle2, Download, ShieldCheck, X, Compass } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useFavoritesAnimation } from '@/context/FavoritesAnimationContext';
 import { usePWA } from '@/components/PWAProvider';
@@ -99,6 +99,9 @@ export default function BottomNav() {
             <Tab href="/mapa" label="Mapa" active={isActive('/mapa')} dataTour="map-mobile">
               <MapPin className="w-[22px] h-[22px]" />
             </Tab>
+            {user.role !== 'admin' && (
+              <DescubreTab active={isActive('/descubre-tu-fp')} />
+            )}
             <Tab href="/favoritos" label="Favoritos" active={isActive('/favoritos')} scrollOnActive dataTour="favorites-mobile">
               <div className="relative">
                 <Heart className="w-[22px] h-[22px]" />
@@ -115,12 +118,13 @@ export default function BottomNav() {
                 </AnimatePresence>
               </div>
             </Tab>
-            {user.role === 'admin' && (
+            {user.role === 'admin' ? (
               <Tab href="/admin" label="Admin" active={isActive('/admin')} scrollOnActive>
                 <ShieldCheck className="w-[22px] h-[22px]" />
               </Tab>
+            ) : (
+              <ProfileTab href="/perfil" label="Perfil" active={isActive('/perfil')} name={user.name} avatar={user.foto_perfil ?? null} />
             )}
-            <ProfileTab href="/perfil" label="Perfil" active={isActive('/perfil')} name={user.name} avatar={user.foto_perfil ?? null} />
           </>
         ) : (
           <>
@@ -128,6 +132,7 @@ export default function BottomNav() {
             <Tab href="/mapa" label="Mapa" active={isActive('/mapa')} dataTour="map-mobile">
               <MapPin className="w-[22px] h-[22px]" />
             </Tab>
+            <DescubreTab active={isActive('/descubre-tu-fp')} />
             <AccountTab active={isActive('/login') || isActive('/registro')} />
           </>
         )}
@@ -238,6 +243,21 @@ function AccountTab({ active }: { active: boolean }) {
         <UserCircle2 className={`w-[22px] h-[22px] transition-colors duration-200 ${active ? 'text-[#223945]' : 'text-neutral-400'}`} />
         <span className={`text-[10px] leading-none transition-colors duration-200 ${active ? 'font-bold text-[#223945]' : 'font-medium text-neutral-400'}`}>
           Acceder
+        </span>
+      </div>
+    </Link>
+  );
+}
+
+// ── Tab Descubre tu FP ───────────────────────────────────────────
+function DescubreTab({ active }: { active: boolean }) {
+  return (
+    <Link href="/descubre-tu-fp" style={TAB_STYLE} className={BASE_CLASS}>
+      {active && <ActiveBar />}
+      <div className="flex flex-col items-center gap-1">
+        <Compass className={`w-[22px] h-[22px] transition-colors duration-200 ${active ? 'text-secondary-500' : 'text-neutral-400'}`} />
+        <span className={`text-[10px] leading-none transition-colors duration-200 ${active ? 'font-bold text-secondary-500' : 'font-medium text-neutral-400'}`}>
+          Descubre
         </span>
       </div>
     </Link>

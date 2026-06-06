@@ -5,7 +5,8 @@ import useSWR from 'swr';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator';
 import { useSearchParams } from 'next/navigation';
-import { School, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
+import { School, ChevronLeft, ChevronRight, ArrowRight, Compass } from 'lucide-react';
+import Link from 'next/link';
 import { searchCentros } from '@/services/api';
 import { FilterOptions, Centro } from '@/types';
 import FilterBar from '@/components/FilterBar';
@@ -178,6 +179,23 @@ export default function SearchContent() {
             <div className="mt-6">
               <AIWizardTriggerButton onClick={() => setIsWizardOpen(true)} />
             </div>
+          </div>
+
+          {/* Descubre tu FP — Banner promotional */}
+          <div className="max-w-[1050px] mx-auto mb-6">
+            <Link
+              href="/descubre-tu-fp"
+              className="group flex items-center gap-4 w-full bg-gradient-to-r from-secondary-500 to-secondary-400 hover:from-secondary-600 hover:to-secondary-500 text-white rounded-2xl px-5 py-4 shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30 transition-all active:scale-[0.99]"
+            >
+              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+                <Compass className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1 min-w-0 text-left">
+                <p className="font-extrabold text-sm leading-tight">¿No sabes qué estudiar?</p>
+                <p className="text-white/80 text-xs mt-0.5">Descubre tu FP en 3 minutos · Gratuito · Personalizado</p>
+              </div>
+              <ArrowRight className="w-5 h-5 text-white/70 group-hover:translate-x-1 transition-transform shrink-0" />
+            </Link>
           </div>
 
           {/* Filter Bar Component */}
