@@ -57,10 +57,13 @@ function IntroScreen({ onStart, userName }: { onStart: () => void; userName?: st
         <Compass className="w-8 h-8 text-white" />
       </div>
 
-      <h1 className="text-2xl md:text-3xl font-bold text-[#223945] mb-3 leading-snug">
-        {userName
-          ? `${userName}, vamos a descubrir tu FP.`
-          : 'Descubre tu FP'}
+      {userName && (
+        <p className="text-base font-semibold text-neutral-400 mb-1 tracking-wide">
+          Hola, {userName}
+        </p>
+      )}
+      <h1 className="text-xl md:text-3xl font-bold text-[#223945] mb-3 leading-snug">
+        Vamos a descubrir tu FP
       </h1>
 
       <div className="space-y-5 mb-10 max-w-sm text-left">
@@ -122,13 +125,13 @@ function QuestionScreen({ questionIndex, answers, onAnswer, onBack }: QuestionSc
       transition={{ duration: 0.25 }}
       className="flex flex-col px-5 pt-4 pb-8 max-w-lg mx-auto min-h-[70vh]"
     >
-      {/* Progress */}
+      {/* Progress header */}
       <div className="mb-6">
         <div className="flex items-center justify-between text-xs text-neutral-500 font-medium mb-2">
-          <span className="text-secondary-600 font-bold uppercase tracking-wide text-[11px]">
+          <span className="text-[#223945]/60 font-bold uppercase tracking-wide text-[11px]">
             {question.category}
           </span>
-          <span>
+          <span className="tabular-nums">
             {questionIndex + 1} / {total}
           </span>
         </div>
@@ -148,7 +151,7 @@ function QuestionScreen({ questionIndex, answers, onAnswer, onBack }: QuestionSc
       </h2>
 
       {/* Options */}
-      <div className="flex flex-col gap-3 flex-1">
+      <div className="flex flex-col gap-3">
         {question.options.map((option, i) => {
           const isSelected = selected === option.id;
           return (
@@ -178,13 +181,13 @@ function QuestionScreen({ questionIndex, answers, onAnswer, onBack }: QuestionSc
         })}
       </div>
 
-      {/* Back */}
+      {/* Back — acción secundaria, debajo de las opciones */}
       {questionIndex > 0 && (
         <motion.button
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           onClick={onBack}
-          className="mt-6 flex items-center gap-1.5 text-neutral-400 hover:text-neutral-600 transition-colors text-sm font-medium mx-auto"
+          className="mt-4 flex items-center gap-1.5 text-neutral-400 hover:text-neutral-600 transition-colors text-sm font-medium mx-auto"
         >
           <ArrowLeft className="w-4 h-4" />
           Pregunta anterior
