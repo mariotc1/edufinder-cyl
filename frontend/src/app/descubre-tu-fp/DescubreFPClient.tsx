@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import {
@@ -447,6 +447,16 @@ function FamilyCard({ match, rank }: { match: FamilyMatch; rank: number }) {
 
 function ResultsScreen({ result, onRestart, userName }: ResultsScreenProps) {
   const { userProfile, matches } = result;
+  const [activeIdx, setActiveIdx] = useState(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const handleCarouselScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const idx = Math.round(el.scrollLeft / (el.scrollWidth / matches.length));
+    setActiveIdx(Math.max(0, Math.min(idx, matches.length - 1)));
+  }, [matches.length]);
+
   // "Perfil tecnológico y digital" → "Tecnológico y digital" (solo primera letra en caps)
   const displayLabel = userProfile.profileLabel
     .replace(/^Perfil\s+/i, '')
@@ -539,21 +549,38 @@ function ResultsScreen({ result, onRestart, userName }: ResultsScreenProps) {
 
       {/* ── Family cards — scroll snap en móvil, grid en desktop ── */}
       <div className="mb-8">
-        {/* Mobile: horizontal snap scroll */}
+        {/* Mobile: horizontal snap scroll centrado */}
         <div
-          className="md:hidden flex gap-4 overflow-x-auto pb-4 px-4"
+          ref={scrollRef}
+          onScroll={handleCarouselScroll}
+          className="md:hidden flex gap-4 overflow-x-auto pb-4"
           style={{ scrollSnapType: 'x mandatory', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}
         >
+          {/* Spacer inicial para centrar primera card */}
+          <div className="shrink-0" style={{ width: 'calc(9vw - 16px)', minWidth: 4 }} />
           {matches.map((match, i) => (
             <div
               key={match.family.codigo}
               className="shrink-0"
-              style={{ scrollSnapAlign: 'start', width: 'calc(88vw)' }}
+              style={{ scrollSnapAlign: 'center', width: '82vw' }}
             >
               <FamilyCard match={match} rank={i + 1} />
             </div>
           ))}
-          <div className="shrink-0 w-4" />
+          {/* Spacer final simétrico */}
+          <div className="shrink-0" style={{ width: 'calc(9vw - 16px)', minWidth: 4 }} />
+        </div>
+
+        {/* Dots indicador — estilo iOS pill */}
+        <div className="flex justify-center items-center gap-1.5 mt-3 md:hidden">
+          {matches.map((_, i) => (
+            <motion.div
+              key={i}
+              animate={{ width: i === activeIdx ? 20 : 6 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              className={`h-1.5 rounded-full ${i === activeIdx ? 'bg-[#223945]' : 'bg-neutral-300'}`}
+            />
+          ))}
         </div>
 
         {/* Desktop: 3 columnas al ancho estándar del sitio */}
