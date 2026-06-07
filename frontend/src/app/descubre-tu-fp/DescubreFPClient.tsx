@@ -34,11 +34,11 @@ const STORAGE_KEY = 'edufinder_descubre_fp_result';
 type Screen = 'intro' | 'question' | 'processing' | 'results';
 
 const PROCESSING_MESSAGES = [
-  'Analizando tus respuestas...',
-  'Comparando con 14 familias profesionales...',
-  'Detectando tus puntos fuertes...',
-  'Construyendo tu perfil único...',
-  'Casi listo...',
+  'Estamos leyendo tus respuestas...',
+  'Buscando qué te hace único...',
+  'Comparando con 14 caminos diferentes...',
+  'Encontrando dónde brillarías más...',
+  'Casi lo tenemos...',
 ];
 
 // ─── Intro ───────────────────────────────────────────────────────────────────
@@ -214,41 +214,82 @@ function ProcessingScreen() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="flex flex-col items-center justify-center px-6 py-20 min-h-[70vh]"
+      className="flex flex-col items-center justify-center px-6 min-h-[70vh] text-center"
     >
-      {/* Animated rings */}
-      <div className="relative w-20 h-20 mb-8">
+      {/* Orb con anillos */}
+      <div className="relative flex items-center justify-center mb-10">
+        {/* Anillo exterior — dashed lento */}
         <motion.div
           animate={{ rotate: 360 }}
-          transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
-          className="absolute inset-0 rounded-full border-4 border-transparent border-t-[#223945] border-r-blue-400"
+          transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
+          className="absolute w-44 h-44 rounded-full border border-blue-300/25"
+          style={{ borderStyle: 'dashed' }}
         />
+        {/* Anillo medio — sólido, giro contrario */}
         <motion.div
           animate={{ rotate: -360 }}
-          transition={{ duration: 1.8, repeat: Infinity, ease: 'linear' }}
-          className="absolute inset-2 rounded-full border-4 border-transparent border-b-secondary-500 border-l-secondary-300"
+          transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
+          className="absolute w-36 h-36 rounded-full"
+          style={{
+            border: '2px solid transparent',
+            borderTopColor: '#223945',
+            borderRightColor: 'transparent',
+            borderBottomColor: 'rgb(96 165 250 / 0.6)',
+            borderLeftColor: 'transparent',
+          }}
         />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Compass className="w-6 h-6 text-[#223945]" />
-        </div>
+        {/* Anillo interior — giro rápido */}
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+          className="absolute w-28 h-28 rounded-full"
+          style={{
+            border: '1.5px solid transparent',
+            borderTopColor: 'transparent',
+            borderRightColor: 'rgb(147 197 253 / 0.5)',
+            borderBottomColor: 'transparent',
+            borderLeftColor: '#223945',
+          }}
+        />
+        {/* Orb central — respira */}
+        <motion.div
+          animate={{ scale: [1, 1.07, 1] }}
+          transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+          className="w-20 h-20 rounded-full bg-gradient-to-br from-[#223945] to-blue-500 flex items-center justify-center"
+          style={{ boxShadow: '0 0 48px rgba(59,130,246,0.35), 0 0 16px rgba(34,57,69,0.25)' }}
+        >
+          <Compass className="w-8 h-8 text-white" />
+        </motion.div>
       </div>
 
+      {/* Titular */}
+      <h2 className="text-xl font-bold text-[#223945] mb-2">
+        Buscando tu camino ideal
+      </h2>
+      <p className="text-neutral-500 text-sm max-w-xs leading-relaxed mb-8">
+        Estamos analizando tus respuestas para encontrar las familias profesionales que mejor encajan contigo.
+      </p>
+
+      {/* Mensaje cíclico — chip */}
       <AnimatePresence mode="wait">
-        <motion.p
+        <motion.div
           key={msgIdx}
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.3 }}
-          className="text-[#223945] font-semibold text-lg text-center"
+          transition={{ duration: 0.35 }}
+          className="flex items-center gap-2.5 bg-white border border-neutral-200 shadow-sm rounded-full px-4 py-2.5"
         >
-          {PROCESSING_MESSAGES[msgIdx]}
-        </motion.p>
+          <motion.span
+            animate={{ opacity: [1, 0.3, 1] }}
+            transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
+            className="w-2 h-2 rounded-full bg-blue-500 shrink-0"
+          />
+          <span className="text-sm font-medium text-neutral-600">
+            {PROCESSING_MESSAGES[msgIdx]}
+          </span>
+        </motion.div>
       </AnimatePresence>
-
-      <p className="text-neutral-400 text-sm mt-3 text-center">
-        Comparando tu perfil con los de cada familia profesional
-      </p>
     </motion.div>
   );
 }
@@ -600,7 +641,7 @@ export default function DescubreFPClient() {
               // ignore
             }
             setScreen('results');
-          }, 3000);
+          }, 4000);
         }
       }, 350);
     },
