@@ -7,7 +7,7 @@ export interface TourStep {
   placement: 'top' | 'bottom' | 'left' | 'right' | 'center';
   placementMobile?: 'top' | 'bottom' | 'left' | 'right' | 'center';
   spotlightPadding?: number;
-  icon?: 'sparkles' | 'search' | 'heart' | 'map' | 'hand-wave' | 'party';
+  icon?: 'sparkles' | 'search' | 'heart' | 'map' | 'hand-wave' | 'party' | 'compass';
   // Actions to perform before showing this step
   requiresMobileMenu?: boolean; // Open mobile menu before this step
   // Special styling for final step
@@ -24,20 +24,20 @@ export const tourSteps: TourStep[] = [
     icon: 'hand-wave',
   },
   {
-    id: 'ai-wizard',
-    targetSelector: '[data-tour="ai-wizard"]',
-    title: 'Asistente Inteligente',
-    description: 'Nuestro asistente con IA te guía paso a paso para encontrar el centro perfecto según tus preferencias.',
+    id: 'descubre-fp',
+    targetSelector: '[data-tour="descubre-fp"]',
+    title: 'Descubre tu FP',
+    description: '¿No sabes qué estudiar? Responde 12 preguntas y te diremos qué familias profesionales encajan con tu perfil.',
     placement: 'bottom',
     placementMobile: 'bottom',
     spotlightPadding: 8,
-    icon: 'sparkles',
+    icon: 'compass',
   },
   {
     id: 'filters',
     targetSelector: '[data-tour="filters"]',
     title: 'Filtros Avanzados',
-    description: 'Filtra por provincia, tipo de enseñanza, titularidad y mucho más. También puedes buscar centros cerca de tu ubicación.',
+    description: 'Filtra por provincia, tipo de enseñanza, titularidad y más. También puedes usar el asistente inteligente para encontrar tu centro en segundos.',
     placement: 'bottom',
     placementMobile: 'top',
     spotlightPadding: 12,

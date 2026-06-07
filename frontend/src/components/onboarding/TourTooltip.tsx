@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Search, Heart, MapPin, Hand, ChevronRight, X, PartyPopper, UserPlus } from 'lucide-react';
+import { Sparkles, Search, Heart, MapPin, Hand, ChevronRight, X, PartyPopper, UserPlus, Compass } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import TourProgress from './TourProgress';
@@ -25,6 +25,7 @@ const iconMap = {
   map: MapPin,
   'hand-wave': Hand,
   'party': PartyPopper,
+  compass: Compass,
 };
 
 // Confetti particle component for final step
