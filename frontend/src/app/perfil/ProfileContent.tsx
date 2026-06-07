@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import api from '@/lib/axios';
-import { getSavedSearches, deleteSavedSearch } from '@/services/api';
+import { getSavedSearches, deleteSavedSearch, getFpQuizResult, deleteFpQuizResult } from '@/services/api';
+import { QuizResult } from '@/lib/descubre-fp/types';
 import PullToRefresh from '@/components/PullToRefresh';
 import { SavedSearch } from '@/types';
-import { User, Heart, Lock, Camera, LogOut, Eye, EyeOff, ChevronLeft, Trash, AlertCircle, CheckCircle, Bookmark, Search, X, Calendar, Building2, GraduationCap, Filter, MapPin, RotateCcw } from 'lucide-react';
+import { User, Heart, Lock, Camera, LogOut, Eye, EyeOff, ChevronLeft, Trash, AlertCircle, CheckCircle, Bookmark, Search, X, Calendar, Building2, GraduationCap, Filter, MapPin, RotateCcw, Compass, ArrowRight, Sparkles, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import LogoutConfirmationModal from '@/components/auth/LogoutConfirmationModal';
@@ -34,7 +35,7 @@ export default function ProfileContent() {
     const [user, setUser] = useState<UserData | null>(null);
     const [favoritos, setFavoritos] = useState<Favorito[]>([]);
     const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
-    const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'favorites' | 'searches'>('profile');
+    const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'favorites' | 'searches' | 'fp-analysis'>('profile');
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
     const router = useRouter();
@@ -63,6 +64,10 @@ export default function ProfileContent() {
     // Delete Search Confirmation Modal State
     const [searchToDelete, setSearchToDelete] = useState<SavedSearch | null>(null);
 
+    // FP Quiz Result
+    const [fpResult, setFpResult] = useState<QuizResult | null>(null);
+    const [deletingFpResult, setDeletingFpResult] = useState(false);
+
 
     const passwordRequirements = useMemo(() => {
         return [
@@ -83,20 +88,23 @@ export default function ProfileContent() {
         if (tab === 'security') setActiveTab('security');
         if (tab === 'profile') setActiveTab('profile');
         if (tab === 'searches') setActiveTab('searches');
+        if (tab === 'fp-analysis') setActiveTab('fp-analysis');
 
     }, [searchParams]);
 
     const fetchData = async () => {
         try {
-            const [userRes, favRes, searchesRes] = await Promise.all([
+            const [userRes, favRes, searchesRes, fpRes] = await Promise.all([
                 api.get('/me'),
                 api.get('/favoritos'),
-                getSavedSearches()
+                getSavedSearches(),
+                getFpQuizResult().catch(() => null),
             ]);
             setUser(userRes.data);
             setName(userRes.data.name);
             setFavoritos(favRes.data);
             setSavedSearches(searchesRes);
+            setFpResult(fpRes);
 
         } catch (error) {
             router.push('/login');
@@ -205,6 +213,20 @@ export default function ProfileContent() {
         }
     };
 
+
+    const handleDeleteFpResult = async () => {
+        setDeletingFpResult(true);
+        try {
+            await deleteFpQuizResult();
+            try { localStorage.removeItem('edufinder_descubre_fp_result'); } catch {}
+            setFpResult(null);
+            setMessage({ text: 'Análisis eliminado', type: 'success' });
+        } catch {
+            setMessage({ text: 'Error al eliminar el análisis', type: 'error' });
+        } finally {
+            setDeletingFpResult(false);
+        }
+    };
 
     const handleLogoutClick = () => {
         setShowLogoutModal(true);
@@ -355,54 +377,30 @@ export default function ProfileContent() {
                             </div>
                         </div>
 
-                        {/* Grid Tabs - 4 columns, no scroll */}
-                        <div className="grid grid-cols-4 border-y border-neutral-100 bg-white">
-                            <button
-                                onClick={() => setActiveTab('profile')}
-                                className={`flex flex-col items-center justify-center gap-1 py-3 text-[10px] font-bold transition-all border-b-2 ${activeTab === 'profile'
-                                    ? 'border-[#223945] text-[#223945]'
-                                    : 'border-transparent text-neutral-400'
-                                }`}
-                            >
-                                <User className="w-4 h-4" />
-                                <span>Perfil</span>
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('security')}
-                                className={`flex flex-col items-center justify-center gap-1 py-3 text-[10px] font-bold transition-all border-b-2 ${activeTab === 'security'
-                                    ? 'border-[#223945] text-[#223945]'
-                                    : 'border-transparent text-neutral-400'
-                                }`}
-                            >
-                                <Lock className="w-4 h-4" />
-                                <span>Seguridad</span>
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('favorites')}
-                                className={`relative flex flex-col items-center justify-center gap-1 py-3 text-[10px] font-bold transition-all border-b-2 ${activeTab === 'favorites'
-                                    ? 'border-[#223945] text-[#223945]'
-                                    : 'border-transparent text-neutral-400'
-                                }`}
-                            >
-                                <Heart className="w-4 h-4" />
-                                <span>Favoritos</span>
-                                {favoritos.length > 0 && (
-                                    <span className="absolute top-1.5 right-1/4 w-4 h-4 flex items-center justify-center text-[8px] bg-[#223945] text-white rounded-full">{favoritos.length}</span>
-                                )}
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('searches')}
-                                className={`relative flex flex-col items-center justify-center gap-1 py-3 text-[10px] font-bold transition-all border-b-2 ${activeTab === 'searches'
-                                    ? 'border-[#223945] text-[#223945]'
-                                    : 'border-transparent text-neutral-400'
-                                }`}
-                            >
-                                <Bookmark className="w-4 h-4" />
-                                <span>Búsquedas</span>
-                                {savedSearches.length > 0 && (
-                                    <span className="absolute top-1.5 right-1/4 w-4 h-4 flex items-center justify-center text-[8px] bg-[#223945] text-white rounded-full">{savedSearches.length}</span>
-                                )}
-                            </button>
+                        {/* Scrollable Tabs - mobile */}
+                        <div className="flex border-y border-neutral-100 bg-white overflow-x-auto scrollbar-none">
+                            {([
+                                { key: 'profile',     icon: <User className="w-4 h-4" />,    label: 'Perfil',      badge: 0 },
+                                { key: 'security',    icon: <Lock className="w-4 h-4" />,    label: 'Seguridad',   badge: 0 },
+                                { key: 'favorites',   icon: <Heart className="w-4 h-4" />,   label: 'Favoritos',   badge: favoritos.length },
+                                { key: 'searches',    icon: <Bookmark className="w-4 h-4" />,label: 'Búsquedas',   badge: savedSearches.length },
+                                { key: 'fp-analysis', icon: <Compass className="w-4 h-4" />, label: 'Mi FP',       badge: fpResult ? 1 : 0 },
+                            ] as const).map(tab => (
+                                <button
+                                    key={tab.key}
+                                    onClick={() => setActiveTab(tab.key)}
+                                    className={`relative flex-1 min-w-[64px] flex flex-col items-center justify-center gap-1 py-3 text-[10px] font-bold transition-all border-b-2 shrink-0 ${activeTab === tab.key
+                                        ? 'border-[#223945] text-[#223945]'
+                                        : 'border-transparent text-neutral-400'
+                                    }`}
+                                >
+                                    {tab.icon}
+                                    <span>{tab.label}</span>
+                                    {tab.badge > 0 && (
+                                        <span className="absolute top-1.5 right-1/4 w-4 h-4 flex items-center justify-center text-[8px] bg-[#223945] text-white rounded-full">{tab.badge}</span>
+                                    )}
+                                </button>
+                            ))}
                         </div>
                         <input
                             type="file"
@@ -495,6 +493,16 @@ export default function ProfileContent() {
                                 >
                                     <Bookmark className="w-4 h-4" />
                                     <span>Búsquedas Guardadas</span>
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('fp-analysis')}
+                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'fp-analysis'
+                                            ? 'bg-[#223945] text-white shadow-md shadow-[#223945]/20'
+                                            : 'text-neutral-500 hover:bg-neutral-50 hover:text-[#223945]'
+                                        }`}
+                                >
+                                    <Compass className="w-4 h-4" />
+                                    <span>Mi análisis FP</span>
                                 </button>
 
                                 <div className="pt-6 mt-4 border-t border-neutral-100">
@@ -893,6 +901,102 @@ export default function ProfileContent() {
                                             <p className="text-neutral-500 text-sm mt-1 max-w-sm mx-auto">Aplica filtros en la búsqueda y guárdalos para acceder rápidamente.</p>
                                             <a href="/" className="inline-block mt-6 bg-[#223945] text-white px-6 py-2.5 rounded-full font-bold text-sm shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all">
                                                 Ir a Buscar
+                                            </a>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {activeTab === 'fp-analysis' && (
+                                <div className="space-y-5 sm:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                    <div className="flex items-start sm:items-center justify-between gap-3 mb-4 sm:mb-6">
+                                        <div>
+                                            <h3 className="text-xl sm:text-2xl font-bold text-[#223945]">Mi análisis FP</h3>
+                                            <p className="text-neutral-500 text-xs sm:text-sm mt-1">Tu perfil vocacional y recomendaciones guardadas.</p>
+                                        </div>
+                                    </div>
+
+                                    {fpResult ? (
+                                        <div className="space-y-4">
+                                            {/* Perfil card */}
+                                            <div className="bg-gradient-to-br from-[#223945] to-blue-700 rounded-2xl p-5 shadow-lg shadow-blue-900/15">
+                                                <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                                                    Tu perfil detectado
+                                                </p>
+                                                <p className="text-lg font-extrabold mb-3" style={{ color: '#ffffff' }}>
+                                                    {fpResult.userProfile.profileLabel.replace(/^Perfil\s+/i, '').replace(/^./, c => c.toUpperCase())}
+                                                </p>
+                                                <ul className="space-y-2 mb-4">
+                                                    {fpResult.userProfile.profileSentences.map((s, i) => (
+                                                        <li key={i} className="flex items-start gap-2">
+                                                            <span className="text-blue-300 mt-0.5 shrink-0 text-sm">→</span>
+                                                            <span className="text-white text-xs leading-relaxed">{s.charAt(0).toUpperCase() + s.slice(1)}</span>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                                <div className="pt-3 border-t border-white/10">
+                                                    <p className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                                                        Trabajarías mejor en{' '}
+                                                        <span className="text-white font-semibold">{fpResult.userProfile.workEnvironment}</span>.
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            {/* Matches summary */}
+                                            <div className="space-y-3">
+                                                <p className="text-[11px] font-bold uppercase tracking-widest text-neutral-400">Tus recomendaciones</p>
+                                                {fpResult.matches.map((match, i) => (
+                                                    <div key={match.family.codigo} className="bg-white border border-neutral-100 rounded-xl p-4 shadow-sm flex items-center gap-4">
+                                                        <div
+                                                            className="w-10 h-10 rounded-xl shrink-0 flex items-center justify-center text-white font-black text-lg"
+                                                            style={{ background: `linear-gradient(135deg, ${match.family.colorFrom}, ${match.family.colorTo})` }}
+                                                        >
+                                                            {i + 1}
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="font-bold text-sm text-neutral-800 truncate">{match.family.nombre}</p>
+                                                            <p className="text-xs text-neutral-500 truncate">{match.justification}</p>
+                                                        </div>
+                                                        <span className="shrink-0 text-base font-black text-[#223945]">{match.score}%</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            {/* Actions */}
+                                            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                                                <a
+                                                    href="/descubre-tu-fp"
+                                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-[#223945] text-white rounded-xl text-sm font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all"
+                                                >
+                                                    <Sparkles className="w-4 h-4" />
+                                                    Ver análisis completo
+                                                    <ExternalLink className="w-3.5 h-3.5 opacity-70" />
+                                                </a>
+                                                <button
+                                                    onClick={handleDeleteFpResult}
+                                                    disabled={deletingFpResult}
+                                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 border border-red-200 text-red-500 rounded-xl text-sm font-bold hover:bg-red-50 disabled:opacity-50 transition-all"
+                                                >
+                                                    {deletingFpResult ? (
+                                                        <span className="w-4 h-4 border-2 border-red-300 border-t-red-500 rounded-full animate-spin" />
+                                                    ) : (
+                                                        <X className="w-4 h-4" />
+                                                    )}
+                                                    Eliminar análisis
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-12 sm:py-16 bg-neutral-50/50 rounded-2xl border border-dashed border-neutral-200">
+                                            <Compass className="w-16 h-16 mx-auto text-neutral-300 mb-4" />
+                                            <h4 className="text-lg font-bold text-neutral-900">No tienes ningún análisis</h4>
+                                            <p className="text-neutral-500 text-sm mt-1 max-w-sm mx-auto">Responde 12 preguntas y descubriremos qué familias profesionales encajan con tu perfil.</p>
+                                            <a
+                                                href="/descubre-tu-fp"
+                                                className="inline-flex items-center gap-2 mt-6 bg-gradient-to-r from-[#223945] to-blue-600 text-white px-6 py-2.5 rounded-full font-bold text-sm shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all"
+                                            >
+                                                Hacer el análisis
+                                                <ArrowRight className="w-4 h-4" />
                                             </a>
                                         </div>
                                     )}

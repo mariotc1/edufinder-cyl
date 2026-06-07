@@ -136,7 +136,7 @@ function NavbarContent() {
               <MapPin className="w-4 h-4 text-neutral-400 group-hover:text-blue-600 transition-colors" />
               Mapa
             </Link>
-            
+
             {user ? (
               <>
                 <Link
@@ -268,7 +268,7 @@ function NavbarContent() {
               </div>
               Mapa
             </Link>
-            
+
             {user ? (
               <>
                 <Link

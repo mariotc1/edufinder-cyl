@@ -8,6 +8,7 @@ use App\Http\Controllers\RecommendationController;
 use App\Http\Controllers\SavedSearchController;
 use App\Http\Controllers\SearchHistoryController;
 use App\Http\Controllers\CycleSearchHistoryController;
+use App\Http\Controllers\FpQuizResultController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -140,6 +141,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/cycle-search-history/sync', [CycleSearchHistoryController::class, 'sync']);
     Route::delete('/cycle-search-history/{id}', [CycleSearchHistoryController::class, 'destroy']);
     Route::delete('/cycle-search-history', [CycleSearchHistoryController::class, 'clear']);
+
+    // ANÁLISIS DE ORIENTACIÓN FP
+    Route::get('/quiz-fp/result', [FpQuizResultController::class, 'show']);
+    Route::post('/quiz-fp/result', [FpQuizResultController::class, 'store']);
+    Route::delete('/quiz-fp/result', [FpQuizResultController::class, 'destroy']);
 
     // HISTORIAL DE CENTROS VISITADOS
     Route::get('/visited-centers', [CentroController::class, 'visitedCenters']);

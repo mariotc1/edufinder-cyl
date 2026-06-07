@@ -4,7 +4,7 @@ import { fetchCycleSuggestions, fetchCentroSuggestions, getSavedSearches, create
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { Search, MapPin, Building2, SlidersHorizontal, Trash2, X, Check, Bookmark, ChevronRight, RefreshCw, Share2, Copy, Clock, History } from 'lucide-react';
+import { Search, MapPin, Building2, SlidersHorizontal, Trash2, X, Check, Bookmark, ChevronRight, RefreshCw, Share2, Copy, Clock, History, Sparkles } from 'lucide-react';
 import { FilterOptions, SavedSearch } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import useSWR, { mutate } from 'swr';
@@ -17,11 +17,25 @@ interface FilterBarProps {
   isLoading: boolean;
   page?: number;
   initialFilters?: FilterOptions;
+  onOpenWizard?: () => void;
+}
+
+const FAMILIAS_FP_OPTIONS = [
+  'ADMINISTRACIÓN Y GESTIÓN', 'INFORMÁTICA Y COMUNICACIONES', 'SANIDAD', 'COMERCIO Y MARKETING',
+  'ELECTRICIDAD Y ELECTRÓNICA', 'HOSTELERÍA Y TURISMO', 'SERVICIOS SOCIOCULTURALES Y A LA COMUNIDAD',
+  'TRANSPORTE Y MANTENIMIENTO DE VEHÍCULOS', 'INSTALACIÓN Y MANTENIMIENTO', 'ACTIVIDADES FÍSICAS Y DEPORTIVAS',
+  'IMAGEN PERSONAL', 'AGRARIA', 'EDIFICACIÓN Y OBRA CIVIL', 'QUÍMICA', 'ARTES PLÁSTICAS Y DISEÑO',
+];
+
+function normalizeFamilia(value: string | undefined): string {
+  if (!value) return '';
+  const match = FAMILIAS_FP_OPTIONS.find(f => f.toLowerCase() === value.toLowerCase());
+  return match ?? value;
 }
 
 // COMPONENTE DE BARRA DE FILTROS AVANZADA
 // Gestiona el estado de los filtros, autocompletado y geolocalización
-export default function FilterBar({ onFilterChange, isLoading, page = 1, initialFilters }: FilterBarProps) {
+export default function FilterBar({ onFilterChange, isLoading, page = 1, initialFilters, onOpenWizard }: FilterBarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -30,14 +44,14 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1, initial
   // Estado inicial: initialFilters (sessionStorage vía SearchContent) > URL params > defaults
   const [filters, setFilters] = useState<FilterOptions>(() => {
     if (initialFilters && Object.values(initialFilters).some(v => v !== '' && v !== undefined)) {
-      return { radio: 10, ...initialFilters };
+      return { radio: 10, ...initialFilters, familia: normalizeFamilia(initialFilters.familia) };
     }
     return {
       q: searchParams.get('q') || '',
       provincia: searchParams.get('provincia') || '',
       tipo: searchParams.get('tipo') || '',
       naturaleza: searchParams.get('naturaleza') || '',
-      familia: searchParams.get('familia') || '',
+      familia: normalizeFamilia(searchParams.get('familia') || ''),
       ciclo: searchParams.get('ciclo') || '',
       nivel: searchParams.get('nivel') || '',
       modalidad: searchParams.get('modalidad') || '',
@@ -458,12 +472,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1, initial
     { value: 'PRIMARIA', label: 'Infantil y Primaria' },
     { value: 'ESPECIAL', label: 'Educación Especial' },
   ];
-  const familiasFP = [
-    'ADMINISTRACIÓN Y GESTIÓN', 'INFORMÁTICA Y COMUNICACIONES', 'SANIDAD', 'COMERCIO Y MARKETING', 
-    'ELECTRICIDAD Y ELECTRÓNICA', 'HOTELERÍA Y TURISMO', 'SERVICIOS SOCIOCULTURALES Y A LA COMUNIDAD',
-    'TRANSPORTE Y MANTENIMIENTO DE VEHÍCULOS', 'INSTALACIÓN Y MANTENIMIENTO', 'ACTIVIDADES FÍSICAS Y DEPORTIVAS',
-    'IMAGEN PERSONAL', 'AGRARIA', 'HOSTELERÍA Y TURISMO'
-  ];
+  const familiasFP = FAMILIAS_FP_OPTIONS;
 
   const hasActiveFilters = Object.values(filters).some(val => val !== undefined && val !== '' && val !== 10) || geolocationStatus === 'success';
 
@@ -495,7 +504,20 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1, initial
 
        
       <div className="flex flex-col gap-6 pt-2">
-        
+
+        {/* IA helper — visible antes de interactuar con los filtros */}
+        {onOpenWizard && (
+          <button
+            onClick={onOpenWizard}
+            className="flex items-center gap-2 self-start group -mt-1"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+            <span className="text-sm font-medium text-[#223945] group-hover:text-blue-600 transition-colors">
+              Filtra más rápido con IA
+            </span>
+          </button>
+        )}
+
         {/* Top Row: Search & Location */}
         <div className="flex flex-col md:flex-row gap-4 items-stretch">
           <div className="flex-1 md:flex-[1] relative group" ref={wrapperCentroRef}>
@@ -1094,18 +1116,18 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1, initial
             </div>
           )}
 
-        {/* Eliminar filtros - Al final del card */}
+        {/* Pie del card: solo limpiar filtros cuando hay activos */}
         {hasActiveFilters && (
-          <div className="flex justify-center py-3 -mb-3 border-t border-neutral-100">
+          <div className="flex justify-center pt-3 -mb-3 border-t border-neutral-100">
             <button
-                onClick={clearAll}
-                className="flex items-center gap-2 px-4 py-2 text-neutral-400 hover:text-red-500 transition-colors group"
-                title="Eliminar todos los filtros"
+              onClick={clearAll}
+              className="flex items-center gap-2 px-4 py-2 text-neutral-400 hover:text-red-500 transition-colors group"
+              title="Eliminar todos los filtros"
             >
-                <span className="text-sm font-medium">
-                  Eliminar {activeFilterCount} {activeFilterCount === 1 ? 'filtro' : 'filtros'}
-                </span>
-                <X className="w-4 h-4 group-hover:rotate-90 transition-transform" />
+              <span className="text-sm font-medium whitespace-nowrap">
+                Eliminar {activeFilterCount} {activeFilterCount === 1 ? 'filtro' : 'filtros'}
+              </span>
+              <X className="w-4 h-4 shrink-0 group-hover:rotate-90 transition-transform" />
             </button>
           </div>
         )}
