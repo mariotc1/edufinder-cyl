@@ -299,6 +299,7 @@ function ProcessingScreen() {
 interface ResultsScreenProps {
   result: QuizResult;
   onRestart: () => void;
+  userName?: string;
 }
 
 function TraitBadge({ attr }: { attr: AttributeKey }) {
@@ -489,8 +490,12 @@ function FamilyCard({ match, rank }: { match: FamilyMatch; rank: number }) {
   );
 }
 
-function ResultsScreen({ result, onRestart }: ResultsScreenProps) {
+function ResultsScreen({ result, onRestart, userName }: ResultsScreenProps) {
   const { userProfile, matches } = result;
+  // "Perfil tecnológico y digital" → "Tecnológico y digital" (solo primera letra en caps)
+  const displayLabel = userProfile.profileLabel
+    .replace(/^Perfil\s+/i, '')
+    .replace(/^./, c => c.toUpperCase());
 
   return (
     <motion.div
@@ -508,8 +513,12 @@ function ResultsScreen({ result, onRestart }: ResultsScreenProps) {
         >
           <Sparkles className="w-7 h-7 text-white" />
         </motion.div>
-        <h2 className="text-2xl font-extrabold text-[#223945] mb-1">Tu perfil</h2>
-        <p className="text-secondary-600 font-semibold text-sm">{userProfile.profileLabel}</p>
+        <p className="text-sm text-neutral-400 font-medium mb-2">
+          {userName ? `${userName}, tenemos tu análisis — tienes un perfil` : 'Tu análisis está listo — tienes un perfil'}
+        </p>
+        <h2 className="text-2xl font-extrabold text-[#223945]">
+          {displayLabel}
+        </h2>
       </div>
 
       {/* Descripción del perfil */}
@@ -697,7 +706,7 @@ export default function DescubreFPClient() {
             <ProcessingScreen key="processing" />
           )}
           {screen === 'results' && result && (
-            <ResultsScreen key="results" result={result} onRestart={handleRestart} />
+            <ResultsScreen key="results" result={result} onRestart={handleRestart} userName={userName} />
           )}
         </AnimatePresence>
       </div>
