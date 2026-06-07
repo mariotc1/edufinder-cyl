@@ -24,9 +24,6 @@ import { runQuiz, getTotalQuestions } from '@/lib/descubre-fp/engine';
 import {
   QuizResult,
   FamilyMatch,
-  AttributeKey,
-  ATTRIBUTE_LABELS,
-  ATTRIBUTE_EMOJIS,
 } from '@/lib/descubre-fp/types';
 
 const STORAGE_KEY = 'edufinder_descubre_fp_result';
@@ -302,14 +299,6 @@ interface ResultsScreenProps {
   userName?: string;
 }
 
-function TraitBadge({ attr }: { attr: AttributeKey }) {
-  return (
-    <span className="inline-flex items-center gap-1.5 bg-white border border-neutral-200 text-neutral-700 text-xs font-semibold px-3 py-1.5 rounded-full shadow-sm">
-      <span>{ATTRIBUTE_EMOJIS[attr]}</span>
-      {ATTRIBUTE_LABELS[attr]}
-    </span>
-  );
-}
 
 const RANK_CONFIG = [
   { label: 'Mejor opción', labelColor: '#FCD34D', ghostColor: 'rgba(252,211,77,0.13)', cardBorder: 'border-2 border-amber-400/60 shadow-xl shadow-amber-400/10' },
@@ -541,22 +530,6 @@ function ResultsScreen({ result, onRestart, userName }: ResultsScreenProps) {
           </div>
         </motion.div>
 
-        {/* Top traits */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="mb-6"
-        >
-          <p className="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-3">
-            Rasgos dominantes
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {userProfile.topAttributes.map(attr => (
-              <TraitBadge key={attr} attr={attr} />
-            ))}
-          </div>
-        </motion.div>
       </div>
 
       {/* ── Separator ── */}
