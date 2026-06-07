@@ -341,7 +341,7 @@ function FamilyCard({ match, rank }: { match: FamilyMatch; rank: number }) {
             {family.emoji}
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-white font-extrabold text-base leading-tight">{family.nombre}</h3>
+            <h3 className="font-extrabold text-base leading-tight" style={{ color: '#ffffff' }}>{family.nombre}</h3>
             <p className="text-white text-xs font-medium mt-0.5" style={{ color: 'rgba(255,255,255,0.7)' }}>{family.tagline}</p>
           </div>
         </div>
