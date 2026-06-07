@@ -86,20 +86,35 @@ function getMatchedTraits(userVector: AttributeVector, family: FamilyProfile): A
   return familyTopAttrs.filter(attr => userTopAttrs.has(attr));
 }
 
+const JUSTIFICATION_PHRASES: Record<AttributeKey, string> = {
+  tecnologia:   'la tecnología',
+  personas:     'el trato con personas',
+  creatividad:  'la creatividad',
+  precision:    'la precisión y el método',
+  naturaleza:   'la naturaleza',
+  negocio:      'los negocios y la gestión',
+  fisico:       'el trabajo manual',
+  ciencia:      'la ciencia',
+  comunicacion: 'la comunicación',
+  arte:         'el arte y el diseño',
+  construccion: 'la construcción',
+  servicio:     'la atención a personas',
+};
+
 function buildJustification(matchedTraits: AttributeKey[], family: FamilyProfile): string {
   if (matchedTraits.length === 0) {
-    return `${family.nombre} puede abrirte puertas en áreas que quizás aún no conoces.`;
+    return `Puede abrirte puertas en áreas que quizás aún no conoces.`;
   }
 
-  const labels = matchedTraits.slice(0, 3).map(attr => ATTRIBUTE_LABELS[attr].toLowerCase());
+  const p = matchedTraits.slice(0, 3).map(attr => JUSTIFICATION_PHRASES[attr]);
 
-  if (labels.length === 1) {
-    return `Encaja con tu perfil de ${labels[0]}.`;
+  if (p.length === 1) {
+    return `Encaja de forma natural con tu afinidad por ${p[0]}.`;
   }
-  if (labels.length === 2) {
-    return `Encaja con tu ${labels[0]} y tu ${labels[1]}.`;
+  if (p.length === 2) {
+    return `Pensada para quien valora ${p[0]} y tiene buen ojo para ${p[1]}.`;
   }
-  return `Conecta con tu ${labels[0]}, tu ${labels[1]} y tu ${labels[2]}.`;
+  return `Conecta con tu interés por ${p[0]}, ${p[1]} y ${p[2]}.`;
 }
 
 function buildUserProfile(rawVector: AttributeVector): UserProfileResult {

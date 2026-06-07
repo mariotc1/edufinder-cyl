@@ -374,82 +374,92 @@ function FamilyCard({ match, rank }: { match: FamilyMatch; rank: number }) {
 
       {/* Body — siempre visible */}
       <div className="p-4 bg-white flex flex-col flex-1 gap-4">
-        {/* Justification */}
-        <div className="bg-neutral-50 rounded-xl p-3 border border-neutral-100">
-          <p className="text-neutral-700 text-xs leading-relaxed">
-            <span className="font-bold text-[#223945]">¿Por qué encaja? </span>
-            {justification}
-          </p>
-          {matchedTraits.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-2">
-              {matchedTraits.map(attr => (
-                <TraitBadge key={attr} attr={attr} />
-              ))}
-            </div>
-          )}
+
+        {/* Por qué encaja — borde izquierdo de acento */}
+        <div className="pl-3 border-l-2 border-[#223945]/25">
+          <p className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Por qué encaja contigo</p>
+          <p className="text-neutral-600 text-xs leading-relaxed">{justification}</p>
         </div>
+
+        <div className="h-px bg-neutral-100" />
 
         {/* Qué aprenderás */}
         <div>
-          <div className="flex items-center gap-1.5 mb-1.5">
-            <BookOpen className="w-3.5 h-3.5 text-[#223945]" />
-            <h4 className="font-bold text-[#223945] text-xs">Qué aprenderás</h4>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-5 h-5 rounded-md bg-blue-50 flex items-center justify-center shrink-0">
+              <BookOpen className="w-3 h-3 text-blue-500" />
+            </div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Qué aprenderás</p>
           </div>
-          <ul className="space-y-1">
+          <ul className="space-y-1.5 pl-1">
             {family.queAprenderas.map(item => (
-              <li key={item} className="flex items-start gap-1.5 text-xs text-neutral-600">
-                <span className="text-green-500 mt-0.5 shrink-0">✓</span>
+              <li key={item} className="flex items-start gap-2 text-xs text-neutral-600 leading-snug">
+                <span className="w-1 h-1 rounded-full bg-blue-400 mt-1.5 shrink-0 block" />
                 {item}
               </li>
             ))}
           </ul>
         </div>
 
-        {/* Salidas profesionales */}
+        <div className="h-px bg-neutral-100" />
+
+        {/* En qué trabajarías */}
         <div>
-          <div className="flex items-center gap-1.5 mb-1.5">
-            <Briefcase className="w-3.5 h-3.5 text-[#223945]" />
-            <h4 className="font-bold text-[#223945] text-xs">Salidas profesionales</h4>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-5 h-5 rounded-md bg-green-50 flex items-center justify-center shrink-0">
+              <Briefcase className="w-3 h-3 text-green-500" />
+            </div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">En qué trabajarías</p>
           </div>
           <div className="flex flex-wrap gap-1.5">
             {family.salidasProfesionales.map(s => (
-              <span key={s} className="text-[11px] bg-neutral-100 text-neutral-600 px-2 py-0.5 rounded-full font-medium">
+              <span key={s} className="text-[10px] bg-green-50 text-green-700 px-2 py-0.5 rounded-full font-medium border border-green-100">
                 {s}
               </span>
             ))}
           </div>
         </div>
 
-        {/* Ciclos destacados */}
+        <div className="h-px bg-neutral-100" />
+
+        {/* Ciclos en CyL */}
         <div>
-          <div className="flex items-center gap-1.5 mb-1.5">
-            <TrendingUp className="w-3.5 h-3.5 text-[#223945]" />
-            <h4 className="font-bold text-[#223945] text-xs">Ciclos en CyL</h4>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-5 h-5 rounded-md bg-purple-50 flex items-center justify-center shrink-0">
+              <TrendingUp className="w-3 h-3 text-purple-500" />
+            </div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Ciclos en CyL</p>
           </div>
-          <ul className="space-y-1">
-            {family.ciclosDestacados.map(c => (
-              <li key={c} className="flex items-start gap-1.5 text-xs text-neutral-600">
-                <span className="text-blue-400 mt-0.5 shrink-0">→</span>
-                {c}
-              </li>
-            ))}
+          <ul className="space-y-2.5 pl-1">
+            {family.ciclosDestacados.map(c => {
+              const [nombre, nivel] = c.split(' — ');
+              const isSuper = nivel?.includes('Superior');
+              const isMedio = nivel?.includes('Medio');
+              return (
+                <li key={c} className="flex items-start gap-2">
+                  <span style={{ color: '#a855f7' }} className="mt-0.5 shrink-0 font-bold leading-none">→</span>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-xs font-semibold text-neutral-700 leading-snug">{nombre}</span>
+                    {nivel && (
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full self-start bg-neutral-100 text-neutral-500">
+                        {nivel}
+                      </span>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         </div>
 
-        {/* Nivel + CTA al fondo */}
-        <div className="mt-auto pt-2 space-y-3">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-neutral-500">Nivel recomendado:</span>
-            <span className="bg-blue-50 text-blue-700 text-[11px] font-bold px-2 py-0.5 rounded-full">
-              {family.nivelRecomendado}
-            </span>
-          </div>
+        {/* CTA */}
+        <div className="mt-auto pt-1">
           <Link
             href={searchUrl}
             className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-[#223945] to-blue-600 text-white font-bold text-xs py-3 rounded-xl hover:opacity-90 active:scale-[0.98] transition-all shadow-md"
           >
             <MapPin className="w-3.5 h-3.5" />
-            Ver centros
+            Ver centros que imparten esta familia
             <ExternalLink className="w-3 h-3 opacity-70" />
           </Link>
         </div>
