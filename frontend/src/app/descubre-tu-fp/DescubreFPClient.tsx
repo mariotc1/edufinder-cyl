@@ -587,19 +587,30 @@ function ResultsScreen({ result, onRestart, userName }: ResultsScreenProps) {
         </div>
       </div>
 
-      {/* ── Footer: descargo + restart ── */}
-      <div className="max-w-lg mx-auto px-4 pb-12 space-y-4">
-        <p className="text-xs text-neutral-400 leading-relaxed text-center">
-          Recomendaciones orientativas basadas en tus respuestas. Complementa esta información con la orientación de tu centro educativo.
-        </p>
+      {/* ── Footer ── */}
+      <div className="max-w-lg mx-auto px-4 pb-8 text-center">
+        <div className="bg-neutral-50 rounded-2xl p-5 border border-neutral-100 mb-6">
+          <p className="text-sm text-neutral-600 leading-relaxed">
+            Esperamos que esto te haya dado un poco más de claridad sobre tus opciones.{' '}
+            <span className="font-medium text-neutral-700">Estas recomendaciones son un punto de partida</span>{' '}
+            — lo siguiente es explorar, preguntar y descubrir el camino que más te encaje.
+          </p>
+        </div>
         <button
           onClick={onRestart}
-          className="flex items-center justify-center gap-2 w-full border-2 border-neutral-200 text-neutral-600 font-semibold text-sm py-3 rounded-xl hover:border-neutral-300 hover:bg-neutral-50 active:scale-[0.98] transition-all"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-[#223945] border border-[#223945]/20 hover:bg-[#223945]/5 active:scale-95 transition-all"
         >
-          <RotateCcw className="w-4 h-4" />
-          Repetir el test
+          <RotateCcw className="w-3.5 h-3.5" />
+          Repetir el análisis
         </button>
       </div>
+
+      {/* Clearance spacer for fixed bottom nav on mobile/PWA — nav is h-16 + safe-area-inset-bottom */}
+      <div
+        aria-hidden="true"
+        className="md:hidden"
+        style={{ height: 'calc(env(safe-area-inset-bottom, 0px) + 4.5rem)' }}
+      />
     </motion.div>
   );
 }
@@ -676,6 +687,7 @@ export default function DescubreFPClient() {
     setResult(null);
     setQuestionIndex(0);
     setScreen('intro');
+    window.scrollTo({ top: 0, behavior: 'instant' });
     try {
       localStorage.removeItem(STORAGE_KEY);
     } catch {
