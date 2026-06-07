@@ -517,23 +517,30 @@ function ResultsScreen({ result, onRestart }: ResultsScreenProps) {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="bg-gradient-to-br from-[#223945] to-blue-700 rounded-2xl p-5 mb-5 text-white shadow-xl shadow-blue-900/20"
+        className="bg-gradient-to-br from-[#223945] to-blue-700 rounded-2xl p-5 mb-5 shadow-xl shadow-blue-900/20"
       >
-        <p className="text-sm leading-relaxed mb-3 text-white/90">
-          Hemos detectado que{' '}
-          {userProfile.profileSentences.length > 0
+        <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: 'rgba(255,255,255,0.5)' }}>
+          Hemos detectado en ti
+        </p>
+        <ul className="space-y-2.5 mb-4">
+          {(userProfile.profileSentences.length > 0
             ? userProfile.profileSentences
-                .map((s, i) =>
-                  i < userProfile.profileSentences.length - 1 ? s : `y ${s}`
-                )
-                .join(', ')
-            : 'tienes un perfil muy versátil'
-          }.
-        </p>
-        <p className="text-white/80 text-xs">
-          Trabajarías mejor en{' '}
-          <span className="text-white font-semibold">{userProfile.workEnvironment}</span>.
-        </p>
+            : ['tienes un perfil muy versátil']
+          ).map((sentence, i) => (
+            <li key={i} className="flex items-start gap-2.5">
+              <span className="mt-0.5 text-blue-300 shrink-0 text-sm">→</span>
+              <span className="text-white text-sm leading-relaxed">
+                {sentence.charAt(0).toUpperCase() + sentence.slice(1)}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <div className="pt-3 border-t border-white/10">
+          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>
+            Trabajarías mejor en{' '}
+            <span className="text-white font-semibold">{userProfile.workEnvironment}</span>.
+          </p>
+        </div>
       </motion.div>
 
       {/* Top traits */}
