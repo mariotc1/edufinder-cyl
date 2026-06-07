@@ -311,9 +311,15 @@ function TraitBadge({ attr }: { attr: AttributeKey }) {
   );
 }
 
+const RANK_CONFIG = [
+  { label: 'Mejor opción', labelColor: '#FCD34D', ghostColor: 'rgba(252,211,77,0.13)', cardBorder: 'border-2 border-amber-400/60 shadow-xl shadow-amber-400/10' },
+  { label: '2ª opción',    labelColor: 'rgba(255,255,255,0.55)', ghostColor: 'rgba(255,255,255,0.06)', cardBorder: 'border border-neutral-200 shadow-md' },
+  { label: '3ª opción',    labelColor: 'rgba(255,255,255,0.45)', ghostColor: 'rgba(255,255,255,0.04)', cardBorder: 'border border-neutral-200 shadow-md' },
+];
+
 function FamilyCard({ match, rank }: { match: FamilyMatch; rank: number }) {
   const { family, score, matchedTraits, justification } = match;
-  const isPrimary = rank === 1;
+  const cfg = RANK_CONFIG[rank - 1] ?? RANK_CONFIG[2];
   const searchUrl = `/?tipo=FP&familia=${encodeURIComponent(family.queryParam)}`;
 
   return (
@@ -321,33 +327,41 @@ function FamilyCard({ match, rank }: { match: FamilyMatch; rank: number }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: rank * 0.1 }}
-      className={`rounded-2xl overflow-hidden border border-neutral-200 flex flex-col h-full ${isPrimary ? 'ring-2 ring-[#223945]/25 shadow-xl shadow-blue-900/10' : 'shadow-md'}`}
+      className={`rounded-2xl overflow-hidden flex flex-col h-full ${cfg.cardBorder}`}
     >
       {/* Header */}
       <div
-        className="relative p-4 shrink-0"
+        className="relative p-4 shrink-0 overflow-hidden"
         style={{ background: `linear-gradient(135deg, ${family.colorFrom}, ${family.colorTo})` }}
       >
-        {isPrimary && (
-          <div className="absolute top-3 right-3">
-            <span className="inline-flex items-center gap-1 bg-white/20 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide backdrop-blur-sm">
-              <Sparkles className="w-2.5 h-2.5" />
-              #1
-            </span>
+        {/* Número fantasma de fondo */}
+        <span
+          className="absolute -right-3 -top-5 text-[110px] font-black leading-none select-none pointer-events-none"
+          style={{ color: cfg.ghostColor }}
+        >
+          {rank}
+        </span>
+
+        {/* Etiqueta de posición */}
+        <p className="text-[10px] font-bold uppercase tracking-widest mb-3 relative z-10" style={{ color: cfg.labelColor }}>
+          {cfg.label}
+        </p>
+
+        {/* Nombre + tagline */}
+        <h3 className="font-extrabold text-base leading-tight mb-0.5 relative z-10" style={{ color: '#ffffff' }}>
+          {family.nombre}
+        </h3>
+        <p className="text-xs font-medium relative z-10" style={{ color: 'rgba(255,255,255,0.7)' }}>
+          {family.tagline}
+        </p>
+
+        {/* Compatibilidad prominente + barra */}
+        <div className="mt-4 relative z-10">
+          <div className="flex items-baseline gap-1.5 mb-1.5">
+            <span className="text-2xl font-black leading-none" style={{ color: '#ffffff' }}>{score}%</span>
+            <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.55)' }}>compatible</span>
           </div>
-        )}
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-xl shrink-0">
-            {family.emoji}
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="font-extrabold text-base leading-tight" style={{ color: '#ffffff' }}>{family.nombre}</h3>
-            <p className="text-white text-xs font-medium mt-0.5" style={{ color: 'rgba(255,255,255,0.7)' }}>{family.tagline}</p>
-          </div>
-        </div>
-        {/* Score + bar */}
-        <div className="flex items-center gap-2">
-          <div className="flex-1 h-1.5 bg-white/20 rounded-full overflow-hidden">
+          <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
             <motion.div
               className="h-full bg-white rounded-full"
               initial={{ width: 0 }}
@@ -355,7 +369,6 @@ function FamilyCard({ match, rank }: { match: FamilyMatch; rank: number }) {
               transition={{ delay: 0.4 + rank * 0.1, duration: 0.8, ease: 'easeOut' }}
             />
           </div>
-          <span className="text-white font-bold text-xs shrink-0">{score}%</span>
         </div>
       </div>
 
