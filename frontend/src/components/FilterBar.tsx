@@ -20,6 +20,19 @@ interface FilterBarProps {
   onOpenWizard?: () => void;
 }
 
+const FAMILIAS_FP_OPTIONS = [
+  'ADMINISTRACIÓN Y GESTIÓN', 'INFORMÁTICA Y COMUNICACIONES', 'SANIDAD', 'COMERCIO Y MARKETING',
+  'ELECTRICIDAD Y ELECTRÓNICA', 'HOSTELERÍA Y TURISMO', 'SERVICIOS SOCIOCULTURALES Y A LA COMUNIDAD',
+  'TRANSPORTE Y MANTENIMIENTO DE VEHÍCULOS', 'INSTALACIÓN Y MANTENIMIENTO', 'ACTIVIDADES FÍSICAS Y DEPORTIVAS',
+  'IMAGEN PERSONAL', 'AGRARIA', 'EDIFICACIÓN Y OBRA CIVIL', 'QUÍMICA', 'ARTES PLÁSTICAS Y DISEÑO',
+];
+
+function normalizeFamilia(value: string | undefined): string {
+  if (!value) return '';
+  const match = FAMILIAS_FP_OPTIONS.find(f => f.toLowerCase() === value.toLowerCase());
+  return match ?? value;
+}
+
 // COMPONENTE DE BARRA DE FILTROS AVANZADA
 // Gestiona el estado de los filtros, autocompletado y geolocalización
 export default function FilterBar({ onFilterChange, isLoading, page = 1, initialFilters, onOpenWizard }: FilterBarProps) {
@@ -31,14 +44,14 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1, initial
   // Estado inicial: initialFilters (sessionStorage vía SearchContent) > URL params > defaults
   const [filters, setFilters] = useState<FilterOptions>(() => {
     if (initialFilters && Object.values(initialFilters).some(v => v !== '' && v !== undefined)) {
-      return { radio: 10, ...initialFilters };
+      return { radio: 10, ...initialFilters, familia: normalizeFamilia(initialFilters.familia) };
     }
     return {
       q: searchParams.get('q') || '',
       provincia: searchParams.get('provincia') || '',
       tipo: searchParams.get('tipo') || '',
       naturaleza: searchParams.get('naturaleza') || '',
-      familia: searchParams.get('familia') || '',
+      familia: normalizeFamilia(searchParams.get('familia') || ''),
       ciclo: searchParams.get('ciclo') || '',
       nivel: searchParams.get('nivel') || '',
       modalidad: searchParams.get('modalidad') || '',
@@ -459,12 +472,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1, initial
     { value: 'PRIMARIA', label: 'Infantil y Primaria' },
     { value: 'ESPECIAL', label: 'Educación Especial' },
   ];
-  const familiasFP = [
-    'ADMINISTRACIÓN Y GESTIÓN', 'INFORMÁTICA Y COMUNICACIONES', 'SANIDAD', 'COMERCIO Y MARKETING', 
-    'ELECTRICIDAD Y ELECTRÓNICA', 'HOTELERÍA Y TURISMO', 'SERVICIOS SOCIOCULTURALES Y A LA COMUNIDAD',
-    'TRANSPORTE Y MANTENIMIENTO DE VEHÍCULOS', 'INSTALACIÓN Y MANTENIMIENTO', 'ACTIVIDADES FÍSICAS Y DEPORTIVAS',
-    'IMAGEN PERSONAL', 'AGRARIA', 'HOSTELERÍA Y TURISMO'
-  ];
+  const familiasFP = FAMILIAS_FP_OPTIONS;
 
   const hasActiveFilters = Object.values(filters).some(val => val !== undefined && val !== '' && val !== 10) || geolocationStatus === 'success';
 
