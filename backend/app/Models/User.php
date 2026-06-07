@@ -62,6 +62,13 @@ class User extends Authenticatable
         return $this->hasMany(CycleSearchHistory::class);
     }
 
+    // RELACIÓN: RESULTADO DEL TEST DE ORIENTACIÓN FP
+    // Un usuario tiene como máximo un resultado guardado (updateOrCreate)
+    public function fpQuizResult()
+    {
+        return $this->hasOne(FpQuizResult::class);
+    }
+
     protected $hidden = [
         'password',
         'remember_token',

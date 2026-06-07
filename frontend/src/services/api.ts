@@ -1,5 +1,6 @@
 import axios from "@/lib/axios";
 import { FilterOptions } from "@/types";
+import { QuizResult } from "@/lib/descubre-fp/types";
 
 // SERVICIO DE BÚSQUEDA DE CENTROS
 // Construye la query string basada en los filtros y realiza la petición al backend
@@ -126,4 +127,26 @@ export const deleteSavedSearch = async (id: number) => {
 export const getVisitedCenters = async () => {
   const response = await axios.get('/visited-centers');
   return response.data;
+};
+
+// ANÁLISIS DE ORIENTACIÓN FP
+// Guarda (o sobreescribe) el resultado del quiz en el backend
+export const saveFpQuizResult = async (result: QuizResult): Promise<void> => {
+  await axios.post('/quiz-fp/result', { result, completed_at: result.completedAt });
+};
+
+// Obtiene el análisis guardado del usuario (null si no tiene)
+export const getFpQuizResult = async (): Promise<QuizResult | null> => {
+  try {
+    const response = await axios.get('/quiz-fp/result');
+    if (response.status === 204 || !response.data) return null;
+    return response.data as QuizResult;
+  } catch {
+    return null;
+  }
+};
+
+// Elimina el análisis guardado del usuario
+export const deleteFpQuizResult = async (): Promise<void> => {
+  await axios.delete('/quiz-fp/result');
 };

@@ -25,6 +25,7 @@ import {
   QuizResult,
   FamilyMatch,
 } from '@/lib/descubre-fp/types';
+import { saveFpQuizResult, getFpQuizResult } from '@/services/api';
 
 const STORAGE_KEY = 'edufinder_descubre_fp_result';
 
@@ -293,10 +294,14 @@ function ProcessingScreen() {
 
 // ─── Results ─────────────────────────────────────────────────────────────────
 
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+
 interface ResultsScreenProps {
   result: QuizResult;
   onRestart: () => void;
   userName?: string;
+  saveStatus?: SaveStatus;
+  isAuthenticated?: boolean;
 }
 
 
@@ -457,7 +462,7 @@ function FamilyCard({ match, rank }: { match: FamilyMatch; rank: number }) {
   );
 }
 
-function ResultsScreen({ result, onRestart, userName }: ResultsScreenProps) {
+function ResultsScreen({ result, onRestart, userName, saveStatus = 'idle', isAuthenticated = false }: ResultsScreenProps) {
   const { userProfile, matches } = result;
   const [activeIdx, setActiveIdx] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -497,6 +502,34 @@ function ResultsScreen({ result, onRestart, userName }: ResultsScreenProps) {
           <h2 className="text-2xl font-extrabold text-[#223945]">
             {displayLabel}
           </h2>
+
+          {/* Save status badge */}
+          <AnimatePresence>
+            {saveStatus === 'saving' && (
+              <motion.div
+                key="saving"
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-100 text-neutral-500 text-xs font-semibold"
+              >
+                <span className="w-3 h-3 border-2 border-neutral-300 border-t-neutral-500 rounded-full animate-spin" />
+                Guardando en tu perfil...
+              </motion.div>
+            )}
+            {saveStatus === 'saved' && (
+              <motion.div
+                key="saved"
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-50 text-green-700 border border-green-100 text-xs font-semibold"
+              >
+                <CheckCircle2 className="w-3 h-3" />
+                Guardado en tu perfil
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Descripción del perfil */}
@@ -588,21 +621,57 @@ function ResultsScreen({ result, onRestart, userName }: ResultsScreenProps) {
       </div>
 
       {/* ── Footer ── */}
-      <div className="max-w-lg mx-auto px-4 pb-8 text-center">
-        <div className="bg-neutral-50 rounded-2xl p-5 border border-neutral-100 mb-6">
-          <p className="text-sm text-neutral-600 leading-relaxed">
-            Esperamos que esto te haya dado un poco más de claridad sobre tus opciones.{' '}
-            <span className="font-medium text-neutral-700">Estas recomendaciones son un punto de partida</span>{' '}
-            — lo siguiente es explorar, preguntar y descubrir el camino que más te encaje.
-          </p>
+      <div className="pb-8">
+        {/* Cards — mismo ancho que el grid de familias en desktop */}
+        <div className={`mx-auto px-4 sm:px-6 lg:px-8 mb-6 ${!isAuthenticated ? 'max-w-7xl' : 'max-w-lg'}`}>
+          <div className={!isAuthenticated ? 'md:grid md:grid-cols-2 md:gap-6 md:items-stretch' : ''}>
+
+            <div className={`bg-neutral-50 rounded-2xl p-5 border border-neutral-100 flex flex-col justify-center ${!isAuthenticated ? 'mb-5 md:mb-0' : ''}`}>
+              <p className="text-sm text-neutral-600 leading-relaxed">
+                Esperamos que esto te haya dado un poco más de claridad sobre tus opciones.{' '}
+                <span className="font-medium text-neutral-700">Estas recomendaciones son un punto de partida</span>{' '}
+                — lo siguiente es explorar, preguntar y descubrir el camino que más te encaje.
+              </p>
+            </div>
+
+            {/* CTA registro para usuarios sin cuenta */}
+            {!isAuthenticated && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="bg-gradient-to-br from-[#223945] to-blue-700 rounded-2xl p-5 text-left shadow-lg shadow-blue-900/15 flex flex-col justify-between"
+              >
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                    ¿Quieres guardarlo?
+                  </p>
+                  <p className="text-sm font-semibold mb-4 leading-snug" style={{ color: '#ffffff' }}>
+                    Crea una cuenta gratuita y consulta tu análisis cuando quieras, desde cualquier dispositivo.
+                  </p>
+                </div>
+                <Link
+                  href="/registro"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-white text-[#223945] text-sm font-bold rounded-xl hover:bg-neutral-50 active:scale-95 transition-all shadow-md self-start"
+                >
+                  Crear cuenta gratis
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </motion.div>
+            )}
+          </div>
         </div>
-        <button
-          onClick={onRestart}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-[#223945] border border-[#223945]/20 hover:bg-[#223945]/5 active:scale-95 transition-all"
-        >
-          <RotateCcw className="w-3.5 h-3.5" />
-          Repetir el análisis
-        </button>
+
+        {/* Repetir — siempre centrado */}
+        <div className="text-center">
+          <button
+            onClick={onRestart}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-[#223945] border border-[#223945]/20 hover:bg-[#223945]/5 active:scale-95 transition-all"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            Repetir el análisis
+          </button>
+        </div>
       </div>
 
       {/* Clearance spacer for fixed bottom nav on mobile/PWA — nav is h-16 + safe-area-inset-bottom */}
@@ -623,21 +692,50 @@ export default function DescubreFPClient() {
   const [questionIndex, setQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [result, setResult] = useState<QuizResult | null>(null);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const [initialLoading, setInitialLoading] = useState(false);
 
-  // Restore saved result on mount
+  // Restore saved result: localStorage (instant) → API fallback para usuarios con cuenta
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved) as QuizResult;
-        if (parsed?.matches && parsed?.userProfile) {
-          setResult(parsed);
-          setScreen('results');
-        }
+    const localResult = (() => {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw) as QuizResult;
+        return parsed?.matches && parsed?.userProfile ? parsed : null;
+      } catch { return null; }
+    })();
+
+    if (localResult) {
+      // Mostramos resultados al instante desde localStorage
+      setResult(localResult);
+      setScreen('results');
+      // Si tiene cuenta, sincronizamos silenciosamente a la API
+      // Esto migra resultados anteriores y garantiza que el perfil esté actualizado
+      if (user) {
+        saveFpQuizResult(localResult)
+          .then(() => setSaveStatus('saved'))
+          .catch(() => {}); // fallo silencioso — el resultado ya se muestra
       }
-    } catch {
-      // ignore
+      return;
     }
+
+    // Sin localStorage: si tiene cuenta intentamos cargar desde la API
+    if (user) {
+      setInitialLoading(true);
+      getFpQuizResult()
+        .then(apiResult => {
+          if (apiResult?.matches && apiResult?.userProfile) {
+            setResult(apiResult);
+            setScreen('results');
+            setSaveStatus('saved');
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(apiResult)); } catch {}
+          }
+        })
+        .catch(() => {})
+        .finally(() => setInitialLoading(false));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleStart = useCallback(() => {
@@ -661,12 +759,16 @@ export default function DescubreFPClient() {
           setTimeout(() => {
             const quizResult = runQuiz(newAnswers);
             setResult(quizResult);
-            try {
-              localStorage.setItem(STORAGE_KEY, JSON.stringify(quizResult));
-            } catch {
-              // ignore
-            }
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(quizResult)); } catch {}
             setScreen('results');
+
+            // Auto-save to API for authenticated users
+            if (user) {
+              setSaveStatus('saving');
+              saveFpQuizResult(quizResult)
+                .then(() => setSaveStatus('saved'))
+                .catch(() => setSaveStatus('error'));
+            }
           }, 4000);
         }
       }, 350);
@@ -687,15 +789,25 @@ export default function DescubreFPClient() {
     setResult(null);
     setQuestionIndex(0);
     setScreen('intro');
+    setSaveStatus('idle');
     window.scrollTo({ top: 0, behavior: 'instant' });
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch {
-      // ignore
-    }
+    try { localStorage.removeItem(STORAGE_KEY); } catch {}
   }, []);
 
   const userName = user?.name?.split(' ')[0] ?? undefined;
+
+  if (initialLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#dbeafe] via-white to-white flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#223945] to-blue-600 flex items-center justify-center shadow-xl shadow-blue-900/20">
+            <Compass className="w-6 h-6 text-white animate-pulse" />
+          </div>
+          <p className="text-sm font-medium text-neutral-500">Cargando tu análisis...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#dbeafe] via-white to-white">
@@ -716,7 +828,14 @@ export default function DescubreFPClient() {
             <ProcessingScreen key="processing" />
           )}
           {screen === 'results' && result && (
-            <ResultsScreen key="results" result={result} onRestart={handleRestart} userName={userName} />
+            <ResultsScreen
+              key="results"
+              result={result}
+              onRestart={handleRestart}
+              userName={userName}
+              saveStatus={saveStatus}
+              isAuthenticated={!!user}
+            />
           )}
       </AnimatePresence>
     </div>
