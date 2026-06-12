@@ -6,9 +6,6 @@ import Link from 'next/link';
 import {
   ArrowRight,
   ArrowLeft,
-  ChevronDown,
-  ChevronUp,
-  ExternalLink,
   RotateCcw,
   CheckCircle2,
   Sparkles,
@@ -306,9 +303,9 @@ interface ResultsScreenProps {
 
 
 const RANK_CONFIG = [
-  { label: 'Mejor opción', labelColor: '#FCD34D', ghostColor: 'rgba(252,211,77,0.13)', cardBorder: 'border-2 border-amber-400/60 shadow-xl shadow-amber-400/10' },
-  { label: '2ª opción',    labelColor: 'rgba(255,255,255,0.55)', ghostColor: 'rgba(255,255,255,0.06)', cardBorder: 'border border-neutral-200 shadow-md' },
-  { label: '3ª opción',    labelColor: 'rgba(255,255,255,0.45)', ghostColor: 'rgba(255,255,255,0.04)', cardBorder: 'border border-neutral-200 shadow-md' },
+  { label: 'Mejor opción', labelColor: '#FCD34D', ghostColor: 'rgba(252,211,77,0.13)', cardBorder: 'border-2 border-amber-400/60 shadow-xl shadow-amber-400/20', glowOpacity: 0.32 },
+  { label: '2ª opción',    labelColor: 'rgba(255,255,255,0.55)', ghostColor: 'rgba(255,255,255,0.06)', cardBorder: 'border border-neutral-200 shadow-md', glowOpacity: 0.16 },
+  { label: '3ª opción',    labelColor: 'rgba(255,255,255,0.45)', ghostColor: 'rgba(255,255,255,0.04)', cardBorder: 'border border-neutral-200 shadow-md', glowOpacity: 0.12 },
 ];
 
 function FamilyCard({ match, rank }: { match: FamilyMatch; rank: number }) {
@@ -317,11 +314,20 @@ function FamilyCard({ match, rank }: { match: FamilyMatch; rank: number }) {
   const searchUrl = `/?tipo=FP&familia=${encodeURIComponent(family.queryParam)}`;
 
   return (
+    <div className="relative h-full">
+      {/* Colored glow matching the card's own gradient */}
+      <div
+        className="absolute -inset-2 rounded-3xl blur-2xl -z-10"
+        style={{
+          background: `linear-gradient(135deg, ${family.colorFrom}, ${family.colorTo})`,
+          opacity: cfg.glowOpacity,
+        }}
+      />
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: rank * 0.1 }}
-      className={`rounded-2xl overflow-hidden flex flex-col h-full ${cfg.cardBorder}`}
+      className={`relative rounded-2xl overflow-hidden flex flex-col h-full ${cfg.cardBorder}`}
     >
       {/* Header */}
       <div
@@ -452,13 +458,13 @@ function FamilyCard({ match, rank }: { match: FamilyMatch; rank: number }) {
             href={searchUrl}
             className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-[#223945] to-blue-600 text-white font-bold text-xs py-3 rounded-xl hover:opacity-90 active:scale-[0.98] transition-all shadow-md"
           >
-            <MapPin className="w-3.5 h-3.5" />
+            <MapPin className="w-3.5 h-3.5 shrink-0" />
             Ver centros que imparten esta familia
-            <ExternalLink className="w-3 h-3 opacity-70" />
           </Link>
         </div>
       </div>
     </motion.div>
+    </div>
   );
 }
 
