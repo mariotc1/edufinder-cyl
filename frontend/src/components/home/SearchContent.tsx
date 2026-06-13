@@ -53,6 +53,7 @@ export default function SearchContent() {
     tipo: searchParams.get('tipo') || '',
     naturaleza: searchParams.get('naturaleza') || '',
     familia: searchParams.get('familia') || '',
+    ciclo: searchParams.get('ciclo') || '',
     nivel: searchParams.get('nivel') || '',
     modalidad: searchParams.get('modalidad') || '',
     radio: searchParams.get('radio') ? Number(searchParams.get('radio')) : undefined,
@@ -137,6 +138,7 @@ export default function SearchContent() {
     filters.tipo ||
     filters.naturaleza ||
     filters.familia ||
+    filters.ciclo ||
     filters.nivel ||
     filters.modalidad ||
     filters.lat ||
