@@ -45,6 +45,7 @@ export default function SearchContent() {
   const searchParams = useSearchParams();
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const scrollRestored = useRef(false);
+  const resultsRef = useRef<HTMLElement>(null);
 
   // Collect URL params — these take priority over session state
   const urlFilters: FilterOptions = {
@@ -53,11 +54,13 @@ export default function SearchContent() {
     tipo: searchParams.get('tipo') || '',
     naturaleza: searchParams.get('naturaleza') || '',
     familia: searchParams.get('familia') || '',
+    ciclo: searchParams.get('ciclo') || '',
     nivel: searchParams.get('nivel') || '',
     modalidad: searchParams.get('modalidad') || '',
     radio: searchParams.get('radio') ? Number(searchParams.get('radio')) : undefined,
     lat: searchParams.get('lat') ? Number(searchParams.get('lat')) : undefined,
     lng: searchParams.get('lng') ? Number(searchParams.get('lng')) : undefined,
+    locationName: searchParams.get('locationName') || '',
   };
   const urlPage = searchParams.get('page') ? Number(searchParams.get('page')) : null;
   const hasUrlParams =
@@ -130,6 +133,28 @@ export default function SearchContent() {
     setPage(1);
   }, []);
 
+  const handlePageChange = useCallback((newPage: number) => {
+    setPage(newPage);
+    if (!resultsRef.current) return;
+
+    const isDesktop = window.matchMedia('(min-width: 768px)').matches;
+    const rawTop = resultsRef.current.offsetTop;
+
+    let offset: number;
+    if (isDesktop) {
+      offset = 96; // navbar fijo 80px + 16px de aire
+    } else {
+      // Lee la altura real del header móvil en tiempo de ejecución
+      // (incluye env(safe-area-inset-top) del notch / Dynamic Island)
+      const headerEl = document.querySelector('header');
+      offset = (headerEl?.getBoundingClientRect().height ?? 56) + 8;
+    }
+
+    const target = Math.max(0, rawTop - offset);
+    window.scrollTo({ top: target, behavior: 'smooth' });
+    document.documentElement.scrollTop = target; // fallback iOS PWA
+  }, []);
+
   // Detectar si hay filtros activos (para ocultar secciones personalizadas)
   const hasActiveFilters = Boolean(
     filters.q ||
@@ -137,6 +162,7 @@ export default function SearchContent() {
     filters.tipo ||
     filters.naturaleza ||
     filters.familia ||
+    filters.ciclo ||
     filters.nivel ||
     filters.modalidad ||
     filters.lat ||
@@ -232,7 +258,7 @@ export default function SearchContent() {
       )}
 
       {/* Results Section - Backgrounds removed */}
-      <section className="flex-grow px-4 sm:px-6 lg:px-8 py-12">
+      <section ref={resultsRef} className="flex-grow px-4 sm:px-6 lg:px-8 py-12">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 flex items-center gap-2">
@@ -280,14 +306,13 @@ export default function SearchContent() {
               </motion.div>
 
               {/* Pagination */}
-              {/* Enhanced Pagination */}
               {data?.last_page > 1 && (
-                <div className="flex flex-col items-center gap-4 mt-12 pb-8">
-                  <div className="flex items-center gap-2 bg-white p-2 rounded-full shadow-lg border border-neutral-100">
+                <div className="flex flex-col items-center gap-3 mt-12 pb-8">
+                  <div className="flex items-center gap-2 bg-white p-2 rounded-full shadow-sm border border-neutral-200">
                     {/* Previous Button */}
                     <button
                       disabled={data.current_page === 1}
-                      onClick={() => setPage(p => Math.max(1, p - 1))}
+                      onClick={() => handlePageChange(Math.max(1, data.current_page - 1))}
                       className="p-2.5 rounded-full hover:bg-neutral-100 disabled:opacity-30 disabled:hover:bg-transparent transition-all text-[#223945]"
                       title="Página anterior"
                     >
@@ -301,7 +326,6 @@ export default function SearchContent() {
                         const total = data.last_page;
                         const pages = [];
 
-                        // Logica para mostrar paginas: 1 ... 4 5 6 ... 20
                         if (total <= 7) {
                           for (let i = 1; i <= total; i++) pages.push(i);
                         } else {
@@ -316,18 +340,18 @@ export default function SearchContent() {
 
                         return pages.map((p, idx) => (
                           p === '...' ? (
-                            <span key={`dots-${idx}`} className="text-neutral-400 font-bold px-1 select-none">...</span>
+                            <span key={`dots-${idx}`} className="text-neutral-400 font-normal px-1 select-none">...</span>
                           ) : (
                             <button
                               key={p}
-                              onClick={() => setPage(p as number)}
+                              onClick={() => handlePageChange(p as number)}
                               className={`
-                                            w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-sm sm:text-base transition-all
-                                            ${current === p
-                                  ? 'bg-[#223945] text-white shadow-md scale-110'
-                                  : 'text-neutral-600 hover:bg-neutral-100 hover:text-[#223945]'
+                                w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-sm sm:text-base transition-all
+                                ${current === p
+                                  ? 'bg-[#223945] text-white font-bold scale-110'
+                                  : 'text-neutral-500 font-semibold hover:bg-neutral-100 hover:text-[#223945]'
                                 }
-                                        `}
+                              `}
                             >
                               {p}
                             </button>
@@ -339,7 +363,7 @@ export default function SearchContent() {
                     {/* Next Button */}
                     <button
                       disabled={data.current_page === data.last_page}
-                      onClick={() => setPage(p => Math.min(data.last_page, p + 1))}
+                      onClick={() => handlePageChange(Math.min(data.last_page, data.current_page + 1))}
                       className="p-2.5 rounded-full hover:bg-neutral-100 disabled:opacity-30 disabled:hover:bg-transparent transition-all text-[#223945]"
                       title="Página siguiente"
                     >
@@ -348,11 +372,11 @@ export default function SearchContent() {
                   </div>
 
                   <div className="flex items-center gap-3 text-sm font-medium text-neutral-500">
-                    <span className="hidden sm:inline">
-                      Página <span className="font-bold text-[#223945]">{data.current_page}</span> de <span className="font-bold text-[#223945]">{data.last_page}</span>
+                    <span>
+                      Pág. <span className="font-semibold text-[#223945]">{data.current_page}</span> / <span className="font-semibold text-[#223945]">{data.last_page}</span>
                     </span>
 
-                    <span className="hidden sm:block w-px h-4 bg-neutral-300"></span>
+                    <span className="w-px h-4 bg-neutral-200"></span>
 
                     <form
                       onSubmit={(e) => {
@@ -361,7 +385,7 @@ export default function SearchContent() {
                         const input = form.elements.namedItem('pageInput') as HTMLInputElement;
                         const val = parseInt(input.value);
                         if (!isNaN(val) && val >= 1 && val <= data.last_page) {
-                          setPage(val);
+                          handlePageChange(val);
                           input.value = '';
                           input.blur();
                         }
@@ -374,11 +398,11 @@ export default function SearchContent() {
                         min="1"
                         max={data.last_page}
                         placeholder="Ir a..."
-                        className="w-20 pl-3 pr-8 py-1.5 rounded-lg border border-neutral-200 bg-white text-sm font-medium text-[#223945] placeholder:text-neutral-400 focus:ring-2 focus:ring-[#223945]/10 focus:border-[#223945] outline-none transition-all shadow-sm hover:border-neutral-300"
+                        className="w-24 pl-3 pr-8 py-1.5 rounded-full border border-neutral-200 bg-white text-sm font-medium text-[#223945] placeholder:text-neutral-400 focus:ring-2 focus:ring-[#223945]/10 focus:border-[#223945] outline-none transition-all hover:border-neutral-300 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                       />
                       <button
                         type="submit"
-                        className="absolute right-1.5 p-1 rounded-md text-neutral-400 hover:text-[#223945] hover:bg-neutral-100 transition-colors"
+                        className="absolute right-1.5 p-1 rounded-full text-neutral-400 hover:text-[#223945] hover:bg-neutral-100 transition-colors"
                         title="Ir"
                       >
                         <ArrowRight className="w-3.5 h-3.5" />
