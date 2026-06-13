@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Github, Linkedin, Database, Code2, Cpu, Heart } from 'lucide-react';
+import { Github, Linkedin, Database, Code2, Cpu } from 'lucide-react';
 
 // COMPONENTE PIE DE PÁGINA
 // Muestra enlaces a repositorios, equipo de desarrollo y créditos de datos abiertos
@@ -118,17 +118,10 @@ export default function Footer() {
         </div>
 
         {/* Ultra-Minimal Bottom Bar */}
-        <div className="mt-8 pt-4 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-3 text-[10px] text-neutral-400 font-medium">
-          <div className="flex items-center gap-1.5">
-            <span>© {currentYear} EduFinder CyL</span>
-            <span className="w-1 h-1 rounded-full bg-neutral-600"></span>
-            <span>Open Data Contest 2026</span>
-          </div>
-          <div className="flex items-center gap-1 opacity-70">
-            <span>Hecho con</span>
-            <Heart className="w-2.5 h-2.5 text-red-500 fill-red-500" />
-            <span>en Castilla y León</span>
-          </div>
+        <div className="mt-8 pt-4 border-t border-white/5 flex items-center justify-center gap-1.5 text-[10px] text-neutral-400 font-medium">
+          <span>© {currentYear} EduFinder CyL</span>
+          <span className="w-1 h-1 rounded-full bg-neutral-600"></span>
+          <span>Open Data Contest 2026</span>
         </div>
 
       </div>
