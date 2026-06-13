@@ -59,6 +59,7 @@ export default function SearchContent() {
     radio: searchParams.get('radio') ? Number(searchParams.get('radio')) : undefined,
     lat: searchParams.get('lat') ? Number(searchParams.get('lat')) : undefined,
     lng: searchParams.get('lng') ? Number(searchParams.get('lng')) : undefined,
+    locationName: searchParams.get('locationName') || '',
   };
   const urlPage = searchParams.get('page') ? Number(searchParams.get('page')) : null;
   const hasUrlParams =
