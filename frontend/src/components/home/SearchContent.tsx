@@ -280,10 +280,9 @@ export default function SearchContent() {
               </motion.div>
 
               {/* Pagination */}
-              {/* Enhanced Pagination */}
               {data?.last_page > 1 && (
-                <div className="flex flex-col items-center gap-4 mt-12 pb-8">
-                  <div className="flex items-center gap-2 bg-white p-2 rounded-full shadow-lg border border-neutral-100">
+                <div className="flex flex-col items-center gap-3 mt-12 pb-8">
+                  <div className="flex items-center gap-2 bg-white p-2 rounded-full shadow-sm border border-neutral-200">
                     {/* Previous Button */}
                     <button
                       disabled={data.current_page === 1}
@@ -301,7 +300,6 @@ export default function SearchContent() {
                         const total = data.last_page;
                         const pages = [];
 
-                        // Logica para mostrar paginas: 1 ... 4 5 6 ... 20
                         if (total <= 7) {
                           for (let i = 1; i <= total; i++) pages.push(i);
                         } else {
@@ -316,18 +314,18 @@ export default function SearchContent() {
 
                         return pages.map((p, idx) => (
                           p === '...' ? (
-                            <span key={`dots-${idx}`} className="text-neutral-400 font-bold px-1 select-none">...</span>
+                            <span key={`dots-${idx}`} className="text-neutral-400 font-normal px-1 select-none">...</span>
                           ) : (
                             <button
                               key={p}
                               onClick={() => setPage(p as number)}
                               className={`
-                                            w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-sm sm:text-base transition-all
-                                            ${current === p
-                                  ? 'bg-[#223945] text-white shadow-md scale-110'
-                                  : 'text-neutral-600 hover:bg-neutral-100 hover:text-[#223945]'
+                                w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-sm sm:text-base transition-all
+                                ${current === p
+                                  ? 'bg-[#223945] text-white font-bold scale-110'
+                                  : 'text-neutral-500 font-semibold hover:bg-neutral-100 hover:text-[#223945]'
                                 }
-                                        `}
+                              `}
                             >
                               {p}
                             </button>
@@ -348,11 +346,11 @@ export default function SearchContent() {
                   </div>
 
                   <div className="flex items-center gap-3 text-sm font-medium text-neutral-500">
-                    <span className="hidden sm:inline">
-                      Página <span className="font-bold text-[#223945]">{data.current_page}</span> de <span className="font-bold text-[#223945]">{data.last_page}</span>
+                    <span>
+                      Pág. <span className="font-semibold text-[#223945]">{data.current_page}</span> / <span className="font-semibold text-[#223945]">{data.last_page}</span>
                     </span>
 
-                    <span className="hidden sm:block w-px h-4 bg-neutral-300"></span>
+                    <span className="w-px h-4 bg-neutral-200"></span>
 
                     <form
                       onSubmit={(e) => {
@@ -374,11 +372,11 @@ export default function SearchContent() {
                         min="1"
                         max={data.last_page}
                         placeholder="Ir a..."
-                        className="w-20 pl-3 pr-8 py-1.5 rounded-lg border border-neutral-200 bg-white text-sm font-medium text-[#223945] placeholder:text-neutral-400 focus:ring-2 focus:ring-[#223945]/10 focus:border-[#223945] outline-none transition-all shadow-sm hover:border-neutral-300"
+                        className="w-20 pl-3 pr-8 py-1.5 rounded-full border border-neutral-200 bg-white text-sm font-medium text-[#223945] placeholder:text-neutral-400 focus:ring-2 focus:ring-[#223945]/10 focus:border-[#223945] outline-none transition-all hover:border-neutral-300 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                       />
                       <button
                         type="submit"
-                        className="absolute right-1.5 p-1 rounded-md text-neutral-400 hover:text-[#223945] hover:bg-neutral-100 transition-colors"
+                        className="absolute right-1.5 p-1 rounded-full text-neutral-400 hover:text-[#223945] hover:bg-neutral-100 transition-colors"
                         title="Ir"
                       >
                         <ArrowRight className="w-3.5 h-3.5" />
