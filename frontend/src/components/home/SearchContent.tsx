@@ -45,6 +45,7 @@ export default function SearchContent() {
   const searchParams = useSearchParams();
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const scrollRestored = useRef(false);
+  const resultsRef = useRef<HTMLElement>(null);
 
   // Collect URL params — these take priority over session state
   const urlFilters: FilterOptions = {
@@ -130,6 +131,28 @@ export default function SearchContent() {
   const handleFilterChange = useCallback((newFilters: FilterOptions) => {
     setFilters(newFilters);
     setPage(1);
+  }, []);
+
+  const handlePageChange = useCallback((newPage: number) => {
+    setPage(newPage);
+    if (!resultsRef.current) return;
+
+    const isDesktop = window.matchMedia('(min-width: 768px)').matches;
+    const rawTop = resultsRef.current.offsetTop;
+
+    let offset: number;
+    if (isDesktop) {
+      offset = 96; // navbar fijo 80px + 16px de aire
+    } else {
+      // Lee la altura real del header móvil en tiempo de ejecución
+      // (incluye env(safe-area-inset-top) del notch / Dynamic Island)
+      const headerEl = document.querySelector('header');
+      offset = (headerEl?.getBoundingClientRect().height ?? 56) + 8;
+    }
+
+    const target = Math.max(0, rawTop - offset);
+    window.scrollTo({ top: target, behavior: 'smooth' });
+    document.documentElement.scrollTop = target; // fallback iOS PWA
   }, []);
 
   // Detectar si hay filtros activos (para ocultar secciones personalizadas)
@@ -235,7 +258,7 @@ export default function SearchContent() {
       )}
 
       {/* Results Section - Backgrounds removed */}
-      <section className="flex-grow px-4 sm:px-6 lg:px-8 py-12">
+      <section ref={resultsRef} className="flex-grow px-4 sm:px-6 lg:px-8 py-12">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 flex items-center gap-2">
@@ -289,7 +312,7 @@ export default function SearchContent() {
                     {/* Previous Button */}
                     <button
                       disabled={data.current_page === 1}
-                      onClick={() => setPage(p => Math.max(1, p - 1))}
+                      onClick={() => handlePageChange(Math.max(1, data.current_page - 1))}
                       className="p-2.5 rounded-full hover:bg-neutral-100 disabled:opacity-30 disabled:hover:bg-transparent transition-all text-[#223945]"
                       title="Página anterior"
                     >
@@ -321,7 +344,7 @@ export default function SearchContent() {
                           ) : (
                             <button
                               key={p}
-                              onClick={() => setPage(p as number)}
+                              onClick={() => handlePageChange(p as number)}
                               className={`
                                 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-sm sm:text-base transition-all
                                 ${current === p
@@ -340,7 +363,7 @@ export default function SearchContent() {
                     {/* Next Button */}
                     <button
                       disabled={data.current_page === data.last_page}
-                      onClick={() => setPage(p => Math.min(data.last_page, p + 1))}
+                      onClick={() => handlePageChange(Math.min(data.last_page, data.current_page + 1))}
                       className="p-2.5 rounded-full hover:bg-neutral-100 disabled:opacity-30 disabled:hover:bg-transparent transition-all text-[#223945]"
                       title="Página siguiente"
                     >
@@ -362,7 +385,7 @@ export default function SearchContent() {
                         const input = form.elements.namedItem('pageInput') as HTMLInputElement;
                         const val = parseInt(input.value);
                         if (!isNaN(val) && val >= 1 && val <= data.last_page) {
-                          setPage(val);
+                          handlePageChange(val);
                           input.value = '';
                           input.blur();
                         }
