@@ -372,7 +372,7 @@ export default function SearchContent() {
                         min="1"
                         max={data.last_page}
                         placeholder="Ir a..."
-                        className="w-20 pl-3 pr-8 py-1.5 rounded-full border border-neutral-200 bg-white text-sm font-medium text-[#223945] placeholder:text-neutral-400 focus:ring-2 focus:ring-[#223945]/10 focus:border-[#223945] outline-none transition-all hover:border-neutral-300 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                        className="w-24 pl-3 pr-8 py-1.5 rounded-full border border-neutral-200 bg-white text-sm font-medium text-[#223945] placeholder:text-neutral-400 focus:ring-2 focus:ring-[#223945]/10 focus:border-[#223945] outline-none transition-all hover:border-neutral-300 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                       />
                       <button
                         type="submit"
