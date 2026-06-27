@@ -7,5 +7,5 @@
         $this->comment(Inspiring::quote());
     })->purpose('Display an inspiring quote');
 
-    Schedule::command('opendata:sync')->daily();
+    Schedule::job(new \App\Jobs\SyncOpenDataJob())->weekly();
 ?>
