@@ -21,7 +21,7 @@ php artisan db:seed --class=UserSeeder --force
 # Sync OpenData (Only in non-local environments)
 if [ "$APP_ENV" != "local" ]; then
     echo "Syncing OpenData..."
-    php artisan opendata:sync
+    php artisan opendata:sync || echo "Warning: OpenData sync failed during startup, app will continue."
 else
     echo "Skipping OpenData sync in local environment..."
 fi
