@@ -10,6 +10,7 @@ use App\Models\SyncLog;
 use App\Models\ActivityLog;
 use App\Models\CentroVisit;
 use App\Models\SearchLog;
+use App\Jobs\SyncOpenDataJob;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 
@@ -108,11 +109,6 @@ class AdminDashboardController extends Controller
         // Trigger command
         // Using exec to run in background so request doesn't timeout
         // Adjust path to artisan as needed. Assuming standard layout.
-        $artisanPath = base_path('artisan');
-        $logPath = storage_path('logs/sync.log');
-        $command = "nohup php {$artisanPath} opendata:sync >> {$logPath} 2>&1 &";
-
-        // Log the manual trigger attempt
         ActivityLog::create([
             'user_id' => auth()->id(),
             'action' => 'force_sync',
@@ -121,12 +117,7 @@ class AdminDashboardController extends Controller
             'user_agent' => request()->userAgent()
         ]);
 
-        // Attempt execution
-        if (str_starts_with(php_uname(), 'Windows')) {
-            pclose(popen("start /B cmd /c $command", "r"));
-        } else {
-            exec($command);
-        }
+        SyncOpenDataJob::dispatch();
 
         return response()->json(['message' => 'Synchronization started in background.']);
     }
