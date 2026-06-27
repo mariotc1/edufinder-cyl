@@ -38,13 +38,16 @@
 
                 if ($centro) {
                     $cicloNombre = $item['ciclo_formativo_curso_de_especializacion'] ?? $item['ciclo_formativo'] ?? '';
+                    $claveCiclo = $item['clave_ciclo'] ?? null;
 
-                    CicloFp::create([
-                        'centro_id' => $centro->id,
+                    $lookup = $claveCiclo
+                        ? ['centro_id' => $centro->id, 'clave_ciclo' => $claveCiclo]
+                        : ['centro_id' => $centro->id, 'ciclo_formativo' => $cicloNombre];
+
+                    CicloFp::updateOrCreate($lookup, [
                         'familia_profesional' => $item['familia_profesional'] ?? null,
                         'codigo_familia' => $item['codigo_familia'] ?? null,
                         'nivel_educativo' => $item['nivel_educativo'] ?? null,
-                        'clave_ciclo' => $item['clave_ciclo'] ?? null,
                         'ciclo_formativo' => $cicloNombre,
                         'modalidad' => $item['modalidad'] ?? null,
                         'tipo_ensenanza' => $item['tipo_ensenanza'] ?? null,

@@ -109,7 +109,8 @@ class AdminDashboardController extends Controller
         // Using exec to run in background so request doesn't timeout
         // Adjust path to artisan as needed. Assuming standard layout.
         $artisanPath = base_path('artisan');
-        $command = "php {$artisanPath} opendata:sync > /dev/null 2>&1 &";
+        $logPath = storage_path('logs/sync.log');
+        $command = "nohup php {$artisanPath} opendata:sync >> {$logPath} 2>&1 &";
 
         // Log the manual trigger attempt
         ActivityLog::create([
