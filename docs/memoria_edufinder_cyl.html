@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Memoria EduFinder CYL — X Concurso Datos Abiertos CyL</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    @page {
+      size: A4;
+      margin: 22mm 20mm 22mm 20mm;
+    }
+
+    body {
+      font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      font-size: 10.5pt;
+      line-height: 1.68;
+      color: #1a1a2e;
+      background: #ffffff;
+    }
+
+    /* ─── CABECERA ─── */
+    .header {
+      border-top: 5px solid #8B0000;
+      padding-top: 22px;
+      margin-bottom: 30px;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 14px;
+    }
+
+    .concurso-label {
+      font-size: 7.5pt;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #8B0000;
+    }
+
+    .categoria-label {
+      font-size: 7.5pt;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #888;
+      text-align: right;
+    }
+
+    .project-title {
+      font-size: 36pt;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: #0d0d1a;
+      line-height: 1.05;
+      margin-bottom: 10px;
+    }
+
+    .header-meta {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      margin-top: 4px;
+    }
+
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .meta-label {
+      font-size: 6.5pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #aaa;
+    }
+
+    .meta-value {
+      font-size: 9.5pt;
+      font-weight: 600;
+      color: #1a1a2e;
+    }
+
+    .meta-value.url {
+      color: #8B0000;
+      font-size: 9pt;
+    }
+
+    .meta-sep {
+      width: 1px;
+      height: 28px;
+      background: #ddd;
+      flex-shrink: 0;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #e0e0e0;
+      margin: 22px 0;
+    }
+
+    .divider-strong {
+      border: none;
+      border-top: 2px solid #8B0000;
+      margin: 24px 0;
+      opacity: 0.25;
+    }
+
+    /* ─── CUERPO ─── */
+    .body-text {
+      text-align: justify;
+      hyphens: auto;
+    }
+
+    p {
+      margin-bottom: 11px;
+    }
+
+    /* ─── ÉNFASIS FUNCIONAL ─── */
+    .section-intro {
+      font-size: 11pt;
+      font-weight: 600;
+      color: #0d0d1a;
+      margin-bottom: 10px;
+      margin-top: 4px;
+      letter-spacing: -0.01em;
+    }
+
+    .highlight-block {
+      border-left: 3px solid #8B0000;
+      padding: 10px 14px;
+      background: #fdf6f6;
+      margin: 16px 0;
+      border-radius: 0 4px 4px 0;
+    }
+
+    .highlight-block p {
+      margin-bottom: 0;
+      font-size: 10pt;
+    }
+
+    /* ─── NOMBRE FUNCIONALIDAD ─── */
+    .feature-name {
+      font-weight: 700;
+      color: #8B0000;
+      font-size: 10.5pt;
+    }
+
+    /* ─── TABLA AUDITORÍA ─── */
+    .audit-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 9.5pt;
+    }
+
+    .audit-table th {
+      background: #8B0000;
+      color: #fff;
+      padding: 7px 12px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 8.5pt;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .audit-table td {
+      padding: 6px 12px;
+      border-bottom: 1px solid #eee;
+      vertical-align: middle;
+    }
+
+    .audit-table tr:nth-child(even) td {
+      background: #fafafa;
+    }
+
+    .score {
+      font-weight: 700;
+      color: #155a2e;
+      font-size: 10pt;
+    }
+
+    /* ─── PIE ─── */
+    .footer {
+      margin-top: 30px;
+      padding-top: 14px;
+      border-top: 1px solid #ddd;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-author {
+      font-size: 8.5pt;
+      color: #666;
+    }
+
+    .footer-url {
+      font-size: 8.5pt;
+      color: #8B0000;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    /* ─── COLUMNAS INFO ─── */
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+      margin: 16px 0;
+    }
+
+    .info-cell {
+      background: #f7f7f9;
+      border-radius: 4px;
+      padding: 10px 12px;
+      border-top: 2px solid #8B0000;
+    }
+
+    .info-cell-label {
+      font-size: 7pt;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 3px;
+    }
+
+    .info-cell-value {
+      font-size: 9pt;
+      font-weight: 600;
+      color: #1a1a2e;
+    }
+
+    /* ─── ETIQUETA DE CRITERIO ─── */
+    .criterion-tag {
+      display: inline-block;
+      background: #8B0000;
+      color: #fff;
+      font-size: 7pt;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 2px;
+      vertical-align: middle;
+      margin-left: 6px;
+      position: relative;
+      top: -1px;
+    }
+
+    strong {
+      font-weight: 600;
+      color: #0d0d1a;
+    }
+
+    em {
+      font-style: italic;
+    }
+
+    /* page break hint */
+    .keep-together {
+      page-break-inside: avoid;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- CABECERA -->
+  <div class="header">
+    <div class="header-top">
+      <div class="concurso-label">X Concurso Datos Abiertos de Castilla y León</div>
+      <div class="categoria-label">Categoría: Productos y Servicios</div>
+    </div>
+    <div class="project-title">EduFinder CYL</div>
+    <div class="header-meta">
+      <div class="meta-item">
+        <span class="meta-label">Autor</span>
+        <span class="meta-value">Mario Tomé Core</span>
+      </div>
+      <div class="meta-sep"></div>
+      <div class="meta-item">
+        <span class="meta-label">URL del proyecto</span>
+        <span class="meta-value url">https://edufinder-cyl.vercel.app</span>
+      </div>
+      <div class="meta-sep"></div>
+      <div class="meta-item">
+        <span class="meta-label">Categoría</span>
+        <span class="meta-value">Productos y Servicios</span>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- CUERPO -->
+  <div class="body-text">
+
+    <p>Identificar un problema concreto fue el punto de partida. Los estudiantes y familias de Castilla y León que intentaban informarse sobre la oferta formativa disponible debían recurrir a fuentes dispersas, formatos heterogéneos y plataformas sin conexión entre sí. Quien quería saber qué ciclos de FP se impartían en su provincia, qué centros los ofrecían en modalidad dual o cómo comparar alternativas antes de matricularse, no disponía de ningún punto de acceso unificado. Sin asesoramiento externo, navegar por 23 familias profesionales, 187 ciclos formativos y múltiples modalidades resultaba, en la práctica, una tarea inabordable para la mayor parte de la ciudadanía. EduFinder CYL nació para resolver ese problema.</p>
+
+    <div class="highlight-block keep-together">
+      <p><strong>EduFinder CYL integra y transforma datos oficiales de Castilla y León en un servicio de orientación educativa accesible para toda la ciudadanía.</strong> El proyecto cruza dos conjuntos de datos del Portal de Datos Abiertos de la Junta de Castilla y León —el directorio completo de centros educativos y la oferta de Formación Profesional— mediante el código oficial del centro. Este proceso de normalización, integración y mantenimiento continuo genera conocimiento que ninguno de los dos datasets contiene por separado: qué ciclos imparte cada uno de los 1.741 centros educativos de la comunidad, en qué modalidad, a qué nivel y con qué titularidad. Dos fuentes oficiales. Una capa de valor nueva. Un servicio que antes no existía.</p>
+    </div>
+
+    <p class="section-intro">Una plataforma completa para una decisión que importa</p>
+
+    <p>El buscador permite combinar doce criterios de filtrado simultáneo: provincia, localidad, código postal, radio de distancia, ubicación GPS, titularidad, tipo de enseñanza, familia profesional, ciclo, modalidad, nivel de FP y nombre. Las búsquedas son guardables y reutilizables.</p>
+
+    <p>El comparador contrasta hasta tres centros de forma simultánea, con exportación en PDF y URL persistente para compartir. Cada ficha incorpora la oferta formativa completa y geolocalización con Google Maps. La plataforma funciona como Progressive Web App —instalable en cualquier dispositivo sin tienda de aplicaciones— e incluye panel de administración para la gestión del sistema. El acceso a las funcionalidades esenciales es inmediato, gratuito y sin registro obligatorio.</p>
+
+    <p class="section-intro">Orientación guiada y recomendación vocacional</p>
+
+    <p>EduFinder incorpora dos funcionalidades de orientación con un enfoque diferencial en el contexto de los servicios educativos públicos de Castilla y León.</p>
+
+    <p>La primera es el <strong>asistente de búsqueda guiada</strong>: en lugar de un formulario de doce filtros, el usuario responde preguntas sencillas —dónde quiere estudiar, qué tipo de formación busca, qué familia profesional le interesa, qué titularidad prefiere— y el sistema construye automáticamente los parámetros de búsqueda. Si el usuario tiene centros o ciclos marcados como favoritos, el algoritmo analiza los patrones de ese historial y pondera los resultados por afinidad, mostrando las razones concretas de cada coincidencia. Una vía accesible para cualquier perfil, incluidos quienes desconocen la terminología del sistema de FP.</p>
+
+    <div class="keep-together">
+    <p>La segunda es <span class="feature-name">Descubre tu FP</span>, un recomendador vocacional que analiza intereses, habilidades y preferencias mediante un cuestionario estructurado, calcula el porcentaje de compatibilidad con cada familia profesional y devuelve un Top 3 personalizado. Para cada resultado, explica por qué esa familia encaja con el perfil del usuario, qué aprenderá, en qué sectores podrá trabajar y cuáles son los ciclos más representativos de esa familia entre los centros de Castilla y León. Una herramienta de orientación vocacional que pone los datos abiertos al servicio de decisiones personales de alta relevancia.</p>
+    </div>
+
+    <p class="section-intro">Valor público, social y económico</p>
+
+    <p>El impacto social es directo. Reduce de horas a minutos el tiempo necesario para obtener información educativa completa sobre los centros de Castilla y León. Democratiza la orientación académica —históricamente condicionada por el acceso a orientadores o redes familiares de información— y convierte el dato público en un servicio accesible para cualquier ciudadano de la comunidad, con independencia de su punto de partida. El proyecto está alineado con los principios de la Carta Internacional de Datos Abiertos, a la que la Junta de Castilla y León se adhirió en 2019.</p>
+
+    <p>El potencial de crecimiento es considerable. La herramienta es directamente replicable en cualquier comunidad autónoma con datasets equivalentes en su portal de datos abiertos, sin necesidad de rediseño conceptual. La arquitectura está preparada para incorporar nuevos conjuntos de datos —becas, estadísticas de inserción laboral, transporte, alojamiento— ampliando el valor del servicio de forma progresiva. La reducción del coste de búsqueda de información educativa para las familias y orientadores de Castilla y León representa un ahorro colectivo de tiempo con impacto real. El proyecto tiene recorrido para evolucionar hacia una plataforma integral de orientación educativa autonómica.</p>
+
+    <p class="section-intro">Solidez técnica contrastada en producción</p>
+
+    <p>Seis meses en funcionamiento continuo, sin incidencias, soportando picos de tráfico de más de 50.000 impresiones en LinkedIn sin degradación del servicio. Google indexa la plataforma correctamente y aparece en respuestas generadas por IA del buscador. El sistema incluye backups automáticos, medidas de seguridad activas y un ciclo de mantenimiento y evolución continua.</p>
+
+    <p>Las decisiones de arquitectura responden a criterios explícitos: el frontend desacoplado en Next.js con TypeScript permite actualizar la interfaz sin afectar al backend; Laravel sobre PostgreSQL garantiza integridad de datos y capacidad de crecimiento; el despliegue en infraestructura cloud con entrega continua elimina el tiempo de inactividad. El proyecto está diseñado para crecer.</p>
+
+    <div class="highlight-block keep-together" style="margin-top: 20px;">
+      <p>Los datos abiertos alcanzan su máximo valor cuando dejan de ser repositorios y se convierten en servicios. EduFinder CYL transforma información oficial de Castilla y León en orientación concreta para quienes más la necesitan, en el momento en que más importa.</p>
+    </div>
+
+  </div>
+
+  <!-- PIE -->
+  <div class="footer">
+    <div class="footer-author">
+      Mario Tomé Core · X Concurso Datos Abiertos de Castilla y León · 2025
+    </div>
+    <div class="footer-url">https://edufinder-cyl.vercel.app</div>
+  </div>
+
+</body>
+</html>
