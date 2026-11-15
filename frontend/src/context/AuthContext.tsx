@@ -56,6 +56,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
     checkAuth();
+
+    // Sesión invalidada por el backend (token expirado/revocado): ver interceptor en lib/axios
+    const handleExpired = () => setUser(null);
+    window.addEventListener('auth:expired', handleExpired);
+    return () => window.removeEventListener('auth:expired', handleExpired);
   }, []);
 
   // Iniciar sesión y guardar credenciales

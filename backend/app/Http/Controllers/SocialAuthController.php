@@ -41,7 +41,7 @@ class SocialAuthController extends Controller
 
         } catch (\Exception $e) {
             Log::error("Social Login Error ($provider): " . $e->getMessage());
-            return redirect(env('FRONTEND_URL') . '/login?error=social_login_failed');
+            return redirect(config('services.frontend_url') . '/login?error=social_login_failed');
         }
 
         $email = $socialUser->getEmail();
@@ -87,7 +87,7 @@ class SocialAuthController extends Controller
                 'ip_address' => request()->ip(),
             ]);
 
-            return redirect(env('FRONTEND_URL') . '/login?error=account_blocked');
+            return redirect(config('services.frontend_url') . '/login?error=account_blocked');
         }
 
         // UPDATE LAST LOGIN
@@ -103,7 +103,7 @@ class SocialAuthController extends Controller
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
+        $frontendUrl = config('services.frontend_url', 'http://localhost:3000');
 
         return redirect("$frontendUrl/auth/callback?token=$token&user_id=$user->id");
     }

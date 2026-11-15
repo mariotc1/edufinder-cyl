@@ -1,8 +1,9 @@
 import Link from 'next/link';
-import { MapPin, ArrowRight } from 'lucide-react';
+import { MapPin, ArrowRight, GraduationCap, Heart, Navigation } from 'lucide-react';
 import { Centro } from '@/types';
 import { useFavorite } from '@/hooks/useFavorite';
 import { useRef } from 'react';
+import { centroName, centroTipo, centroLugar, centroEtapas, titleCase } from '@/lib/centro-format';
 
 interface MapPopupProps {
     centro: Centro;
@@ -10,7 +11,7 @@ interface MapPopupProps {
 }
 
 // COMPONENTE POPUP DEL MAPA
-// Ventana emergente al hacer clic en un marcador del mapa
+// Ficha emergente al tocar un marcador: qué es, dónde está y qué se puede estudiar
 export default function MapPopup({ centro, initialIsFavorite = false }: MapPopupProps) {
     const cardRef = useRef<HTMLDivElement>(null);
 
@@ -19,66 +20,85 @@ export default function MapPopup({ centro, initialIsFavorite = false }: MapPopup
         initialIsFavorite
     });
 
+    const esPublico = centro.naturaleza?.toUpperCase().includes('PÚBLICO');
+    const ciclos = centro.ciclos_count ?? 0;
+    const etapas = centroEtapas(centro.denominacion_generica);
+    const direccion = titleCase(centro.direccion);
+
     return (
         <div ref={cardRef} className="w-full bg-white font-sans overflow-hidden">
-            {/* Minimalist Gradient Line (Top) */}
-            <div className="h-1 w-full bg-gradient-to-r from-[#223945] via-blue-500 to-blue-400" />
-            
+            <div className="h-1.5 w-full bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300" />
+
             <div className="p-4">
-                {/* Header: Title + Heart (Flex Row for perfect alignment) */}
-                <div className="flex justify-between items-start gap-2 mb-2">
-                    <div className="min-w-0 flex-1">
-                        <span className="text-xs font-bold text-blue-600 uppercase tracking-wider block mb-0.5">
-                            {centro.denominacion_generica || "Centro"}
+                {/* Titularidad + tipo · favorito */}
+                <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ring-1 ${
+                            esPublico ? 'bg-blue-50 text-blue-700 ring-blue-200' : 'bg-amber-50 text-amber-700 ring-amber-200'
+                        }`}>
+                            {centro.naturaleza || 'Centro'}
                         </span>
-                        <div className="text-lg font-bold text-[#223945] leading-tight line-clamp-2" title={centro.nombre}>
-                            {centro.nombre}
-                        </div>
+                        <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest truncate">
+                            {centroTipo(centro.denominacion_generica)}
+                        </span>
                     </div>
-                    
-                    {/* Heart Button */}
-                    <button 
+                    <button
                         onClick={(e) => toggleFavorite(e, cardRef.current!)}
                         disabled={loading}
-                        className="shrink-0 p-2 -mr-1 -mt-1 rounded-full bg-white border border-neutral-200 shadow-sm hover:bg-neutral-50 transition-all group/heart"
-                        title={isFavorite ? "Quitar de favoritos" : "Añadir a favoritos"}
+                        className="shrink-0 -mr-1 -mt-1 p-1.5 rounded-full bg-white border border-neutral-100 shadow-sm hover:bg-red-50 transition-colors group/heart"
+                        aria-label={isFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'}
                     >
-                        <svg 
-                            xmlns="http://www.w3.org/2000/svg" 
-                            viewBox="0 0 24 24" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            strokeWidth="2" 
-                            strokeLinecap="round" 
-                            strokeLinejoin="round" 
-                            className={`w-5 h-5 transition-colors ${
-                                isFavorite 
-                                ? "fill-red-500 text-red-500 border-red-500" 
-                                : "text-neutral-300 group-hover/heart:text-red-500"
-                            }`}
-                        >
-                            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-                        </svg>
+                        <Heart className={`w-4 h-4 transition-colors ${isFavorite ? 'fill-red-500 text-red-500' : 'text-neutral-400 group-hover/heart:text-red-500'}`} />
                     </button>
                 </div>
 
-                {/* Address - Larger */}
-                <div className="flex items-start gap-1.5 mb-3 text-neutral-500">
-                    <MapPin className="w-4 h-4 mt-0.5 shrink-0" />
-                    <div className="text-sm leading-snug flex flex-col">
-                        <span className="line-clamp-2">{centro.direccion || 'Ubicación no disponible'}</span>
-                        <span className="text-neutral-400 text-xs font-medium leading-none mt-1">{centro.localidad}</span>
+                <div className="mt-1.5 text-[17px] font-extrabold text-[#111827] leading-tight line-clamp-2" title={centroName(centro)}>
+                    {centroName(centro)}
+                </div>
+
+                <div className="mt-2 flex items-start gap-1.5 text-neutral-500">
+                    <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                    <div className="text-[13px] leading-snug min-w-0">
+                        {direccion && <span className="block truncate">{direccion}</span>}
+                        <span className="block text-xs text-neutral-400">{centroLugar(centro)}</span>
                     </div>
                 </div>
 
-                {/* Big Clear Action Button */}
-                <Link 
-                    href={`/centro/${centro.id}`} 
-                    className="flex items-center justify-center gap-2 w-full py-2 bg-[#223945] text-white rounded-md text-sm font-bold hover:bg-[#1a2c35] transition-colors shadow-sm decoration-0"
-                >
-                    <span className="text-white">Explorar Centro</span>
-                    <ArrowRight className="w-4 h-4 text-white" />
-                </Link>
+                {/* Qué se puede estudiar */}
+                <div className="mt-3">
+                    {ciclos > 0 ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#223945]/[0.06] text-xs font-bold text-[#223945]">
+                            <GraduationCap className="w-3.5 h-3.5 text-blue-600" />
+                            {ciclos} {ciclos === 1 ? 'ciclo de FP' : 'ciclos de FP'}
+                        </span>
+                    ) : etapas.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                            {etapas.map(e => (
+                                <span key={e} className="px-2 py-0.5 rounded-full bg-[#223945]/[0.06] text-[11px] font-semibold text-[#223945]">{e}</span>
+                            ))}
+                        </div>
+                    ) : null}
+                </div>
+
+                {/* Acciones */}
+                <div className="mt-3.5 flex gap-2">
+                    <Link
+                        href={`/centro/${centro.id}`}
+                        className="flex-1 flex items-center justify-center gap-1.5 h-10 rounded-xl bg-[#223945] text-sm font-bold shadow-md shadow-[#223945]/20 hover:bg-gradient-to-r hover:from-[#223945] hover:to-blue-700 transition-all !text-white"
+                    >
+                        Ver centro
+                        <ArrowRight className="w-4 h-4" />
+                    </Link>
+                    <a
+                        href={`https://www.google.com/maps/dir/?api=1&destination=${centro.latitud},${centro.longitud}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="Cómo llegar"
+                        className="shrink-0 w-10 h-10 rounded-xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 flex items-center justify-center hover:bg-blue-100 transition-colors"
+                    >
+                        <Navigation className="w-4 h-4" />
+                    </a>
+                </div>
             </div>
         </div>
     );

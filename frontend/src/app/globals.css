@@ -4,12 +4,24 @@
   --background: #ffffff;
   --foreground: #111827;
   --navbar-height: 5rem;
-  --bottom-nav-height: calc(4rem + env(safe-area-inset-bottom, 0px));
+  /* --pwa-strip-height lo fija BottomNav mientras se muestra la franja "Instalar app" */
+  --bottom-nav-height: calc(4rem + var(--pwa-strip-height, 0px) + env(safe-area-inset-bottom, 0px));
   /* Mobile top header: 3.5rem content + safe-area para notch/Dynamic Island */
   --mobile-header-height: calc(3.5rem + env(safe-area-inset-top, 0px));
+  /* Alto disponible para el contenido del asistente IA en móvil:
+     pantalla - cabecera - barra inferior - márgenes (1.5rem) - barra de progreso (~5rem) */
+  --wizard-content-max: calc(100dvh - var(--mobile-header-height) - var(--bottom-nav-height) - 6.5rem);
 }
 
 @media (max-width: 767px) {
+  /* iOS Safari hace zoom al enfocar campos con letra < 16px y no lo deshace al salir:
+     en móvil todos los campos de texto usan 16px */
+  input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
   .mobile-bottom-safe {
     padding-bottom: var(--bottom-nav-height);
   }
@@ -43,8 +55,13 @@
   }
 }
 
-* {
-  border-color: #e5e7eb;
+/* Color de borde por defecto (en base para no anular border-blue-200 y similares) */
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-color: #e5e7eb;
+  }
 }
 
 body {
@@ -58,18 +75,20 @@ body {
   overflow-x: hidden;
 }
 
-/* Typography Hierarchy */
-h1 {
+/* Typography Hierarchy
+   Tamaños fuera de capa (mantienen el aspecto actual de toda la app).
+   El asistente IA (.ai-wizard), las pantallas de acceso (.auth-ui) Descubre tu FP (.fp-ui) y el perfil (.profile-ui) quedan fuera: allí mandan las clases text-*.
+   Colores dentro de @layer base para que text-white, text-neutral-500... puedan sobrescribirlos:
+   antes ganaban siempre a las clases y dejaban texto oscuro sobre fondos oscuros. */
+h1:not(.ai-wizard h1, .auth-ui h1, .fp-ui h1, .profile-ui h1) {
   font-size: clamp(1.875rem, 5vw, 3rem);
   font-weight: 700;
-  color: #111827;
   line-height: 1.2;
 }
 
-h2 {
+h2:not(.ai-wizard h2, .auth-ui h2, .fp-ui h2, .profile-ui h2) {
   font-size: clamp(1.5rem, 4vw, 1.875rem);
   font-weight: 700;
-  color: #1f2937;
   line-height: 1.3;
 }
 
@@ -78,17 +97,22 @@ h2 {
   letter-spacing: 0.02em;
 }
 
-h3 {
+h3:not(.ai-wizard h3, .auth-ui h3, .fp-ui h3, .profile-ui h3) {
   font-size: clamp(1.25rem, 3vw, 1.5rem);
   font-weight: 600;
-  color: #1f2937;
   line-height: 1.3;
 }
 
-p {
+p:not(.ai-wizard p, .auth-ui p, .fp-ui p, .profile-ui p) {
   font-size: 1rem;
-  color: #374151;
   line-height: 1.625;
+}
+
+/* :where() evita que el compilador fusione estas reglas con las de tamaño de arriba */
+@layer base {
+  :where(h1) { color: #111827; }
+  :where(h2, h3) { color: #1f2937; }
+  :where(p) { color: #374151; }
 }
 
 /* Smooth Transitions */
@@ -304,17 +328,28 @@ button {
 /* Custom Range Slider Styles for MapSidebar */
 .custom-range-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
+  height: 22px;
+  width: 22px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid #223945;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(34, 57, 69, 0.25);
+  transition: transform 0.1s;
+}
+
+.custom-range-slider::-moz-range-thumb {
   height: 18px;
   width: 18px;
   border-radius: 50%;
   background: #ffffff;
   border: 2px solid #223945;
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  transition: transform 0.1s;
+  box-shadow: 0 2px 6px rgba(34, 57, 69, 0.25);
 }
 
-.custom-range-slider::-webkit-slider-thumb:hover {
+.custom-range-slider::-webkit-slider-thumb:hover,
+.custom-range-slider:active::-webkit-slider-thumb {
   transform: scale(1.1);
 }
 
@@ -326,4 +361,31 @@ button {
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;  /* Chrome, Safari, Opera */
+}
+
+/* Grupos de centros en el mapa (ver ClusteredMarkers en components/Map.tsx) */
+.map-cluster-wrapper {
+  background: transparent;
+  border: none;
+}
+
+.map-cluster {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #223945 0%, #1d4ed8 100%);
+  border: 3px solid #ffffff;
+  box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.18), 0 6px 16px rgba(34, 57, 69, 0.35);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.map-cluster:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 0 9px rgba(37, 99, 235, 0.2), 0 8px 20px rgba(34, 57, 69, 0.4);
 }

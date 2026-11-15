@@ -19,10 +19,10 @@ const familiasProfesionales = [
 ];
 
 const niveles = [
-    { id: 'BASICA', name: 'Básica' },
-    { id: 'GM', name: 'Grado Medio' },
-    { id: 'GS', name: 'Grado Superior' },
-    { id: 'CE', name: 'Especialización' }
+    { id: 'BASICA', name: 'Grado Básico', solid: 'bg-blue-600 text-white', dot: 'bg-blue-600' },
+    { id: 'GM', name: 'Grado Medio', solid: 'bg-amber-500 text-white', dot: 'bg-amber-500' },
+    { id: 'GS', name: 'Grado Superior', solid: 'bg-purple-600 text-white', dot: 'bg-purple-600' },
+    { id: 'CE', name: 'Especialización', solid: 'bg-rose-600 text-white', dot: 'bg-rose-600' }
 ];
 
 const modalidades = [
@@ -85,27 +85,27 @@ export default function FPDetailsStep({
                 </p>
             </div>
 
-            {/* Contenido compacto */}
-            <div className="space-y-3 mb-3">
-                {/* Familia Profesional - Grid compacto */}
+            {/* Contenido: mismo lenguaje visual que los filtros del buscador */}
+            <div className="space-y-4 mb-4">
+                {/* Familia profesional */}
                 <div>
-                    <label className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wide mb-1.5 block">
-                        Familia Profesional
+                    <label className="text-[11px] font-bold text-[#223945]/80 uppercase tracking-wider mb-2 block">
+                        ¿Qué área te interesa?
                     </label>
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-1.5">
                         {familiasProfesionales.map((familia) => {
                             const isSelected = selectedFamilia === familia.id;
                             return (
                                 <button
                                     key={familia.id}
                                     onClick={() => onSelectFamilia(isSelected ? null : familia.id)}
-                                    className={`flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium transition-all ${
+                                    className={`flex items-center gap-1 px-3 py-1.5 rounded-full border text-xs font-bold transition-all active:scale-95 ${
                                         isSelected
-                                            ? 'bg-[#223945] text-white shadow-sm'
-                                            : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                                            ? 'bg-[#223945] border-[#223945] text-white shadow-md shadow-[#223945]/20'
+                                            : 'bg-white border-neutral-200 text-[#223945] hover:border-[#223945]/30'
                                     }`}
                                 >
-                                    {isSelected && <Check className="w-2.5 h-2.5" />}
+                                    {isSelected && <Check className="w-3 h-3" />}
                                     {familia.name}
                                 </button>
                             );
@@ -113,9 +113,9 @@ export default function FPDetailsStep({
                     </div>
                 </div>
 
-                {/* Nivel - Grid 2x2 compacto */}
+                {/* Nivel, con el código de color de toda la app */}
                 <div>
-                    <label className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wide mb-1.5 block">
+                    <label className="text-[11px] font-bold text-[#223945]/80 uppercase tracking-wider mb-2 block">
                         Nivel
                     </label>
                     <div className="grid grid-cols-2 gap-1.5">
@@ -125,13 +125,13 @@ export default function FPDetailsStep({
                                 <button
                                     key={nivel.id}
                                     onClick={() => onSelectNivel(isSelected ? null : nivel.id)}
-                                    className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-[11px] font-semibold transition-all ${
+                                    className={`flex items-center justify-center gap-1.5 h-10 px-2 rounded-xl border text-xs font-bold transition-all active:scale-95 ${
                                         isSelected
-                                            ? 'bg-[#223945] text-white shadow-sm'
-                                            : 'bg-neutral-100 text-neutral-500 hover:bg-neutral-200'
+                                            ? `${nivel.solid} border-transparent shadow-md`
+                                            : 'bg-white border-neutral-200 text-[#223945] hover:border-[#223945]/30'
                                     }`}
                                 >
-                                    {isSelected && <Check className="w-3 h-3" />}
+                                    <span className={`w-2 h-2 rounded-full shrink-0 ${isSelected ? 'bg-white' : nivel.dot}`} />
                                     {nivel.name}
                                 </button>
                             );
@@ -139,22 +139,20 @@ export default function FPDetailsStep({
                     </div>
                 </div>
 
-                {/* Modalidad - Toggle buttons */}
+                {/* Modalidad: control segmentado */}
                 <div>
-                    <label className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wide mb-1.5 block">
+                    <label className="text-[11px] font-bold text-[#223945]/80 uppercase tracking-wider mb-2 block">
                         Modalidad
                     </label>
-                    <div className="flex gap-1.5">
+                    <div className="flex p-1 rounded-xl bg-neutral-100">
                         {modalidades.map((modalidad) => {
                             const isSelected = selectedModalidad === modalidad.id;
                             return (
                                 <button
                                     key={modalidad.id}
                                     onClick={() => onSelectModalidad(isSelected ? null : modalidad.id)}
-                                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-semibold transition-all ${
-                                        isSelected
-                                            ? 'bg-[#223945] text-white shadow-sm'
-                                            : 'bg-neutral-100 text-neutral-500 hover:bg-neutral-200'
+                                    className={`flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg text-xs font-bold transition-all ${
+                                        isSelected ? 'bg-white text-[#223945] shadow-sm' : 'text-neutral-500 hover:text-[#223945]'
                                     }`}
                                 >
                                     {isSelected && <Check className="w-3 h-3" />}

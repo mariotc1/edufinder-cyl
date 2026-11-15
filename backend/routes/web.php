@@ -14,6 +14,6 @@
 
     // AUTENTICACIÓN SOCIAL (Web)
     // Estas rutas son necesarias para el flujo de OAuth si se inicia desde navegador
-    Route::get('/auth/{provider}/redirect', [SocialAuthController::class, 'redirectToProvider']);
-    Route::get('/auth/{provider}/callback', [SocialAuthController::class, 'handleProviderCallback']);
+    Route::get('/auth/{provider}/redirect', [SocialAuthController::class, 'redirectToProvider'])->whereIn('provider', ['google', 'github']);
+    Route::get('/auth/{provider}/callback', [SocialAuthController::class, 'handleProviderCallback'])->whereIn('provider', ['google', 'github']);
 ?>

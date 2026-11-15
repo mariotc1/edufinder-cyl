@@ -4,7 +4,9 @@ import { fetchCycleSuggestions, fetchCentroSuggestions, getSavedSearches, create
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { Search, MapPin, Building2, SlidersHorizontal, Trash2, X, Check, Bookmark, ChevronRight, RefreshCw, Share2, Copy, Clock, History, Sparkles } from 'lucide-react';
+import { Search, Building2, Trash2, X, Check, Bookmark, ChevronRight, RefreshCw, Share2, Copy, Clock, History, Sparkles } from 'lucide-react';
+import { titleCase } from '@/lib/centro-format';
+import { TIPO_TILES, PillSelect } from '@/components/filters/FilterControls';
 import { FilterOptions, SavedSearch } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import useSWR, { mutate } from 'swr';
@@ -466,12 +468,6 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1, initial
   };
 
   const provincias = ['AVILA', 'BURGOS', 'LEON', 'PALENCIA', 'SALAMANCA', 'SEGOVIA', 'SORIA', 'VALLADOLID', 'ZAMORA'];
-  const tiposEnsenanza = [
-    { value: 'FP', label: 'Formación Profesional' },
-    { value: 'ESO', label: 'ESO / Bachillerato' },
-    { value: 'PRIMARIA', label: 'Infantil y Primaria' },
-    { value: 'ESPECIAL', label: 'Educación Especial' },
-  ];
   const familiasFP = FAMILIAS_FP_OPTIONS;
 
   const hasActiveFilters = Object.values(filters).some(val => val !== undefined && val !== '' && val !== 10) || geolocationStatus === 'success';
@@ -493,17 +489,19 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1, initial
 
   const activeFilterCount = countActiveFilters();
 
-  const inputClasses = "w-full appearance-none bg-neutral-50 border border-neutral-200 text-neutral-700 py-3 px-4 pr-8 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#223945]/20 focus:border-[#223945] transition-all font-medium text-sm hover:border-[#223945]/50 placeholder:text-neutral-400";
-  const labelClasses = "text-[11px] font-bold text-[#223945] ml-1 uppercase tracking-wider mb-1 block opacity-80";
 
   return (
     <>
-    <div data-tour="filters" className="relative z-30 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/50 p-6 transition-all hover:shadow-2xl">
+    <div data-tour="filters" className="relative z-30 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/50 p-4 sm:p-6 transition-all hover:shadow-2xl">
        {/* Decorative top border/gradient - matching cards */}
-       <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300"></div>
+       {/* Recorte con la misma forma que la tarjeta: la línea sigue la curva de las esquinas
+           (la tarjeta no puede usar overflow-hidden porque tiene desplegables) */}
+       <div aria-hidden="true" className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+         <div className="h-1.5 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300"></div>
+       </div>
 
        
-      <div className="flex flex-col gap-6 pt-2">
+      <div className="flex flex-col gap-4 sm:gap-6 pt-2">
 
         {/* IA helper — visible antes de interactuar con los filtros */}
         {onOpenWizard && (
@@ -658,7 +656,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1, initial
           </div>
           
           {/* Buscador de ubicación + Botones */}
-          <div className="w-full md:flex-[1] flex flex-wrap gap-2 min-w-0">
+          <div className="w-full md:flex-[1] flex flex-nowrap gap-2 min-w-0">
             {/* Buscador de ubicación inteligente */}
             <LocationSearchInput
               onLocationSelect={handleLocationSelect}
@@ -676,7 +674,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1, initial
             <div className="relative shrink-0" ref={savedDropdownRef}>
               <button
                 onClick={handleBookmarkClick}
-                className="px-4 py-3.5 rounded-xl transition-all border flex items-center justify-center gap-2 relative text-neutral-400 bg-neutral-50 border-neutral-200 hover:text-[#223945] hover:bg-[#223945]/5 hover:border-[#223945]/10"
+                className="px-3 sm:px-4 py-3.5 rounded-xl transition-all border flex items-center justify-center gap-2 relative text-neutral-400 bg-neutral-50 border-neutral-200 hover:text-[#223945] hover:bg-[#223945]/5 hover:border-[#223945]/10"
                 title="Búsquedas guardadas"
               >
                 <Bookmark className="w-5 h-5" />
@@ -762,7 +760,7 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1, initial
               <div className="relative shrink-0" ref={shareMenuRef}>
                 <button
                     onClick={() => setShowShareMenu(!showShareMenu)}
-                    className={`p-3.5 rounded-xl transition-all border flex items-center justify-center ${
+                    className={`p-3 sm:p-3.5 h-full rounded-xl transition-all border flex items-center justify-center ${
                       showShareMenu
                         ? 'text-[#223945] bg-[#223945]/10 border-[#223945]/30'
                         : 'text-neutral-400 bg-neutral-50 border-neutral-200 hover:text-[#223945] hover:bg-[#223945]/5 hover:border-[#223945]/20'
@@ -818,112 +816,112 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1, initial
                       </div>
         </div>
 
-        {/* Radius Slider (Conditional) - Mostrar cuando hay ubicación activa */}
+        {/* Distancia: una sola línea, estilo neutro con el control en el color de marca */}
         {(geolocationStatus === 'success' || (filters.lat && filters.lng)) && (
-             <div className="bg-gradient-to-r from-blue-50 to-white p-4 rounded-xl border border-blue-100/50 flex flex-col sm:flex-row gap-4 items-center animate-in zoom-in-95 duration-200 shadow-inner">
-                <div className="flex items-center gap-2 text-[#223945] min-w-[160px]">
-                    <MapPin className="w-4 h-4" />
-                    <div className="flex flex-col">
-                        <span className="text-sm font-bold">Radio: {filters.radio} km</span>
-                        <span className="text-[10px] text-neutral-500 truncate max-w-[140px]">
-                            {isUsingMyLocation ? 'Desde tu ubicación' : filters.locationName ? `Desde ${filters.locationName.split(',')[0]}` : ''}
-                        </span>
-                    </div>
-                </div>
-                <div className="flex-grow w-full px-2">
-                    <input 
-                        type="range" 
-                        min="1" 
-                        max="100" 
-                        step="1"
-                        value={filters.radio || 10}
-                        onChange={(e) => handleChange('radio', Number(e.target.value))}
-                        className="w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer accent-[#223945] hover:accent-[#1a2c35] focus:outline-none focus:ring-2 focus:ring-[#223945]/20"
-                        style={{
-                            backgroundImage: `linear-gradient(to right, #223945 0%, #223945 ${(filters.radio!/100)*100}%, #e5e5e5 ${(filters.radio!/100)*100}%, #e5e5e5 100%)`
-                        }}
-                    />
-                     <div className="flex justify-between text-[10px] font-bold text-neutral-400 mt-1 uppercase tracking-wider">
-                        <span>1 km</span>
-                        <span>50 km</span>
-                        <span>100 km</span>
-                    </div>
-                </div>
-            </div>
+          <div className="flex items-center gap-3 pl-3.5 pr-2 py-2 rounded-2xl bg-neutral-50 border border-neutral-200 animate-in zoom-in-95 duration-200">
+            <span className="text-[11px] font-bold text-[#223945]/70 uppercase tracking-wider shrink-0">Radio</span>
+            <input
+              type="range"
+              min="1"
+              max="100"
+              step="1"
+              value={filters.radio || 10}
+              onChange={(e) => handleChange('radio', Number(e.target.value))}
+              aria-label="Radio de búsqueda en kilómetros"
+              className="custom-range-slider flex-1 min-w-0 h-1.5 rounded-full appearance-none cursor-pointer focus:outline-none"
+              style={{
+                background: `linear-gradient(to right, #223945 0%, #223945 ${filters.radio!}%, #e5e7eb ${filters.radio!}%, #e5e7eb 100%)`
+              }}
+            />
+            <span className="shrink-0 min-w-[4.25rem] text-center px-2.5 py-1.5 rounded-xl bg-white border border-neutral-200 text-[#223945] text-sm font-bold tabular-nums shadow-sm">
+              {filters.radio} km
+            </span>
+          </div>
         )}
 
-        {/* Filters Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          
-          <div className="space-y-1">
-            <label className={labelClasses}>Provincia</label>
-            <div className="relative">
-                <select 
-                className={inputClasses}
-                value={filters.provincia || ''}
-                onChange={(e) => handleChange('provincia', e.target.value)}
-                aria-label="Seleccionar provincia"
+        {/* ¿Qué quieres estudiar? — tipo de enseñanza (tocar el activo lo deselecciona) */}
+        <div>
+          <p className="!text-[11px] !font-bold !text-[#223945]/80 uppercase tracking-wider mb-2 ml-1">¿Qué quieres estudiar?</p>
+          <div className="grid grid-cols-4 gap-2 sm:gap-2.5" role="radiogroup" aria-label="Tipo de enseñanza">
+            {TIPO_TILES.map(t => {
+              const active = filters.tipo === t.value;
+              const Icon = t.icon;
+              return (
+                <button
+                  key={t.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => handleChange('tipo', active ? '' : t.value)}
+                  className={`flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2 min-h-[4.5rem] sm:min-h-0 py-2.5 sm:py-3 px-1.5 sm:px-3 rounded-2xl border transition-all active:scale-95 ${
+                    active
+                      ? 'bg-gradient-to-br from-[#223945] to-blue-700 border-transparent text-white shadow-lg shadow-[#223945]/25'
+                      : 'bg-white border-neutral-200 text-[#223945] hover:border-[#223945]/30 hover:bg-[#223945]/[0.03]'
+                  }`}
                 >
-                <option value="">Todas las provincias</option>
-                {provincias.map(p => <option key={p} value={p}>{p}</option>)}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#223945]">
-                    <ChevronDown className="w-4 h-4" />
-                </div>
-            </div>
+                  <Icon className={`w-5 h-5 shrink-0 ${active ? 'text-white' : 'text-blue-600'}`} />
+                  <span className="text-[11px] sm:text-sm font-bold leading-[1.15] text-center">{t.label}</span>
+                </button>
+              );
+            })}
           </div>
-
-          <div className="space-y-1">
-            <label className={labelClasses}>Tipo</label>
-            <div className="relative">
-                <select
-                className={inputClasses}
-                value={filters.tipo || ''}
-                onChange={(e) => handleChange('tipo', e.target.value)}
-                aria-label="Seleccionar tipo de enseñanza"
-                >
-                <option value="">Todos los tipos</option>
-                {tiposEnsenanza.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#223945]">
-                    <ChevronDown className="w-4 h-4" />
-                </div>
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <label className={labelClasses}>Titularidad</label>
-            <div className="relative">
-                <select
-                className={inputClasses}
-                value={filters.naturaleza || ''}
-                onChange={(e) => handleChange('naturaleza', e.target.value)}
-                aria-label="Seleccionar titularidad del centro"
-                >
-                <option value="">Todos</option>
-                <option value="PÚBLICO">Público</option>
-                <option value="PRIVADO">Privado</option>
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#223945]">
-                    <ChevronDown className="w-4 h-4" />
-                </div>
-            </div>
-          </div>
-
         </div>
 
-        {/* FP Conditional Filters - Dedicated Row */}
+        {/* Filtros en pastilla: abren el selector nativo del sistema */}
+        <div className="flex flex-wrap items-center gap-2 -mt-1">
+          <PillSelect
+            label="Provincia"
+            value={filters.provincia || ''}
+            onChange={(v) => handleChange('provincia', v)}
+            options={provincias.map(p => ({ value: p, label: titleCase(p) }))}
+          />
+          <PillSelect
+            label="Titularidad"
+            value={filters.naturaleza || ''}
+            onChange={(v) => handleChange('naturaleza', v)}
+            options={[{ value: 'PÚBLICO', label: 'Público' }, { value: 'PRIVADO', label: 'Privado' }]}
+          />
           {filters.tipo === 'FP' && (
-             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-neutral-100 animate-in slide-in-from-top-2 fade-in duration-300">
+            <>
+              <PillSelect
+                label="Familia"
+                value={filters.familia || ''}
+                onChange={(v) => handleChange('familia', v)}
+                options={familiasFP.map(f => ({ value: f, label: titleCase(f) }))}
+              />
+              <PillSelect
+                label="Nivel"
+                value={filters.nivel || ''}
+                onChange={(v) => handleChange('nivel', v)}
+                options={[
+                  { value: 'BASICA', label: 'Grado Básico' },
+                  { value: 'GM', label: 'Grado Medio' },
+                  { value: 'GS', label: 'Grado Superior' },
+                  { value: 'CE', label: 'Especialización' },
+                ]}
+              />
+              <PillSelect
+                label="Modalidad"
+                value={filters.modalidad || ''}
+                onChange={(v) => handleChange('modalidad', v)}
+                options={[{ value: 'PRESENCIAL', label: 'Presencial' }, { value: 'DISTANCIA', label: 'A distancia' }]}
+              />
+            </>
+          )}
+        </div>
+
+        {/* Nombre del ciclo (solo FP) — autocompletado */}
+        {filters.tipo === 'FP' && (
+          <div className="animate-in slide-in-from-top-2 fade-in duration-300 -mt-2">
                {/* Ciclo Name Search - Autocomplete */}
-                <div className="space-y-1" ref={wrapperRef}>
-                 <label className={labelClasses}>Nombre del Ciclo</label>
+                <div className="w-full" ref={wrapperRef}>
+                 <label className="sr-only">Nombre del ciclo</label>
                   <div className="relative group">
                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 group-focus-within:text-[#223945] transition-colors" />
                      <input
                        type="text"
-                       placeholder="Ej: Desarrollo Web"
-                       className={`w-full bg-neutral-50 border border-neutral-200 text-neutral-700 py-3 pl-10 pr-10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#223945]/20 focus:border-[#223945] transition-all font-medium text-sm hover:border-[#223945]/50 placeholder:text-neutral-400`}
+                       placeholder="¿Qué ciclo buscas? Ej: Enfermería"
+                       className={`w-full h-11 bg-neutral-50 border border-neutral-200 text-neutral-700 pl-10 pr-10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#223945]/20 focus:border-[#223945] transition-all font-medium text-sm hover:border-[#223945]/50 placeholder:text-neutral-400`}
                        value={filters.ciclo || ''}
                        onChange={(e) => {
                          handleChange('ciclo', e.target.value);
@@ -1055,66 +1053,8 @@ export default function FilterBar({ onFilterChange, isLoading, page = 1, initial
                      )}
                  </div>
                </div>
-
-               <div className="space-y-1">
-                <label className={labelClasses}>Familia</label>
-                 <div className="relative">
-                    <select 
-                    className={inputClasses}
-                    value={filters.familia || ''}
-                    onChange={(e) => handleChange('familia', e.target.value)}
-                    aria-label="Seleccionar familia profesional"
-                    >
-                    <option value="">Todas</option>
-                    {familiasFP.map(f => <option key={f} value={f}>{f}</option>)}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#223945]">
-                        <ChevronDown className="w-4 h-4" />
-                    </div>
-                </div>
-              </div>
-
-               <div className="space-y-1">
-                <label className={labelClasses}>Nivel</label>
-                <div className="relative">
-                    <select 
-                    className={inputClasses}
-                    value={filters.nivel || ''}
-                    onChange={(e) => handleChange('nivel', e.target.value)}
-                    aria-label="Seleccionar nivel educativo"
-                    >
-                    <option value="">Todos</option>
-                    <option value="BASICA">FP Básica</option>
-                    <option value="GM">Grado Medio</option>
-                    <option value="GS">Grado Superior</option>
-                    <option value="CE">Curso de Especialización</option>
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#223945]">
-                        <ChevronDown className="w-4 h-4" />
-                    </div>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                 <label className={labelClasses}>Modalidad</label>
-                 <div className="relative">
-                    <select 
-                    className={inputClasses}
-                    value={filters.modalidad || ''}
-                    onChange={(e) => handleChange('modalidad', e.target.value)}
-                    aria-label="Seleccionar modalidad"
-                    >
-                    <option value="">Todas</option>
-                    <option value="PRESENCIAL">Presencial</option>
-                    <option value="DISTANCIA">Distancia</option>
-                    </select>
-                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#223945]">
-                        <ChevronDown className="w-4 h-4" />
-                    </div>
-                </div>
-              </div>
-            </div>
-          )}
+          </div>
+        )}
 
         {/* Pie del card: solo limpiar filtros cuando hay activos */}
         {hasActiveFilters && (

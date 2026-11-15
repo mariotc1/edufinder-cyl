@@ -31,38 +31,14 @@ Route::middleware(['throttle:login'])->group(function () {
 
 // AUTENTICACIÓN SOCIAL (OAuth)
 // Rutas para manejar el inicio de sesión con proveedores externos (Google, etc.)
-Route::get('/auth/{provider}/redirect', [App\Http\Controllers\SocialAuthController::class, 'redirectToProvider']);
-Route::get('/auth/{provider}/callback', [App\Http\Controllers\SocialAuthController::class, 'handleProviderCallback']);
+Route::get('/auth/{provider}/redirect', [App\Http\Controllers\SocialAuthController::class, 'redirectToProvider'])->whereIn('provider', ['google', 'github']);
+Route::get('/auth/{provider}/callback', [App\Http\Controllers\SocialAuthController::class, 'handleProviderCallback'])->whereIn('provider', ['google', 'github']);
 
 // RECUPERACIÓN DE CONTRASEÑA (con rate limiting estricto para evitar spam de emails)
 Route::middleware(['throttle:password-reset'])->group(function () {
     Route::post('/forgot-password', [AuthController::class, 'sendResetLinkEmail']);
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 });
-
-// UTILIDADES Y DEPURACIÓN
-// Ruta temporal para verificar el estado de la cola de trabajos y configuración de correo.
-Route::get('/debug-queue', function () {
-    try {
-        $failed = \Illuminate\Support\Facades\DB::table('failed_jobs')->orderByDesc('id')->limit(5)->get();
-        $pending = \Illuminate\Support\Facades\DB::table('jobs')->count();
-        return response()->json([
-            'pending_jobs_count' => $pending,
-            'recent_failed_jobs' => $failed,
-            'mail_config' => [
-                'default' => config('mail.default'),
-                'smtp_host' => config('mail.mailers.smtp.host'),
-                'smtp_port' => config('mail.mailers.smtp.port'),
-                'smtp_username' => config('mail.mailers.smtp.username'),
-                'from_address' => config('mail.from.address'),
-            ]
-        ]);
-
-    } catch (\Throwable $e) {
-        return response()->json(['error' => $e->getMessage()], 500);
-    }
-});
-
 
 // ============================================
 // GESTIÓN DE CENTROS EDUCATIVOS

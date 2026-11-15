@@ -5,9 +5,8 @@ import Footer from '@/components/Footer';
 
 export default function ConditionalFooter() {
     const pathname = usePathname();
-    const isMapPage = pathname === '/mapa';
-
-    if (isMapPage) return null;
+    // Mapa y perfil son pantallas a altura fija (sin scroll de página)
+    if (pathname === '/mapa' || pathname === '/perfil') return null;
 
     return (
         <div className="hidden md:block">

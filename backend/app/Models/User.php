@@ -13,6 +13,8 @@ class User extends Authenticatable
 
     // ATRIBUTOS ASIGNABLES EN MASA
     // Define qué campos pueden ser rellenados mediante create() o update()
+    // 'role' e 'is_blocked' se excluyen a propósito para evitar escalada de privilegios
+    // (se asignan de forma explícita en el panel de administración)
     protected $fillable = [
         'name',
         'email',
@@ -22,8 +24,6 @@ class User extends Authenticatable
         'foto_perfil',
         'ubicacion_lat',
         'ubicacion_lon',
-        'role',
-        'is_blocked',
         'last_login_at',
     ];
 

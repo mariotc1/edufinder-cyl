@@ -88,8 +88,14 @@ export default function MapaContent() {
     };
 
     const searchParams = useSearchParams();
+    // ?favoritos=1 → muestra solo los centros guardados por el usuario
+    const [soloFavoritos, setSoloFavoritos] = useState(() => searchParams.get('favoritos') === '1');
     const centroIdParam = searchParams.get('centro');
     const focusCenterId = centroIdParam ? parseInt(centroIdParam) : undefined;
+
+    const centrosVisibles = soloFavoritos
+        ? (data?.data || []).filter((c: any) => favoriteIds.includes(c.id))
+        : (data?.data || []);
 
     let mapCenter: [number, number] | undefined = undefined;
     if (focusCenterId && data?.data) {
@@ -108,7 +114,7 @@ export default function MapaContent() {
                     <div className="w-14 h-14 border-4 border-[#223945]/20 border-t-[#223945] rounded-full animate-spin" />
                     <div className="text-center px-8">
                         <p className="font-bold text-[#223945] text-base">Cargando el mapa</p>
-                        <p className="text-neutral-500 text-sm mt-1.5">Preparando más de 2.400 centros educativos</p>
+                        <p className="text-neutral-500 text-sm mt-1.5">Preparando todos los centros de Castilla y León</p>
                     </div>
                 </div>
             )}
@@ -130,13 +136,27 @@ export default function MapaContent() {
                 onLocateUser={handleLocateUser}
                 onClearLocation={handleClearLocation}
                 userLocation={userLocation}
-                centerCount={data?.data?.length || 0}
+                centerCount={centrosVisibles.length}
                 loading={isLoading || status === 'locating'}
             />
 
             {/* Map Container */}
+            {/* Aviso de modo "solo favoritos" */}
+            {soloFavoritos && (
+                <div className="absolute top-3 left-1/2 -translate-x-1/2 md:left-auto md:right-5 md:translate-x-0 md:top-5 z-[1000] flex items-center gap-2 pl-3.5 pr-1.5 py-1.5 rounded-full bg-[#223945] text-white shadow-lg whitespace-nowrap">
+                    <span className="text-sm font-bold">Tus favoritos</span>
+                    <button
+                        onClick={() => setSoloFavoritos(false)}
+                        className="px-2.5 py-1 rounded-full bg-white/15 hover:bg-white/25 text-xs font-bold transition-colors"
+                    >
+                        Ver todos
+                    </button>
+                </div>
+            )}
+
             <Map 
-                centros={data?.data || []} 
+                centros={centrosVisibles} 
+                fitToCentros={soloFavoritos}
                 userLocation={userLocation}
                 radius={radius}
                 favoriteIds={favoriteIds}

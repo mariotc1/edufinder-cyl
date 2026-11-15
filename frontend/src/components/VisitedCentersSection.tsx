@@ -2,10 +2,11 @@
 
 import { useVisitedCenters, VisitedCentro } from '@/hooks/useVisitedCenters';
 import Link from 'next/link';
-import { History, MapPin, X, ChevronRight, ChevronLeft, Trash2, Eye, AlertTriangle } from 'lucide-react';
+import { History, ChevronRight, ChevronLeft, Trash2, AlertTriangle, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
+import CentroMiniCard from './CentroMiniCard';
 // COMPONENTE: SECCIÓN DE CENTROS VISITADOS RECIENTEMENTE
 // Muestra un carrusel horizontal con los últimos centros visitados por el usuario
 export default function VisitedCentersSection() {
@@ -104,14 +105,6 @@ export default function VisitedCentersSection() {
         );
     }
 
-    const getNaturalezaColor = (naturaleza: string) => {
-        switch (naturaleza?.toUpperCase()) {
-            case 'PÚBLICO': return 'bg-blue-50 text-blue-700 border-blue-200 ring-1 ring-blue-100';
-            case 'PRIVADO': return 'bg-amber-50 text-amber-700 border-amber-200 ring-1 ring-amber-100';
-            default: return 'bg-neutral-50 text-neutral-600 border-neutral-200';
-        }
-    };
-
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
         const now = new Date();
@@ -144,8 +137,8 @@ export default function VisitedCentersSection() {
                             </div>
                         </div>
                         <div>
-                            <h2 className="text-lg sm:text-xl font-bold text-[#223945]">Visitados recientemente</h2>
-                            <p className="text-xs sm:text-sm text-neutral-500">Retoma donde lo dejaste</p>
+                            <h2 className="!text-lg sm:!text-xl !leading-tight font-bold text-[#223945]">Visitados recientemente</h2>
+                            <p className="!text-xs sm:!text-sm text-neutral-500">Retoma donde lo dejaste</p>
                         </div>
                     </div>
 
@@ -246,22 +239,15 @@ export default function VisitedCentersSection() {
                         )}
                     </AnimatePresence>
 
-                    {/* Gradient fade izquierdo */}
-                    <AnimatePresence>
-                        {canScrollLeft && (
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                className="absolute left-0 top-0 bottom-6 w-12 sm:w-20 bg-gradient-to-r from-[#f8fafc] via-[#f8fafc]/80 to-transparent pointer-events-none z-10"
-                            />
-                        )}
-                    </AnimatePresence>
-
                     {/* Contenedor del carrusel */}
                     <div
                         ref={scrollContainerRef}
-                        className="flex gap-4 overflow-x-auto pb-6 scrollbar-hide snap-x snap-mandatory scroll-smooth"
+                        className="flex gap-4 overflow-x-auto pt-1 pb-6 -mx-1 px-1 scrollbar-hide snap-x snap-mandatory scroll-smooth"
+                        // Los bordes se desvanecen con una máscara (sin pintar encima del fondo de la página)
+                        style={{
+                            maskImage: `linear-gradient(to right, ${canScrollLeft ? 'transparent, black 2.5rem' : 'black'}, ${canScrollRight ? 'black calc(100% - 2.5rem), transparent' : 'black'})`,
+                            WebkitMaskImage: `linear-gradient(to right, ${canScrollLeft ? 'transparent, black 2.5rem' : 'black'}, ${canScrollRight ? 'black calc(100% - 2.5rem), transparent' : 'black'})`,
+                        }}
                     >
                         {visitedCenters.map((centro, index) => (
                             <motion.div
@@ -273,12 +259,11 @@ export default function VisitedCentersSection() {
                                     delay: Math.min(index * 0.03, 0.15),
                                     ease: [0.25, 0.1, 0.25, 1]
                                 }}
-                                className="flex-shrink-0 snap-start"
+                                className="flex-shrink-0 snap-start flex"
                             >
                                 <VisitedCentroCard
                                     centro={centro}
                                     onRemove={() => removeFromHistory(centro.id)}
-                                    getNaturalezaColor={getNaturalezaColor}
                                     formatDate={formatDate}
                                 />
                             </motion.div>
@@ -305,8 +290,6 @@ export default function VisitedCentersSection() {
                         )}
                     </div>
 
-                    {/* Gradient fade derecho - siempre visible si hay más contenido */}
-                    <div className="absolute right-0 top-0 bottom-6 w-12 sm:w-20 bg-gradient-to-l from-[#f8fafc] via-[#f8fafc]/80 to-transparent pointer-events-none z-10"></div>
                 </div>
 
                 {/* Indicador de progreso - solo visible si hay scroll */}
@@ -334,84 +317,22 @@ export default function VisitedCentersSection() {
 function VisitedCentroCard({
     centro,
     onRemove,
-    getNaturalezaColor,
     formatDate
 }: {
     centro: VisitedCentro;
     onRemove: () => void;
-    getNaturalezaColor: (n: string) => string;
     formatDate: (d: string) => string;
 }) {
-    // Formatear ubicación de forma compacta
-    const formatLocation = (localidad: string, provincia: string) => {
-        const loc = localidad || '';
-        const prov = provincia || '';
-
-        // Si la localidad es muy larga, solo mostrar provincia
-        if (loc.length > 20) {
-            return prov;
-        }
-
-        return `${loc}, ${prov}`;
-    };
-
     return (
-        <div className="relative group w-[280px] sm:w-[320px]">
-            {/* Card con altura fija - mismo tamaño que RecommendationCard */}
-            <div className="relative bg-white rounded-xl border border-neutral-200 overflow-hidden hover:border-[#223945]/30 hover:shadow-lg transition-all duration-200 h-[140px] sm:h-[150px] flex flex-col">
-                {/* Degradado corporativo superior */}
-                <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-primary-500 to-primary-300"></div>
-
-                {/* Botones superiores: Ver centro + Eliminar */}
-                <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5 z-10">
-                    {/* Botón ver centro */}
-                    <Link
-                        href={`/centro/${centro.id}`}
-                        className="p-1.5 sm:p-2 rounded-full bg-[#223945] text-white shadow-md sm:shadow-lg hover:scale-110 hover:shadow-xl transition-all"
-                        title="Ver centro"
-                    >
-                        <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    </Link>
-
-                    {/* Botón eliminar */}
-                    <button
-                        onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            onRemove();
-                        }}
-                        className="p-1.5 sm:p-2 rounded-full bg-white/90 text-neutral-400 hover:text-red-500 hover:bg-red-50 transition-all shadow-md sm:shadow-lg border border-neutral-100"
-                        title="Eliminar del historial"
-                    >
-                        <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    </button>
-                </div>
-
-                <div className="p-3 sm:p-4 pt-4 sm:pt-5 flex flex-col flex-1 pr-20">
-                    {/* Badge de naturaleza + tiempo de visita */}
-                    <div className="flex items-center gap-1.5 mb-2 shrink-0">
-                        <span className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full border ${getNaturalezaColor(centro.naturaleza)}`}>
-                            {centro.naturaleza || 'Centro'}
-                        </span>
-                        <span className="text-[9px] sm:text-[10px] text-neutral-400 font-medium whitespace-nowrap">
-                            {formatDate(centro.visitedAt)}
-                        </span>
-                    </div>
-
-                    {/* Nombre del centro */}
-                    <h3 className="font-bold text-[#223945] text-[11px] sm:text-[12px] leading-tight line-clamp-2 mb-1.5" title={centro.nombre}>
-                        {centro.nombre}
-                    </h3>
-
-                    {/* Ubicación - siempre al fondo */}
-                    <div className="flex items-center gap-1.5 text-neutral-500 mt-auto">
-                        <MapPin className="w-3 h-3 shrink-0" />
-                        <span className="text-[10px] sm:text-xs truncate">
-                            {formatLocation(centro.localidad, centro.provincia)}
-                        </span>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <CentroMiniCard
+            centro={centro}
+            onRemove={onRemove}
+            meta={
+                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-white/80 ring-1 ring-neutral-200 text-[9px] font-bold text-neutral-500 whitespace-nowrap">
+                    <Clock className="w-2.5 h-2.5" />
+                    {formatDate(centro.visitedAt)}
+                </span>
+            }
+        />
     );
 }

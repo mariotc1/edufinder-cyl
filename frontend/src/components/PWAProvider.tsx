@@ -72,6 +72,13 @@ export default function PWAProvider({ children }: { children: React.ReactNode })
 
     // Registrar SW
     const registerSW = async () => {
+      // En desarrollo los chunks no llevan hash y el SW serviría código antiguo:
+      // se desinstala cualquier SW previo y no se registra
+      if (process.env.NODE_ENV !== 'production') {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map(r => r.unregister()));
+        return;
+      }
       try {
         const registration = await navigator.serviceWorker.register('/sw.js', {
           scope: '/',

@@ -26,7 +26,7 @@
             // Personalización de la URL de restablecimiento de contraseña
             // Redirige al frontend en lugar de usar vistas de Blade predeterminadas
             ResetPassword::createUrlUsing(function (object $notifiable, string $token) {
-                return config('services.frontend_url', 'http://localhost:3000') . "/reset-password?token={$token}&email={$notifiable->getEmailForPasswordReset()}";
+                return config('services.frontend_url', 'http://localhost:3000') . "/reset-password?token={$token}&email=" . urlencode($notifiable->getEmailForPasswordReset());
             });
 
             // ============================================

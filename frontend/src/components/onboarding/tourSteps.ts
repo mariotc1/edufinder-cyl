@@ -7,10 +7,15 @@ export interface TourStep {
   placement: 'top' | 'bottom' | 'left' | 'right' | 'center';
   placementMobile?: 'top' | 'bottom' | 'left' | 'right' | 'center';
   spotlightPadding?: number;
-  icon?: 'sparkles' | 'search' | 'heart' | 'map' | 'hand-wave' | 'party' | 'compass';
+  // En vez de centrar o pegar el elemento a la cabecera, se desplaza hasta este ancla (p. ej. "Resultados")
+  scrollAnchor?: string;
+  icon?: 'sparkles' | 'search' | 'heart' | 'map' | 'hand-wave' | 'party' | 'compass' | 'palette';
+  // Bloque visual extra bajo la descripción (leyenda de colores, acciones de la tarjeta)
+  extra?: 'leyenda' | 'acciones';
   // Actions to perform before showing this step
   requiresMobileMenu?: boolean; // Open mobile menu before this step
-  // Special styling for final step
+  // Special styling for first/final step
+  isWelcomeStep?: boolean;
   isFinalStep?: boolean;
 }
 
@@ -18,16 +23,17 @@ export const tourSteps: TourStep[] = [
   {
     id: 'welcome',
     targetSelector: '',
-    title: 'Bienvenido a EduFinder',
-    description: 'Te mostraremos las funciones principales para que encuentres tu centro educativo ideal en Castilla y León. Solo llevará un momento.',
+    title: 'Encuentra qué estudiar y dónde hacerlo',
+    description: 'Todos los centros educativos y ciclos de FP de Castilla y León, con los datos abiertos oficiales de la Junta. Te enseñamos lo esencial en un minuto.',
     placement: 'center',
     icon: 'hand-wave',
+    isWelcomeStep: true,
   },
   {
     id: 'descubre-fp',
     targetSelector: '[data-tour="descubre-fp"]',
-    title: 'Descubre tu FP',
-    description: '¿No sabes qué estudiar? Responde 12 preguntas y te diremos qué familias profesionales encajan con tu perfil.',
+    title: '¿No sabes qué estudiar?',
+    description: 'Responde 12 preguntas rápidas sobre lo que te gusta y te diremos qué familias de FP encajan contigo, y dónde estudiarlas.',
     placement: 'bottom',
     placementMobile: 'bottom',
     spotlightPadding: 8,
@@ -36,33 +42,42 @@ export const tourSteps: TourStep[] = [
   {
     id: 'filters',
     targetSelector: '[data-tour="filters"]',
-    title: 'Filtros Avanzados',
-    description: 'Filtra por provincia, tipo de enseñanza, titularidad y más. También puedes usar el asistente inteligente para encontrar tu centro en segundos.',
+    title: '¿Ya lo tienes claro? Filtra',
+    description: 'Elige qué quieres estudiar, la provincia o si buscas público o privado. Para la FP puedes afinar por familia, nivel y modalidad, o dejar que la IA rellene los filtros por ti.',
     placement: 'bottom',
     placementMobile: 'top',
     spotlightPadding: 12,
     icon: 'search',
   },
   {
-    id: 'favorites',
-    // Desktop: apunta al link del navbar
-    // Móvil: apunta al botón corazón del primer CentroCard (si existe)
-    // Si no hay cards, mostrará el fallback
-    targetSelector: '[data-tour="favorite-button"]',
-    targetSelectorMobile: '[data-tour="favorite-button"]',
-    title: 'Guarda tus Favoritos',
-    description: 'Pulsa el corazón en cualquier centro para guardarlo en tus favoritos. Crea una cuenta gratuita para no perderlos.',
-    placement: 'left',
+    id: 'leyenda',
+    targetSelector: '[data-tour="centro-card"]',
+    title: 'Así se lee cada centro',
+    description: 'El color y el icono te dicen qué tipo de centro es antes de leer nada.',
+    placement: 'right',
     placementMobile: 'top',
-    spotlightPadding: 8,
+    spotlightPadding: 6,
+    scrollAnchor: '[data-tour="resultados"]',
+    icon: 'palette',
+    extra: 'leyenda',
+  },
+  {
+    id: 'acciones',
+    targetSelector: '[data-tour="card-actions"]',
+    title: 'Guarda, comparte y compara',
+    description: 'Cada centro tiene sus acciones a mano. Toca la tarjeta para ver la ficha completa con todos sus ciclos.',
+    placement: 'right',
+    placementMobile: 'top',
+    spotlightPadding: 6,
     icon: 'heart',
+    extra: 'acciones',
   },
   {
     id: 'map',
     targetSelector: '[data-tour="map"]',
     targetSelectorMobile: '[data-tour="map-mobile"]',
-    title: 'Explora en el Mapa',
-    description: 'Visualiza todos los centros educativos de Castilla y León en un mapa interactivo.',
+    title: 'Explora en el mapa',
+    description: 'Todos los centros de Castilla y León en un mapa. Usa tu ubicación para ver lo que tienes cerca de casa.',
     placement: 'bottom',
     placementMobile: 'top',
     spotlightPadding: 8,
@@ -71,8 +86,8 @@ export const tourSteps: TourStep[] = [
   {
     id: 'finish',
     targetSelector: '',
-    title: '¡Ya estás listo!',
-    description: 'Con una cuenta podrás sincronizar tus búsquedas y acceder desde cualquier dispositivo.',
+    title: '¡Todo listo!',
+    description: 'Con una cuenta gratuita tus favoritos, comparaciones y resultados de Descubre tu FP te acompañan en cualquier dispositivo.',
     placement: 'center',
     icon: 'party',
     isFinalStep: true,

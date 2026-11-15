@@ -1,7 +1,10 @@
-import { MapPin, Navigation, Layers, Search, ChevronDown, ChevronUp, X, Building2 } from 'lucide-react';
+import { MapPin, Navigation, Layers, Search, ChevronDown, X, Building2 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { FilterOptions } from '@/types';
 import { fetchCentroSuggestions } from '@/services/api';
+import { titleCase } from '@/lib/centro-format';
+import { formatNumber } from '@/lib/utils';
+import { TIPO_TILES, PillSelect } from '@/components/filters/FilterControls';
 
 interface MapSidebarProps {
     radius: number;
@@ -19,10 +22,14 @@ interface MapSidebarProps {
 // Contiene filtros, controles de radio y lista resumen de centros visibles
 export default function MapSidebar({ radius, setRadius, filters, setFilters, onLocateUser, onClearLocation, userLocation, centerCount, loading }: MapSidebarProps) {
     const [isExpanded, setIsExpanded] = useState(true);
-    const [sections, setSections] = useState({
-        filters: true,
-        config: false
-    });
+
+    // En móvil el panel arranca plegado (bottom sheet) para que el mapa sea protagonista
+    useEffect(() => {
+        if (window.matchMedia('(max-width: 767px)').matches) {
+            const id = requestAnimationFrame(() => setIsExpanded(false));
+            return () => cancelAnimationFrame(id);
+        }
+    }, []);
 
     // Estados para el modal de búsqueda
     const [showSearchModal, setShowSearchModal] = useState(false);
@@ -31,10 +38,6 @@ export default function MapSidebar({ radius, setRadius, filters, setFilters, onL
     const [isSearching, setIsSearching] = useState(false);
     const modalInputRef = useRef<HTMLInputElement>(null);
 
-    // Control de colapso/expansión de la barra lateral
-    const toggleSection = (section: 'filters' | 'config') => {
-        setSections(prev => ({ ...prev, [section]: !prev[section] }));
-    };
 
     // Focus en el input del modal cuando se abre
     useEffect(() => {
@@ -106,145 +109,157 @@ export default function MapSidebar({ radius, setRadius, filters, setFilters, onL
         setFilters({ ...filters, [key]: newValue });
     };
 
-    const selectContainerClass = "relative";
-    const selectClass = "w-full appearance-none bg-neutral-50 border border-neutral-200 text-neutral-700 py-2.5 px-3 pr-8 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#223945]/20 focus:border-[#223945] text-sm font-medium transition-all hover:border-[#223945]/50 cursor-pointer";
-    const iconClass = "pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-neutral-500";
+    const activeFilters = [filters.tipo, filters.provincia, filters.naturaleza, filters.q].filter(Boolean).length;
 
     return (
         <>
-        <div className={`absolute bottom-0 left-0 right-0 md:top-24 md:left-6 md:right-auto md:bottom-auto z-[1000] transition-transform duration-300 ${isExpanded ? 'translate-y-0' : 'translate-y-[calc(100%-60px)] md:translate-y-0'}`}>
-            <div className="bg-white/95 backdrop-blur-md border border-white/20 shadow-xl rounded-t-2xl md:rounded-2xl w-full md:w-80 overflow-hidden flex flex-col max-h-[85vh] md:max-h-[calc(100vh-140px)] relative transition-all">
-                
-                {/* Visual Polish: Gradient Top Border */}
-                <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300 z-10"></div>
+        <div className={`absolute bottom-0 left-0 right-0 md:top-5 md:left-5 md:right-auto md:bottom-auto z-[1000] transition-transform duration-300 ${isExpanded ? 'translate-y-0' : 'translate-y-[calc(100%-76px)] md:translate-y-0'}`}>
+            <div className="relative bg-white/95 backdrop-blur-xl border border-white/70 shadow-[0_20px_50px_-15px_rgba(34,57,69,0.35)] rounded-t-3xl md:rounded-3xl w-full md:w-[340px] overflow-hidden flex flex-col max-h-[70dvh] md:max-h-[calc(100dvh-7.5rem)]">
+                <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300 z-10" />
 
-                {/* Header Toggle */}
-                <div 
-                    className="p-4 border-b border-neutral-100 flex items-center justify-between cursor-pointer group bg-white/50 hover:bg-white transition-colors mt-1.5"
+                {/* Asa de la bottom sheet (móvil) */}
+                <span aria-hidden="true" className="md:hidden absolute top-3 left-1/2 -translate-x-1/2 w-10 h-1 rounded-full bg-neutral-300 z-10" />
+
+                {/* Cabecera: título + nº de centros visibles */}
+                <button
+                    type="button"
                     onClick={() => setIsExpanded(!isExpanded)}
+                    aria-expanded={isExpanded}
+                    className="w-full px-5 pt-6 pb-4 flex items-center justify-between text-left"
                 >
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-[#223945]/10 rounded-lg text-[#223945] group-hover:bg-[#223945] group-hover:text-white transition-colors">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#223945] to-blue-700 text-white flex items-center justify-center shadow-md shadow-[#223945]/25">
                             <Layers className="w-5 h-5" />
                         </div>
                         <div>
-                            <h2 className="font-bold text-[#223945] leading-tight">Explorador</h2>
-                            <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-wide">
-                                {loading ? 'Actualizando...' : `${centerCount} centros`}
+                            <h2 className="!text-lg !font-extrabold !text-[#223945] !leading-tight">Explora el mapa</h2>
+                            <p className="!text-xs !text-neutral-500 font-medium flex items-center gap-1.5">
+                                <span className={`w-1.5 h-1.5 rounded-full ${loading ? 'bg-amber-400 animate-pulse' : 'bg-emerald-500'}`} />
+                                {loading ? 'Actualizando…' : `${formatNumber(centerCount)} ${centerCount === 1 ? 'centro' : 'centros'}`}
                             </p>
                         </div>
                     </div>
-                    {isExpanded ? <ChevronDown className="w-5 h-5 text-neutral-400" /> : <ChevronUp className="w-5 h-5 text-neutral-400" />}
-                </div>
+                    <ChevronDown className={`w-5 h-5 text-neutral-400 transition-transform ${isExpanded ? '' : 'rotate-180'}`} />
+                </button>
 
-                {/* Scrollable Content */}
-                <div className={`overflow-y-auto custom-scrollbar bg-neutral-50/50 transition-all duration-300 ${isExpanded ? 'opacity-100' : 'opacity-0 hidden'}`}>
-                    
-                    {/* SECTION 1: QUICK CONTROLS (Location & Radius) - Always Visible at Top */}
-                    <div className="p-4 bg-white border-b border-neutral-100 space-y-4">
-                        {/* Location Toggle */}
-                        {userLocation ? (
-                            <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-xl animate-in fade-in transition-all">
-                                <div className="flex items-center gap-2.5 text-green-700">
-                                    <div className="relative">
-                                        <Navigation className="w-4 h-4 fill-current" />
-                                        <span className="absolute -top-1 -right-1 flex h-2 w-2">
-                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                                        </span>
-                                    </div>
-                                    <span className="text-xs font-bold leading-tight">Ubicación Activa</span>
-                                </div>
-                                <button 
-                                    onClick={onClearLocation} 
-                                    className="p-1.5 text-green-600 hover:text-red-500 hover:bg-green-100 rounded-lg transition-colors group"
-                                    title="Desactivar ubicación"
-                                >
-                                    <X className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                                </button>
-                            </div>
-                        ) : (
-                            <button 
-                                onClick={onLocateUser}
-                                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-sm bg-[#223945] text-white shadow-lg shadow-[#223945]/20 hover:shadow-[#223945]/40 hover:-translate-y-0.5 transition-all active:translate-y-0"
+                {/* Contenido */}
+                <div className={`overflow-y-auto px-5 pb-5 space-y-4 ${isExpanded ? '' : 'hidden'}`}>
+                    {/* Buscar un centro por nombre (abre el buscador tipo Spotlight) */}
+                    <button
+                        type="button"
+                        onClick={openSearchModal}
+                        className="w-full h-11 flex items-center gap-2.5 px-3.5 rounded-xl bg-neutral-50 border border-neutral-200 hover:border-[#223945]/40 hover:bg-white transition-all text-left group"
+                    >
+                        <Search className="w-4 h-4 text-neutral-400 group-hover:text-[#223945] transition-colors shrink-0" />
+                        <span className={`flex-1 truncate text-sm font-medium ${filters.q ? 'text-neutral-800' : 'text-neutral-400'}`}>
+                            {filters.q ? titleCase(filters.q) : 'Buscar un centro…'}
+                        </span>
+                        {filters.q && (
+                            <span
+                                role="button"
+                                aria-label="Quitar búsqueda"
+                                onClick={(e) => { e.stopPropagation(); clearSearch(); }}
+                                className="p-1 rounded-full text-neutral-400 hover:text-red-500 hover:bg-neutral-100 transition-all shrink-0"
                             >
-                                <Navigation className="w-4 h-4" />
-                                Usar mi ubicación GPS
-                            </button>
+                                <X className="w-3.5 h-3.5" />
+                            </span>
                         )}
+                    </button>
 
-                        {/* Radius Slider (Only if location active) */}
-                        <div className={`space-y-3 transition-all duration-300 ${!userLocation ? 'opacity-50 blur-[1px] pointer-events-none' : 'opacity-100'}`}>
-                             <div className="flex items-center justify-between">
-                                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Radio de Búsqueda</label>
-                                <span className="text-xs font-bold text-white bg-[#223945] px-2 py-0.5 rounded shadow-sm">{radius} km</span>
-                            </div>
-                            <div className="relative h-6 flex items-center">
-                                <input 
-                                    type="range" 
-                                    min="1" 
-                                    max="100" 
-                                    value={radius} 
-                                    onChange={(e) => setRadius(parseInt(e.target.value))}
-                                    className="absolute w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#223945]/20 z-10 custom-range-slider"
-                                    style={{
-                                        background: `linear-gradient(to right, #223945 ${radius}%, #e5e5e5 ${radius}%)`
-                                    }}
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* SECTION 2: FILTERS */}
-                    <div className="bg-white border-b border-neutral-100">
-                        <div className="p-4 space-y-4">
-                            <div className="flex items-center gap-2 pb-2">
-                                <span className="font-bold text-sm text-[#223945]">Filtros</span>
-                            </div>
-
-                            {/* Provincia */}
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider ml-1">Provincia</label>
-                                <div className={selectContainerClass}>
-                                    <select
-                                        className={selectClass}
-                                        value={filters.provincia || ''}
-                                        onChange={(e) => handleChange('provincia', e.target.value)}
-                                        aria-label="Seleccionar provincia"
-                                    >
-                                        <option value="">Todas</option>
-                                        {provincias.map(p => <option key={p} value={p}>{p}</option>)}
-                                    </select>
-                                    <div className={iconClass}><ChevronDown className="w-4 h-4" /></div>
-                                </div>
-                            </div>
-
-                             {/* Botón para abrir modal de búsqueda */}
-                             <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider ml-1">Centro</label>
-                                <button
-                                    onClick={openSearchModal}
-                                    className="w-full flex items-center gap-2 pl-3 pr-3 py-2.5 rounded-xl bg-neutral-50 border border-neutral-200 hover:border-[#223945]/50 hover:bg-white transition-all text-left group"
-                                >
-                                    <Search className="w-4 h-4 text-neutral-400 group-hover:text-[#223945] transition-colors flex-shrink-0" />
-                                    {filters.q ? (
-                                        <span className="text-sm font-medium text-neutral-800 truncate flex-1">{filters.q}</span>
-                                    ) : (
-                                        <span className="text-sm font-medium text-neutral-400 flex-1">Buscar centro...</span>
-                                    )}
-                                    {filters.q && (
-                                        <span
-                                            onClick={(e) => { e.stopPropagation(); clearSearch(); }}
-                                            className="p-1 rounded-full text-neutral-400 hover:text-red-500 hover:bg-neutral-100 transition-all flex-shrink-0"
-                                        >
-                                            <X className="w-3.5 h-3.5" />
-                                        </span>
-                                    )}
+                    {/* Cerca de mí + radio */}
+                    {userLocation ? (
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between h-10 pl-3.5 pr-1.5 rounded-xl bg-[#223945] text-white">
+                                <span className="flex items-center gap-2 text-sm font-bold">
+                                    <Navigation className="w-4 h-4 fill-current" />
+                                    Cerca de ti
+                                </span>
+                                <button onClick={onClearLocation} aria-label="Quitar ubicación" className="p-1.5 rounded-lg hover:bg-white/15 transition-colors">
+                                    <X className="w-4 h-4" />
                                 </button>
-                             </div>
+                            </div>
+                            <div className="flex items-center gap-3 pl-3.5 pr-1.5 py-1.5 rounded-xl bg-neutral-50 border border-neutral-200">
+                                <span className="text-[11px] font-bold text-[#223945]/70 uppercase tracking-wider shrink-0">Radio</span>
+                                <input
+                                    type="range"
+                                    min="1"
+                                    max="100"
+                                    value={radius}
+                                    onChange={(e) => setRadius(parseInt(e.target.value))}
+                                    aria-label="Radio de búsqueda en kilómetros"
+                                    className="custom-range-slider flex-1 min-w-0 h-1.5 rounded-full appearance-none cursor-pointer focus:outline-none"
+                                    style={{ background: `linear-gradient(to right, #223945 ${radius}%, #e5e7eb ${radius}%)` }}
+                                />
+                                <span className="shrink-0 min-w-[4rem] text-center px-2 py-1 rounded-lg bg-white border border-neutral-200 text-[#223945] text-sm font-bold tabular-nums">
+                                    {radius} km
+                                </span>
+                            </div>
+                        </div>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={onLocateUser}
+                            className="w-full h-11 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#223945] via-[#2d4a5e] to-blue-600 text-white text-sm font-bold shadow-lg shadow-[#223945]/20 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all"
+                        >
+                            <Navigation className="w-4 h-4" />
+                            Centros cerca de mí
+                        </button>
+                    )}
+
+                    {/* ¿Qué quieres estudiar? */}
+                    <div>
+                        <p className="!text-[11px] !font-bold !text-[#223945]/80 uppercase tracking-wider mb-2 ml-0.5">¿Qué quieres estudiar?</p>
+                        <div className="grid grid-cols-4 gap-1.5" role="radiogroup" aria-label="Tipo de enseñanza">
+                            {TIPO_TILES.map(t => {
+                                const active = filters.tipo === t.value;
+                                const Icon = t.icon;
+                                return (
+                                    <button
+                                        key={t.value}
+                                        type="button"
+                                        role="radio"
+                                        aria-checked={active}
+                                        onClick={() => handleChange('tipo', active ? '' : t.value)}
+                                        className={`flex flex-col items-center justify-center gap-1 min-h-[4.25rem] px-1 py-2 rounded-2xl border transition-all active:scale-95 ${
+                                            active
+                                                ? 'bg-gradient-to-br from-[#223945] to-blue-700 border-transparent text-white shadow-md shadow-[#223945]/25'
+                                                : 'bg-white border-neutral-200 text-[#223945] hover:border-[#223945]/30'
+                                        }`}
+                                    >
+                                        <Icon className={`w-[18px] h-[18px] ${active ? 'text-white' : 'text-blue-600'}`} />
+                                        <span className="text-[10.5px] font-bold leading-[1.15] text-center">{t.label}</span>
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
 
+                    {/* Provincia y titularidad */}
+                    <div className="flex flex-wrap gap-2">
+                        <PillSelect
+                            label="Provincia"
+                            value={filters.provincia || ''}
+                            onChange={(v) => handleChange('provincia', v)}
+                            options={provincias.map(p => ({ value: p, label: titleCase(p) }))}
+                        />
+                        <PillSelect
+                            label="Titularidad"
+                            value={filters.naturaleza || ''}
+                            onChange={(v) => handleChange('naturaleza', v)}
+                            options={[{ value: 'PÚBLICO', label: 'Público' }, { value: 'PRIVADO', label: 'Privado' }]}
+                        />
+                    </div>
+
+                    {activeFilters > 0 && (
+                        <button
+                            type="button"
+                            onClick={() => setFilters({})}
+                            className="w-full flex items-center justify-center gap-1.5 pt-1 text-sm font-medium text-neutral-400 hover:text-red-500 transition-colors"
+                        >
+                            Limpiar {activeFilters} {activeFilters === 1 ? 'filtro' : 'filtros'}
+                            <X className="w-4 h-4" />
+                        </button>
+                    )}
                 </div>
             </div>
         </div>

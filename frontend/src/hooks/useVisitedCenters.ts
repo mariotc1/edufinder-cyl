@@ -10,6 +10,7 @@ export interface VisitedCentro {
     localidad: string;
     provincia: string;
     naturaleza: string;
+    denominacion_generica?: string;
     visitedAt: string; // ISO date
 }
 
@@ -55,6 +56,7 @@ export function useVisitedCenters() {
                 localidad: visit.centro.localidad,
                 provincia: visit.centro.provincia,
                 naturaleza: visit.centro.naturaleza,
+                denominacion_generica: visit.centro.denominacion_generica,
                 visitedAt: visit.created_at,
             }));
         } catch (error) {
@@ -108,6 +110,7 @@ export function useVisitedCenters() {
             localidad: centro.localidad,
             provincia: centro.provincia,
             naturaleza: centro.naturaleza,
+            denominacion_generica: centro.denominacion_generica,
             visitedAt: new Date().toISOString(),
         };
 

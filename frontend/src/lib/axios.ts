@@ -25,3 +25,22 @@ api.interceptors.request.use((config) => {
 });
 
 export default api;
+
+// INTERCEPTOR DE RESPONSE
+// Si un token enviado deja de ser válido (expirado o revocado), se limpia la sesión local
+// y se avisa al AuthContext para que la UI no muestre al usuario como autenticado
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (
+      typeof window !== "undefined" &&
+      error?.response?.status === 401 &&
+      error.config?.headers?.Authorization
+    ) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.dispatchEvent(new Event("auth:expired"));
+    }
+    return Promise.reject(error);
+  }
+);

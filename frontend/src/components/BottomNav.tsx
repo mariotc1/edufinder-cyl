@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Home, MapPin, Heart, UserCircle2, Download, ShieldCheck, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -55,6 +56,13 @@ export default function BottomNav() {
 
   const showInstallStrip = (isInstallable || isIOS) && !isInstalled && !stripDismissed;
 
+  // Reserva el alto de la franja en el layout (ver --bottom-nav-height en globals.css)
+  // para que no tape el final de las páginas, el botón de subir ni el mapa
+  useEffect(() => {
+    document.documentElement.style.setProperty('--pwa-strip-height', showInstallStrip ? '2.75rem' : '0px');
+    return () => { document.documentElement.style.removeProperty('--pwa-strip-height'); };
+  }, [showInstallStrip]);
+
   return (
     <nav
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)', transform: 'translateZ(0)' }}
@@ -66,24 +74,29 @@ export default function BottomNav() {
       <AnimatePresence>
         {showInstallStrip && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="w-full flex items-center bg-gradient-to-r from-[#223945] to-blue-600 text-white overflow-hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="w-full h-11 flex items-center gap-3 pl-3 pr-1.5 bg-gradient-to-r from-[#223945] to-blue-600 text-white overflow-hidden"
           >
+            <Image src="/icons/icon-72x72.png" alt="" width={28} height={28} className="w-7 h-7 rounded-lg shrink-0 bg-white/10" />
+            <span className="flex-1 min-w-0 leading-tight">
+              <span className="block text-[13px] font-bold truncate">Instala EduFinder</span>
+              <span className="block text-[11px] text-blue-100/90 truncate">Rápida y sin conexión</span>
+            </span>
             <button
               onClick={isInstallable ? installApp : showIOSInstallGuide}
               style={TAB_STYLE}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-semibold"
+              className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white text-[#223945] text-xs font-bold active:scale-95 transition-transform"
             >
-              <Download className="w-3.5 h-3.5 shrink-0" />
-              <span>Instala EduFinder para mejor experiencia</span>
+              <Download className="w-3.5 h-3.5" />
+              Instalar
             </button>
             <button
               onClick={dismissStrip}
               style={TAB_STYLE}
-              className="pr-3 pl-1 py-2.5 opacity-70 hover:opacity-100 transition-opacity"
+              className="shrink-0 p-2 opacity-70 hover:opacity-100 transition-opacity"
               aria-label="Cerrar"
             >
               <X className="w-4 h-4" />

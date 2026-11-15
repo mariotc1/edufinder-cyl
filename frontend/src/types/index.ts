@@ -43,6 +43,7 @@ export interface Centro {
   distancia_km?: number;
   distance?: number;
   ciclos?: CicloFP[];
+  ciclos_count?: number;
   match_reasons?: MatchReason[];
   relevance_score?: number;
   favorite_affinity?: number;

@@ -13,10 +13,11 @@ interface AddToCompareButtonProps {
 }
 
 export default function AddToCompareButton({ centro, className, showLabel = false }: AddToCompareButtonProps) {
-    const { selectedCentros, addToCompare, removeFromCompare } = useComparison();
+    const { selectedCentros, addToCompare, removeFromCompare, pendiente } = useComparison();
     const { user, openLoginModal } = useAuth();
     
-    const isSelected = selectedCentros.some(c => c.id === centro.id);
+    // Una comparación ya abierta no marca las tarjetas: el siguiente toque empieza otra
+    const isSelected = pendiente && selectedCentros.some(c => c.id === centro.id);
 
     const handleClick = (e: React.MouseEvent) => {
         e.preventDefault(); 
@@ -38,10 +39,10 @@ export default function AddToCompareButton({ centro, className, showLabel = fals
         <button
             onClick={handleClick}
             className={cn(
-                "group relative flex items-center gap-2 transition-all p-1.5 rounded-full",
-                isSelected 
-                    ? "bg-[#223945] text-white shadow-md" 
-                    : "bg-white/80 hover:bg-white text-neutral-500 hover:text-[#223945] shadow-sm border border-neutral-100",
+                "group relative flex items-center justify-center gap-2 transition-colors w-8 h-8 rounded-full",
+                isSelected
+                    ? "bg-[#223945] text-white shadow-md"
+                    : "text-neutral-400 hover:bg-[#223945]/5 hover:text-[#223945]",
                 className
             )}
             title={isSelected ? "Quitar del comparador" : "Comparar este centro"}
