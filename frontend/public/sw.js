@@ -1,5 +1,5 @@
 // EduFinder CYL - Service Worker
-const CACHE_VERSION = 'v1.2.0';
+const CACHE_VERSION = 'v1.3.0';
 const CACHE_NAME = `edufinder-cyl-${CACHE_VERSION}`;
 const API_CACHE_NAME = `edufinder-api-${CACHE_VERSION}`;
 
@@ -43,31 +43,40 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
 
   if (request.method !== 'GET') return;
-  if (url.protocol === 'chrome-extension:' || url.protocol === 'moz-extension:') return;
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
 
-  // API: network-first
-  if (url.pathname.startsWith('/api/') || url.hostname !== self.location.hostname) {
+  const isApi = url.pathname.startsWith('/api/');
+
+  // API: network-first. Las respuestas con sesión (Authorization) no se guardan en caché:
+  // son datos personales y no deben quedarse en el dispositivo tras cerrar sesión
+  if (isApi) {
+    if (request.headers.get('Authorization')) return;
     event.respondWith(networkFirst(request));
     return;
   }
 
-  // Recursos estáticos: cache-first
-  if (isStaticAsset(url.pathname)) {
+  // Otros orígenes (teselas del mapa, fuentes...): los gestiona la caché HTTP del navegador
+  if (url.origin !== self.location.origin) return;
+
+  // Recursos con hash en el nombre (inmutables) e imágenes propias: cache-first
+  if (isImmutableAsset(url.pathname)) {
     event.respondWith(cacheFirst(request));
     return;
   }
 
-  // Navegación: stale-while-revalidate
+  // Navegación: network-first para que tras cada despliegue se vea la versión nueva;
+  // sin conexión se sirve la copia guardada o la página offline
   if (request.mode === 'navigate') {
-    event.respondWith(staleWhileRevalidate(request));
+    event.respondWith(networkFirst(request, CACHE_NAME));
     return;
   }
 
   event.respondWith(networkFirst(request));
 });
 
-function isStaticAsset(pathname) {
-  return ['.js', '.css', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2'].some(ext => pathname.endsWith(ext));
+function isImmutableAsset(pathname) {
+  if (pathname.startsWith('/_next/static/')) return true;
+  return ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.webp', '.woff', '.woff2'].some(ext => pathname.endsWith(ext));
 }
 
 async function cacheFirst(request) {
@@ -86,11 +95,11 @@ async function cacheFirst(request) {
   }
 }
 
-async function networkFirst(request) {
+async function networkFirst(request, cacheName = API_CACHE_NAME) {
   try {
     const response = await fetch(request);
     if (response.ok) {
-      const cache = await caches.open(API_CACHE_NAME);
+      const cache = await caches.open(cacheName);
       cache.put(request, response.clone());
     }
     return response;
@@ -103,20 +112,6 @@ async function networkFirst(request) {
       headers: { 'Content-Type': 'application/json' }
     });
   }
-}
-
-async function staleWhileRevalidate(request) {
-  const cache = await caches.open(CACHE_NAME);
-  const cached = await cache.match(request);
-
-  const fetchPromise = fetch(request)
-    .then((response) => {
-      if (response.ok) cache.put(request, response.clone());
-      return response;
-    })
-    .catch(() => cached || caches.match('/offline'));
-
-  return cached || fetchPromise;
 }
 
 // Mensajes

@@ -214,6 +214,12 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
+        // Revocar el resto de sesiones (tokens) manteniendo la actual
+        $currentToken = $request->user()->currentAccessToken();
+        $request->user()->tokens()
+            ->when($currentToken instanceof \Laravel\Sanctum\PersonalAccessToken, fn($q) => $q->where('id', '!=', $currentToken->id))
+            ->delete();
+
         return response()->json(['message' => 'Contraseña actualizada correctamente']);
     }
 
@@ -246,6 +252,9 @@ class AuthController extends Controller
                 'password' => Hash::make($password)
             ])->setRememberToken(Str::random(60));
             $user->save();
+
+            // Invalidar todos los tokens existentes (posible sesión comprometida)
+            $user->tokens()->delete();
             event(new PasswordReset($user));
         });
 
@@ -281,9 +290,11 @@ class AuthController extends Controller
                 ]);
 
             } catch (\Exception $e) {
+                // No exponer detalles internos (mensaje/traza) al cliente
+                \Illuminate\Support\Facades\Log::error('Error uploading profile photo: ' . $e->getMessage());
+
                 return response()->json([
-                    'message' => 'Error al subir la imagen: ' . $e->getMessage(),
-                    'error_details' => $e->getTraceAsString()
+                    'message' => 'Error al subir la imagen. Inténtalo de nuevo más tarde.',
                 ], 500);
             }
         }
@@ -306,9 +317,10 @@ class AuthController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Error deleting profile photo: ' . $e->getMessage());
+
             return response()->json([
-                'message' => 'Error al eliminar foto: ' . $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'message' => 'Error al eliminar la foto. Inténtalo de nuevo más tarde.',
             ], 500);
         }
     }

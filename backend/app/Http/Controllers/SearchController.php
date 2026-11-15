@@ -41,9 +41,10 @@ class SearchController extends Controller
             SearchLog::create([
                 'user_id' => $request->user('sanctum') ? $request->user('sanctum')->id : null,
                 'query' => $validated['q'] ?? null,
-                'filters' => json_encode(array_filter($validated, function ($v, $k) {
+                // El modelo ya castea 'filters' a JSON: no se codifica dos veces
+                'filters' => array_filter($validated, function ($v, $k) {
                     return $k !== 'q' && !empty($v);
-                }, ARRAY_FILTER_USE_BOTH)),
+                }, ARRAY_FILTER_USE_BOTH),
                 'results_count' => 0, // We can update this later or leave it as 0 if not critical for performance
                 'ip_address' => $request->ip()
             ]);
@@ -59,7 +60,9 @@ class SearchController extends Controller
 
         $query = $this->searchService->buildQuery($validated);
 
-        $centros = $query->paginate($request->input('per_page', 15));
+        // Limitar el tamaño de página para evitar respuestas masivas (scraping / DoS)
+        $perPage = min(max((int) $request->input('per_page', 15), 1), 100);
+        $centros = $query->paginate($perPage);
 
         return response()->json($centros);
     }

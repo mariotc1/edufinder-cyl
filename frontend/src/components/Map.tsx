@@ -1,17 +1,16 @@
 'use client';
 
-import { MapContainer, TileLayer, Marker, Popup, useMap, Circle } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents, Circle } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-defaulticon-compatibility';
 import 'leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css';
-import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import L from 'leaflet';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { MapPin, Building2, Star } from 'lucide-react';
 import MapPopup from '@/components/map/MapPopup';
 import { Centro } from '@/types';
 
+import { centroName } from '@/lib/centro-format';
 // GENERADOR DE ICONOS PERSONALIZADOS
 // Crea marcadores SVG renderizados dinámicamente para el mapa
 const createCustomIcon = (type: string, title?: string) => {
@@ -57,6 +56,27 @@ const createCustomIcon = (type: string, title?: string) => {
         iconAnchor: [20, 48], 
         popupAnchor: [0, -50] 
     });
+};
+
+// El marcador es igual para todos los centros: se genera una sola vez
+// (antes se renderizaba el SVG 1.700 veces en cada pintado del mapa)
+const CENTRO_ICON = createCustomIcon('default');
+
+// ICONO DE GRUPO: burbuja con el nº de centros, mayor cuantos más agrupa
+const clusterIconCache = new globalThis.Map<number, L.DivIcon>();
+const getClusterIcon = (count: number) => {
+    const size = count < 10 ? 38 : count < 50 ? 46 : count < 200 ? 54 : 62;
+    const key = size * 100000 + count;
+    const cached = clusterIconCache.get(key);
+    if (cached) return cached;
+    const icon = L.divIcon({
+        html: `<div class="map-cluster" style="width:${size}px;height:${size}px"><span>${count.toLocaleString('es-ES')}</span></div>`,
+        className: 'map-cluster-wrapper',
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size / 2],
+    });
+    clusterIconCache.set(key, icon);
+    return icon;
 };
 
 const UserIcon = L.divIcon({
@@ -118,6 +138,143 @@ function MapController({ userLocation, radius, center, zoom }: MapControllerProp
   return null;
 }
 
+// AGRUPACIÓN DE MARCADORES
+// Agrupa los centros en celdas de pantalla de CELL px según el zoom actual y solo pinta lo visible.
+// A partir de MAX_CLUSTER_ZOOM se muestran todos los marcadores individuales.
+const CELL = 60;
+const MAX_CLUSTER_ZOOM = 15;
+
+// pos se crea una sola vez por centro: si cambiara en cada render, react-leaflet recolocaría el marcador
+// (y su ficha abierta), el mapa se desplazaría y se entraría en un bucle de renders
+type PuntoCentro = { centro: Centro; lat: number; lng: number; pos: [number, number] };
+
+// MARCADOR DE UN CENTRO (memoizado)
+// Si se repintara en cada movimiento del mapa, su ficha abierta se reencuadraría (autoPan),
+// eso movería el mapa otra vez y se entraría en un bucle infinito de renders
+type PopupPadding = { topLeft: [number, number]; bottomRight: [number, number] };
+
+const CentroMarker = memo(function CentroMarker({ centro, pos, isFavorite, isFocus, popupPadding }: {
+    centro: Centro;
+    pos: [number, number];
+    isFavorite: boolean;
+    isFocus: boolean;
+    popupPadding: PopupPadding;
+}) {
+    return (
+        <Marker
+            position={pos}
+            icon={CENTRO_ICON}
+            title={centroName(centro)}
+            alt={`Marcador de ${centroName(centro)}`}
+            ref={(ref) => {
+                if (ref && isFocus) {
+                    setTimeout(() => ref.openPopup(), 500);
+                }
+            }}
+        >
+            <Popup
+                className="premium-popup-container"
+                closeButton={false}
+                maxWidth={300}
+                minWidth={260}
+                autoPanPaddingTopLeft={popupPadding.topLeft}
+                autoPanPaddingBottomRight={popupPadding.bottomRight}
+            >
+                <MapPopup centro={centro} initialIsFavorite={isFavorite} />
+            </Popup>
+        </Marker>
+    );
+});
+
+function ClusteredMarkers({ centros, favoriteIds, focusCenterId, popupPadding }: {
+    centros: Centro[];
+    favoriteIds: number[];
+    focusCenterId?: number;
+    popupPadding: PopupPadding;
+}) {
+    const map = useMap();
+    const [view, setView] = useState(() => ({ zoom: map.getZoom(), bounds: map.getBounds() }));
+    // moveend también se dispara al terminar un zoom
+    useMapEvents({
+        moveend: () => setView({ zoom: map.getZoom(), bounds: map.getBounds() }),
+    });
+
+    const puntos = useMemo<PuntoCentro[]>(() => centros
+        .map(centro => {
+            const lat = parseFloat(centro.latitud);
+            const lng = parseFloat(centro.longitud);
+            return { centro, lat, lng, pos: [lat, lng] as [number, number] };
+        })
+        .filter(p => Number.isFinite(p.lat) && Number.isFinite(p.lng)), [centros]);
+
+    const grupos = useMemo(() => {
+        const visibles = view.bounds.pad(0.3);
+        const enVista = puntos.filter(p => visibles.contains([p.lat, p.lng]) || p.centro.id === focusCenterId);
+        if (view.zoom >= MAX_CLUSTER_ZOOM) return enVista.map(p => [p]);
+
+        const celdas = new globalThis.Map<string, PuntoCentro[]>();
+        for (const p of enVista) {
+            const px = map.project([p.lat, p.lng], view.zoom);
+            const key = `${Math.floor(px.x / CELL)}:${Math.floor(px.y / CELL)}`;
+            const celda = celdas.get(key);
+            if (celda) celda.push(p); else celdas.set(key, [p]);
+        }
+        return [...celdas.values()];
+    }, [puntos, view, map, focusCenterId]);
+
+    return (
+        <>
+            {grupos.map(grupo => {
+                if (grupo.length === 1) {
+                    const { centro, pos } = grupo[0];
+                    return (
+                        <CentroMarker
+                            key={centro.id}
+                            centro={centro}
+                            pos={pos}
+                            isFavorite={favoriteIds.includes(centro.id)}
+                            isFocus={focusCenterId === centro.id}
+                            popupPadding={popupPadding}
+                        />
+                    );
+                }
+                // Centro del grupo = media de sus puntos; al tocarlo se encuadran todos sus centros
+                const lat = grupo.reduce((s, p) => s + p.lat, 0) / grupo.length;
+                const lng = grupo.reduce((s, p) => s + p.lng, 0) / grupo.length;
+                return (
+                    <Marker
+                        key={`g:${grupo[0].centro.id}:${grupo.length}`}
+                        position={[lat, lng]}
+                        icon={getClusterIcon(grupo.length)}
+                        title={`${grupo.length} centros`}
+                        eventHandlers={{
+                            click: () => {
+                                const bounds = L.latLngBounds(grupo.map(p => [p.lat, p.lng] as [number, number]));
+                                map.flyToBounds(bounds, { padding: [60, 60], maxZoom: MAX_CLUSTER_ZOOM + 1, duration: 0.6 });
+                            },
+                        }}
+                    />
+                );
+            })}
+        </>
+    );
+}
+
+// Encaja en pantalla todos los centros recibidos (una vez, al cargarlos)
+function FitToCentros({ centros }: { centros: Centro[] }) {
+    const map = useMap();
+    const key = centros.map(c => c.id).join(',');
+    useEffect(() => {
+        const pts = centros
+            .map(c => [parseFloat(c.latitud), parseFloat(c.longitud)] as [number, number])
+            .filter(([la, ln]) => Number.isFinite(la) && Number.isFinite(ln));
+        if (pts.length === 1) map.flyTo(pts[0], 14, { duration: 1 });
+        else if (pts.length > 1) map.flyToBounds(L.latLngBounds(pts), { padding: [70, 70], maxZoom: 14, duration: 1 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [key, map]);
+    return null;
+}
+
 interface MapProps {
     centros: Centro[];
     userLocation?: { lat: number, lon: number } | null;
@@ -126,11 +283,12 @@ interface MapProps {
     zoom?: number;
     favoriteIds?: number[];
     focusCenterId?: number;
+    fitToCentros?: boolean;
 }
 
 // COMPONENTE PRINCIPAL DE MAPA
 // Wrapper de React-Leaflet con marcadores, clusters y controles
-export default function Map({ centros, userLocation, radius, center, zoom, favoriteIds = [], focusCenterId }: MapProps) {
+export default function Map({ centros, userLocation, radius, center, zoom, favoriteIds = [], focusCenterId, fitToCentros = false }: MapProps) {
     const defaultCenter: [number, number] = [41.652, -4.728]; // Valladolid center
 
     // Determinar el centro efectivo
@@ -147,6 +305,14 @@ export default function Map({ centros, userLocation, radius, center, zoom, favor
     }
 
     const effectiveZoom = zoom || 8;
+
+    // Margen para que la ficha emergente no quede bajo el panel lateral (escritorio) o la hoja inferior (móvil)
+    const [popupPadding] = useState(() => {
+        const desktop = typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches;
+        return desktop
+            ? { topLeft: [370, 90] as [number, number], bottomRight: [30, 30] as [number, number] }
+            : { topLeft: [16, 70] as [number, number], bottomRight: [16, 110] as [number, number] };
+    });
 
     return (
         <MapContainer
@@ -183,37 +349,15 @@ export default function Map({ centros, userLocation, radius, center, zoom, favor
                  </Marker>
             )}
 
-             {/* Center Markers */}
-             {centros.map((centro) => {
-                 const lat = parseFloat(centro.latitud);
-                 const lon = parseFloat(centro.longitud);
+             {fitToCentros && <FitToCentros centros={centros} />}
 
-                 if (isNaN(lat) || isNaN(lon)) return null;
-
-                 return (
-                     <Marker 
-                         key={centro.id} 
-                         position={[lat, lon]}
-                         icon={createCustomIcon(centro.naturaleza || 'default', centro.nombre)}
-                         title={centro.nombre}
-                         alt={`Marcador de ${centro.nombre}`}
-                         ref={(ref) => {
-                             if (ref && focusCenterId === centro.id) {
-                                 setTimeout(() => ref.openPopup(), 500);
-                             }
-                         }}
-                     >
-                         <Popup 
-                            className="premium-popup-container" 
-                            closeButton={false} 
-                            maxWidth={300}
-                            minWidth={250}
-                         >
-                            <MapPopup centro={centro} initialIsFavorite={favoriteIds.includes(centro.id)} />
-                         </Popup>
-                     </Marker>
-                 );
-             })}
+             {/* Centros (agrupados según el zoom) */}
+             <ClusteredMarkers
+                 centros={centros}
+                 favoriteIds={favoriteIds}
+                 focusCenterId={focusCenterId}
+                 popupPadding={popupPadding}
+             />
          </MapContainer>
     );
 }

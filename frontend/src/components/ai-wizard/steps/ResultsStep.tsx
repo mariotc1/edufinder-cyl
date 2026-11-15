@@ -13,6 +13,7 @@ import { useFavorite } from '@/hooks/useFavorite';
 import { useRef } from 'react';
 import useSWR from 'swr';
 
+import { centroName, centroLugar, nivelFP } from '@/lib/centro-format';
 // Tipos para las nuevas funcionalidades
 interface MatchReason {
     type: string;
@@ -165,29 +166,36 @@ function ResultCard({
                         </div>
 
                         {/* Nombre */}
-                        <h4 className="font-semibold text-[#223945] text-[13px] leading-tight mb-1 line-clamp-2 group-hover:text-blue-600 transition-colors pr-16">
-                            {centro.nombre}
+                        <h4 className="font-extrabold text-[#111827] text-[15px] leading-tight mb-1 line-clamp-2 group-hover:text-[#223945] transition-colors pr-16">
+                            {centroName(centro)}
                         </h4>
 
                         {/* Ubicación */}
-                        <p className="text-[11px] text-neutral-500">
-                            {centro.localidad}, {centro.provincia}
+                        <p className="flex items-center gap-1 text-xs font-medium text-neutral-500">
+                            <MapPin className="w-3 h-3 shrink-0" />
+                            {centroLugar(centro)}
                         </p>
 
                         {/* Ciclos si existen */}
                         {centro.ciclos && centro.ciclos.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-1.5">
-                                {centro.ciclos.slice(0, 2).map((ciclo, idx) => (
-                                    <span
-                                        key={idx}
-                                        className="text-[9px] px-1.5 py-0.5 bg-[#223945]/5 text-[#223945] rounded"
-                                    >
-                                        {ciclo.ciclo_formativo}
-                                    </span>
-                                ))}
+                            <div className="space-y-1 mt-2">
+                                {centro.ciclos.slice(0, 2).map((ciclo, idx) => {
+                                    const nivel = nivelFP(ciclo.nivel_educativo);
+                                    return (
+                                        <div
+                                            key={idx}
+                                            className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border ${nivel?.soft ?? 'bg-neutral-50 border-neutral-100'}`}
+                                        >
+                                            <span className="flex-1 min-w-0 truncate text-[11px] font-medium text-neutral-800">{ciclo.ciclo_formativo}</span>
+                                            <span className={`shrink-0 text-[8px] font-bold px-1.5 py-0.5 rounded-full ${nivel?.solid ?? 'bg-neutral-600 text-white'}`}>
+                                                {nivel?.abbr ?? ciclo.nivel_educativo}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
                                 {centro.ciclos.length > 2 && (
-                                    <span className="text-[9px] px-1.5 py-0.5 bg-neutral-100 text-neutral-500 rounded">
-                                        +{centro.ciclos.length - 2}
+                                    <span className="block text-[10px] font-semibold text-[#223945]/70 pl-0.5">
+                                        + {centro.ciclos.length - 2} ciclos más
                                     </span>
                                 )}
                             </div>
@@ -351,7 +359,7 @@ export default function ResultsStep({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="py-3 px-4 sm:px-6 flex flex-col h-full max-h-[70vh]"
+            className="py-3 px-4 sm:px-6 flex flex-col h-full max-h-[var(--wizard-content-max)] md:max-h-[70vh]"
         >
             {/* Header compacto - NO scrolleable */}
             <div className="text-center mb-2 flex-shrink-0">

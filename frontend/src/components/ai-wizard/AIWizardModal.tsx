@@ -339,7 +339,8 @@ export default function AIWizardModal({ isOpen, onClose }: AIWizardModalProps) {
                 </Transition.Child>
 
                 {/* Panel */}
-                <div className="fixed inset-0 flex items-center justify-center p-4">
+                {/* En móvil se deja libre la cabecera y la barra inferior: el panel queda centrado con margen */}
+                <div className="fixed inset-0 flex items-center justify-center px-4 pt-[calc(var(--mobile-header-height)+0.75rem)] pb-[calc(var(--bottom-nav-height)+0.75rem)] md:p-4">
                     <Transition.Child
                         as={Fragment}
                         enter="ease-out duration-300"
@@ -349,7 +350,7 @@ export default function AIWizardModal({ isOpen, onClose }: AIWizardModalProps) {
                         leaveFrom="opacity-100 scale-100"
                         leaveTo="opacity-0 scale-95"
                     >
-                        <Dialog.Panel className="relative w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden bg-gradient-to-b from-[#dbeafe] via-white to-[#eff6ff]">
+                        <Dialog.Panel className="ai-wizard relative w-full max-w-lg max-h-full flex flex-col rounded-3xl shadow-2xl overflow-hidden bg-gradient-to-b from-[#dbeafe] via-white to-[#eff6ff]">
                             {/* Línea superior decorativa - consistente con el resto de la web */}
                             <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300 z-20" />
 
@@ -360,7 +361,7 @@ export default function AIWizardModal({ isOpen, onClose }: AIWizardModalProps) {
                             />
 
                             {/* Contenido */}
-                            <div className="max-h-[75vh] sm:max-h-[70vh] overflow-y-auto">
+                            <div className="min-h-0 overflow-y-auto max-h-[var(--wizard-content-max)] md:max-h-[70vh]">
                                 <AnimatePresence mode="wait">
                                     {currentStep === 'welcome' && (
                                         <WelcomeStep

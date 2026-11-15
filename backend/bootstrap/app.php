@@ -12,6 +12,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Confiar en el proxy de Render (solo el salto inmediato) para obtener la IP real
+        // del cliente desde X-Forwarded-For. Sin esto, $request->ip() devuelve la IP del
+        // proxy y el rate limiting / bloqueo de IPs afectaría a todos los usuarios a la vez.
+        // Las entradas de X-Forwarded-For añadidas por el cliente no se tienen en cuenta.
+        $middleware->trustProxies(at: '*');
+
         // Alias de middlewares personalizados
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,

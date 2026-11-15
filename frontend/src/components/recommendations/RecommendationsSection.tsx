@@ -129,10 +129,10 @@ export default function RecommendationsSection() {
                             <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                         </div>
                         <div>
-                            <h2 className="text-lg sm:text-xl font-bold text-[#223945]">
+                            <h2 className="!text-lg sm:!text-xl !leading-tight font-bold text-[#223945]">
                                 Basado en tus favoritos
                             </h2>
-                            <p className="text-xs sm:text-sm text-neutral-500">
+                            <p className="!text-xs sm:!text-sm text-neutral-500">
                                 Centros que podrían interesarte
                             </p>
                         </div>
@@ -188,22 +188,15 @@ export default function RecommendationsSection() {
                         )}
                     </AnimatePresence>
 
-                    {/* Gradient fade izquierdo */}
-                    <AnimatePresence>
-                        {canScrollLeft && (
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                className="absolute left-0 top-0 bottom-6 w-12 sm:w-20 bg-gradient-to-r from-[#f8fafc] via-[#f8fafc]/80 to-transparent pointer-events-none z-10"
-                            />
-                        )}
-                    </AnimatePresence>
-
                     {/* Contenedor del carrusel */}
                     <div
                         ref={scrollContainerRef}
-                        className="flex gap-4 overflow-x-auto pb-6 scrollbar-hide snap-x snap-mandatory scroll-smooth"
+                        className="flex gap-4 overflow-x-auto pt-1 pb-6 -mx-1 px-1 scrollbar-hide snap-x snap-mandatory scroll-smooth"
+                        // Los bordes se desvanecen con una máscara (sin pintar encima del fondo de la página)
+                        style={{
+                            maskImage: `linear-gradient(to right, ${canScrollLeft ? 'transparent, black 2.5rem' : 'black'}, ${canScrollRight ? 'black calc(100% - 2.5rem), transparent' : 'black'})`,
+                            WebkitMaskImage: `linear-gradient(to right, ${canScrollLeft ? 'transparent, black 2.5rem' : 'black'}, ${canScrollRight ? 'black calc(100% - 2.5rem), transparent' : 'black'})`,
+                        }}
                     >
                         {recommendations.map((centro, index) => (
                             <motion.div
@@ -215,15 +208,13 @@ export default function RecommendationsSection() {
                                     delay: Math.min(index * 0.03, 0.15),
                                     ease: [0.25, 0.1, 0.25, 1]
                                 }}
-                                className="flex-shrink-0 snap-start"
+                                className="flex-shrink-0 snap-start flex"
                             >
                                 <RecommendationCard centro={centro} />
                             </motion.div>
                         ))}
                     </div>
 
-                    {/* Gradient fade derecho */}
-                    <div className="absolute right-0 top-0 bottom-6 w-12 sm:w-20 bg-gradient-to-l from-[#f8fafc] via-[#f8fafc]/80 to-transparent pointer-events-none z-10"></div>
                 </div>
 
                 {/* Indicador de progreso - solo visible si hay scroll */}

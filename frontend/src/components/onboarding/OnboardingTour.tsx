@@ -80,6 +80,7 @@ export default function OnboardingTour() {
       <TourSpotlight
         targetSelector={targetSelector}
         padding={currentStep.spotlightPadding}
+        scrollAnchor={currentStep.scrollAnchor}
         isActive={isActive}
       />
 

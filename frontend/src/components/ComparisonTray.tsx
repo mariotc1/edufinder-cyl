@@ -1,153 +1,119 @@
 'use client';
 
 import { useComparison } from '@/context/ComparisonContext';
-import { X, ArrowRight, Trash2, Scale, ChevronUp } from 'lucide-react';
+import { X, Trash2, Scale, ChevronUp } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
+import { centroName } from '@/lib/centro-format';
+
+// Mismas letras y colores que las columnas del comparador
+const COLUMNAS = [
+    { letra: 'A', solid: 'bg-[#223945] ring-white/30' },
+    { letra: 'B', solid: 'bg-teal-600 ring-teal-300/40' },
+    { letra: 'C', solid: 'bg-pink-600 ring-pink-300/40' },
+];
+
+// Favoritos tiene su propia selección y el comparador ya muestra los centros
+const RUTAS_SIN_BANDEJA = ['/comparador', '/favoritos'];
+
 // COMPONENTE BANDEJA DE COMPARACIÓN
-// Muestra una barra flotante en la parte inferior cuando hay centros seleccionados para comparar
+// Barra flotante con los centros añadidos desde las tarjetas mientras se busca
 export default function ComparisonTray() {
-    const { selectedCentros, removeFromCompare, clearComparison } = useComparison();
+    const { selectedCentros, removeFromCompare, clearComparison, pendiente } = useComparison();
     const pathname = usePathname();
     const [expanded, setExpanded] = useState(false);
 
-    // No renderizar si no hay seleccionados o estamos en la página de comparación
-    if (selectedCentros.length === 0 || pathname === '/comparador') return null;
+    // Una comparación ya abierta no se queda colgando en la bandeja
+    if (!pendiente || selectedCentros.length === 0 || RUTAS_SIN_BANDEJA.includes(pathname)) return null;
 
     const canCompare = selectedCentros.length >= 2;
+    const ids = selectedCentros.map(c => c.id).join(',');
 
     return (
-        <AnimatePresence>
-            <motion.div
-                initial={{ y: 100, opacity: 0, x: '-50%' }}
-                animate={{ y: 0, opacity: 1, x: '-50%' }}
-                exit={{ y: 100, opacity: 0, x: '-50%' }}
-                transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                className="fixed bottom-[5.5rem] md:bottom-6 left-1/2 z-50 w-[calc(100%-2rem)] max-w-md"
-            >
-                {/* Expanded view - list of centers */}
-                <AnimatePresence>
-                    {expanded && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                            className="mb-2 bg-white rounded-2xl shadow-2xl border border-neutral-100 overflow-hidden"
-                        >
-                            <div className="p-3 border-b border-neutral-100 bg-neutral-50">
-                                <p className="text-xs font-bold text-neutral-500 uppercase tracking-wide">
-                                    Centros seleccionados ({selectedCentros.length}/3)
-                                </p>
-                            </div>
-                            <div className="p-2 space-y-1 max-h-48 overflow-y-auto">
-                                {selectedCentros.map((centro, idx) => (
-                                    <div
-                                        key={centro.id}
-                                        className="flex items-center gap-3 p-2 rounded-xl hover:bg-neutral-50 group"
-                                    >
-                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#223945] to-blue-600 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
-                                            {idx + 1}
-                                        </div>
-                                        <span className="flex-1 text-sm font-medium text-neutral-700 truncate">
-                                            {centro.nombre}
-                                        </span>
-                                        <button
-                                            onClick={() => removeFromCompare(centro.id)}
-                                            className="p-1.5 rounded-full text-neutral-400 hover:text-red-500 hover:bg-red-50 sm:opacity-0 sm:group-hover:opacity-100 transition-all"
-                                        >
-                                            <X className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                ))}
-                                {selectedCentros.length < 3 && (
-                                    <div className="flex items-center gap-3 p-2 rounded-xl border-2 border-dashed border-neutral-200 text-neutral-400">
-                                        <div className="w-8 h-8 rounded-full border-2 border-dashed border-neutral-300 flex items-center justify-center text-xs">
-                                            +
-                                        </div>
-                                        <span className="text-sm">
-                                            {selectedCentros.length < 2
-                                                ? `Añade ${2 - selectedCentros.length} más para comparar`
-                                                : 'Puedes añadir 1 más'
-                                            }
-                                        </span>
-                                    </div>
-                                )}
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {/* Main floating bar */}
-                <div className="
-                    flex items-center justify-between p-2 rounded-2xl
-                    bg-gradient-to-r from-[#223945] to-blue-600 backdrop-blur-2xl
-                    border border-white/20 shadow-[0_20px_50px_-10px_rgba(0,0,0,0.5)]
-                ">
-                    {/* Left: Expandable button with info */}
-                    <button
-                        onClick={() => setExpanded(!expanded)}
-                        className="flex items-center gap-3 pl-2 pr-3 py-1 rounded-xl hover:bg-white/10 transition-colors flex-1 min-w-0"
+        <motion.div
+            initial={{ y: 40, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+            className="fixed z-[120] inset-x-3 bottom-[calc(var(--bottom-nav-height)+0.75rem)] md:inset-x-auto md:left-1/2 md:-translate-x-1/2 md:bottom-6 md:w-[30rem]"
+        >
+            {/* Lista de centros elegidos */}
+            <AnimatePresence>
+                {expanded && (
+                    <motion.ul
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 8 }}
+                        className="mb-2 p-1.5 rounded-2xl bg-white shadow-[0_20px_50px_-12px_rgba(34,57,69,0.45)] border border-neutral-100"
                     >
-                        <div className="relative flex-shrink-0">
-                            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-                                <Scale className="w-5 h-5 !text-white" />
-                            </div>
-                            <span className="absolute -top-1 -right-1 w-5 h-5 bg-white text-[#223945] text-[10px] font-bold rounded-full flex items-center justify-center shadow">
-                                {selectedCentros.length}
+                        {selectedCentros.map((centro, i) => (
+                            <li key={centro.id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-neutral-50">
+                                <span className={`w-7 h-7 shrink-0 rounded-lg ${COLUMNAS[i].solid} text-white text-xs font-extrabold flex items-center justify-center`}>
+                                    {COLUMNAS[i].letra}
+                                </span>
+                                <span className="flex-1 min-w-0 truncate text-sm font-semibold text-[#223945]">{centroName(centro)}</span>
+                                <button
+                                    onClick={() => removeFromCompare(centro.id)}
+                                    aria-label={`Quitar ${centroName(centro)}`}
+                                    className="p-1.5 rounded-full text-neutral-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </li>
+                        ))}
+                    </motion.ul>
+                )}
+            </AnimatePresence>
+
+            <div className="flex items-center gap-2 p-2 pl-3 rounded-2xl bg-[#223945] text-white shadow-[0_20px_50px_-12px_rgba(34,57,69,0.6)] ring-1 ring-white/10">
+                <button
+                    type="button"
+                    onClick={() => setExpanded(!expanded)}
+                    aria-expanded={expanded}
+                    className="flex-1 min-w-0 flex items-center gap-3 text-left"
+                >
+                    <span className="flex -space-x-1.5 shrink-0" aria-hidden="true">
+                        {selectedCentros.map((c, i) => (
+                            <span key={c.id} className={`w-7 h-7 rounded-lg ring-2 ${COLUMNAS[i].solid} text-white text-xs font-extrabold flex items-center justify-center`}>
+                                {COLUMNAS[i].letra}
                             </span>
-                        </div>
+                        ))}
+                    </span>
+                    <span className="min-w-0">
+                        <span className="block text-sm font-extrabold leading-tight truncate">
+                            {canCompare ? `${selectedCentros.length} elegidos` : 'Elige otro centro'}
+                        </span>
+                        <span className="flex items-center gap-1 text-[11px] text-white/60 font-medium leading-tight mt-0.5">
+                            {expanded ? 'Ocultar' : 'Ver elegidos'}
+                            <ChevronUp className={`w-3 h-3 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+                        </span>
+                    </span>
+                </button>
 
-                        <div className="text-left flex-1 min-w-0 overflow-hidden">
-                            <p className="text-xs font-bold !text-white leading-none truncate whitespace-nowrap">
-                                {canCompare ? 'Listo para comparar' : 'Selecciona centros'}
-                            </p>
-                            <p className="text-[10px] !text-white/70 mt-0.5 truncate whitespace-nowrap">
-                                {selectedCentros.length}/3 · Toca para ver
-                            </p>
-                        </div>
-
-                        <ChevronUp className={`w-4 h-4 !text-white/70 transition-transform flex-shrink-0 ${expanded ? 'rotate-180' : ''}`} />
-                    </button>
-
-                    {/* Divider */}
-                    <div className="h-8 w-px bg-white/20 mx-2 flex-shrink-0"></div>
-
-                    {/* Right: Actions */}
-                    <div className="flex items-center gap-1.5 flex-shrink-0">
-                        <button
-                            onClick={clearComparison}
-                            className="p-2.5 rounded-xl text-white hover:text-red-400 hover:bg-white/10 transition-all"
-                            title="Limpiar todo"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                        </button>
-
-                        {canCompare ? (
-                            <Link
-                                href="/comparador"
-                                className="
-                                    flex items-center gap-2
-                                    bg-white text-[#223945]
-                                    px-4 py-2.5 rounded-xl
-                                    text-sm font-bold
-                                    shadow-lg hover:shadow-xl
-                                    transition-all hover:scale-[1.02] active:scale-95
-                                "
-                            >
-                                <span className="hidden sm:inline">Comparar</span>
-                                <ArrowRight className="w-4 h-4" />
-                            </Link>
-                        ) : (
-                            <div className="px-3 py-2.5 rounded-xl bg-white/20 text-white text-sm font-bold cursor-not-allowed">
-                                +{2 - selectedCentros.length}
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </motion.div>
-        </AnimatePresence>
+                <button
+                    type="button"
+                    onClick={() => { clearComparison(); setExpanded(false); }}
+                    aria-label="Vaciar comparación"
+                    className="w-10 h-10 shrink-0 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+                >
+                    <Trash2 className="w-4 h-4" />
+                </button>
+                {canCompare ? (
+                    <Link
+                        href={`/comparador?centros=${ids}`}
+                        className="h-10 shrink-0 px-4 rounded-xl bg-white !text-[#223945] text-sm font-extrabold flex items-center gap-1.5 shadow-md"
+                    >
+                        <Scale className="w-4 h-4" />
+                        Comparar
+                    </Link>
+                ) : (
+                    <span className="h-10 shrink-0 px-4 rounded-xl bg-white/15 text-white/70 text-sm font-bold flex items-center">
+                        Falta 1
+                    </span>
+                )}
+            </div>
+        </motion.div>
     );
 }

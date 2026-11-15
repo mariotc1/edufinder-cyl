@@ -119,6 +119,22 @@ class RecommendationController extends Controller
      */
     public function fromWizard(Request $request): JsonResponse
     {
+        // Validar entrada (evita errores SQL con coordenadas no numéricas y
+        // limita el número de provincias, ya que cada una lanza una consulta)
+        $request->validate([
+            'provincias' => 'nullable|array|max:9',
+            'provincias.*' => 'string|max:100',
+            'provincia' => 'nullable|string|max:100',
+            'tipo' => 'nullable|string|max:50',
+            'naturaleza' => 'nullable|string|max:50',
+            'familia' => 'nullable|string|max:100',
+            'nivel' => 'nullable|string|max:50',
+            'modalidad' => 'nullable|string|max:50',
+            'lat' => 'nullable|numeric|between:-90,90',
+            'lng' => 'nullable|numeric|between:-180,180',
+            'radio' => 'nullable|numeric|min:0|max:500',
+        ]);
+
         // Obtener provincias del request (puede venir como array)
         $provincias = $request->input('provincias', []);
 

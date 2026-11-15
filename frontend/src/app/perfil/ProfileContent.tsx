@@ -3,17 +3,19 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import api from '@/lib/axios';
 import { getSavedSearches, deleteSavedSearch, getFpQuizResult, deleteFpQuizResult } from '@/services/api';
-import { QuizResult } from '@/lib/descubre-fp/types';
+import { QuizResult, ATTRIBUTE_LABELS, ATTRIBUTE_EMOJIS } from '@/lib/descubre-fp/types';
 import PullToRefresh from '@/components/PullToRefresh';
 import { SavedSearch } from '@/types';
-import { User, Heart, Lock, Camera, LogOut, Eye, EyeOff, ChevronLeft, Trash, AlertCircle, CheckCircle, Bookmark, Search, X, Calendar, Building2, GraduationCap, Filter, MapPin, RotateCcw, Compass, ArrowRight, Sparkles, ExternalLink } from 'lucide-react';
+import { User, Heart, Lock, Camera, LogOut, Trash, AlertCircle, CheckCircle, Bookmark, X, Building2, MapPin, RotateCcw, Compass, ArrowRight, Sparkles, Mail, type LucideIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import LogoutConfirmationModal from '@/components/auth/LogoutConfirmationModal';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useOnboarding } from '@/context/OnboardingContext';
 import { useAuth } from '@/context/AuthContext';
 
+import { centroName, centroTipo, centroLugar, titleCase } from '@/lib/centro-format';
+import { AuthField, BrandBackdrop } from '@/components/auth/AuthLayout';
 interface UserData {
     name: string;
     email: string;
@@ -28,6 +30,10 @@ interface Favorito {
         id: number;
         nombre: string;
         direccion?: string;
+        denominacion_generica?: string;
+        naturaleza?: string;
+        localidad?: string;
+        provincia?: string;
     };
 }
 
@@ -45,9 +51,6 @@ export default function ProfileContent() {
 
     const [name, setName] = useState('');
     const [passwordData, setPasswordData] = useState({ current: '', new: '', confirm: '' });
-    const [showCurrentPass, setShowCurrentPass] = useState(false);
-    const [showNewPass, setShowNewPass] = useState(false);
-    const [showConfirmPass, setShowConfirmPass] = useState(false);
 
     const [uploading, setUploading] = useState(false);
     const [updatingPassword, setUpdatingPassword] = useState(false);
@@ -71,14 +74,21 @@ export default function ProfileContent() {
 
     const passwordRequirements = useMemo(() => {
         return [
-            { text: "Mínimo 8 caracteres", met: passwordData.new.length >= 8 },
-            { text: "Al menos una mayúscula", met: /[A-Z]/.test(passwordData.new) },
-            { text: "Al menos un número", met: /[0-9]/.test(passwordData.new) },
+            { text: "8 caracteres", met: passwordData.new.length >= 8 },
+            { text: "Una mayúscula", met: /[A-Z]/.test(passwordData.new) },
+            { text: "Un número", met: /[0-9]/.test(passwordData.new) },
             { text: "Coinciden", met: passwordData.new && passwordData.new === passwordData.confirm },
         ];
     }, [passwordData.new, passwordData.confirm]);
 
     const isPasswordValid = passwordRequirements.every(req => req.met) && passwordData.new.length > 0;
+
+    // Los avisos flotantes se ocultan solos
+    useEffect(() => {
+        if (!message) return;
+        const t = setTimeout(() => setMessage(null), 3500);
+        return () => clearTimeout(t);
+    }, [message]);
 
     useEffect(() => {
         fetchData();
@@ -278,18 +288,6 @@ export default function ProfileContent() {
         return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
     };
 
-    const getFilterCount = (filters: any) => {
-        let count = 0;
-        if (filters.provincia) count++;
-        if (filters.naturaleza) count++;
-        if (filters.familia) count++;
-        if (filters.nivel) count++;
-        if (filters.modalidad) count++;
-        if (filters.lat && filters.lng) count++;
-        if (filters.q) count++;
-        return count;
-    };
-
     const handleLogoutConfirm = async () => {
         setIsLoggingOut(true);
         await authLogout(); // limpia AuthContext (setUser null) + localStorage + API call
@@ -300,719 +298,508 @@ export default function ProfileContent() {
 
     const handleRefresh = useCallback(async () => { await fetchData(); }, []);
 
-    if (loading) return <div className="p-8 text-center">Cargando...</div>;
+    if (loading) return <ProfileSkeleton />;
+
+    const fpLabel = fpResult?.userProfile.profileLabel.replace(/^Perfil\s+/i, '').replace(/^./, c => c.toUpperCase());
+
+    const TABS = [
+        { key: 'profile', icon: User, label: 'Perfil', title: 'Tu información', subtitle: 'Cómo te ven en EduFinder.', count: 0 },
+        { key: 'security', icon: Lock, label: 'Seguridad', title: 'Seguridad', subtitle: 'Cambia tu contraseña de acceso.', count: 0 },
+        { key: 'favorites', icon: Heart, label: 'Favoritos', title: 'Mis favoritos', subtitle: 'Los centros que has guardado.', count: favoritos.length },
+        { key: 'searches', icon: Bookmark, label: 'Búsquedas', title: 'Búsquedas guardadas', subtitle: 'Vuelve a tus filtros con un toque.', count: savedSearches.length },
+        { key: 'fp-analysis', icon: Compass, label: 'Mi FP', title: 'Mi análisis FP', subtitle: 'Tu perfil vocacional y tus caminos.', count: 0 },
+    ] as const;
+    const current = TABS.find(t => t.key === activeTab)!;
+
+    const avatar = (size: 'sm' | 'lg') => (
+        <button
+            type="button"
+            onClick={() => setShowPhotoMenu(true)}
+            aria-label="Cambiar foto de perfil"
+            className="relative shrink-0 group rounded-full"
+        >
+            <span className={`block rounded-full p-[3px] bg-gradient-to-br from-[#223945] via-blue-600 to-blue-300 shadow-lg shadow-[#223945]/20 ${size === 'lg' ? 'w-24 h-24' : 'w-14 h-14'}`}>
+                {user?.foto_perfil ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                        src={user.foto_perfil}
+                        alt={user.name}
+                        className="w-full h-full rounded-full object-cover bg-white ring-2 ring-white"
+                        onError={() => setUser(prev => prev ? { ...prev, foto_perfil: undefined } : null)}
+                    />
+                ) : (
+                    <span className={`w-full h-full rounded-full bg-gradient-to-br from-[#223945] to-[#2d4a5e] ring-2 ring-white text-white font-bold flex items-center justify-center ${size === 'lg' ? 'text-3xl' : 'text-xl'}`}>
+                        {user?.name?.charAt(0).toUpperCase()}
+                    </span>
+                )}
+            </span>
+            <span className={`absolute bottom-0 right-0 rounded-full bg-white shadow-md ring-1 ring-neutral-200 flex items-center justify-center text-[#223945] group-hover:text-blue-600 transition-colors ${size === 'lg' ? 'w-8 h-8' : 'w-6 h-6'}`}>
+                <Camera className={size === 'lg' ? 'w-4 h-4' : 'w-3 h-3'} />
+            </span>
+        </button>
+    );
 
     return (
-        <div className="min-h-screen bg-brand-gradient pt-6 md:pt-20 pb-12 px-4 sm:px-6">
-        <PullToRefresh onRefresh={handleRefresh} />
-            <div className="max-w-5xl mx-auto">
-                {/* Back Link */}
-                <button
-                    onClick={() => router.back()}
-                    className="hidden md:inline-flex items-center gap-2 text-neutral-500 hover:text-[#223945] font-bold mb-8 transition-colors text-sm uppercase tracking-wide cursor-pointer"
-                >
-                    <ChevronLeft className="w-4 h-4" />
-                    Volver
-                </button>
+        <div className="profile-ui relative isolate bg-brand-gradient h-[calc(100dvh-var(--mobile-header-height)-var(--bottom-nav-height))] md:h-[calc(100dvh-5rem)] p-3 sm:p-4 md:p-8 flex items-stretch md:items-center justify-center">
+            <PullToRefresh onRefresh={handleRefresh} />
+            <BrandBackdrop pattern={false} />
 
-                {/* Main Profile Card */}
-                <div className="relative bg-white/90 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/50 overflow-hidden">
-                    {/* Decorative Top Gradient */}
-                    <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300"></div>
+            <input type="file" ref={fileInputRef} className="hidden" accept="image/png, image/jpeg, image/jpg" onChange={handlePhotoUpload} />
 
-                    {/* Mobile Header */}
-                    <div className="md:hidden">
-                        {/* User Card - Clean design */}
-                        <div className="p-4 pt-6 pb-4">
-                            <div className="bg-gradient-to-r from-[#223945] to-blue-600 rounded-2xl p-4 text-white relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8"></div>
-                                <div className="relative z-10 flex items-center gap-4">
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPhotoMenu(true)}
-                                        className="relative flex-shrink-0 rounded-full overflow-hidden"
-                                        aria-label="Cambiar foto de perfil"
-                                    >
-                                        {user?.foto_perfil ? (
-                                            <img
-                                                src={user.foto_perfil}
-                                                alt={user.name}
-                                                className="w-16 h-16 rounded-full object-cover border-2 border-white/30 shadow-lg bg-white"
-                                                onError={() => setUser(prev => prev ? { ...prev, foto_perfil: undefined } : null)}
-                                            />
-                                        ) : (
-                                            <div className="w-16 h-16 rounded-full bg-white/20 text-white flex items-center justify-center text-2xl font-bold border-2 border-white/30">
-                                                {user?.name?.charAt(0)}
-                                            </div>
-                                        )}
-                                        <div className="absolute bottom-0 left-0 right-0 h-6 flex items-center justify-center pointer-events-none bg-gradient-to-t from-black/40 to-transparent">
-                                            <Camera className="w-3 h-3 text-white" />
-                                        </div>
-                                    </button>
-                                    <div className="flex-1 min-w-0">
-                                        <h2 className="text-lg font-bold !text-white truncate">{user?.name}</h2>
-                                        <p className="text-xs !text-white/80 truncate">{user?.email}</p>
-                                    </div>
-                                </div>
-                                {/* Actions at bottom of card */}
-                                <div className="mt-4 flex gap-2">
-                                    <button
-                                        onClick={() => {
-                                            restartTour();
-                                            router.push('/');
-                                        }}
-                                        className="flex-1 flex items-center justify-center gap-2 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-bold text-white/90 transition-colors"
-                                    >
-                                        <RotateCcw className="w-4 h-4" />
-                                        Repetir Tour
-                                    </button>
-                                    <button
-                                        onClick={handleLogoutClick}
-                                        className="flex-1 flex items-center justify-center gap-2 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-bold text-white/90 transition-colors"
-                                    >
-                                        <LogOut className="w-4 h-4" />
-                                        Cerrar sesión
-                                    </button>
-                                </div>
-                            </div>
+            {/* Aviso flotante (no desplaza el contenido) */}
+            <AnimatePresence>
+                {message && (
+                    <motion.div
+                        key={message.text}
+                        initial={{ opacity: 0, y: -12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -12 }}
+                        role="status"
+                        className={`fixed left-1/2 -translate-x-1/2 top-[calc(var(--mobile-header-height)+0.75rem)] md:top-24 z-[150] flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg text-sm font-semibold max-w-[calc(100%-2rem)] ${
+                            message.type === 'success' ? 'bg-[#223945] text-white' : 'bg-red-600 text-white'
+                        }`}
+                    >
+                        {message.type === 'success' ? <CheckCircle className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+                        <span className="truncate">{message.text}</span>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
+                className="relative w-full max-w-5xl h-full md:h-auto md:max-h-full md:min-h-[560px] flex flex-col md:flex-row bg-white/85 backdrop-blur-xl rounded-3xl border border-white/70 shadow-[0_24px_60px_-20px_rgba(34,57,69,0.35)] overflow-hidden"
+            >
+                <div aria-hidden="true" className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300 z-10" />
+
+                {/* ── Cabecera móvil ── */}
+                <div className="md:hidden shrink-0 px-4 pt-5 pb-3">
+                    <div className="flex items-center gap-3">
+                        {avatar('sm')}
+                        <div className="flex-1 min-w-0">
+                            <h1 className="text-lg font-extrabold text-[#223945] leading-tight truncate">{user?.name}</h1>
+                            <p className="text-xs text-neutral-500 truncate">{user?.email}</p>
                         </div>
+                        <button
+                            onClick={handleLogoutClick}
+                            aria-label="Cerrar sesión"
+                            className="shrink-0 w-10 h-10 rounded-xl bg-red-50 text-red-500 flex items-center justify-center active:scale-95 transition-transform"
+                        >
+                            <LogOut className="w-[18px] h-[18px]" />
+                        </button>
+                    </div>
+                </div>
 
-                        {/* Scrollable Tabs - mobile */}
-                        <div className="flex border-y border-neutral-100 bg-white overflow-x-auto scrollbar-none">
-                            {([
-                                { key: 'profile',     icon: <User className="w-4 h-4" />,    label: 'Perfil',      badge: 0 },
-                                { key: 'security',    icon: <Lock className="w-4 h-4" />,    label: 'Seguridad',   badge: 0 },
-                                { key: 'favorites',   icon: <Heart className="w-4 h-4" />,   label: 'Favoritos',   badge: favoritos.length },
-                                { key: 'searches',    icon: <Bookmark className="w-4 h-4" />,label: 'Búsquedas',   badge: savedSearches.length },
-                                { key: 'fp-analysis', icon: <Compass className="w-4 h-4" />, label: 'Mi FP',       badge: fpResult ? 1 : 0 },
-                            ] as const).map(tab => (
+                {/* Pestañas móvil: control segmentado */}
+                <div className="md:hidden shrink-0 px-3 pb-2">
+                    <div role="tablist" className="flex p-1 rounded-2xl bg-[#223945]/[0.06]">
+                        {TABS.map(t => {
+                            const active = activeTab === t.key;
+                            return (
                                 <button
-                                    key={tab.key}
-                                    onClick={() => setActiveTab(tab.key)}
-                                    className={`relative flex-1 min-w-[64px] flex flex-col items-center justify-center gap-1 py-3 text-[10px] font-bold transition-all border-b-2 shrink-0 ${activeTab === tab.key
-                                        ? 'border-[#223945] text-[#223945]'
-                                        : 'border-transparent text-neutral-400'
+                                    key={t.key}
+                                    role="tab"
+                                    aria-selected={active}
+                                    onClick={() => setActiveTab(t.key)}
+                                    className={`flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-xl text-[10px] font-bold transition-all ${
+                                        active ? 'bg-white text-[#223945] shadow-sm' : 'text-neutral-500'
                                     }`}
                                 >
-                                    {tab.icon}
-                                    <span>{tab.label}</span>
-                                    {tab.badge > 0 && (
-                                        <span className="absolute top-1.5 right-1/4 w-4 h-4 flex items-center justify-center text-[8px] bg-[#223945] text-white rounded-full">{tab.badge}</span>
-                                    )}
+                                    <span className="relative">
+                                        <t.icon className={`w-4 h-4 ${active ? 'text-blue-600' : ''}`} />
+                                        {t.count > 0 && (
+                                            <span className="absolute -top-1.5 -right-2.5 min-w-4 h-4 px-1 rounded-full bg-[#223945] text-white text-[9px] font-bold flex items-center justify-center ring-2 ring-white">
+                                                {t.count}
+                                            </span>
+                                        )}
+                                    </span>
+                                    {t.label}
                                 </button>
-                            ))}
-                        </div>
-                        <input
-                            type="file"
-                            ref={fileInputRef}
-                            className="hidden"
-                            accept="image/png, image/jpeg, image/jpg"
-                            onChange={handlePhotoUpload}
-                        />
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* ── Lateral escritorio ── */}
+                <aside className="hidden md:flex md:w-72 lg:w-80 shrink-0 flex-col border-r border-neutral-100 bg-white/60 p-6 pt-9">
+                    <div className="flex flex-col items-center text-center">
+                        {avatar('lg')}
+                        <h1 className="mt-4 text-xl font-extrabold text-[#223945] leading-tight">{user?.name}</h1>
+                        <p className="text-sm text-neutral-500 truncate max-w-full">{user?.email}</p>
+                        {fpLabel && (
+                            <span className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold ring-1 ring-blue-100">
+                                <Sparkles className="w-3 h-3" />
+                                {fpLabel}
+                            </span>
+                        )}
                     </div>
 
-                    <div className="md:flex md:min-h-[600px]">
-                        {/* Sidebar - Desktop Only */}
-                        <div className="hidden md:block md:w-1/3 bg-white p-8 border-r border-neutral-100 relative">
-                            {/* Avatar Section */}
-                            <div className="text-center mb-8 relative">
-                                <div className="relative inline-block group">
-                                    <div className="absolute inset-0 bg-[#223945] rounded-full blur opacity-20 group-hover:opacity-30 transition-opacity"></div>
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPhotoMenu(true)}
-                                        className="relative z-10 rounded-full block overflow-hidden"
-                                        title="Cambiar foto"
-                                    >
-                                        {user?.foto_perfil ? (
-                                            <img
-                                                src={user.foto_perfil}
-                                                alt={user.name}
-                                                className="w-28 h-28 rounded-full object-cover border-4 border-white shadow-xl bg-white"
-                                                onError={() => setUser(prev => prev ? { ...prev, foto_perfil: undefined } : null)}
+                    <nav className="mt-6 space-y-1">
+                        {TABS.map(t => {
+                            const active = activeTab === t.key;
+                            return (
+                                <button
+                                    key={t.key}
+                                    onClick={() => setActiveTab(t.key)}
+                                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                                        active
+                                            ? 'bg-gradient-to-r from-[#223945] to-blue-700 text-white shadow-md shadow-[#223945]/20'
+                                            : 'text-neutral-600 hover:bg-[#223945]/[0.05] hover:text-[#223945]'
+                                    }`}
+                                >
+                                    <t.icon className="w-4 h-4" />
+                                    <span className="flex-1 text-left">{t.label === 'Mi FP' ? 'Mi análisis FP' : t.label}</span>
+                                    {t.count > 0 && (
+                                        <span className={`min-w-5 h-5 px-1.5 rounded-full text-[11px] flex items-center justify-center ${active ? 'bg-white/20' : 'bg-neutral-100 text-neutral-500'}`}>
+                                            {t.count}
+                                        </span>
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </nav>
+
+                    <div className="mt-auto pt-4 border-t border-neutral-100 space-y-1">
+                        <button
+                            onClick={() => { restartTour(); router.push('/'); }}
+                            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-neutral-600 hover:bg-[#223945]/[0.05] hover:text-[#223945] transition-colors"
+                        >
+                            <RotateCcw className="w-4 h-4" />
+                            Ver la guía de nuevo
+                        </button>
+                        <button
+                            onClick={handleLogoutClick}
+                            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-red-500 hover:bg-red-50 transition-colors"
+                        >
+                            <LogOut className="w-4 h-4" />
+                            Cerrar sesión
+                        </button>
+                    </div>
+                </aside>
+
+                {/* ── Contenido ── */}
+                <section className="flex-1 min-h-0 flex flex-col">
+                    <header className="hidden md:block shrink-0 px-8 pt-9 pb-4">
+                        <h2 className="text-2xl font-extrabold tracking-tight text-[#223945]">{current.title}</h2>
+                        <p className="text-sm text-neutral-500 mt-0.5">{current.subtitle}</p>
+                    </header>
+
+                    <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 pb-4 pt-1 md:px-8 md:pb-8">
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={activeTab}
+                                initial={{ opacity: 0, y: 8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -8 }}
+                                transition={{ duration: 0.18 }}
+                            >
+                                {activeTab === 'profile' && (
+                                    <div className="space-y-4 max-w-lg">
+                                        <form onSubmit={handleUpdateProfile}>
+                                            <AuthField
+                                                id="profile-name"
+                                                label="Nombre"
+                                                icon={User}
+                                                type="text"
+                                                value={name}
+                                                onChange={e => setName(e.target.value)}
+                                                autoComplete="name"
+                                                labelAction={name !== user?.name && name.trim() ? (
+                                                    <button type="submit" className="text-xs font-bold text-blue-600 hover:text-blue-700">Guardar cambios</button>
+                                                ) : undefined}
                                             />
-                                        ) : (
-                                            <div className="w-28 h-28 rounded-full bg-[#223945] text-white flex items-center justify-center text-4xl font-bold shadow-xl border-4 border-white">
-                                                {user?.name?.charAt(0)}
-                                            </div>
-                                        )}
-                                        <div className="absolute bottom-0 left-0 right-0 h-10 flex items-center justify-center pointer-events-none bg-gradient-to-t from-black/40 to-transparent">
-                                            <Camera className="w-4 h-4 text-white" />
-                                        </div>
-                                    </button>
-                                    <input
-                                        type="file"
-                                        ref={fileInputRef}
-                                        className="hidden"
-                                        accept="image/png, image/jpeg, image/jpg"
-                                        onChange={handlePhotoUpload}
-                                    />
-                                </div>
-                                <h2 className="mt-5 text-xl font-bold text-[#223945]">{user?.name}</h2>
-                                <p className="text-sm text-neutral-500 font-medium">{user?.email}</p>
-                            </div>
-
-                            {/* Navigation Menu */}
-                            <nav className="space-y-2">
-                                <button
-                                    onClick={() => setActiveTab('profile')}
-                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'profile'
-                                            ? 'bg-[#223945] text-white shadow-md shadow-[#223945]/20'
-                                            : 'text-neutral-500 hover:bg-neutral-50 hover:text-[#223945]'
-                                        }`}
-                                >
-                                    <User className="w-4 h-4" />
-                                    <span>Perfil Personal</span>
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab('security')}
-                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'security'
-                                            ? 'bg-[#223945] text-white shadow-md shadow-[#223945]/20'
-                                            : 'text-neutral-500 hover:bg-neutral-50 hover:text-[#223945]'
-                                        }`}
-                                >
-                                    <Lock className="w-4 h-4" />
-                                    <span>Seguridad</span>
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab('favorites')}
-                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'favorites'
-                                            ? 'bg-[#223945] text-white shadow-md shadow-[#223945]/20'
-                                            : 'text-neutral-500 hover:bg-neutral-50 hover:text-[#223945]'
-                                        }`}
-                                >
-                                    <Heart className="w-4 h-4" />
-                                    <span>Mis Favoritos</span>
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab('searches')}
-                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'searches'
-                                            ? 'bg-[#223945] text-white shadow-md shadow-[#223945]/20'
-                                            : 'text-neutral-500 hover:bg-neutral-50 hover:text-[#223945]'
-                                        }`}
-                                >
-                                    <Bookmark className="w-4 h-4" />
-                                    <span>Búsquedas Guardadas</span>
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab('fp-analysis')}
-                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'fp-analysis'
-                                            ? 'bg-[#223945] text-white shadow-md shadow-[#223945]/20'
-                                            : 'text-neutral-500 hover:bg-neutral-50 hover:text-[#223945]'
-                                        }`}
-                                >
-                                    <Compass className="w-4 h-4" />
-                                    <span>Mi análisis FP</span>
-                                </button>
-
-                                <div className="pt-6 mt-4 border-t border-neutral-100">
-                                    <button
-                                        onClick={() => {
-                                            restartTour();
-                                            router.push('/');
-                                        }}
-                                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-blue-600 hover:bg-blue-50 transition-colors"
-                                    >
-                                        <RotateCcw className="w-4 h-4" />
-                                        <span>Repetir Tour</span>
-                                    </button>
-                                </div>
-
-                                <div className="pt-2">
-                                    <button onClick={handleLogoutClick} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 transition-colors">
-                                        <LogOut className="w-4 h-4" /> Cerrar Sesión
-                                    </button>
-                                </div>
-                            </nav>
-                        </div>
-
-                        {/* Content Area */}
-                        <div className="md:w-2/3 p-4 sm:p-6 md:p-8 lg:p-12 bg-white/50">
-                            {message && (
-                                <div className={`mb-6 sm:mb-8 p-3 sm:p-4 rounded-xl flex items-center gap-3 text-xs sm:text-sm font-medium animate-in fade-in slide-in-from-top-2 ${message.type === 'success'
-                                        ? 'bg-green-50 text-green-700 border border-green-100'
-                                        : 'bg-red-50 text-red-700 border border-red-100'
-                                    }`}>
-                                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${message.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                                    {message.text}
-                                </div>
-                            )}
-
-                            {activeTab === 'profile' && (
-                                <div className="space-y-5 sm:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                    <div className="mb-4 sm:mb-6">
-                                        <h3 className="text-xl sm:text-2xl font-bold text-[#223945]">Información Personal</h3>
-                                        <p className="text-neutral-500 text-xs sm:text-sm mt-1">Gestiona tu información básica y ubicación.</p>
+                                        </form>
+                                        <AuthField
+                                            id="profile-email"
+                                            label="Correo electrónico"
+                                            icon={Mail}
+                                            type="email"
+                                            value={user?.email || ''}
+                                            disabled
+                                            readOnly
+                                        />
+                                        <button
+                                            onClick={() => { restartTour(); router.push('/'); }}
+                                            className="md:hidden w-full flex items-center gap-3 p-3 rounded-2xl bg-white border border-neutral-200 text-left active:scale-[0.99] transition-transform"
+                                        >
+                                            <span className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                                                <RotateCcw className="w-4 h-4" />
+                                            </span>
+                                            <span className="flex-1">
+                                                <span className="block text-sm font-bold text-[#223945]">Ver la guía de nuevo</span>
+                                                <span className="block text-xs text-neutral-500">Repasa cómo usar EduFinder en 1 minuto</span>
+                                            </span>
+                                            <ArrowRight className="w-4 h-4 text-neutral-400" />
+                                        </button>
                                     </div>
+                                )}
 
-                                    <form onSubmit={handleUpdateProfile} className="space-y-6">
-                                        <div className="grid gap-6">
-                                            <div className="space-y-2">
-                                                <label className="text-xs font-bold text-[#223945] uppercase tracking-wider ml-1">Nombre</label>
-                                                <div className="relative">
-                                                    <input
-                                                        type="text"
-                                                        value={name}
-                                                        onChange={e => setName(e.target.value)}
-                                                        className="w-full px-4 py-3 rounded-xl bg-neutral-50 border-2 border-transparent focus:bg-white focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 outline-none transition-all font-medium text-neutral-700 pr-24"
-                                                    />
-                                                    {name !== user?.name && name.trim() && (
-                                                        <button
-                                                            type="submit"
-                                                            className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-[#223945] text-white text-xs font-bold rounded-lg hover:bg-[#1a2c36] transition-colors"
-                                                        >
-                                                            Guardar
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-xs font-bold text-[#223945] uppercase tracking-wider ml-1">Correo Electrónico</label>
-                                                <input
-                                                    type="email"
-                                                    value={user?.email}
-                                                    disabled
-                                                    className="w-full px-4 py-3 rounded-xl bg-neutral-100 border-2 border-transparent text-neutral-500 font-medium cursor-not-allowed"
-                                                />
-                                            </div>
+                                {activeTab === 'security' && (
+                                    <form onSubmit={handleUpdatePassword} className="space-y-3.5 max-w-lg">
+                                        <AuthField
+                                            id="current-password"
+                                            label="Contraseña actual"
+                                            icon={Lock}
+                                            type="password"
+                                            autoComplete="current-password"
+                                            value={passwordData.current}
+                                            onChange={e => { setPasswordData({ ...passwordData, current: e.target.value }); setPasswordFailed(false); }}
+                                        />
+                                        <div className="grid sm:grid-cols-2 gap-3.5">
+                                            <AuthField
+                                                id="new-password"
+                                                label="Nueva contraseña"
+                                                icon={Lock}
+                                                type="password"
+                                                autoComplete="new-password"
+                                                value={passwordData.new}
+                                                onChange={e => setPasswordData({ ...passwordData, new: e.target.value })}
+                                            />
+                                            <AuthField
+                                                id="confirm-password"
+                                                label="Repite la nueva"
+                                                icon={Lock}
+                                                type="password"
+                                                autoComplete="new-password"
+                                                value={passwordData.confirm}
+                                                onChange={e => setPasswordData({ ...passwordData, confirm: e.target.value })}
+                                            />
                                         </div>
-                                    </form>
-
-                                </div>
-                            )}
-
-                            {activeTab === 'security' && (
-                                <div className="space-y-5 sm:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                    <div className="mb-4 sm:mb-6">
-                                        <h3 className="text-xl sm:text-2xl font-bold text-[#223945]">Seguridad</h3>
-                                        <p className="text-neutral-500 text-xs sm:text-sm mt-1">Gestiona tu contraseña y acceso.</p>
-                                    </div>
-
-                                    <form onSubmit={handleUpdatePassword} className="space-y-5">
-                                        <div className="space-y-2">
-                                            <label className="text-xs font-bold text-[#223945] uppercase tracking-wider ml-1">Contraseña Actual</label>
-                                            <div className="relative">
-                                                <input
-                                                    type={showCurrentPass ? "text" : "password"}
-                                                    value={passwordData.current}
-                                                    onChange={e => { setPasswordData({ ...passwordData, current: e.target.value }); setPasswordFailed(false); }}
-                                                    className="w-full px-4 py-3 rounded-xl bg-neutral-50 border-2 border-transparent focus:bg-white focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 outline-none transition-all font-medium text-neutral-700 pr-10"
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setShowCurrentPass(!showCurrentPass)}
-                                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-[#223945] transition-colors"
-                                                >
-                                                    {showCurrentPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div className="grid md:grid-cols-2 gap-5">
-                                            <div className="space-y-2">
-                                                <label className="text-xs font-bold text-[#223945] uppercase tracking-wider ml-1">Nueva Contraseña</label>
-                                                <div className="relative">
-                                                    <input
-                                                        type={showNewPass ? "text" : "password"}
-                                                        value={passwordData.new}
-                                                        onChange={e => setPasswordData({ ...passwordData, new: e.target.value })}
-                                                        className="w-full px-4 py-3 rounded-xl bg-neutral-50 border-2 border-transparent focus:bg-white focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 outline-none transition-all font-medium text-neutral-700 pr-10"
-                                                    />
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setShowNewPass(!showNewPass)}
-                                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-[#223945] transition-colors"
-                                                    >
-                                                        {showNewPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-xs font-bold text-[#223945] uppercase tracking-wider ml-1">Confirmar Nueva</label>
-                                                <div className="relative">
-                                                    <input
-                                                        type={showConfirmPass ? "text" : "password"}
-                                                        value={passwordData.confirm}
-                                                        onChange={e => setPasswordData({ ...passwordData, confirm: e.target.value })}
-                                                        className="w-full px-4 py-3 rounded-xl bg-neutral-50 border-2 border-transparent focus:bg-white focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 outline-none transition-all font-medium text-neutral-700 pr-10"
-                                                    />
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setShowConfirmPass(!showConfirmPass)}
-                                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-[#223945] transition-colors"
-                                                    >
-                                                        {showConfirmPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-
-
-
-                                        {/* Password Requirements Indicator */}
-                                        <div className="bg-neutral-50 p-4 rounded-xl border border-neutral-100 grid grid-cols-2 gap-x-4 gap-y-2">
-                                            {passwordRequirements.map((req, idx) => (
-                                                <div key={idx} className={`flex items-center gap-2 text-xs font-bold transition-colors ${req.met ? 'text-green-600' : 'text-neutral-400'}`}>
-                                                    {req.met ? <CheckCircle className="w-3.5 h-3.5" /> : <div className="w-3.5 h-3.5 rounded-full border-2 border-neutral-300" />}
+                                        <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 px-1">
+                                            {passwordRequirements.map(req => (
+                                                <div key={req.text} className={`flex items-center gap-1.5 text-xs font-semibold transition-colors ${req.met ? 'text-emerald-600' : 'text-neutral-400'}`}>
+                                                    {req.met ? <CheckCircle className="w-3.5 h-3.5 shrink-0" /> : <span className="w-3.5 h-3.5 rounded-full border-2 border-neutral-300 shrink-0" />}
                                                     {req.text}
                                                 </div>
                                             ))}
                                         </div>
-
-                                        <div className="pt-2 flex flex-col gap-3 items-start">
+                                        <button
+                                            type="submit"
+                                            disabled={!passwordData.current || !isPasswordValid || updatingPassword}
+                                            className="w-full sm:w-auto sm:px-8 h-11 rounded-xl bg-gradient-to-r from-[#223945] via-[#2d4a5e] to-blue-600 text-white text-sm font-bold shadow-lg shadow-[#223945]/20 flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:shadow-none enabled:hover:-translate-y-0.5"
+                                        >
+                                            {updatingPassword && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                                            {updatingPassword ? 'Actualizando…' : 'Actualizar contraseña'}
+                                        </button>
+                                        {passwordFailed && (
                                             <button
-                                                type="submit"
-                                                disabled={!passwordData.current || !isPasswordValid || updatingPassword}
-                                                className={`bg-[#223945] text-white px-6 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all ${
-                                                    (!passwordData.current || !isPasswordValid || updatingPassword)
-                                                        ? 'opacity-50 cursor-not-allowed'
-                                                        : 'hover:bg-[#1a2c36] hover:-translate-y-0.5'
-                                                }`}
+                                                type="button"
+                                                onClick={async () => {
+                                                    if (sendingRecovery) return;
+                                                    setSendingRecovery(true);
+                                                    try {
+                                                        await api.post('/forgot-password', { email: user?.email });
+                                                        setPasswordFailed(false);
+                                                        setMessage({ text: 'Email de recuperación enviado a ' + user?.email, type: 'success' });
+                                                    } catch {
+                                                        setMessage({ text: 'Error al enviar email', type: 'error' });
+                                                    } finally {
+                                                        setSendingRecovery(false);
+                                                    }
+                                                }}
+                                                disabled={sendingRecovery}
+                                                className="block text-xs font-semibold text-blue-600 hover:text-blue-700"
                                             >
-                                                {updatingPassword ? (
-                                                    <>
-                                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                        Actualizando…
-                                                    </>
-                                                ) : (
-                                                    'Actualizar Contraseña'
-                                                )}
+                                                {sendingRecovery ? 'Enviando enlace…' : '¿No la recuerdas? Recibir enlace de recuperación →'}
                                             </button>
-
-                                            {passwordFailed && (
-                                                <button
-                                                    type="button"
-                                                    onClick={async () => {
-                                                        if (sendingRecovery) return;
-                                                        setSendingRecovery(true);
-                                                        try {
-                                                            await api.post('/forgot-password', { email: user?.email });
-                                                            setPasswordFailed(false);
-                                                            setMessage({ text: 'Email de recuperación enviado a ' + user?.email, type: 'success' });
-                                                        } catch (e) {
-                                                            setMessage({ text: 'Error al enviar email', type: 'error' });
-                                                        } finally {
-                                                            setSendingRecovery(false);
-                                                        }
-                                                    }}
-                                                    disabled={sendingRecovery}
-                                                    className="text-xs text-neutral-400 hover:text-[#223945] transition-colors animate-in fade-in slide-in-from-top-1 duration-300 w-fit"
-                                                >
-                                                    {sendingRecovery ? 'Enviando enlace…' : '¿Olvidaste tu contraseña? Recibir enlace de recuperación →'}
-                                                </button>
-                                            )}
-                                        </div>
+                                        )}
                                     </form>
-                                </div>
-                            )}
+                                )}
 
-                            {activeTab === 'favorites' && (
-                                <div className="space-y-5 sm:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                    <div className="flex items-start sm:items-center justify-between gap-3 mb-4 sm:mb-6">
-                                        <div>
-                                            <h3 className="text-xl sm:text-2xl font-bold text-[#223945]">Mis Favoritos</h3>
-                                            <p className="text-neutral-500 text-xs sm:text-sm mt-1">Centros guardados para consultar.</p>
-                                        </div>
-                                        {favoritos.length > 0 && (
-                                            <span className="text-[10px] sm:text-xs font-bold text-white bg-gradient-to-r from-[#223945] to-[#345165] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full shadow-sm whitespace-nowrap">
-                                                {favoritos.length} {favoritos.length === 1 ? 'centro' : 'centros'}
-                                            </span>
-                                        )}
-                                    </div>
-
-                            {favoritos.length > 0 ? (
-                                        <div className="grid gap-4 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-neutral-200 hover:scrollbar-thumb-neutral-300">
-                                            {favoritos.map(fav => (
-                                                <div key={fav.id} className="group relative bg-white border border-neutral-100 rounded-2xl shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-[#223945]/30 transition-all overflow-hidden">
-                                                    {/* Gradient accent on hover */}
-                                                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300 opacity-0 group-hover:opacity-100 transition-opacity" />
-
-                                                    <div className="p-4 sm:p-5">
-                                                        {/* Header: Icon + Name + Heart button */}
-                                                        <div className="flex items-start gap-3 sm:gap-4 mb-4">
-                                                            <div className="bg-gradient-to-br from-[#223945] to-[#345165] p-2.5 sm:p-3 rounded-xl text-white shadow-sm flex-shrink-0">
-                                                                <Heart className="w-5 h-5 sm:w-6 sm:h-6 fill-white" />
-                                                            </div>
-                                                            <div className="flex-1 min-w-0 pr-8">
-                                                                <h4 className="font-bold text-neutral-900 text-base sm:text-lg group-hover:text-[#223945] transition-colors leading-tight">{fav.centro.nombre}</h4>
-                                                                <p className="text-xs sm:text-sm text-neutral-500 font-medium mt-1">{fav.centro.direccion || 'Sin dirección'}</p>
-                                                            </div>
-                                                            {/* Heart Remove Button */}
-                                                            <button
-                                                                onClick={async (e) => {
-                                                                    e.preventDefault();
-                                                                    try {
-                                                                        await api.delete(`/favoritos/${fav.centro.id}`);
-                                                                        setFavoritos(prev => prev.filter(f => f.id !== fav.id));
-                                                                        setMessage({ text: 'Centro eliminado de favoritos', type: 'success' });
-                                                                    } catch (error) {
-                                                                        setMessage({ text: 'Error al eliminar favorito', type: 'error' });
-                                                                    }
-                                                                }}
-                                                                className="absolute top-4 right-4 p-1.5 rounded-full bg-white/90 backdrop-blur-sm shadow-sm border border-neutral-100 hover:bg-red-50 text-red-500 hover:text-red-600 transition-colors"
-                                                                title="Eliminar de favoritos"
-                                                            >
-                                                                <Heart className="w-4 h-4 fill-current" />
-                                                            </button>
-                                                        </div>
-
-                                                        {/* Actions - Full width below */}
-                                                        <div className="flex gap-2">
-                                                            <Link
-                                                                href={`/centro/${fav.centro.id}`}
-                                                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-neutral-200 text-neutral-600 rounded-xl text-sm font-bold shadow-sm hover:bg-neutral-50 hover:border-[#223945]/20 transition-all hover:-translate-y-0.5"
-                                                            >
-                                                                <Eye className="w-4 h-4" />
-                                                                Ver más
-                                                            </Link>
-                                                            <Link
-                                                                href={`/mapa?centro=${fav.centro.id}`}
-                                                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#223945] text-white rounded-xl text-sm font-bold shadow-md shadow-[#223945]/10 hover:shadow-lg hover:shadow-[#223945]/20 hover:-translate-y-0.5 transition-all"
-                                                            >
-                                                                <MapPin className="w-4 h-4" />
-                                                                Localizar
-                                                            </Link>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
+                                {activeTab === 'favorites' && (
+                                    favoritos.length > 0 ? (
+                                        <ul className="space-y-2">
+                                            {favoritos.map(fav => {
+                                                const publico = fav.centro.naturaleza?.toUpperCase().includes('PÚBLICO');
+                                                return (
+                                                    <li key={fav.id} className="flex items-center gap-3 p-2.5 pr-2 rounded-2xl bg-white border border-neutral-200/80 hover:border-[#223945]/25 hover:shadow-md transition-all">
+                                                        <Link href={`/centro/${fav.centro.id}`} className="flex items-center gap-3 flex-1 min-w-0">
+                                                            <span className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${publico ? 'bg-blue-50 text-blue-600' : 'bg-amber-50 text-amber-600'}`}>
+                                                                <Building2 className="w-5 h-5" />
+                                                            </span>
+                                                            <span className="min-w-0">
+                                                                <span className="block text-[15px] font-bold text-[#111827] leading-tight truncate">{centroName(fav.centro)}</span>
+                                                                <span className="block text-xs text-neutral-500 truncate mt-0.5">
+                                                                    {centroTipo(fav.centro.denominacion_generica)} · {centroLugar(fav.centro)}
+                                                                </span>
+                                                            </span>
+                                                        </Link>
+                                                        <Link
+                                                            href={`/mapa?centro=${fav.centro.id}`}
+                                                            aria-label="Ver en el mapa"
+                                                            className="w-9 h-9 rounded-xl bg-neutral-50 text-neutral-500 hover:text-[#223945] hover:bg-neutral-100 flex items-center justify-center shrink-0 transition-colors"
+                                                        >
+                                                            <MapPin className="w-4 h-4" />
+                                                        </Link>
+                                                        <button
+                                                            onClick={async () => {
+                                                                try {
+                                                                    await api.delete(`/favoritos/${fav.centro.id}`);
+                                                                    setFavoritos(prev => prev.filter(f => f.id !== fav.id));
+                                                                    setMessage({ text: 'Centro eliminado de favoritos', type: 'success' });
+                                                                } catch {
+                                                                    setMessage({ text: 'Error al eliminar favorito', type: 'error' });
+                                                                }
+                                                            }}
+                                                            aria-label="Quitar de favoritos"
+                                                            className="w-9 h-9 rounded-xl bg-rose-50 text-rose-500 hover:bg-rose-100 flex items-center justify-center shrink-0 transition-colors"
+                                                        >
+                                                            <Heart className="w-4 h-4 fill-current" />
+                                                        </button>
+                                                    </li>
+                                                );
+                                            })}
+                                        </ul>
                                     ) : (
-                                        <div className="text-center py-12 sm:py-16 bg-neutral-50/50 rounded-2xl border border-dashed border-neutral-200">
-                                            <Heart className="w-16 h-16 mx-auto text-neutral-300 mb-4" />
-                                            <h4 className="text-lg font-bold text-neutral-900">No tienes favoritos</h4>
-                                            <p className="text-neutral-500 text-sm mt-1 max-w-sm mx-auto">Guarda centros para no perderlos y recibir sugerencias personalizadas basadas en tus intereses.</p>
-                                            <a href="/" className="inline-block mt-6 bg-[#223945] text-white px-6 py-2.5 rounded-full font-bold text-sm shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all">
-                                                Ir a Buscar
-                                            </a>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
+                                        <EmptyState
+                                            icon={Heart}
+                                            title="Aún no tienes favoritos"
+                                            text="Guarda centros con el corazón para tenerlos a mano y recibir recomendaciones."
+                                            href="/"
+                                            cta="Buscar centros"
+                                        />
+                                    )
+                                )}
 
-                            {activeTab === 'searches' && (
-                                <div className="space-y-5 sm:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                    <div className="flex items-start sm:items-center justify-between gap-3 mb-4 sm:mb-6">
-                                        <div>
-                                            <h3 className="text-xl sm:text-2xl font-bold text-[#223945]">Búsquedas Guardadas</h3>
-                                            <p className="text-neutral-500 text-xs sm:text-sm mt-1">Accede rápido a tus filtros favoritos.</p>
-                                        </div>
-                                        {savedSearches.length > 0 && (
-                                            <span className="text-[10px] sm:text-xs font-bold text-white bg-gradient-to-r from-[#223945] to-[#345165] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full shadow-sm whitespace-nowrap">
-                                                {savedSearches.length} {savedSearches.length === 1 ? 'búsqueda' : 'búsquedas'}
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    {savedSearches.length > 0 ? (
-                                        <div className="grid gap-4 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-neutral-200 hover:scrollbar-thumb-neutral-300">
+                                {activeTab === 'searches' && (
+                                    savedSearches.length > 0 ? (
+                                        <ul className="space-y-2">
                                             {savedSearches.map(search => {
                                                 const filterItems = formatFilters(search.filters);
-                                                const filterCount = getFilterCount(search.filters);
-
                                                 return (
-                                                    <div key={search.id} className="group relative bg-white border border-neutral-100 rounded-2xl shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-[#223945]/30 transition-all overflow-hidden">
-                                                        {/* Header with gradient accent */}
-                                                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300 opacity-0 group-hover:opacity-100 transition-opacity" />
-
-                                                        <div className="p-4 sm:p-5 pr-12 sm:pr-14">
-                                                            {/* Title and meta row */}
-                                                            <div className="flex items-start gap-3 mb-3">
-                                                                <div className="bg-gradient-to-br from-[#223945] to-[#345165] p-2.5 rounded-xl text-white shadow-sm flex-shrink-0">
-                                                                    <Bookmark className="w-5 h-5" />
-                                                                </div>
-                                                                <div className="flex-1 min-w-0">
-                                                                    <h4 className="font-bold text-neutral-900 text-base sm:text-lg group-hover:text-[#223945] transition-colors break-words leading-tight">
-                                                                        {search.name}
-                                                                    </h4>
-                                                                    <div className="flex items-center gap-3 mt-1.5 text-xs text-neutral-400">
-                                                                        <span className="flex items-center gap-1">
-                                                                            <Calendar className="w-3 h-3" />
-                                                                            {formatDate(search.created_at)}
-                                                                        </span>
-                                                                        <span className="flex items-center gap-1">
-                                                                            <Filter className="w-3 h-3" />
-                                                                            {filterCount} {filterCount === 1 ? 'filtro' : 'filtros'}
-                                                                        </span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-
-                                                            {/* Search query if exists */}
-                                                            {search.filters.q && (
-                                                                <div className="mb-3 flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-lg border border-blue-100">
-                                                                    <Search className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
-                                                                    <span className="text-sm text-blue-700 font-medium truncate">"{search.filters.q}"</span>
-                                                                </div>
-                                                            )}
-
-                                                            {/* Filter chips */}
-                                                            {filterItems.length > 0 && (
-                                                                <div className="flex flex-wrap gap-1.5 mb-4">
-                                                                    {filterItems.map((filter, idx) => (
-                                                                        <span
-                                                                            key={idx}
-                                                                            className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium ${
-                                                                                filter.type === 'location'
-                                                                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
-                                                                                    : filter.type === 'education'
-                                                                                    ? 'bg-violet-50 text-violet-700 border border-violet-100'
-                                                                                    : 'bg-neutral-100 text-neutral-600 border border-neutral-200'
-                                                                            }`}
-                                                                        >
-                                                                            {filter.type === 'location' && <MapPin className="w-3 h-3" />}
-                                                                            {filter.type === 'education' && <GraduationCap className="w-3 h-3" />}
-                                                                            {filter.type === 'general' && <Building2 className="w-3 h-3" />}
-                                                                            {filter.label}
+                                                    <li key={search.id} className="flex items-center gap-3 p-2.5 pr-2 rounded-2xl bg-white border border-neutral-200/80 hover:border-[#223945]/25 hover:shadow-md transition-all">
+                                                        <Link href={buildSearchUrl(search.filters)} className="flex items-center gap-3 flex-1 min-w-0">
+                                                            <span className="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                                                                <Bookmark className="w-5 h-5" />
+                                                            </span>
+                                                            <span className="min-w-0 flex-1">
+                                                                <span className="block text-[15px] font-bold text-[#111827] leading-tight truncate">{search.name}</span>
+                                                                <span className="mt-1 flex gap-1 overflow-hidden">
+                                                                    {search.filters.q && (
+                                                                        <span className="shrink-0 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[11px] font-semibold">“{search.filters.q}”</span>
+                                                                    )}
+                                                                    {filterItems.map((f, i) => (
+                                                                        <span key={i} className="shrink-0 px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-600 text-[11px] font-semibold">
+                                                                            {titleCase(f.label)}
                                                                         </span>
                                                                     ))}
-                                                                </div>
-                                                            )}
-
-                                                            {filterItems.length === 0 && !search.filters.q && (
-                                                                <p className="text-xs text-neutral-400 italic mb-4">Sin filtros específicos</p>
-                                                            )}
-
-                                                            {/* Action button */}
-                                                            <Link
-                                                                href={buildSearchUrl(search.filters)}
-                                                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#223945] text-white rounded-xl text-sm font-bold shadow-md shadow-[#223945]/10 hover:shadow-lg hover:shadow-[#223945]/20 hover:-translate-y-0.5 transition-all"
-                                                            >
-                                                                <Search className="w-4 h-4" />
-                                                                Aplicar búsqueda
-                                                            </Link>
-                                                        </div>
-
-                                                        {/* Delete button */}
+                                                                    {filterItems.length === 0 && !search.filters.q && (
+                                                                        <span className="text-[11px] text-neutral-400">{formatDate(search.created_at)}</span>
+                                                                    )}
+                                                                </span>
+                                                            </span>
+                                                        </Link>
                                                         <button
                                                             onClick={() => setSearchToDelete(search)}
-                                                            className="absolute top-3 sm:top-4 right-3 sm:right-4 p-1.5 rounded-full bg-white shadow-sm border border-neutral-100 hover:bg-red-50 text-neutral-400 hover:text-red-500 transition-colors"
-                                                            title="Eliminar búsqueda"
+                                                            aria-label="Eliminar búsqueda"
+                                                            className="w-9 h-9 rounded-xl bg-neutral-50 text-neutral-400 hover:text-red-500 hover:bg-red-50 flex items-center justify-center shrink-0 transition-colors"
                                                         >
                                                             <X className="w-4 h-4" />
                                                         </button>
-                                                    </div>
+                                                    </li>
                                                 );
                                             })}
-                                        </div>
+                                        </ul>
                                     ) : (
-                                        <div className="text-center py-16 bg-neutral-50/50 rounded-2xl border border-dashed border-neutral-200">
-                                            <Bookmark className="w-16 h-16 mx-auto text-neutral-300 mb-4" />
-                                            <h4 className="text-lg font-bold text-neutral-900">No tienes búsquedas guardadas</h4>
-                                            <p className="text-neutral-500 text-sm mt-1 max-w-sm mx-auto">Aplica filtros en la búsqueda y guárdalos para acceder rápidamente.</p>
-                                            <a href="/" className="inline-block mt-6 bg-[#223945] text-white px-6 py-2.5 rounded-full font-bold text-sm shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all">
-                                                Ir a Buscar
-                                            </a>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
+                                        <EmptyState
+                                            icon={Bookmark}
+                                            title="No tienes búsquedas guardadas"
+                                            text="Filtra en el buscador y pulsa el marcador para guardar la búsqueda."
+                                            href="/"
+                                            cta="Ir al buscador"
+                                        />
+                                    )
+                                )}
 
-                            {activeTab === 'fp-analysis' && (
-                                <div className="space-y-5 sm:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                    <div className="flex items-start sm:items-center justify-between gap-3 mb-4 sm:mb-6">
-                                        <div>
-                                            <h3 className="text-xl sm:text-2xl font-bold text-[#223945]">Mi análisis FP</h3>
-                                            <p className="text-neutral-500 text-xs sm:text-sm mt-1">Tu perfil vocacional y recomendaciones guardadas.</p>
-                                        </div>
-                                    </div>
-
-                                    {fpResult ? (
-                                        <div className="space-y-4">
-                                            {/* Perfil card */}
-                                            <div className="bg-gradient-to-br from-[#223945] to-blue-700 rounded-2xl p-5 shadow-lg shadow-blue-900/15">
-                                                <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                                                    Tu perfil detectado
-                                                </p>
-                                                <p className="text-lg font-extrabold mb-3" style={{ color: '#ffffff' }}>
-                                                    {fpResult.userProfile.profileLabel.replace(/^Perfil\s+/i, '').replace(/^./, c => c.toUpperCase())}
-                                                </p>
-                                                <ul className="space-y-2 mb-4">
-                                                    {fpResult.userProfile.profileSentences.map((s, i) => (
-                                                        <li key={i} className="flex items-start gap-2">
-                                                            <span className="text-blue-300 mt-0.5 shrink-0 text-sm">→</span>
-                                                            <span className="text-white text-xs leading-relaxed">{s.charAt(0).toUpperCase() + s.slice(1)}</span>
-                                                        </li>
+                                {activeTab === 'fp-analysis' && (
+                                    fpResult ? (
+                                        <div className="space-y-3">
+                                            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#223945] via-[#24406a] to-blue-700 p-4 shadow-lg shadow-blue-900/20">
+                                                <div aria-hidden="true" className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-blue-400/20 blur-2xl" />
+                                                <p className="relative text-[11px] font-bold uppercase tracking-widest text-blue-200/80">Tu perfil</p>
+                                                <p className="relative text-xl font-extrabold text-white leading-tight">{fpLabel}</p>
+                                                <div className="relative mt-2.5 flex flex-wrap gap-1.5">
+                                                    {fpResult.userProfile.topAttributes.slice(0, 3).map(attr => (
+                                                        <span key={attr} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/15 text-xs font-semibold text-white">
+                                                            {ATTRIBUTE_EMOJIS[attr]} {ATTRIBUTE_LABELS[attr]}
+                                                        </span>
                                                     ))}
-                                                </ul>
-                                                <div className="pt-3 border-t border-white/10">
-                                                    <p className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>
-                                                        Trabajarías mejor en{' '}
-                                                        <span className="text-white font-semibold">{fpResult.userProfile.workEnvironment}</span>.
-                                                    </p>
                                                 </div>
                                             </div>
 
-                                            {/* Matches summary */}
-                                            <div className="space-y-3">
-                                                <p className="text-[11px] font-bold uppercase tracking-widest text-neutral-400">Tus recomendaciones</p>
+                                            <ul className="space-y-2">
                                                 {fpResult.matches.map((match, i) => (
-                                                    <div key={match.family.codigo} className="bg-white border border-neutral-100 rounded-xl p-4 shadow-sm flex items-center gap-4">
-                                                        <div
-                                                            className="w-10 h-10 rounded-xl shrink-0 flex items-center justify-center text-white font-black text-lg"
-                                                            style={{ background: `linear-gradient(135deg, ${match.family.colorFrom}, ${match.family.colorTo})` }}
+                                                    <li key={match.family.codigo}>
+                                                        <Link
+                                                            href={`/?tipo=FP&familia=${encodeURIComponent(match.family.queryParam)}`}
+                                                            className="flex items-center gap-3 p-2.5 pr-3 rounded-2xl bg-white border border-neutral-200/80 hover:border-[#223945]/25 hover:shadow-md transition-all"
                                                         >
-                                                            {i + 1}
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <p className="font-bold text-sm text-neutral-800 truncate">{match.family.nombre}</p>
-                                                            <p className="text-xs text-neutral-500 truncate">{match.justification}</p>
-                                                        </div>
-                                                        <span className="shrink-0 text-base font-black text-[#223945]">{match.score}%</span>
-                                                    </div>
+                                                            <span
+                                                                className="w-11 h-11 rounded-xl shrink-0 flex items-center justify-center text-xl"
+                                                                style={{ background: `linear-gradient(135deg, ${match.family.colorFrom}, ${match.family.colorTo})` }}
+                                                            >
+                                                                {match.family.emoji}
+                                                            </span>
+                                                            <span className="flex-1 min-w-0">
+                                                                <span className="flex items-center gap-1.5">
+                                                                    {i === 0 && <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />}
+                                                                    <span className="text-[15px] font-bold text-[#111827] truncate">{match.family.nombre}</span>
+                                                                </span>
+                                                                <span className="mt-1.5 flex items-center gap-2">
+                                                                    <span className="flex-1 h-1.5 rounded-full bg-neutral-100 overflow-hidden">
+                                                                        <span className="block h-full rounded-full bg-gradient-to-r from-[#223945] to-blue-500" style={{ width: `${match.score}%` }} />
+                                                                    </span>
+                                                                    <span className="text-xs font-extrabold text-[#223945] tabular-nums">{match.score}%</span>
+                                                                </span>
+                                                            </span>
+                                                        </Link>
+                                                    </li>
                                                 ))}
-                                            </div>
+                                            </ul>
 
-                                            {/* Actions */}
-                                            <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                                                <a
+                                            <div className="flex gap-2 pt-1">
+                                                <Link
                                                     href="/descubre-tu-fp"
-                                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-[#223945] text-white rounded-xl text-sm font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all"
+                                                    className="flex-1 h-11 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#223945] via-[#2d4a5e] to-blue-600 text-white text-sm font-bold shadow-lg shadow-[#223945]/20 hover:-translate-y-0.5 transition-all"
                                                 >
-                                                    <Sparkles className="w-4 h-4" />
                                                     Ver análisis completo
-                                                    <ExternalLink className="w-3.5 h-3.5 opacity-70" />
-                                                </a>
+                                                    <ArrowRight className="w-4 h-4" />
+                                                </Link>
                                                 <button
                                                     onClick={handleDeleteFpResult}
                                                     disabled={deletingFpResult}
-                                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 border border-red-200 text-red-500 rounded-xl text-sm font-bold hover:bg-red-50 disabled:opacity-50 transition-all"
+                                                    aria-label="Eliminar análisis"
+                                                    className="w-11 h-11 rounded-xl bg-white border border-neutral-200 text-neutral-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 flex items-center justify-center transition-colors disabled:opacity-50"
                                                 >
-                                                    {deletingFpResult ? (
-                                                        <span className="w-4 h-4 border-2 border-red-300 border-t-red-500 rounded-full animate-spin" />
-                                                    ) : (
-                                                        <X className="w-4 h-4" />
-                                                    )}
-                                                    Eliminar análisis
+                                                    {deletingFpResult
+                                                        ? <span className="w-4 h-4 border-2 border-red-200 border-t-red-500 rounded-full animate-spin" />
+                                                        : <Trash className="w-4 h-4" />}
                                                 </button>
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="text-center py-12 sm:py-16 bg-neutral-50/50 rounded-2xl border border-dashed border-neutral-200">
-                                            <Compass className="w-16 h-16 mx-auto text-neutral-300 mb-4" />
-                                            <h4 className="text-lg font-bold text-neutral-900">No tienes ningún análisis</h4>
-                                            <p className="text-neutral-500 text-sm mt-1 max-w-sm mx-auto">Responde 12 preguntas y descubriremos qué familias profesionales encajan con tu perfil.</p>
-                                            <a
-                                                href="/descubre-tu-fp"
-                                                className="inline-flex items-center gap-2 mt-6 bg-gradient-to-r from-[#223945] to-blue-600 text-white px-6 py-2.5 rounded-full font-bold text-sm shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all"
-                                            >
-                                                Hacer el análisis
-                                                <ArrowRight className="w-4 h-4" />
-                                            </a>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
+                                        <EmptyState
+                                            icon={Compass}
+                                            title="Aún no has hecho tu análisis"
+                                            text="12 preguntas y 3 minutos para descubrir qué FP encaja contigo."
+                                            href="/descubre-tu-fp"
+                                            cta="Descubre tu FP"
+                                        />
+                                    )
+                                )}
+                            </motion.div>
+                        </AnimatePresence>
                     </div>
-                </div>
-            </div>
+                </section>
+            </motion.div>
 
-            {/* Photo Menu — Instagram-style centered modal */}
+            {/* Menú de foto */}
             {showPhotoMenu && (
                 <>
                     <div className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm" onClick={() => setShowPhotoMenu(false)} />
                     <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 pointer-events-none">
-                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xs overflow-hidden pointer-events-auto animate-in zoom-in-95 fade-in duration-200">
+                        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-xs overflow-hidden pointer-events-auto animate-in zoom-in-95 fade-in duration-200">
                             <p className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider text-center pt-4 pb-3 border-b border-neutral-100">
                                 Foto de perfil
                             </p>
@@ -1042,67 +829,22 @@ export default function ProfileContent() {
                 </>
             )}
 
-            {/* Delete Confirmation Modal */}
             {showDeleteConfirm && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-in zoom-in-95 duration-200 border border-neutral-100">
-                        <div className="flex flex-col items-center text-center">
-                            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4 text-red-600">
-                                <AlertCircle className="w-6 h-6" />
-                            </div>
-                            <h3 className="text-lg font-bold text-neutral-900 mb-2">¿Eliminar foto de perfil?</h3>
-                            <p className="text-sm text-neutral-500 mb-6">Esta acción no se puede deshacer. Volverás a tener tus iniciales como avatar.</p>
-
-                            <div className="flex gap-3 w-full">
-                                <button
-                                    onClick={() => setShowDeleteConfirm(false)}
-                                    className="flex-1 px-4 py-2.5 rounded-xl border border-neutral-200 text-neutral-600 font-bold text-sm hover:bg-neutral-50 transition-colors"
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    onClick={confirmDelete}
-                                    className="flex-1 px-4 py-2.5 rounded-xl bg-red-600 text-white font-bold text-sm hover:bg-red-700 shadow-lg shadow-red-600/20 transition-all hover:shadow-red-600/30 hover:-translate-y-0.5"
-                                >
-                                    Eliminar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <ConfirmDialog
+                    title="¿Eliminar foto de perfil?"
+                    text="Volverás a tener tu inicial como avatar."
+                    onCancel={() => setShowDeleteConfirm(false)}
+                    onConfirm={confirmDelete}
+                />
             )}
 
-            {/* Delete Search Confirmation Modal */}
             {searchToDelete && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-in zoom-in-95 duration-200 border border-neutral-100">
-                        <div className="flex flex-col items-center text-center">
-                            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4 text-red-600">
-                                <AlertCircle className="w-6 h-6" />
-                            </div>
-                            <h3 className="text-lg font-bold text-neutral-900 mb-2">¿Eliminar búsqueda guardada?</h3>
-                            <p className="text-sm text-neutral-500 mb-2">
-                                Vas a eliminar <span className="font-semibold text-neutral-700">"{searchToDelete.name}"</span>
-                            </p>
-                            <p className="text-xs text-neutral-400 mb-6">Esta acción no se puede deshacer.</p>
-
-                            <div className="flex gap-3 w-full">
-                                <button
-                                    onClick={() => setSearchToDelete(null)}
-                                    className="flex-1 px-4 py-2.5 rounded-xl border border-neutral-200 text-neutral-600 font-bold text-sm hover:bg-neutral-50 transition-colors"
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    onClick={() => handleDeleteSearch(searchToDelete)}
-                                    className="flex-1 px-4 py-2.5 rounded-xl bg-red-600 text-white font-bold text-sm hover:bg-red-700 shadow-lg shadow-red-600/20 transition-all hover:shadow-red-600/30 hover:-translate-y-0.5"
-                                >
-                                    Eliminar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <ConfirmDialog
+                    title="¿Eliminar búsqueda guardada?"
+                    text={`Vas a eliminar “${searchToDelete.name}”. Esta acción no se puede deshacer.`}
+                    onCancel={() => setSearchToDelete(null)}
+                    onConfirm={() => handleDeleteSearch(searchToDelete)}
+                />
             )}
 
             <LogoutConfirmationModal
@@ -1112,6 +854,68 @@ export default function ProfileContent() {
                 onConfirm={handleLogoutConfirm}
                 isLoggingOut={isLoggingOut}
             />
+        </div>
+    );
+}
+
+// ─── Piezas de presentación ──────────────────────────────────────────────────
+
+function EmptyState({ icon: Icon, title, text, href, cta }: { icon: LucideIcon; title: string; text: string; href: string; cta: string }) {
+    return (
+        <div className="flex flex-col items-center text-center px-6 py-10 rounded-3xl border border-dashed border-neutral-200 bg-white/50">
+            <span className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#223945] to-blue-600 text-white flex items-center justify-center shadow-lg shadow-[#223945]/20">
+                <Icon className="w-6 h-6" />
+            </span>
+            <h3 className="mt-4 text-base font-extrabold text-[#223945]">{title}</h3>
+            <p className="mt-1 text-sm text-neutral-500 max-w-xs">{text}</p>
+            <Link
+                href={href}
+                className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#223945] text-white text-sm font-bold shadow-md hover:-translate-y-0.5 transition-all"
+            >
+                {cta}
+                <ArrowRight className="w-4 h-4" />
+            </Link>
+        </div>
+    );
+}
+
+function ConfirmDialog({ title, text, onCancel, onConfirm }: { title: string; text: string; onCancel: () => void; onConfirm: () => void }) {
+    return (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 animate-in zoom-in-95 duration-200 text-center">
+                <span className="mx-auto w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center mb-4 text-red-500">
+                    <AlertCircle className="w-6 h-6" />
+                </span>
+                <h3 className="text-lg font-extrabold text-[#223945]">{title}</h3>
+                <p className="mt-1.5 text-sm text-neutral-500">{text}</p>
+                <div className="mt-6 flex gap-3">
+                    <button onClick={onCancel} className="flex-1 h-11 rounded-xl border border-neutral-200 text-neutral-600 font-bold text-sm hover:bg-neutral-50 transition-colors">
+                        Cancelar
+                    </button>
+                    <button onClick={onConfirm} className="flex-1 h-11 rounded-xl bg-red-600 text-white font-bold text-sm shadow-lg shadow-red-600/20 hover:bg-red-700 transition-colors">
+                        Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+export function ProfileSkeleton() {
+    return (
+        <div className="bg-brand-gradient h-[calc(100dvh-var(--mobile-header-height)-var(--bottom-nav-height))] md:h-[calc(100dvh-5rem)] p-3 sm:p-4 md:p-8 flex items-stretch md:items-center justify-center">
+            <div className="w-full max-w-5xl h-full md:h-[560px] rounded-3xl bg-white/70 animate-pulse flex flex-col md:flex-row overflow-hidden">
+                <div className="md:w-80 p-6 flex md:flex-col items-center gap-4">
+                    <div className="w-14 h-14 md:w-24 md:h-24 rounded-full bg-neutral-200" />
+                    <div className="space-y-2 md:w-full md:flex md:flex-col md:items-center">
+                        <div className="h-5 w-32 bg-neutral-200 rounded-lg" />
+                        <div className="h-4 w-44 bg-neutral-100 rounded-lg" />
+                    </div>
+                </div>
+                <div className="flex-1 p-6 space-y-3">
+                    {[...Array(3)].map((_, i) => <div key={i} className="h-12 bg-neutral-100 rounded-xl" />)}
+                </div>
+            </div>
         </div>
     );
 }

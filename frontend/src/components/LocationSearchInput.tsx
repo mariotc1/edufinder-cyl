@@ -146,10 +146,10 @@ export default function LocationSearchInput({
     const typingHint = getTypingHint();
 
     return (
-        <div className="flex-1 min-w-0 flex flex-wrap items-center gap-2">
+        <div className="flex-1 min-w-0 flex flex-nowrap items-center gap-2">
             {hasLocation ? (
                 // Estado: Ubicación activa
-                <div className="flex-1 min-w-[140px] flex items-center gap-2 bg-[#223945] text-white px-3 sm:px-4 py-3.5 rounded-xl border border-[#223945] transition-all">
+                <div className="flex-1 min-w-0 flex items-center gap-2 bg-[#223945] text-white px-3 sm:px-4 py-3.5 rounded-xl border border-[#223945] transition-all">
                     <MapPin className="w-5 h-5 shrink-0" />
                     <span className="text-sm font-medium truncate flex-1">
                         {isUsingMyLocation ? 'Mi ubicación' : selectedLocation?.name}
@@ -164,7 +164,7 @@ export default function LocationSearchInput({
                 </div>
             ) : (
                 // Estado: Buscando ubicación - Input con ancho mínimo responsive
-                <div className="relative flex-1 min-w-[120px] sm:min-w-36">
+                <div className="relative flex-1 min-w-0 sm:min-w-36">
                     <div className="relative">
                         {isSearching && (
                             <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10">
@@ -179,9 +179,9 @@ export default function LocationSearchInput({
                             value={postalCode}
                             onChange={handleInputChange}
                             className={`w-full py-3.5 rounded-xl bg-neutral-50 border transition-all outline-none ring-0 focus:outline-none focus:ring-4 focus:ring-[#223945]/10 font-medium text-sm text-neutral-800 placeholder:text-neutral-400 ${
-                                isSearching ? 'pl-9' : 'pl-4'
+                                isSearching ? 'pl-9' : 'pl-3 sm:pl-4'
                             } ${
-                                (typingHint || localidad) ? 'pr-4 sm:pr-24' : 'pr-4'
+                                (typingHint || localidad) ? 'pr-2 sm:pr-24' : 'pr-2 sm:pr-4'
                             } ${
                                 error
                                     ? 'border-red-300 focus:border-red-300'
@@ -214,7 +214,7 @@ export default function LocationSearchInput({
                 <button
                     onClick={onUseMyLocation}
                     disabled={isLoadingMyLocation}
-                    className="flex items-center gap-1.5 px-4 py-3.5 rounded-xl bg-neutral-50 border border-neutral-200 text-neutral-600 hover:bg-[#223945]/5 hover:border-[#223945]/20 hover:text-[#223945] transition-all text-sm font-bold shrink-0"
+                    className="flex items-center gap-1.5 px-3 sm:px-4 py-3.5 rounded-xl bg-neutral-50 border border-neutral-200 text-neutral-600 hover:bg-[#223945]/5 hover:border-[#223945]/20 hover:text-[#223945] transition-all text-sm font-bold shrink-0"
                     title="Usar mi ubicación actual"
                 >
                     {isLoadingMyLocation ? (

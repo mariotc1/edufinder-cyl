@@ -7,6 +7,7 @@ interface TourSpotlightProps {
   targetSelector: string;
   padding?: number;
   isActive: boolean;
+  scrollAnchor?: string;
 }
 
 interface TargetRect {
@@ -20,6 +21,7 @@ export default function TourSpotlight({
   targetSelector,
   padding = 8,
   isActive,
+  scrollAnchor,
 }: TourSpotlightProps) {
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -61,15 +63,41 @@ export default function TourSpotlight({
       el = el.parentElement;
     }
 
-    // On mobile leave space for bottom nav + tooltip sheet above it
-    const bottomSheetHeight = isMobile ? 280 : 0;
-    const visibleHeight = window.innerHeight - bottomSheetHeight;
-    const isVisible = isInFixedContainer || (rect.top >= 0 && rect.top < visibleHeight);
+    // Altura de la barra superior: cabecera móvil o navbar de escritorio (5rem)
+    const header = isMobile
+      ? parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mobile-header-height')) || 64
+      : 80;
+    const anchor = scrollAnchor ? document.querySelector(scrollAnchor) : null;
+    let isVisible: boolean;
+    let scrollTop: number | null = null;
+    if (anchor) {
+      // Se baja hasta el ancla (p. ej. la cabecera de Resultados) para ver la zona entera
+      const anchorTop = anchor.getBoundingClientRect().top;
+      isVisible = isInFixedContainer || Math.abs(anchorTop - (header + 12)) < 24;
+      scrollTop = window.scrollY + anchorTop - header - 12;
+    } else if (isMobile) {
+      // En móvil el elemento debe quedar entero entre la cabecera y la hoja del tour (se mide la hoja real)
+      const sheets = document.querySelectorAll<HTMLElement>('[data-tour-sheet]');
+      const sheet = sheets[sheets.length - 1];
+      const sheetTop = sheet
+        ? window.innerHeight - (parseFloat(getComputedStyle(sheet).bottom) || 0) - sheet.offsetHeight
+        : window.innerHeight - 420;
+      const needed = Math.min(rect.height, sheetTop - header - 24);
+      isVisible = isInFixedContainer || (rect.top >= header + 8 && rect.top + needed <= sheetTop - 8);
+      scrollTop = window.scrollY + rect.top - header - 16;
+    } else {
+      isVisible = isInFixedContainer || (rect.top >= 0 && rect.top < window.innerHeight);
+    }
 
     if (!isVisible) {
       isScrollingRef.current = true;
       // Smooth scroll on desktop (polished UX); instant on mobile (browsers animate slowly)
-      element.scrollIntoView({ behavior: isMobile ? 'instant' : 'smooth', block: 'center' });
+      if (scrollTop !== null) {
+        // Con ancla el desplazamiento es suave: se ve cómo la página baja hasta los resultados
+        window.scrollTo({ top: scrollTop, behavior: anchor || !isMobile ? 'smooth' : 'instant' });
+      } else {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
 
       setTimeout(() => {
         isScrollingRef.current = false;
@@ -80,7 +108,7 @@ export default function TourSpotlight({
           width: newRect.width + padding * 2,
           height: newRect.height + padding * 2,
         });
-      }, isMobile ? 80 : 500);
+      }, isMobile && !scrollAnchor ? 80 : 550);
       return;
     }
 
@@ -90,7 +118,7 @@ export default function TourSpotlight({
       width: rect.width + padding * 2,
       height: rect.height + padding * 2,
     });
-  }, [targetSelector, padding, isMobile]);
+  }, [targetSelector, padding, isMobile, scrollAnchor]);
 
   // Reset scroll guard when step changes
   useEffect(() => {
@@ -100,7 +128,8 @@ export default function TourSpotlight({
   useEffect(() => {
     if (!isActive) return;
 
-    const timer = setTimeout(updateTargetRect, 150);
+    // En móvil se espera a que la hoja del paso esté montada para medirla
+    const timer = setTimeout(updateTargetRect, isMobile ? 280 : 150);
 
     const handleResize = () => updateTargetRect();
     const handleScroll = () => updateTargetRect();
@@ -118,7 +147,7 @@ export default function TourSpotlight({
       window.removeEventListener('scroll', handleScroll, true);
       resizeObserver.disconnect();
     };
-  }, [isActive, targetSelector, updateTargetRect]);
+  }, [isActive, targetSelector, updateTargetRect, isMobile]);
 
   if (!isActive) return null;
 

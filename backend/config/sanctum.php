@@ -47,7 +47,8 @@ return [
     |
     */
 
-    'expiration' => null,
+    // Caducidad de los tokens: 30 días por defecto (antes nunca caducaban)
+    'expiration' => (int) env('SANCTUM_EXPIRATION', 60 * 24 * 30),
 
     /*
     |--------------------------------------------------------------------------

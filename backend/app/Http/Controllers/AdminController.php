@@ -45,6 +45,11 @@ class AdminController extends Controller
             return response()->json(['message' => 'No puedes quitarte el rol de admin a ti mismo.'], 403);
         }
 
+        // Evitar que un admin degrade a otro admin (luego podría bloquearlo o eliminarlo)
+        if ($user->role === 'admin' && $user->id !== $request->user()->id) {
+            return response()->json(['message' => 'No se puede modificar el rol de otro administrador.'], 403);
+        }
+
         $user->role = $request->role;
         $user->save();
 
@@ -132,14 +137,18 @@ class AdminController extends Controller
     {
         $user = User::findOrFail($id);
 
-        // No bloquear a otros admins por seguridad (o al menos comprobar)
-        if ($user->role === 'admin' && $user->id !== auth()->id()) {
-            // Permitir si soy superadmin? Por ahora restringimos bloquear admins.
+        // No bloquear a ningún admin (incluido uno mismo, para no perder el acceso)
+        if ($user->role === 'admin') {
             return response()->json(['message' => 'No se puede bloquear a un administrador.'], 403);
         }
 
         $user->is_blocked = !$user->is_blocked;
         $user->save();
+
+        // Al bloquear, revocar sus tokens para cerrar las sesiones activas
+        if ($user->is_blocked) {
+            $user->tokens()->delete();
+        }
 
         $status = $user->is_blocked ? 'blocked' : 'unblocked';
 
@@ -183,8 +192,19 @@ class AdminController extends Controller
         ]);
 
         $user = User::findOrFail($id);
+
+        // Evitar que un admin tome el control de la cuenta de otro admin
+        if ($user->role === 'admin' && $user->id !== $request->user()->id) {
+            return response()->json(['message' => 'No se puede restablecer la contraseña de otro administrador.'], 403);
+        }
+
         $user->password = \Illuminate\Support\Facades\Hash::make($request->password);
         $user->save();
+
+        // Invalidar las sesiones existentes del usuario (salvo que sea uno mismo)
+        if ($user->id !== $request->user()->id) {
+            $user->tokens()->delete();
+        }
 
         ActivityLog::create([
             'user_id' => $request->user()->id,

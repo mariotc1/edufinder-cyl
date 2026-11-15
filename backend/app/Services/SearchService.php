@@ -48,6 +48,22 @@
                 $query->where('naturaleza', 'ILIKE', '%' . $filters['naturaleza'] . '%');
             }
 
+            // Número total de ciclos de FP del centro (para mostrarlo en la tarjeta sin cargar la relación)
+            $query->withCount('ciclos');
+
+            // 6. Orden. Con ubicación manda la distancia (scope cercanos). Sin ella, el directorio
+            // oficial devuelve cientos de colegios seguidos: se intercalan los tipos de centro
+            // (FP, instituto, colegio, otros) para que la lista sea variada desde la primera página.
+            // md5(id) reparte de forma estable entre provincias y mantiene la paginación coherente.
+            if (empty($filters['lat']) || empty($filters['lng']) || empty($filters['radio'])) {
+                $grupo = "CASE
+                    WHEN denominacion_generica ILIKE '%FORMACI%N PROFESIONAL%' THEN 0
+                    WHEN denominacion_generica ILIKE 'INSTITUTO%' THEN 1
+                    WHEN denominacion_generica ILIKE '%PRIMARIA%' OR denominacion_generica ILIKE '%INFANTIL%' THEN 2
+                    ELSE 3 END";
+                $query->orderByRaw("row_number() OVER (PARTITION BY {$grupo} ORDER BY md5(centros.id::text)), {$grupo}, centros.id");
+            }
+
             return $query;
         }
 

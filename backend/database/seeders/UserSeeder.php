@@ -17,10 +17,13 @@ class UserSeeder extends Seeder
         $adminEmail = 'admin@edufinder.com';
 
         if (!User::where('email', $adminEmail)->exists()) {
-            User::create([
+            // La contraseña se toma de ADMIN_PASSWORD; si no existe se genera una aleatoria
+            // (nunca usar una contraseña por defecto conocida en producción)
+            // forceCreate porque 'role' no es asignable en masa
+            User::forceCreate([
                 'name' => 'Administrador',
                 'email' => $adminEmail,
-                'password' => Hash::make('Admin1234!'), // Default secure password
+                'password' => Hash::make(env('ADMIN_PASSWORD') ?: \Illuminate\Support\Str::random(32)),
                 'role' => 'admin',
                 'email_verified_at' => now(),
             ]);

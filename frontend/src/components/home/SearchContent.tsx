@@ -5,9 +5,10 @@ import useSWR from 'swr';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator';
 import { useSearchParams } from 'next/navigation';
-import { School, ChevronLeft, ChevronRight, ArrowRight, Compass } from 'lucide-react';
+import { School, ChevronLeft, ChevronRight, ArrowRight, Compass, SearchX, RotateCcw } from 'lucide-react';
 import Link from 'next/link';
 import { searchCentros } from '@/services/api';
+import { formatNumber } from '@/lib/utils';
 import { FilterOptions, Centro } from '@/types';
 import FilterBar from '@/components/FilterBar';
 import CentroCard from '@/components/CentroCard';
@@ -44,6 +45,8 @@ function readSession(): SessionState | null {
 export default function SearchContent() {
   const searchParams = useSearchParams();
   const [isWizardOpen, setIsWizardOpen] = useState(false);
+  // Cambiar la key remonta FilterBar para que su estado interno refleje un reset externo
+  const [filterBarKey, setFilterBarKey] = useState(0);
   const scrollRestored = useRef(false);
   const resultsRef = useRef<HTMLElement>(null);
 
@@ -188,20 +191,21 @@ export default function SearchContent() {
       />
 
       {/* Hero Section */}
-      <section className="relative pt-6 pb-20 md:py-20 px-4 sm:px-6 lg:px-8">
+      <section className="relative pt-5 pb-8 md:py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto relative z-50">
-          <div className="text-center mb-10">
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl mb-3 tracking-tight font-bold flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
-              <span className="bg-gradient-to-r from-[#223945] via-blue-600 to-blue-400 bg-clip-text text-transparent text-center leading-tight py-2">
-                Excelencia educativa a tu alcance
+          <div className="text-center mb-6 sm:mb-10">
+            <h1 className="!text-[1.75rem] sm:!text-6xl lg:!text-7xl !font-bold tracking-tight !leading-[1.1] sm:!leading-[1.05] !text-[#223945]">
+              Encuentra qué estudiar
+              <span className="block bg-gradient-to-r from-[#223945] via-blue-600 to-blue-400 bg-clip-text text-transparent pb-1 sm:pb-2">
+                y dónde hacerlo
               </span>
             </h1>
-            <p className="text-lg sm:text-xl text-neutral-600 max-w-2xl mx-auto leading-relaxed">
-              Encuentra tu centro ideal en <span className="font-semibold text-[#223945]">Castilla y León</span> con nuestra búsqueda inteligente.
+            <p className="mt-2 sm:mt-3 !text-[15px] sm:!text-xl text-neutral-600 max-w-2xl mx-auto !leading-relaxed text-balance">
+              Todos los centros y ciclos de FP de <span className="font-semibold text-[#223945]">Castilla y León</span>, en un solo lugar.
             </p>
 
             {/* Descubre tu FP — eyebrow + pill estilo wizard, branding azul */}
-            <div className="mt-6 flex flex-col items-center gap-2.5">
+            <div className="mt-4 sm:mt-6 flex flex-col items-center gap-2 sm:gap-2.5">
               <p className="text-sm font-semibold text-neutral-600">¿No sabes qué estudiar?</p>
               <Link href="/descubre-tu-fp">
                 <motion.span
@@ -239,6 +243,7 @@ export default function SearchContent() {
           {/* Filter Bar Component */}
           <div className="max-w-[1050px] mx-auto">
             <FilterBar
+              key={filterBarKey}
               onFilterChange={handleFilterChange}
               isLoading={isLoading}
               page={page}
@@ -246,6 +251,7 @@ export default function SearchContent() {
               onOpenWizard={() => setIsWizardOpen(true)}
             />
           </div>
+
         </div>
       </section>
 
@@ -260,14 +266,14 @@ export default function SearchContent() {
       {/* Results Section - Backgrounds removed */}
       <section ref={resultsRef} className="flex-grow px-4 sm:px-6 lg:px-8 py-12">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
+          <div data-tour="resultados" className="flex items-center justify-between gap-3 mb-6 sm:mb-8">
             <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 flex items-center gap-2">
               <School className="text-primary-600 w-7 h-7" />
               Resultados
             </h2>
             {data && (
               <span className="text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-[#223945] to-[#345165] border border-white/10 px-3.5 py-1 rounded-full shadow-md whitespace-nowrap animate-in fade-in zoom-in-95 duration-300">
-                {data.total} Centros encontrados
+                {formatNumber(data.total)} {data.total === 1 ? 'centro' : 'centros'}<span className="hidden sm:inline"> {data.total === 1 ? 'encontrado' : 'encontrados'}</span>
               </span>
             )}
             {!data && isLoading && (
@@ -285,6 +291,25 @@ export default function SearchContent() {
             <div className="text-center py-20 bg-white rounded-xl border border-red-100 shadow-sm">
               <p className="text-red-500 font-medium text-lg">Ocurrió un error al cargar los datos.</p>
               <p className="text-neutral-500 text-sm mt-1">Por favor, intenta modificar tus filtros.</p>
+            </div>
+          ) : data?.data?.length === 0 ? (
+            <div className="text-center py-16 px-6 bg-white rounded-2xl border border-neutral-200 shadow-sm">
+              <SearchX className="w-12 h-12 text-neutral-300 mx-auto mb-4" />
+              <p className="text-lg font-semibold text-[#223945]">No hay centros que cumplan todos los filtros</p>
+              <p className="text-neutral-500 text-sm mt-1 max-w-md mx-auto">
+                Prueba a quitar algún filtro, ampliar el radio de búsqueda o buscar por otra localidad.
+              </p>
+              <button
+                onClick={() => {
+                  setFilters({ q: '', provincia: '', tipo: '', naturaleza: '', familia: '', ciclo: '', nivel: '', modalidad: '', locationName: '' });
+                  setPage(1);
+                  window.history.replaceState(null, '', '/');
+                  setFilterBarKey(k => k + 1);
+                }}
+                className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#223945] text-white text-sm font-semibold hover:bg-[#1a2d38] shadow-sm"
+              >
+                <RotateCcw className="w-4 h-4" /> Limpiar filtros
+              </button>
             </div>
           ) : (
             <>
@@ -307,7 +332,7 @@ export default function SearchContent() {
 
               {/* Pagination */}
               {data?.last_page > 1 && (
-                <div className="flex flex-col items-center gap-3 mt-12 pb-8">
+                <nav aria-label="Paginación de resultados" className="flex flex-col items-center gap-3 mt-12 pb-8">
                   <div className="flex items-center gap-2 bg-white p-2 rounded-full shadow-sm border border-neutral-200">
                     {/* Previous Button */}
                     <button
@@ -315,12 +340,18 @@ export default function SearchContent() {
                       onClick={() => handlePageChange(Math.max(1, data.current_page - 1))}
                       className="p-2.5 rounded-full hover:bg-neutral-100 disabled:opacity-30 disabled:hover:bg-transparent transition-all text-[#223945]"
                       title="Página anterior"
+                      aria-label="Página anterior"
                     >
                       <ChevronLeft className="w-5 h-5" />
                     </button>
 
+                    {/* Móvil: indicador compacto (la lista de números no cabe en 360px) */}
+                    <span className="sm:hidden px-3 text-sm font-semibold text-neutral-500 tabular-nums whitespace-nowrap">
+                      <span className="text-[#223945] font-bold">{data.current_page}</span> de {data.last_page}
+                    </span>
+
                     {/* Page Numbers */}
-                    <div className="flex items-center px-2 gap-1 sm:gap-2">
+                    <div className="hidden sm:flex items-center px-2 gap-1 sm:gap-2">
                       {(() => {
                         const current = data.current_page;
                         const total = data.last_page;
@@ -345,6 +376,8 @@ export default function SearchContent() {
                             <button
                               key={p}
                               onClick={() => handlePageChange(p as number)}
+                              aria-label={`Página ${p}`}
+                              aria-current={current === p ? 'page' : undefined}
                               className={`
                                 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-sm sm:text-base transition-all
                                 ${current === p
@@ -366,17 +399,18 @@ export default function SearchContent() {
                       onClick={() => handlePageChange(Math.min(data.last_page, data.current_page + 1))}
                       className="p-2.5 rounded-full hover:bg-neutral-100 disabled:opacity-30 disabled:hover:bg-transparent transition-all text-[#223945]"
                       title="Página siguiente"
+                      aria-label="Página siguiente"
                     >
                       <ChevronRight className="w-5 h-5" />
                     </button>
                   </div>
 
                   <div className="flex items-center gap-3 text-sm font-medium text-neutral-500">
-                    <span>
+                    <span className="hidden sm:inline">
                       Pág. <span className="font-semibold text-[#223945]">{data.current_page}</span> / <span className="font-semibold text-[#223945]">{data.last_page}</span>
                     </span>
 
-                    <span className="w-px h-4 bg-neutral-200"></span>
+                    <span className="hidden sm:block w-px h-4 bg-neutral-200"></span>
 
                     <form
                       onSubmit={(e) => {
@@ -409,7 +443,7 @@ export default function SearchContent() {
                       </button>
                     </form>
                   </div>
-                </div>
+                </nav>
               )}
             </>
           )}

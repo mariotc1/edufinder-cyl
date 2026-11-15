@@ -4,21 +4,19 @@ import { useState } from 'react';
 import api from '@/lib/axios';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { LogIn, Mail, Lock, Eye, EyeOff, ChevronLeft, Loader2 } from 'lucide-react';
+import { LogIn, Mail, Lock } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-
-const GOOGLE_URL = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/auth/google/redirect`;
-const GITHUB_URL = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/auth/github/redirect`;
+import AuthLayout, { AuthField, AuthSubmit, SocialAuth, AuthError } from '@/components/auth/AuthLayout';
 
 export default function LoginContent() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const { login } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
+    const redirectUrl = searchParams.get('redirect');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -28,7 +26,6 @@ export default function LoginContent() {
         try {
             const res = await api.post('/login', { email, password });
             login(res.data.user, res.data.access_token);
-            const redirectUrl = searchParams.get('redirect');
             router.push(redirectUrl || '/');
         } catch (err: any) {
             setError(err.response?.data?.message || 'Error al iniciar sesión');
@@ -37,152 +34,62 @@ export default function LoginContent() {
     };
 
     return (
-        <div className="min-h-screen bg-brand-gradient flex flex-col items-center justify-start p-4 pt-6 md:pt-16">
-            <div className="w-full max-w-sm md:max-w-md">
-                <Link
-                    href="/"
-                    className="hidden md:inline-flex items-center gap-2 text-neutral-500 hover:text-[#223945] font-bold mb-6 transition-colors text-sm uppercase tracking-wide group"
-                >
-                    <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                    Volver al inicio
-                </Link>
+        <AuthLayout
+            mode="login"
+            icon={LogIn}
+            title="Bienvenido de nuevo"
+            subtitle="Accede a tu cuenta de EduFinder CYL"
+            footer={
+                <>
+                    ¿No tienes cuenta?{' '}
+                    <Link
+                        href={redirectUrl ? `/registro?redirect=${encodeURIComponent(redirectUrl)}` : '/registro'}
+                        className="font-bold text-[#223945] hover:text-blue-700 underline-offset-4 hover:underline"
+                    >
+                        Regístrate gratis
+                    </Link>
+                </>
+            }
+        >
+            <AuthError message={error} />
 
-                <div className="relative bg-white/90 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/50 overflow-hidden p-5 md:p-8">
-                    <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300" />
+            <form onSubmit={handleSubmit} className="space-y-4">
+                <AuthField
+                    id="email"
+                    label="Correo electrónico"
+                    icon={Mail}
+                    type="email"
+                    required
+                    autoComplete="email"
+                    placeholder="tu@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={isLoading}
+                />
+                <AuthField
+                    id="password"
+                    label="Contraseña"
+                    icon={Lock}
+                    type="password"
+                    required
+                    autoComplete="current-password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={isLoading}
+                    labelAction={
+                        <Link href="/forgot-password" className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline">
+                            ¿La has olvidado?
+                        </Link>
+                    }
+                />
 
-                    <div className="text-center mb-4 md:mb-8">
-                        {/* Icon — desktop only */}
-                        <div className="hidden md:block mb-6 relative">
-                            <div className="absolute inset-0 bg-blue-400 rounded-full blur-xl opacity-20 animate-pulse" />
-                            <div className="relative mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-white border border-neutral-100 shadow-md">
-                                <LogIn className="w-8 h-8 text-[#223945]" />
-                            </div>
-                        </div>
-
-                        <h2 className="text-xl md:text-3xl font-bold text-[#223945] mb-1 md:mb-2 tracking-tight">
-                            Bienvenido de nuevo
-                        </h2>
-                        <p className="text-neutral-500 text-sm font-medium">
-                            Accede a tu cuenta de EduFinder CYL
-                        </p>
-                    </div>
-
-                    {error && (
-                        <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl mb-4 text-sm font-medium flex items-center gap-2">
-                            <div className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
-                            {error}
-                        </div>
-                    )}
-
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="space-y-1.5">
-                            <label htmlFor="email" className="flex items-center gap-2 text-xs font-bold text-[#223945] uppercase tracking-wider ml-1">
-                                <Mail className="w-3.5 h-3.5" />
-                                Correo electrónico
-                            </label>
-                            <input
-                                id="email"
-                                type="email"
-                                required
-                                placeholder="tu@email.com"
-                                className="w-full px-4 py-3 rounded-xl bg-neutral-50 border-2 border-transparent focus:bg-white focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 outline-none transition-all font-medium text-neutral-700 placeholder:text-neutral-400"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                disabled={isLoading}
-                            />
-                        </div>
-
-                        <div className="space-y-1.5">
-                            <div className="flex justify-between items-center ml-1">
-                                <label htmlFor="password" className="flex items-center gap-2 text-xs font-bold text-[#223945] uppercase tracking-wider">
-                                    <Lock className="w-3.5 h-3.5" />
-                                    Contraseña
-                                </label>
-                                <Link href="/forgot-password" className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline">
-                                    ¿Olvidaste tu contraseña?
-                                </Link>
-                            </div>
-                            <div className="relative">
-                                <input
-                                    id="password"
-                                    type={showPassword ? 'text' : 'password'}
-                                    required
-                                    placeholder="••••••••"
-                                    className="w-full px-4 py-3 rounded-xl bg-neutral-50 border-2 border-transparent focus:bg-white focus:border-[#223945] focus:ring-4 focus:ring-[#223945]/10 outline-none transition-all font-medium text-neutral-700 placeholder:text-neutral-400 pr-10"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    disabled={isLoading}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-[#223945] transition-colors focus:outline-none"
-                                    disabled={isLoading}
-                                >
-                                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                </button>
-                            </div>
-                        </div>
-
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className={`w-full bg-[#223945] text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-[#223945]/20 hover:shadow-[#223945]/40 hover:-translate-y-0.5 transition-all text-sm uppercase tracking-wide flex items-center justify-center gap-2 group ${isLoading ? 'opacity-80 cursor-not-allowed transform-none hover:transform-none' : ''}`}
-                        >
-                            {isLoading ? (
-                                <>
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                    Iniciando sesión...
-                                </>
-                            ) : (
-                                <span className="group-hover:translate-x-0.5 transition-transform">Iniciar Sesión</span>
-                            )}
-                        </button>
-
-                        <div className="relative my-4">
-                            <div className="absolute inset-0 flex items-center">
-                                <div className="w-full border-t border-neutral-200" />
-                            </div>
-                            <div className="relative flex justify-center text-xs uppercase">
-                                <span className="bg-white px-2 text-neutral-400 font-bold tracking-wider">O continúa con</span>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                            <a
-                                href={GOOGLE_URL}
-                                className="flex items-center justify-center gap-2 bg-white border border-neutral-200 text-neutral-700 py-2.5 rounded-xl hover:bg-neutral-50 hover:border-neutral-300 transition-all font-bold text-sm shadow-sm"
-                            >
-                                <svg className="w-4 h-4" viewBox="0 0 24 24">
-                                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-                                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-                                </svg>
-                                Google
-                            </a>
-                            <a
-                                href={GITHUB_URL}
-                                className="flex items-center justify-center gap-2 bg-[#24292e] text-white py-2.5 rounded-xl hover:bg-black transition-all font-bold text-sm shadow-sm"
-                            >
-                                <svg className="w-4 h-4 fill-current" viewBox="0 0 16 16">
-                                    <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
-                                </svg>
-                                GitHub
-                            </a>
-                        </div>
-                    </form>
-
-                    <div className="mt-4 pt-4 md:mt-8 md:pt-6 text-center border-t border-neutral-100">
-                        <p className="text-sm text-neutral-600 font-medium">
-                            ¿No tienes cuenta?{' '}
-                            <Link href="/registro" className="text-[#223945] hover:text-black font-bold hover:underline decoration-2 underline-offset-4 transition-all">
-                                Regístrate aquí
-                            </Link>
-                        </p>
-                    </div>
+                <div className="pt-1">
+                    <AuthSubmit loading={isLoading} loadingText="Entrando...">Iniciar sesión</AuthSubmit>
                 </div>
-            </div>
-        </div>
+            </form>
+
+            <SocialAuth label="o continúa con" />
+        </AuthLayout>
     );
 }

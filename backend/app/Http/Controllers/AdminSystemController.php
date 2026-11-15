@@ -58,8 +58,9 @@ class AdminSystemController extends Controller
     public function toggleMaintenance(Request $request)
     {
         $enable = $request->input('enable');
-        // secret key for bypassing maintenance mode
-        $secret = 'admin-bypass-secret'; // hardcoded for simplicity, could be env
+        // Secreto para saltarse el modo mantenimiento: aleatorio en cada activación
+        // (un valor fijo en el código permitiría a cualquiera saltarse el mantenimiento)
+        $secret = \Illuminate\Support\Str::random(40);
 
         if ($enable) {
             Artisan::call('down', [
@@ -112,7 +113,8 @@ class AdminSystemController extends Controller
         try {
             \Illuminate\Support\Facades\DB::table('failed_jobs')->delete();
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to clear jobs: ' . $e->getMessage()], 500);
+            \Illuminate\Support\Facades\Log::error('Failed to clear failed jobs: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to clear jobs.'], 500);
         }
 
         ActivityLog::create([

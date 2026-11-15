@@ -52,9 +52,33 @@ class CentroController extends Controller
         }
 
         // FILTROS AVANZADOS
+        // Tipo de enseñanza (mismos valores que el buscador: FP, ESO, PRIMARIA, ESPECIAL)
+        if ($request->filled('tipo')) {
+            switch (strtoupper($request->tipo)) {
+                case 'FP':
+                    $query->whereHas('ciclos');
+                    break;
+                case 'ESO':
+                    $query->where('denominacion_generica', 'ilike', '%SECUNDARIA%');
+                    break;
+                case 'PRIMARIA':
+                    $query->where(function ($q) {
+                        $q->where('denominacion_generica', 'ilike', '%PRIMARIA%')
+                          ->orWhere('denominacion_generica', 'ilike', '%INFANTIL%');
+                    });
+                    break;
+                case 'ESPECIAL':
+                    $query->where('denominacion_generica', 'ilike', '%ESPECIAL%');
+                    break;
+            }
+        }
+
+        // La columna real es nivel_educativo ("Grado Medio"...); se aceptan también los códigos del buscador
         if ($request->filled('nivel')) {
-            $query->whereHas('ciclos', function ($q) use ($request) {
-                $q->where('nivel', 'ilike', '%' . $request->nivel . '%');
+            $niveles = ['GM' => 'Grado Medio', 'GS' => 'Grado Superior', 'BASICA' => 'Grado B', 'CE' => 'Curso Especializa'];
+            $nivel = $niveles[strtoupper($request->nivel)] ?? $request->nivel;
+            $query->whereHas('ciclos', function ($q) use ($nivel) {
+                $q->where('nivel_educativo', 'ilike', '%' . $nivel . '%');
             });
         }
 
@@ -71,11 +95,12 @@ class CentroController extends Controller
         }
 
         // FILTRO DE GEOLOCALIZACIÓN - usar whereRaw en lugar de havingRaw
+        // least/greatest evita errores de dominio en acos() por redondeo (centro en el mismo punto)
         if ($hasGeo) {
             $query->whereNotNull('latitud')
                   ->whereNotNull('longitud')
                   ->whereRaw(
-                      "( 6371 * acos( cos( radians(?) ) * cos( radians( latitud ) ) * cos( radians( longitud ) - radians(?) ) + sin( radians(?) ) * sin( radians( latitud ) ) ) ) < ?",
+                      "( 6371 * acos( least(1.0, greatest(-1.0, cos( radians(?) ) * cos( radians( latitud ) ) * cos( radians( longitud ) - radians(?) ) + sin( radians(?) ) * sin( radians( latitud ) ) )) ) ) < ?",
                       [$lat, $lon, $lat, $radius]
                   );
         }
@@ -85,7 +110,7 @@ class CentroController extends Controller
             if ($hasGeo) {
                 $query->selectRaw(
                     "id, nombre, latitud, longitud, naturaleza, provincia, municipio, localidad, direccion, denominacion_generica,
-                    ( 6371 * acos( cos( radians(?) ) * cos( radians( latitud ) ) * cos( radians( longitud ) - radians(?) ) + sin( radians(?) ) * sin( radians( latitud ) ) ) ) AS distance",
+                    ( 6371 * acos( least(1.0, greatest(-1.0, cos( radians(?) ) * cos( radians( latitud ) ) * cos( radians( longitud ) - radians(?) ) + sin( radians(?) ) * sin( radians( latitud ) ) )) ) ) AS distance",
                     [$lat, $lon, $lat]
                 )->orderBy('distance');
             } else {
@@ -95,7 +120,8 @@ class CentroController extends Controller
                 ])->orderBy('nombre');
             }
 
-            $centros = $query->limit(2000)->get();
+            // Nº de ciclos de FP para mostrarlo en la ficha emergente del mapa
+            $centros = $query->withCount('ciclos')->limit(2000)->get();
 
             $data = $centros->map(function ($centro) {
                 return [
@@ -110,6 +136,7 @@ class CentroController extends Controller
                     'direccion' => $centro->direccion,
                     'denominacion_generica' => $centro->denominacion_generica,
                     'distance' => $centro->distance ?? null,
+                    'ciclos_count' => $centro->ciclos_count,
                 ];
             });
 
@@ -119,7 +146,7 @@ class CentroController extends Controller
         // MODO NORMAL (paginado)
         if ($hasGeo) {
             $query->selectRaw(
-                "*, ( 6371 * acos( cos( radians(?) ) * cos( radians( latitud ) ) * cos( radians( longitud ) - radians(?) ) + sin( radians(?) ) * sin( radians( latitud ) ) ) ) AS distance",
+                "*, ( 6371 * acos( least(1.0, greatest(-1.0, cos( radians(?) ) * cos( radians( latitud ) ) * cos( radians( longitud ) - radians(?) ) + sin( radians(?) ) * sin( radians( latitud ) ) )) ) ) AS distance",
                 [$lat, $lon, $lat]
             )->orderBy('distance');
         } else {

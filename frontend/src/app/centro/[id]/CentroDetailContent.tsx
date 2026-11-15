@@ -5,7 +5,7 @@ import useSWR from 'swr';
 import api from '@/lib/axios';
 import { useRef, useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { Mail, Phone, MapPin, Globe, BookOpen, ChevronLeft, Heart, Share2, Copy, CheckCircle, ChevronDown, GraduationCap } from 'lucide-react';
+import { Mail, Phone, MapPin, Globe, ChevronLeft, Heart, Share2, Copy, CheckCircle, Navigation, GraduationCap, type LucideIcon } from 'lucide-react';
 import { useFavorite } from '@/hooks/useFavorite';
 import { useCicloFavorite } from '@/hooks/useCicloFavorite';
 import { useVisitedCenters } from '@/hooks/useVisitedCenters';
@@ -13,7 +13,11 @@ import { useFavoritesAnimation } from '@/context/FavoritesAnimationContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import CentroDetailSkeleton from '@/components/CentroDetailSkeleton';
 import InterestBadges from '@/components/InterestBadges';
+import StaticMap from '@/components/StaticMap';
+import Link from 'next/link';
 import { CicloFP } from '@/types';
+import { centroName, centroLugar, centroEtapas, titleCase, formatLocalidad, nivelFP, NIVELES_FP, denominacionDe } from '@/lib/centro-format';
+import { estiloTipo } from '@/lib/centro-estilo';
 
 
 const Map = dynamic(() => import('@/components/Map'), {
@@ -23,12 +27,72 @@ const Map = dynamic(() => import('@/components/Map'), {
 
 const fetcher = (url: string) => api.get(url).then(res => res.data);
 
+// Traduce el parámetro ?nivel de la búsqueda (GM, GS, FPB, CE...) a la clave de NIVELES_FP
+function nivelKeyFromParam(param: string | null): string | null {
+    if (!param) return null;
+    const p = param.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+    if (p === 'GM' || p.includes('MEDIO')) return 'MEDIO';
+    if (p === 'GS' || p.includes('SUPERIOR')) return 'SUPERIOR';
+    if (p === 'FPB' || p.includes('BASIC')) return 'BASIC';
+    if (p === 'CE' || p.includes('ESPECIALIZA')) return 'ESPECIALIZA';
+    return null;
+}
+
+// Botón de acción rápida (Llamar, Correo, Web, Cómo llegar). Se atenúa si el dato no existe.
+// Todas con el color principal de la web; "Ruta" destaca como acción principal
+const QUICK_TONES = {
+    soft: 'bg-white text-[#223945] ring-[#223945]/10 shadow-sm hover:ring-[#223945]/30 hover:shadow-md',
+    brand: 'bg-gradient-to-br from-[#223945] to-blue-700 text-white ring-transparent shadow-lg shadow-[#223945]/25 hover:shadow-[#223945]/40',
+} as const;
+
+function QuickAction({ href, icon: Icon, label, external, tone }: { href?: string; icon: LucideIcon; label: string; external?: boolean; tone: keyof typeof QUICK_TONES }) {
+    const content = (
+        <>
+            <Icon className="w-5 h-5" />
+            <span className="text-[11px] sm:text-xs font-bold text-center leading-tight px-1">{label}</span>
+        </>
+    );
+    const base = 'flex flex-col items-center justify-center gap-1.5 py-3.5 rounded-2xl ring-1 transition-all';
+    if (!href) {
+        return <span className={`${base} bg-neutral-50 text-neutral-300 ring-neutral-100 cursor-not-allowed`} aria-disabled="true">{content}</span>;
+    }
+    return (
+        <motion.a
+            href={href}
+            whileHover={{ y: -2 }}
+            whileTap={{ scale: 0.96 }}
+            {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+            className={`${base} ${QUICK_TONES[tone]}`}
+        >
+            {content}
+        </motion.a>
+    );
+}
+
+function ContactRow({ icon: Icon, label, value, href, external }: { icon: LucideIcon; label: string; value: string; href?: string; external?: boolean }) {
+    return (
+        <div className="flex items-center gap-3">
+            <span className="p-1.5 bg-white rounded-lg shrink-0 ring-1 ring-[#223945]/10">
+                <Icon className="w-3.5 h-3.5 text-[#223945]" />
+            </span>
+            <dt className="sr-only">{label}</dt>
+            <dd className="min-w-0 break-words font-medium text-neutral-800">
+                {href ? (
+                    <a href={href} {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})} className="hover:text-blue-700 hover:underline underline-offset-2">
+                        {value}
+                    </a>
+                ) : value}
+            </dd>
+        </div>
+    );
+}
+
 export default function CentroDetailContent() {
     const params = useParams();
     const router = useRouter();
     const searchParams = useSearchParams();
     const id = params.id;
-    const { data: centro, error } = useSWR(id ? `/centros/${id}` : null, fetcher);
+    const { data: centro, error, mutate: mutateCentro } = useSWR(id ? `/centros/${id}` : null, fetcher);
     const { data: ciclos } = useSWR(id ? `/centros/${id}/ciclos` : null, fetcher);
 
     const headerRef = useRef<HTMLDivElement>(null);
@@ -40,74 +104,9 @@ export default function CentroDetailContent() {
     const [showShareMenu, setShowShareMenu] = useState(false);
     const [copied, setCopied] = useState(false);
 
-    // Mapeo de parámetros de URL a palabras clave para buscar en los nombres de nivel
-    const urlParamToKeywords: Record<string, string[]> = {
-        // Abreviaturas
-        'GS': ['GRADO SUPERIOR', 'SUPERIOR'],
-        'GM': ['GRADO MEDIO', 'MEDIO'],
-        'FPB': ['FP BÁSICA', 'BÁSICA', 'FORMACIÓN PROFESIONAL BÁSICA', 'BASICA', 'GRADO BÁSICO', 'PROFESIONAL BÁSICA', 'F.P. BÁSICA', 'CICLO FORMATIVO BÁSICO', 'CICLOS FORMATIVOS DE GRADO BÁSICO'],
-        'CE': ['CURSO DE ESPECIALIZACIÓN', 'ESPECIALIZACIÓN', 'ESPECIALIZACION'],
-        // Variantes de URL usadas en FilterBar
-        'BASICA': ['FP BÁSICA', 'BÁSICA', 'FORMACIÓN PROFESIONAL BÁSICA', 'BASICA', 'GRADO BÁSICO', 'PROFESIONAL BÁSICA', 'F.P. BÁSICA', 'CICLO FORMATIVO BÁSICO', 'CICLOS FORMATIVOS DE GRADO BÁSICO'],
-        'SUPERIOR': ['GRADO SUPERIOR', 'SUPERIOR'],
-        'MEDIO': ['GRADO MEDIO', 'MEDIO'],
-        'ESPECIALIZACION': ['CURSO DE ESPECIALIZACIÓN', 'ESPECIALIZACIÓN', 'ESPECIALIZACION'],
-    };
-
-    // Normalizar texto removiendo acentos para comparaciones
-    const normalizeText = (text: string): string => {
-        return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
-    };
-
-    // Función para encontrar el nivel real en los datos dado un parámetro de URL
-    const findMatchingLevel = (urlParam: string | null, levelKeys: string[]): string | null => {
-        if (!urlParam) return null;
-        const param = urlParam.toUpperCase();
-        const paramNormalized = normalizeText(param);
-
-        // Si el parámetro coincide exactamente con una clave existente
-        if (levelKeys.includes(param)) return param;
-
-        // Buscar usando las palabras clave
-        const keywords = urlParamToKeywords[param];
-        if (keywords) {
-            for (const levelKey of levelKeys) {
-                const levelKeyNormalized = normalizeText(levelKey);
-                for (const keyword of keywords) {
-                    const keywordNormalized = normalizeText(keyword);
-                    // Comparar tanto con y sin acentos
-                    if (levelKey.includes(keyword) || keyword.includes(levelKey) ||
-                        levelKeyNormalized.includes(keywordNormalized) || keywordNormalized.includes(levelKeyNormalized)) {
-                        return levelKey;
-                    }
-                }
-            }
-        }
-
-        // Buscar si el nivel contiene "BÁSIC" o "BASIC" para FP Básica
-        if (paramNormalized === 'BASICA') {
-            for (const levelKey of levelKeys) {
-                const normalized = normalizeText(levelKey);
-                if (normalized.includes('BASIC') || normalized.includes('BASICO')) {
-                    return levelKey;
-                }
-            }
-        }
-
-        // Último intento: buscar coincidencia parcial
-        for (const levelKey of levelKeys) {
-            const levelKeyNormalized = normalizeText(levelKey);
-            if (levelKeyNormalized.includes(paramNormalized) || paramNormalized.includes(levelKeyNormalized)) {
-                return levelKey;
-            }
-        }
-
-        return null;
-    };
-
-    // Acordeones: cerrados por defecto, se abren según filtros de URL
+    // Nivel de FP preseleccionado si se llega desde una búsqueda filtrada (?nivel=GM)
     const nivelFromUrl = searchParams.get('nivel');
-    const [expandedLevels, setExpandedLevels] = useState<Record<string, boolean>>({});
+    const [nivelActivo, setNivelActivo] = useState<string | null>(() => nivelKeyFromParam(nivelFromUrl));
     const [isDesktop, setIsDesktop] = useState(false);
 
     // Hook para gestionar historial de centros visitados
@@ -127,25 +126,6 @@ export default function CentroDetailContent() {
             addVisitedCenter(centro.data);
         }
     }, [centro]);
-
-    // Abrir acordeón según el nivel de la URL cuando se carguen los ciclos
-    useEffect(() => {
-        if (ciclos?.data && nivelFromUrl) {
-            const currentGrouped = ciclos.data.reduce((acc: Record<string, CicloFP[]>, ciclo: CicloFP) => {
-                const nivel = ciclo.nivel_educativo?.toUpperCase() || 'OTROS';
-                if (!acc[nivel]) acc[nivel] = [];
-                acc[nivel].push(ciclo);
-                return acc;
-            }, {} as Record<string, CicloFP[]>);
-
-            const levelKeys = Object.keys(currentGrouped);
-            const matchedLevel = findMatchingLevel(nivelFromUrl, levelKeys);
-
-            if (matchedLevel) {
-                setExpandedLevels(prev => ({ ...prev, [matchedLevel]: true }));
-            }
-        }
-    }, [ciclos, nivelFromUrl]);
 
     // Cerrar menú de compartir al hacer clic fuera
     useEffect(() => {
@@ -185,7 +165,7 @@ export default function CentroDetailContent() {
         e.preventDefault();
         e.stopPropagation();
         const c = centro?.data;
-        const text = `Mira este centro que he encontrado en EduFinder CyL:\n\n${c?.nombre}\n${c?.localidad}, ${c?.provincia}\n\nEchale un vistazo: ${getShareUrl()}`;
+        const text = `Mira este centro que he encontrado en EduFinder CyL:\n\n${c ? centroName(c) : ''}\n${c ? centroLugar(c) : ''}\n\nEchale un vistazo: ${getShareUrl()}`;
         window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
         setShowShareMenu(false);
     };
@@ -197,8 +177,8 @@ export default function CentroDetailContent() {
         if (navigator.share) {
             try {
                 await navigator.share({
-                    title: c?.nombre || 'Centro Educativo',
-                    text: `${c?.nombre} - ${c?.localidad}, ${c?.provincia}`,
+                    title: c ? centroName(c) : 'Centro Educativo',
+                    text: `${c ? centroName(c) : ''} - ${c ? centroLugar(c) : ''}`,
                     url: getShareUrl(),
                 });
             } catch (err) {
@@ -208,10 +188,6 @@ export default function CentroDetailContent() {
             }
         }
         setShowShareMenu(false);
-    };
-
-    const toggleLevel = (level: string) => {
-        setExpandedLevels(prev => ({ ...prev, [level]: !prev[level] }));
     };
 
     useEffect(() => {
@@ -251,74 +227,71 @@ export default function CentroDetailContent() {
         toggleCiclo(cicloId);
     };
 
-    if (error) return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-            <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
-                <p className="text-red-700 font-medium">Error al cargar el centro educativo</p>
+    if (error) {
+        const notFound = error?.response?.status === 404;
+        return (
+            <div className="min-h-[70vh] flex items-center justify-center px-4 py-10 bg-brand-gradient">
+                <div className="relative overflow-hidden bg-white rounded-3xl shadow-xl shadow-neutral-200/50 border border-neutral-100 p-8 text-center max-w-md w-full">
+                    <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300"></div>
+                    <div className="w-16 h-16 rounded-2xl bg-[#223945]/[0.06] flex items-center justify-center mx-auto mb-5">
+                        <MapPin className="w-8 h-8 text-[#223945]" />
+                    </div>
+                    <h1 className="!text-xl !font-bold !text-[#223945]">
+                        {notFound ? 'Este centro no existe' : 'No hemos podido cargar el centro'}
+                    </h1>
+                    <p className="mt-2 text-sm text-neutral-500">
+                        {notFound ? 'Puede que el enlace sea antiguo o que el centro se haya dado de baja.' : 'Revisa tu conexión e inténtalo de nuevo.'}
+                    </p>
+                    <div className="mt-6 flex flex-col gap-2.5">
+                        {!notFound && (
+                            <button onClick={() => mutateCentro()} className="w-full py-3 rounded-xl bg-gradient-to-r from-[#223945] to-blue-700 text-white font-bold shadow-lg shadow-[#223945]/20 active:scale-[0.98] transition-transform">
+                                Reintentar
+                            </button>
+                        )}
+                        <button onClick={() => router.push('/')} className="w-full py-3 rounded-xl bg-neutral-100 text-[#223945] font-bold active:scale-[0.98] transition-transform">
+                            Buscar otros centros
+                        </button>
+                    </div>
+                </div>
             </div>
-        </div>
-    );
+        );
+    }
 
     if (!centro) return <CentroDetailSkeleton />;
 
     const c = centro.data;
-
-    const getNaturalezaBadge = (naturaleza: string) => {
-        switch (naturaleza?.toUpperCase()) {
-            case 'PÚBLICO': return 'bg-blue-50 text-blue-700 border-blue-200 ring-1 ring-blue-100';
-            case 'PRIVADO': return 'bg-amber-50 text-amber-700 border-amber-200 ring-1 ring-amber-100';
-            default: return 'bg-gray-50 text-gray-700 border-gray-200';
-        }
-    };
-
-    const getLevelColor = (nivel: string) => {
-        const n = normalizeText(nivel || '');
-        if (n.includes('SUPERIOR')) return 'bg-purple-600 text-white border-purple-600 shadow-sm';
-        if (n.includes('MEDIO')) return 'bg-amber-500 text-white border-amber-500 shadow-sm';
-        if (n.includes('BASIC') || n.includes('BASICO')) return 'bg-blue-600 text-white border-blue-600 shadow-sm';
-        if (n.includes('ESPECIALIZACION')) return 'bg-rose-600 text-white border-rose-600 shadow-sm';
-        return 'bg-neutral-600 text-white border-neutral-600';
-    };
-
-    const getLevelBackground = (nivel: string) => {
-        const n = normalizeText(nivel || '');
-        if (n.includes('SUPERIOR')) return 'bg-purple-50 border-purple-100';
-        if (n.includes('MEDIO')) return 'bg-amber-50 border-amber-100';
-        if (n.includes('BASIC') || n.includes('BASICO')) return 'bg-blue-50 border-blue-100';
-        if (n.includes('ESPECIALIZACION')) return 'bg-rose-50 border-rose-100';
-        return 'bg-neutral-50 border-neutral-100';
-    };
-
-    const getLevelAbbreviation = (nivel: string) => {
-        const n = normalizeText(nivel || '');
-        if (n.includes('SUPERIOR')) return 'GS';
-        if (n.includes('MEDIO')) return 'GM';
-        if (n.includes('BASIC') || n.includes('BASICO')) return 'FPB';
-        if (n.includes('ESPECIALIZACION')) return 'CE';
-        return nivel?.substring(0, 2)?.toUpperCase() || '';
-    };
 
     const getMapsLink = (mode: 'driving' | 'walking' | 'transit') => {
         const destination = `${c.latitud},${c.longitud}`;
         return `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=${mode}`;
     };
 
-    // Agrupar ciclos por nivel educativo
-    const groupedCiclos = ciclos?.data?.reduce((acc: Record<string, CicloFP[]>, ciclo: CicloFP) => {
-        const nivel = ciclo.nivel_educativo?.toUpperCase() || 'OTROS';
-        if (!acc[nivel]) acc[nivel] = [];
-        acc[nivel].push(ciclo);
-        return acc;
-    }, {} as Record<string, CicloFP[]>) || {};
+    // Datos formateados para lectura
+    const nombre = centroName(c);
+    const estilo = estiloTipo(denominacionDe(c));
+    const TipoIcon = estilo.icon;
+    const tipo = estilo.label;
+    const lugar = centroLugar(c);
+    const etapas = centroEtapas(denominacionDe(c));
+    const esPublico = c.naturaleza?.toUpperCase().includes('PÚBLICO');
+    const codigoPostal = c.codigo_postal ? String(c.codigo_postal).padStart(5, '0') : '';
+    const direccion = [titleCase(c.direccion), [codigoPostal, formatLocalidad(c.localidad)].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+    const webUrl = c.web ? (/^https?:\/\//i.test(c.web) ? c.web : `http://${c.web}`) : null;
 
-    const levelOrder = ['FP BÁSICA', 'FORMACIÓN PROFESIONAL BÁSICA', 'GRADO MEDIO', 'GRADO SUPERIOR', 'CURSO DE ESPECIALIZACIÓN', 'OTROS'];
-    const sortedLevels = Object.keys(groupedCiclos).sort((a, b) => {
-        const indexA = levelOrder.indexOf(a) === -1 ? 999 : levelOrder.indexOf(a);
-        const indexB = levelOrder.indexOf(b) === -1 ? 999 : levelOrder.indexOf(b);
-        return indexA - indexB;
+    // Ciclos ordenados por nivel (Básico → Especialización) y conteo por nivel para el selector
+    const listaCiclos: CicloFP[] = [...(ciclos?.data ?? [])].sort((a: CicloFP, b: CicloFP) => {
+        const ia = NIVELES_FP.findIndex(n => n.key === nivelFP(a.nivel_educativo)?.key);
+        const ib = NIVELES_FP.findIndex(n => n.key === nivelFP(b.nivel_educativo)?.key);
+        return ia - ib || a.ciclo_formativo.localeCompare(b.ciclo_formativo, 'es');
     });
-
-    const totalCiclos = ciclos?.data?.length || 0;
+    const nivelesDisponibles = NIVELES_FP
+        .map(n => ({ ...n, count: listaCiclos.filter(ci => nivelFP(ci.nivel_educativo)?.key === n.key).length }))
+        .filter(n => n.count > 0);
+    const nivelSeleccionado = nivelesDisponibles.some(n => n.key === nivelActivo) ? nivelActivo : null;
+    const ciclosFiltrados = nivelSeleccionado
+        ? listaCiclos.filter(ci => nivelFP(ci.nivel_educativo)?.key === nivelSeleccionado)
+        : listaCiclos;
+    const totalCiclos = listaCiclos.length;
 
     // Verificar si hay coordenadas válidas para el mapa
     const hasValidCoords = c && c.latitud && c.longitud &&
@@ -417,41 +390,49 @@ export default function CentroDetailContent() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                     {/* Left Column: Info */}
                     <div className="lg:col-span-7 space-y-6">
-                        {/* Header Card */}
+                        {/* Cabecera: qué es, cómo se llama, dónde está */}
                         <div
                             ref={headerRef}
-                            className="bg-white rounded-2xl p-6 md:p-8 border border-neutral-100 shadow-xl shadow-neutral-200/50 relative"
+                            className={`relative bg-white bg-gradient-to-b ${estilo.header} via-white via-40% to-white rounded-3xl p-5 sm:p-6 md:p-8 ring-1 ring-neutral-200/80 shadow-xl shadow-neutral-200/50`}
                         >
-                            {/* Decorative Top Gradient */}
-                            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300 rounded-t-2xl"></div>
-
-                            <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-3 mb-4">
-                                        <span className={`px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase border ${getNaturalezaBadge(c.naturaleza)}`}>
-                                            {c.naturaleza || 'Sin especificar'}
+                            <div>
+                                <div>
+                                    <div className="flex items-center gap-3 sm:gap-4 pr-24 sm:pr-28">
+                                        <span className={`shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br ${estilo.tile} text-white flex items-center justify-center shadow-lg`}>
+                                            <TipoIcon className="w-7 h-7 sm:w-8 sm:h-8" />
                                         </span>
+                                        <div className="min-w-0">
+                                            <span className={`block text-xs sm:text-sm font-extrabold uppercase tracking-wider ${estilo.text}`}>{tipo}</span>
+                                            <span className={`mt-1.5 inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wide uppercase ${
+                                                esPublico ? 'bg-blue-600 text-white' : 'bg-amber-400 text-amber-950'
+                                            }`}>
+                                                {esPublico ? 'Público' : c.naturaleza ? 'Privado' : 'Sin especificar'}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#111827] mb-2 font-heading leading-tight">
-                                        {c.nombre}
+                                    <h1 className="mt-5 !text-3xl md:!text-4xl !font-extrabold tracking-tight !text-[#111827] !leading-tight">
+                                        {nombre}
                                     </h1>
-                                    <p className="text-base md:text-lg text-neutral-500 font-medium mb-3">{c.denominacion_generica}</p>
+                                    <p className="mt-2 flex items-center gap-1.5 !text-base font-medium text-neutral-500">
+                                        <MapPin className="w-4 h-4 text-rose-500" />
+                                        {lugar}
+                                    </p>
                                     {c.interest_badges && c.interest_badges.length > 0 && (
-                                        <InterestBadges badges={c.interest_badges} size="md" />
+                                        <div className="mt-4">
+                                            <InterestBadges badges={c.interest_badges} size="md" />
+                                        </div>
                                     )}
                                 </div>
 
                                 {/* Botones de acción */}
-                                <div className="flex items-center gap-2 shrink-0 self-start">
+                                <div className="absolute top-5 right-5 sm:top-6 sm:right-6 md:top-8 md:right-8 z-20 flex items-center gap-0.5 p-1 rounded-full bg-white/90 backdrop-blur-sm ring-1 ring-neutral-200/80 shadow-sm">
                                     {/* Botón Compartir con menú desplegable */}
                                     <div className="relative" ref={shareMenuRef}>
                                         <motion.button
                                             onClick={handleToggleShareMenu}
                                             whileTap={{ scale: 0.9 }}
-                                            className={`p-3 rounded-full border shadow-sm hover:shadow-md transition-all ${
-                                                showShareMenu
-                                                    ? 'bg-[#223945]/10 border-[#223945]/30 text-[#223945]'
-                                                    : 'bg-white border-neutral-200 text-neutral-400 hover:text-[#223945] hover:border-[#223945]/30'
+                                            className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+                                                showShareMenu ? 'bg-[#223945]/10 text-[#223945]' : 'text-neutral-400 hover:bg-[#223945]/5 hover:text-[#223945]'
                                             }`}
                                             aria-label="Compartir centro"
                                             title="Compartir"
@@ -466,7 +447,7 @@ export default function CentroDetailContent() {
                                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                                     exit={{ opacity: 0, y: 8, scale: 0.95 }}
                                                     transition={{ duration: 0.15 }}
-                                                    className="absolute left-0 sm:left-auto sm:right-0 mt-2 w-52 sm:w-56 bg-white rounded-xl shadow-2xl border border-neutral-100 overflow-hidden z-50"
+                                                    className="absolute right-0 mt-2 w-52 sm:w-56 bg-white rounded-xl shadow-2xl border border-neutral-100 overflow-hidden z-50"
                                                 >
                                                     <div className="p-1.5">
                                                         <button
@@ -512,7 +493,7 @@ export default function CentroDetailContent() {
                                     <motion.button
                                         onClick={(e) => favoriteLogic.toggleFavorite(e, headerRef.current!)}
                                         whileTap={{ scale: 0.9 }}
-                                        className="p-3 rounded-full bg-white border border-neutral-200 shadow-sm hover:shadow-md transition-all group"
+                                        className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-50 transition-colors group"
                                         title={favoriteLogic.isFavorite ? "Eliminar de favoritos" : "Añadir a favoritos"}
                                         disabled={favoriteLogic.loading}
                                     >
@@ -520,251 +501,177 @@ export default function CentroDetailContent() {
                                     </motion.button>
                                 </div>
                             </div>
+
+                            {/* Acciones rápidas */}
+                            <div className="mt-6 grid grid-cols-4 gap-2 sm:gap-3">
+                                <QuickAction href={c.telefono ? `tel:${c.telefono}` : undefined} icon={Phone} label="Llamar" tone="soft" />
+                                <QuickAction href={c.email ? `mailto:${c.email}` : undefined} icon={Mail} label="Correo" tone="soft" />
+                                <QuickAction href={webUrl ?? undefined} icon={Globe} label="Web" external tone="soft" />
+                                <QuickAction
+                                    href={hasValidCoords
+                                        ? `https://www.google.com/maps/dir/?api=1&destination=${c.latitud},${c.longitud}`
+                                        : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(direccion)}`}
+                                    icon={Navigation}
+                                    label="Ruta"
+                                    external
+                                    tone="brand"
+                                />
+                            </div>
+
+                            {/* Datos de contacto en texto, para copiar */}
+                            <dl className="mt-4 p-4 rounded-2xl bg-[#223945]/[0.04] space-y-3 text-sm">
+                                <ContactRow icon={MapPin} label="Dirección" value={direccion} />
+                                {c.telefono && <ContactRow icon={Phone} label="Teléfono" value={String(c.telefono)} href={`tel:${c.telefono}`} />}
+                                {c.email && <ContactRow icon={Mail} label="Correo" value={c.email} href={`mailto:${c.email}`} />}
+                                {webUrl && <ContactRow icon={Globe} label="Web" value={c.web.replace(/^https?:\/\//i, '').replace(/\/$/, '')} href={webUrl} external />}
+                            </dl>
                         </div>
 
-                        {/* Ubicación para móvil - Tarjeta con enlace a Google Maps */}
-                        <div className="lg:hidden">
-                            <div className="bg-white rounded-2xl shadow-lg border border-neutral-100 overflow-hidden">
-                                {/* Header con imagen estática de mapa */}
-                                <div className="relative h-32 bg-gradient-to-br from-[#223945] to-blue-600 overflow-hidden">
-                                    <div className="absolute inset-0 opacity-20">
-                                        <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                                            <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
-                                                <path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" strokeWidth="0.5"/>
-                                            </pattern>
-                                            <rect width="100" height="100" fill="url(#grid)" />
-                                        </svg>
+                        {/* Mapa en móvil: vista previa estática + accesos a ruta y al mapa de la app */}
+                        {hasValidCoords && (
+                            <div className="lg:hidden bg-white rounded-3xl border border-neutral-100 shadow-lg overflow-hidden">
+                                <a
+                                    href={`https://www.google.com/maps/dir/?api=1&destination=${c.latitud},${c.longitud}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    aria-label={`Cómo llegar a ${nombre}`}
+                                    className="block active:opacity-90 transition-opacity"
+                                >
+                                    <StaticMap lat={parseFloat(String(c.latitud))} lng={parseFloat(String(c.longitud))} className="h-44" />
+                                </a>
+                                <div className="p-4 flex items-center gap-3">
+                                    <div className="flex-1 min-w-0">
+                                        <p className="!text-sm font-bold !text-[#223945] truncate">{titleCase(c.direccion) || lugar}</p>
+                                        <p className="!text-xs !text-neutral-500 truncate">{[codigoPostal, lugar].filter(Boolean).join(' · ')}</p>
                                     </div>
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-                                            <MapPin className="w-8 h-8 text-white" />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Contenido */}
-                                <div className="p-4">
-                                    <h4 className="font-bold text-[#223945] mb-1">Ubicación del centro</h4>
-                                    <p className="text-sm text-neutral-600 mb-4">{c.direccion}, {c.localidad}</p>
-
-                                    {/* Botones de navegación */}
-                                    <div className="flex gap-2">
-                                        <a
-                                            href={getMapsLink('driving')}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-neutral-100 hover:bg-neutral-200 transition-colors text-sm font-medium text-neutral-700"
-                                        >
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" /><circle cx="7" cy="17" r="2" /><circle cx="17" cy="17" r="2" /></svg>
-                                            Coche
-                                        </a>
-                                        <a
-                                            href={getMapsLink('walking')}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-neutral-100 hover:bg-neutral-200 transition-colors text-sm font-medium text-neutral-700"
-                                        >
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="5" r="2"/><path d="m9 20 3-6 3 6"/><path d="m6 15 3-3 3 3 3-3 3 3"/></svg>
-                                            Andando
-                                        </a>
-                                    </div>
-
-                                    {/* Botón principal */}
-                                    <a
-                                        href={`https://www.google.com/maps/search/?api=1&query=${c.latitud},${c.longitud}`}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="mt-3 w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#223945] hover:bg-[#1a2d38] text-white font-bold transition-colors"
+                                    <Link
+                                        href={`/mapa?centro=${c.id}`}
+                                        className="shrink-0 px-3.5 py-2 rounded-full bg-neutral-100 text-[#223945] text-xs font-bold active:scale-95 transition-transform"
                                     >
-                                        <MapPin className="w-4 h-4" />
-                                        Abrir en Google Maps
+                                        Ver en mapa
+                                    </Link>
+                                    <a
+                                        href={`https://www.google.com/maps/dir/?api=1&destination=${c.latitud},${c.longitud}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-gradient-to-r from-[#223945] to-blue-700 text-white text-xs font-bold shadow-md shadow-[#223945]/20 active:scale-95 transition-transform"
+                                    >
+                                        <Navigation className="w-3.5 h-3.5" />
+                                        Ir
                                     </a>
                                 </div>
                             </div>
-                        </div>
-
-                        {/* Contact Grid */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {/* Address */}
-                            <div className="bg-white/80 backdrop-blur-sm p-4 sm:p-5 rounded-xl border border-neutral-100 shadow-sm hover:shadow-md transition-all">
-                                <div className="flex items-start gap-3">
-                                    <div className="p-2.5 bg-blue-50 text-blue-600 rounded-lg shrink-0">
-                                        <MapPin className="w-5 h-5" />
-                                    </div>
-                                    <div className="min-w-0">
-                                        <h4 className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-1">Dirección</h4>
-                                        <p className="font-bold text-neutral-800 leading-snug text-sm">{c.direccion}</p>
-                                        <p className="text-xs text-neutral-500 mt-0.5">{c.codigo_postal}, {c.localidad}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Phone */}
-                            {c.telefono && (
-                                <a href={`tel:${c.telefono}`} className="bg-white/80 backdrop-blur-sm p-4 sm:p-5 rounded-xl border border-neutral-100 shadow-sm hover:shadow-md transition-all block">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2.5 bg-amber-50 text-amber-600 rounded-lg shrink-0">
-                                            <Phone className="w-5 h-5" />
-                                        </div>
-                                        <div>
-                                            <h4 className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-1">Teléfono</h4>
-                                            <p className="font-bold text-neutral-800">{c.telefono}</p>
-                                        </div>
-                                    </div>
-                                </a>
-                            )}
-
-                            {/* Email */}
-                            {c.email && (
-                                <a href={`mailto:${c.email}`} className="bg-white/80 backdrop-blur-sm p-4 sm:p-5 rounded-xl border border-neutral-100 shadow-sm hover:shadow-md transition-all block sm:col-span-2">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-lg shrink-0">
-                                            <Mail className="w-5 h-5" />
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <h4 className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-1">Correo Electrónico</h4>
-                                            <p className="font-bold text-neutral-800 truncate text-sm">{c.email}</p>
-                                        </div>
-                                    </div>
-                                </a>
-                            )}
-
-                            {/* Web */}
-                            {c.web && (
-                                <a href={c.web} target="_blank" rel="noreferrer" className="bg-white/80 backdrop-blur-sm p-4 sm:p-5 rounded-xl border border-neutral-100 shadow-sm hover:shadow-md transition-all block sm:col-span-2">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-lg shrink-0">
-                                            <Globe className="w-5 h-5" />
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <h4 className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-1">Sitio Web</h4>
-                                            <p className="font-bold text-neutral-800 truncate text-sm">{c.web}</p>
-                                        </div>
-                                    </div>
-                                </a>
-                            )}
-                        </div>
-
-                        {/* Educational Offer (Ciclos) - Con acordeones por nivel */}
-                        {ciclos && ciclos.data.length > 0 && (
-                            <div className="bg-white rounded-2xl p-5 sm:p-8 border border-neutral-100 shadow-lg">
-                                {/* Header */}
-                                <div className="mb-5">
-                                    <div className="flex items-start justify-between gap-4 mb-3">
-                                        <h3 className="text-xl font-bold text-[#223945] flex items-center gap-3">
-                                            <div className="p-2 bg-[#223945] text-white rounded-lg shrink-0">
-                                                <BookOpen className="w-5 h-5" />
-                                            </div>
-                                            Oferta Educativa
-                                        </h3>
-                                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 rounded-full shrink-0">
-                                            <GraduationCap className="w-4 h-4 text-[#223945]" />
-                                            <span className="text-sm font-bold text-[#223945]">{totalCiclos} ciclos</span>
-                                        </div>
-                                    </div>
-                                    <p className="text-sm text-neutral-500 ml-12 mb-3">
-                                        Pulsa en cada nivel para ver los ciclos disponibles, y guarda los que más te interesen pulsando en el corazón.{' '}
-                                    </p>
-
-                                    {/* Quick Stats - Siempre en fila, compactos */}
-                                    <div className="flex items-center gap-1.5 ml-12 flex-wrap">
-                                        {sortedLevels.map(level => (
-                                            <span
-                                                key={level}
-                                                className={`px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap ${getLevelColor(level)}`}
-                                            >
-                                                {groupedCiclos[level].length} {getLevelAbbreviation(level)}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Acordeones por nivel */}
-                                <div className="space-y-3">
-                                    {sortedLevels.map(level => (
-                                        <div key={level} className={`rounded-xl border overflow-hidden ${getLevelBackground(level)}`}>
-                                            {/* Header del acordeón */}
-                                            <button
-                                                onClick={() => toggleLevel(level)}
-                                                className="w-full flex items-center justify-between p-4 hover:bg-white/50 transition-colors"
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${getLevelColor(level)}`}>
-                                                        {level}
-                                                    </span>
-                                                    <span className="text-sm font-medium text-neutral-600">
-                                                        {groupedCiclos[level].length} {groupedCiclos[level].length === 1 ? 'ciclo' : 'ciclos'}
-                                                    </span>
-                                                </div>
-                                                <motion.div
-                                                    animate={{ rotate: expandedLevels[level] ? 180 : 0 }}
-                                                    transition={{ duration: 0.2 }}
-                                                >
-                                                    <ChevronDown className="w-5 h-5 text-neutral-400" />
-                                                </motion.div>
-                                            </button>
-
-                                            {/* Contenido del acordeón */}
-                                            <AnimatePresence initial={false}>
-                                                {expandedLevels[level] && (
-                                                    <motion.div
-                                                        initial={{ height: 0, opacity: 0 }}
-                                                        animate={{ height: 'auto', opacity: 1 }}
-                                                        exit={{ height: 0, opacity: 0 }}
-                                                        transition={{ duration: 0.2 }}
-                                                        className="overflow-hidden"
-                                                    >
-                                                        <div className="p-4 pt-0 space-y-2">
-                                                            {groupedCiclos[level].map((ciclo: CicloFP) => {
-                                                                const isFavorito = isCicloFavorito(ciclo.id);
-                                                                return (
-                                                                    <div
-                                                                        key={ciclo.id}
-                                                                        className="bg-white/80 backdrop-blur-sm p-4 rounded-lg border border-white/50 shadow-sm hover:shadow-md transition-all"
-                                                                        data-ciclo-card
-                                                                    >
-                                                                        <div className="flex items-start justify-between gap-3">
-                                                                            <div className="flex-1 min-w-0">
-                                                                                <div className="flex items-center gap-2 mb-2">
-                                                                                    <span className="text-xs font-bold text-[#223945] bg-white px-2 py-0.5 rounded border border-neutral-200/50 uppercase tracking-wide">
-                                                                                        {ciclo.modalidad}
-                                                                                    </span>
-                                                                                </div>
-                                                                                <h4 className="font-bold text-[#111827] leading-snug">{ciclo.ciclo_formativo}</h4>
-                                                                                <p className="text-sm text-neutral-500 mt-1">
-                                                                                    {ciclo.familia_profesional}
-                                                                                </p>
-                                                                            </div>
-                                                                            <motion.button
-                                                                                onClick={(e) => {
-                                                                                    const cardEl = (e.currentTarget as HTMLElement).closest('[data-ciclo-card]') as HTMLElement;
-                                                                                    handleToggleCiclo(ciclo.id, ciclo.ciclo_formativo, cardEl);
-                                                                                }}
-                                                                                whileTap={{ scale: 0.85 }}
-                                                                                animate={isFavorito ? { scale: [1, 1.2, 1] } : {}}
-                                                                                transition={{ duration: 0.3 }}
-                                                                                className={`p-2 rounded-full shrink-0 transition-all ${
-                                                                                    isFavorito
-                                                                                        ? 'bg-red-50 text-red-500'
-                                                                                        : 'bg-neutral-100 text-neutral-400 hover:bg-red-50 hover:text-red-400'
-                                                                                }`}
-                                                                                title={isFavorito ? 'Quitar de favoritos' : 'Añadir a favoritos'}
-                                                                            >
-                                                                                <Heart className={`w-4 h-4 ${isFavorito ? 'fill-current' : ''}`} />
-                                                                            </motion.button>
-                                                                        </div>
-                                                                    </div>
-                                                                );
-                                                            })}
-                                                        </div>
-                                                    </motion.div>
-                                                )}
-                                            </AnimatePresence>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
                         )}
+
+                        {/* Qué puedes estudiar aquí */}
+                        <section className="bg-white rounded-3xl p-6 md:p-8 border border-neutral-100 shadow-lg">
+                            <div className="flex items-center justify-between gap-4">
+                                <h2 className="flex items-center gap-3 !text-xl md:!text-2xl !font-bold tracking-tight !text-[#223945]">
+                                    <span className="p-2 bg-[#223945] text-white rounded-xl shrink-0 shadow-sm">
+                                        <GraduationCap className="w-5 h-5" />
+                                    </span>
+                                    Qué puedes estudiar aquí
+                                </h2>
+                                {totalCiclos > 0 && (
+                                    <span className="px-3 py-1 rounded-full bg-gradient-to-r from-[#223945] to-[#345165] text-white text-xs sm:text-sm font-bold tabular-nums whitespace-nowrap shadow-md">
+                                        {totalCiclos} {totalCiclos === 1 ? 'ciclo' : 'ciclos'}
+                                    </span>
+                                )}
+                            </div>
+
+                            {!ciclos ? (
+                                <div className="mt-5 space-y-3">
+                                    {[...Array(3)].map((_, i) => <div key={i} className="h-12 bg-neutral-100 rounded-xl animate-pulse" />)}
+                                </div>
+                            ) : totalCiclos > 0 ? (
+                                <>
+                                    {/* Selector de nivel (segmented control) */}
+                                    {nivelesDisponibles.length > 1 && (
+                                        <div className="mt-5">
+                                            <div role="tablist" aria-label="Filtrar por nivel" className="flex flex-wrap gap-2">
+                                                {[{ key: null, short: 'Todos', count: totalCiclos, solid: 'bg-[#223945] text-white' }, ...nivelesDisponibles].map(n => {
+                                                    const active = nivelSeleccionado === n.key;
+                                                    return (
+                                                        <button
+                                                            key={n.key ?? 'todos'}
+                                                            role="tab"
+                                                            aria-selected={active}
+                                                            onClick={() => setNivelActivo(n.key)}
+                                                            className={`px-3.5 py-1.5 rounded-full text-sm font-bold whitespace-nowrap transition-all active:scale-95 ${
+                                                                active ? `${n.solid} shadow-md` : 'bg-neutral-100 text-neutral-500 hover:text-neutral-800'
+                                                            }`}
+                                                        >
+                                                            {n.short} <span className={active ? 'opacity-70' : 'text-neutral-400'}>{n.count}</span>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <ul className="mt-5 space-y-2">
+                                        {ciclosFiltrados.map((ciclo: CicloFP) => {
+                                            const isFavorito = isCicloFavorito(ciclo.id);
+                                            const distancia = ciclo.modalidad && !ciclo.modalidad.toLowerCase().startsWith('presencial');
+                                            const nivel = nivelFP(ciclo.nivel_educativo);
+                                            return (
+                                                <li
+                                                    key={ciclo.id}
+                                                    className={`flex items-center gap-3 sm:gap-4 p-3.5 sm:p-4 rounded-xl border transition-shadow hover:shadow-md ${nivel?.soft ?? 'bg-neutral-50 border-neutral-100'}`}
+                                                    data-ciclo-card
+                                                >
+                                                    <span className={`hidden sm:inline-flex shrink-0 w-11 justify-center text-[11px] font-bold py-1 rounded-full shadow-sm ${nivel?.solid ?? 'bg-neutral-600 text-white'}`}>
+                                                        {nivel?.abbr ?? '—'}
+                                                    </span>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="!text-[15px] font-bold !text-neutral-900 !leading-snug">{ciclo.ciclo_formativo}</p>
+                                                        <p className="!text-sm !text-neutral-600 mt-0.5">
+                                                            <span className="sm:hidden font-semibold">{nivel?.short ?? ciclo.nivel_educativo} · </span>
+                                                            {ciclo.familia_profesional}
+                                                            {distancia && (
+                                                                <span className="ml-2 px-2 py-0.5 rounded-full bg-white text-[#223945] ring-1 ring-[#223945]/15 text-xs font-bold">A distancia</span>
+                                                            )}
+                                                        </p>
+                                                    </div>
+                                                    <motion.button
+                                                        onClick={(e) => {
+                                                            const cardEl = (e.currentTarget as HTMLElement).closest('[data-ciclo-card]') as HTMLElement;
+                                                            handleToggleCiclo(ciclo.id, ciclo.ciclo_formativo, cardEl);
+                                                        }}
+                                                        whileTap={{ scale: 0.85 }}
+                                                        animate={isFavorito ? { scale: [1, 1.2, 1] } : {}}
+                                                        transition={{ duration: 0.3 }}
+                                                        className={`p-2 rounded-full shrink-0 transition-colors ${
+                                                            isFavorito ? 'text-red-500 bg-white shadow-sm' : 'text-neutral-400 bg-white/70 hover:text-red-500 hover:bg-white'
+                                                        }`}
+                                                        aria-label={isFavorito ? 'Quitar de favoritos' : 'Guardar ciclo en favoritos'}
+                                                    >
+                                                        <Heart className={`w-5 h-5 ${isFavorito ? 'fill-current' : ''}`} />
+                                                    </motion.button>
+                                                </li>
+                                            );
+                                        })}
+                                    </ul>
+                                </>
+                            ) : (
+                                <div className="mt-5">
+                                    {etapas.length > 0 && (
+                                        <div className="flex flex-wrap gap-2">
+                                            {etapas.map(e => (
+                                                <span key={e} className={`px-3.5 py-1.5 rounded-xl ring-1 text-sm font-bold ${estilo.chip}`}>{e}</span>
+                                            ))}
+                                        </div>
+                                    )}
+                                    <p className="mt-4 !text-sm text-neutral-500">
+                                        Este centro no imparte Formación Profesional. Para conocer su oferta concreta, contacta directamente con el centro.
+                                    </p>
+                                </div>
+                            )}
+
+                            {totalCiclos > 0 && (
+                                <p className="mt-4 !text-xs text-neutral-400">Guarda los ciclos que te interesen con el corazón para compararlos después.</p>
+                            )}
+                        </section>
                     </div>
 
                     {/* Right Column: Map - Solo visible en desktop */}

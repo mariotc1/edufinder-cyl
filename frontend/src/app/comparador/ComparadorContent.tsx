@@ -1,14 +1,15 @@
 'use client';
 
 import { useComparison } from '@/context/ComparisonContext';
-import { useEffect, useState, useRef, Suspense, useCallback } from 'react';
+import { useEffect, useState, useRef, Suspense, useMemo } from 'react';
 import api from '@/lib/axios';
-import { ChevronLeft, Info, MapPin, Phone, Mail, Globe, Check, X, Loader2, AlertTriangle, GraduationCap, Scale, Download, Share2, Link2, Copy, CheckCircle } from 'lucide-react';
-import { hapticFeedback } from '@/lib/haptics';
+import { ChevronLeft, MapPin, Phone, Mail, Globe, X, Loader2, GraduationCap, Scale, Download, Share2, Copy, CheckCircle, Check, ArrowRight, Heart, Laptop } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import jsPDF from 'jspdf';
+import { BrandBackdrop } from '@/components/auth/AuthLayout';
+import { centroName, centroTipo, centroEtapas, centroLugar, nivelFP, NIVELES_FP } from '@/lib/centro-format';
 
 // Wrapper component for Suspense - Exportado para usar desde page.tsx
 export default function ComparadorContent() {
@@ -27,6 +28,7 @@ interface CentroDetail {
     id: number;
     nombre: string;
     naturaleza: string;
+    denominacion_generica?: string;
     direccion: string;
     localidad: string;
     provincia: string;
@@ -48,132 +50,116 @@ interface Ciclo {
     clave_ciclo: string;
 }
 
+// Identidad de cada columna: letra + color (la letra evita depender solo del color)
+const COLUMNAS = [
+    { letra: 'A', solid: 'bg-[#223945]', bar: 'from-[#223945] to-[#3b5a6b]' },
+    { letra: 'B', solid: 'bg-teal-600', bar: 'from-teal-600 to-teal-400' },
+    { letra: 'C', solid: 'bg-pink-600', bar: 'from-pink-600 to-pink-400' },
+];
+
+const esDistancia = (c: Ciclo) => !!c.modalidad && !c.modalidad.toLowerCase().startsWith('presencial');
+const ordenNivel = (nivel: string) => {
+    const n = nivelFP(nivel);
+    return n ? NIVELES_FP.indexOf(n) : 99;
+};
+
+type Fila = { key: string; nombre: string; nivel: string; familia: string; en: boolean[]; };
+
 // PÁGINA DE COMPARADOR DE CENTROS
 function ComparadorPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const { selectedCentros, removeFromCompare, addToCompare } = useComparison();
-    const [details, setDetails] = useState<CentroDetail[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const { selectedCentros, removeFromCompare, replaceComparison } = useComparison();
+    const [cache, setCache] = useState<Record<number, CentroDetail>>({});
     const [isHydrated, setIsHydrated] = useState(false);
-    const [loadedFromUrl, setLoadedFromUrl] = useState(false);
+    // Mientras se cargan los centros de un enlace (?centros=1,2,3) no se muestra la selección anterior
+    const [urlPending, setUrlPending] = useState(() => !!searchParams.get('centros'));
+    const [soloComun, setSoloComun] = useState(false);
 
-    // Evitar problemas de hidratación y scroll to top al montar
     useEffect(() => {
         setIsHydrated(true);
-        // Scroll to top cuando se navega a la página
         window.scrollTo({ top: 0, behavior: 'instant' });
     }, []);
 
-    // Load centers from URL params (for shared links)
+    // Enlace compartido o venir de Favoritos: los centros del enlace sustituyen la selección
+    const urlLoaded = useRef(false);
     useEffect(() => {
-        const centrosParam = searchParams.get('centros');
-        if (centrosParam && !loadedFromUrl && isHydrated) {
-            setLoadedFromUrl(true); // Bloquear inmediatamente para evitar bucles
-            
-            const ids = centrosParam.split(',').map(id => parseInt(id)).filter(id => !isNaN(id));
-            if (ids.length >= 1) {
-                const fetchAndAdd = async () => {
-                    try {
-                        const promises = ids.slice(0, 3).map(id =>
-                            api.get(`/centros/${id}`).then(res => res.data.data)
-                        );
-                        const results = await Promise.all(promises);
-                        results.forEach(centro => {
-                            addToCompare(centro);
-                        });
-                    } catch (error) {
-                        console.error("Error loading from URL:", error);
-                    }
-                };
-                fetchAndAdd();
-            }
+        if (!isHydrated || urlLoaded.current) return;
+        urlLoaded.current = true;
+        const ids = (searchParams.get('centros') ?? '').split(',').map(Number).filter(n => n > 0).slice(0, 3);
+        if (ids.length === 0) { setUrlPending(false); return; }
+        Promise.allSettled(ids.map(id => api.get(`/centros/${id}`).then(res => res.data.data as CentroDetail)))
+            .then(results => {
+                const ok = results.flatMap(r => (r.status === 'fulfilled' && r.value ? [r.value] : []));
+                setCache(prev => Object.fromEntries([...Object.entries(prev), ...ok.map(c => [c.id, c])]));
+                if (ok.length > 0) replaceComparison(ok);
+            })
+            .finally(() => setUrlPending(false));
+    }, [isHydrated, searchParams, replaceComparison]);
+
+    // Detalle completo (con ciclos) de los centros que aún no se han pedido
+    const pedidos = useRef(new Set<number>());
+    useEffect(() => {
+        if (!isHydrated || urlPending) return;
+        selectedCentros.filter(c => !cache[c.id] && !pedidos.current.has(c.id)).forEach(c => {
+            pedidos.current.add(c.id);
+            api.get(`/centros/${c.id}`)
+                .then(res => setCache(prev => ({ ...prev, [c.id]: res.data.data })))
+                .catch(err => console.error('Error fetching comparison details', err));
+        });
+    }, [selectedCentros, cache, isHydrated, urlPending]);
+
+    // La URL refleja siempre la comparación actual (para recargar o compartir)
+    const idsKey = selectedCentros.map(c => c.id).join(',');
+    useEffect(() => {
+        if (!isHydrated || urlPending) return;
+        if ((searchParams.get('centros') ?? '') !== idsKey) {
+            router.replace(idsKey ? `/comparador?centros=${idsKey}` : '/comparador', { scroll: false });
         }
-    }, [searchParams, loadedFromUrl, isHydrated, addToCompare]);
+    }, [idsKey, isHydrated, urlPending, searchParams, router]);
 
-    // Efecto para obtener detalles completos
-    useEffect(() => {
-        if (!isHydrated) return;
+    const details = useMemo(() => selectedCentros.map(c => cache[c.id]).filter(Boolean), [selectedCentros, cache]);
+    const isLoading = urlPending || details.length < selectedCentros.length;
+    const n = details.length;
 
-        const fetchDetails = async () => {
-            if (selectedCentros.length === 0) {
-                setIsLoading(false);
-                setDetails([]);
-                return;
-            }
-
-            setIsLoading(true);
-            try {
-                const promises = selectedCentros.map(c =>
-                    api.get(`/centros/${c.id}`).then(res => res.data.data)
-                );
-                const results = await Promise.all(promises);
-                setDetails(results);
-                // Haptic feedback cuando la comparación está lista
-                if (results.length >= 2) {
-                    hapticFeedback('success');
-                }
-            } catch (error) {
-                console.error("Error fetching comparison details", error);
-            } finally {
-                setIsLoading(false);
-            }
+    // Resumen por centro
+    const resumen = useMemo(() => details.map(d => {
+        const ciclos = d.ciclos ?? [];
+        return {
+            ciclos: ciclos.length,
+            niveles: NIVELES_FP.map(nv => ({ nivel: nv, count: ciclos.filter(c => nivelFP(c.nivel_educativo) === nv).length })).filter(x => x.count > 0),
+            distancia: ciclos.filter(esDistancia).length,
+            familias: new Set(ciclos.map(c => c.familia_profesional)).size,
+            etapas: centroEtapas(d.denominacion_generica),
         };
+    }), [details]);
+    const maxCiclos = Math.max(0, ...resumen.map(r => r.ciclos));
+    const hayFP = maxCiclos > 0;
 
-        fetchDetails();
-    }, [selectedCentros, isHydrated]); // Dependencia directa de selectedCentros ahora que el contexto es estable
-
-    const [activeIndex, setActiveIndex] = useState(0);
-
-    const scrollToCard = (index: number) => {
-        const container = document.getElementById('comparison-carousel');
-        if (container) {
-            const cardWidth = container.clientWidth;
-            container.scrollTo({ left: index * cardWidth, behavior: 'smooth' });
-            setActiveIndex(index);
-        }
-    };
-
-    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-        const container = e.currentTarget;
-        const index = Math.round(container.scrollLeft / container.clientWidth);
-        setActiveIndex(index);
-    };
-
-    const getNaturalezaBadge = (naturaleza: string) => {
-        switch (naturaleza?.toUpperCase()) {
-            case "PÚBLICO": return "bg-blue-50/50 text-blue-700 border-blue-200/60 ring-1 ring-blue-100/50 backdrop-blur-sm";
-            case "PRIVADO": return "bg-amber-50/50 text-amber-700 border-amber-200/60 ring-1 ring-amber-100/50 backdrop-blur-sm";
-            default: return "bg-gray-50/50 text-gray-700 border-gray-200/60 backdrop-blur-sm";
-        }
-    };
-
-    const getLevelColor = (nivel: string) => {
-        switch (nivel?.toUpperCase()) {
-            case "GRADO SUPERIOR": return "bg-purple-600/90 text-white border-purple-500/50 shadow-sm shadow-purple-500/20";
-            case "GRADO MEDIO": return "bg-amber-500/90 text-white border-amber-500/50 shadow-sm shadow-amber-500/20";
-            case "FP BÁSICA": return "bg-blue-600/90 text-white border-blue-600/50 shadow-sm shadow-blue-500/20";
-            default: return "bg-neutral-600 text-white border-neutral-600";
-        }
-    };
-
-    const getLevelBackground = (nivel: string) => {
-        switch (nivel?.toUpperCase()) {
-            case "GRADO SUPERIOR": return "bg-purple-50/30 border-purple-100/60 group-hover:border-purple-200/80";
-            case "GRADO MEDIO": return "bg-amber-50/30 border-amber-100/60 group-hover:border-amber-200/80";
-            case "FP BÁSICA": return "bg-blue-50/30 border-blue-100/60 group-hover:border-blue-200/80";
-            default: return "bg-neutral-50/30 border-neutral-100/60";
-        }
-    };
-
-    const getLevelDotColor = (nivel: string) => {
-        switch (nivel?.toUpperCase()) {
-            case "GRADO SUPERIOR": return "bg-purple-400";
-            case "GRADO MEDIO": return "bg-amber-400";
-            case "FP BÁSICA": return "bg-blue-400";
-            default: return "bg-neutral-400";
-        }
-    };
+    // Oferta de FP cruzada: cada ciclo (nombre + nivel) y en qué centros se imparte
+    const familias = useMemo(() => {
+        const filas = new Map<string, Fila>();
+        details.forEach((d, i) => (d.ciclos ?? []).forEach(c => {
+            const key = `${c.familia_profesional}|${nivelFP(c.nivel_educativo)?.abbr ?? c.nivel_educativo}|${c.ciclo_formativo.toLowerCase().trim()}`;
+            const fila = filas.get(key) ?? { key, nombre: c.ciclo_formativo, nivel: c.nivel_educativo, familia: c.familia_profesional, en: details.map(() => false) };
+            fila.en[i] = true;
+            filas.set(key, fila);
+        }));
+        const grupos = new Map<string, Fila[]>();
+        filas.forEach(f => grupos.set(f.familia, [...(grupos.get(f.familia) ?? []), f]));
+        return [...grupos.entries()]
+            .map(([familia, filas]) => ({
+                familia,
+                filas: filas.sort((a, b) => ordenNivel(a.nivel) - ordenNivel(b.nivel) || a.nombre.localeCompare(b.nombre, 'es')),
+                centros: details.map((_, i) => filas.some(f => f.en[i])).filter(Boolean).length,
+            }))
+            .sort((a, b) => b.centros - a.centros || a.familia.localeCompare(b.familia, 'es'));
+    }, [details]);
+    const totalFilas = familias.reduce((s, f) => s + f.filas.length, 0);
+    const filasComunes = familias.reduce((s, f) => s + f.filas.filter(r => r.en.filter(Boolean).length >= 2).length, 0);
+    const familiasVisibles = soloComun
+        ? familias.map(f => ({ ...f, filas: f.filas.filter(r => r.en.filter(Boolean).length >= 2) })).filter(f => f.filas.length > 0)
+        : familias;
 
     // Share functionality
     const [showShareMenu, setShowShareMenu] = useState(false);
@@ -209,7 +195,7 @@ function ComparadorPage() {
 
     const handleShareWhatsApp = () => {
         const centrosCount = details.length;
-        const centrosList = details.map(d => `- ${d.nombre}`).join('\n');
+        const centrosList = details.map(d => `- ${centroName(d)}`).join('\n');
         const text = `Mira, he comparado estos ${centrosCount} centros con EduFinder CyL, ¿que te parece?\n\n${centrosList}\n\nEchale un vistazo: ${getShareUrl()}`;
         window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
         setShowShareMenu(false);
@@ -284,13 +270,13 @@ function ComparadorPage() {
                 pdf.setTextColor(17, 24, 39);
                 pdf.setFontSize(10);
                 pdf.setFont('helvetica', 'bold');
-                const nameLines = pdf.splitTextToSize(centro.nombre, colWidth - 10);
+                const nameLines = pdf.splitTextToSize(centroName(centro), colWidth - 10);
                 pdf.text(nameLines.slice(0, 2), x + 4, localY + 16);
 
                 pdf.setFontSize(8);
                 pdf.setFont('helvetica', 'normal');
                 pdf.setTextColor(107, 114, 128);
-                pdf.text(`${centro.localidad}, ${centro.provincia}`, x + 4, localY + 30);
+                pdf.text(centroLugar(centro), x + 4, localY + 30);
 
                 localY += 34;
                 pdf.setFontSize(7);
@@ -392,62 +378,72 @@ function ComparadorPage() {
     // No renderizar nada hasta que estemos hidratados para evitar parpadeos y bucles
     if (!isHydrated) return null;
 
-    if (selectedCentros.length < 2) {
+    if (!urlPending && selectedCentros.length < 2) {
         return (
-            <div className="min-h-[70vh] flex flex-col items-center justify-center p-4">
-                <div className="bg-white/50 backdrop-blur-md p-6 rounded-full border border-neutral-200/60 mb-6 shadow-sm">
-                    <Scale className="w-12 h-12 text-[#223945]/60" />
-                </div>
-                <h2 className="text-2xl font-bold text-[#223945] mb-2 text-center tracking-tight">
-                    {selectedCentros.length === 0 ? "Comparador Vacío" : "Necesitas al menos 2 centros"}
-                </h2>
-                <p className="text-neutral-500 mb-8 max-w-md text-center text-sm leading-relaxed">
-                    {selectedCentros.length === 0 
-                        ? "Ve a tus favoritos para seleccionar los centros que quieres comparar."
-                        : "Comparar un solo centro no tiene mucha gracia. ¡Añade otro para empezar el duelo!"}
-                </p>
-                <div className="flex gap-4">
-                    <Link href="/favoritos" className="bg-[#223945] text-white px-8 py-3 rounded-xl font-bold hover:shadow-lg transition-all">
-                        Ir a Favoritos
+            <div className="relative isolate min-h-[80vh] flex items-center justify-center px-4 py-12">
+                <BrandBackdrop pattern={false} />
+                <div className="relative w-full max-w-md text-center px-6 py-12 rounded-3xl bg-white/85 backdrop-blur-xl border border-white/70 shadow-[0_24px_60px_-20px_rgba(34,57,69,0.35)]">
+                    <div aria-hidden="true" className="absolute inset-0 rounded-3xl overflow-hidden pointer-events-none">
+                        <div className="h-1.5 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300" />
+                    </div>
+                    <span className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-[#223945] to-blue-600 text-white flex items-center justify-center shadow-lg shadow-[#223945]/25">
+                        <Scale className="w-7 h-7" />
+                    </span>
+                    <h1 className="mt-5 !text-2xl !font-extrabold !text-[#223945]">
+                        {selectedCentros.length === 0 ? 'Compara centros lado a lado' : 'Te falta un centro'}
+                    </h1>
+                    <p className="mt-2 !text-sm text-neutral-500 max-w-xs mx-auto">
+                        {selectedCentros.length === 0
+                            ? 'Elige 2 o 3 de tus favoritos y verás en qué se parecen y en qué se diferencian.'
+                            : 'Para comparar necesitas al menos dos centros. Elige otro desde tus favoritos.'}
+                    </p>
+                    <Link href="/favoritos" className="mt-7 inline-flex items-center justify-center gap-2 h-11 px-6 rounded-xl bg-gradient-to-r from-[#223945] via-[#2d4a5e] to-blue-600 text-white text-sm font-bold shadow-lg shadow-[#223945]/20 hover:-translate-y-0.5 transition-all">
+                        <Heart className="w-4 h-4" />
+                        Elegir en favoritos
                     </Link>
-                    {selectedCentros.length > 0 && (
-                         <button onClick={() => removeFromCompare(selectedCentros[0].id)} className="px-8 py-3 rounded-xl font-bold text-red-500 hover:bg-red-50 transition-colors">
-                            Limpiar
-                        </button>
-                    )}
                 </div>
             </div>
         );
     }
 
+    // Columnas: en móvil la etiqueta va encima; en escritorio, a la izquierda
+    const cols = { '--n': n } as React.CSSProperties;
+    const gridResumen = 'grid gap-x-2 md:gap-x-4 grid-cols-[repeat(var(--n),minmax(0,1fr))] md:grid-cols-[10rem_repeat(var(--n),minmax(0,1fr))]';
+    const gridOferta = 'grid items-center gap-x-1.5 md:gap-x-4 grid-cols-[minmax(0,1fr)_repeat(var(--n),2.25rem)] md:grid-cols-[minmax(0,1fr)_repeat(var(--n),8.5rem)]';
+
     return (
-        <div className="min-h-screen bg-brand-gradient pt-6 md:pt-20 pb-12 px-4 sm:px-6">
-            <div className="max-w-7xl mx-auto"> 
-                <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-neutral-500 hover:text-[#223945] mb-8 font-semibold transition-colors text-sm md:font-bold md:uppercase md:tracking-wide group">
+        <div className="relative isolate min-h-screen bg-brand-gradient pt-5 md:pt-12 pb-16 px-4 sm:px-6">
+            <BrandBackdrop pattern={false} />
+            <div className="max-w-6xl mx-auto">
+                <button onClick={() => router.back()} className="inline-flex items-center gap-1.5 text-neutral-500 hover:text-[#223945] mb-5 text-sm font-semibold transition-colors group">
                     <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
                     Volver
                 </button>
 
-                <div className="mb-8">
-                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                {/* ── Cabecera ── */}
+                <div className="relative flex md:items-end md:justify-between gap-4 mb-6">
+                    <div className="flex items-center gap-4">
+                        <div className="relative shrink-0">
+                            <div aria-hidden="true" className="absolute inset-0 rounded-2xl bg-blue-500/30 blur-xl" />
+                            <div className="relative w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br from-[#223945] to-blue-600 ring-4 ring-white shadow-lg shadow-[#223945]/25 flex items-center justify-center">
+                                <Scale className="w-7 h-7 md:w-8 md:h-8 text-white" />
+                            </div>
+                        </div>
                         <div>
-                            <h1 className="text-2xl md:text-3xl font-bold text-[#223945] mb-2 flex items-center gap-3">
-                                <div className="p-2.5 bg-gradient-to-br from-[#223945] to-[#374f5e] text-white rounded-xl shadow-lg">
-                                    <Scale className="w-6 h-6" />
-                                </div>
-                                Comparador de Centros
-                            </h1>
-                            <p className="text-neutral-500 max-w-2xl text-sm pl-[3.5rem] leading-relaxed">
-                                Compara {details.length} centros educativos
+                            <h1 className="!text-[1.75rem] md:!text-4xl !font-extrabold tracking-tight !text-[#223945] !leading-tight">Comparador</h1>
+                            <p className="!text-sm md:!text-base !text-neutral-500 font-medium">
+                                {isLoading ? 'Preparando la comparación…' : `${n} centros, lado a lado · `}
+                                {!isLoading && <Link href="/favoritos" className="text-blue-600 font-semibold hover:underline">Cambiar</Link>}
                             </p>
                         </div>
+                    </div>
 
-                        {details.length >= 2 && !isLoading && (
-                            <div className="flex items-center justify-center sm:justify-end gap-2 w-full sm:w-auto">
+                        {!isLoading && details.length >= 2 && (
+                            <div className="flex items-center gap-2 max-md:absolute max-md:right-0 max-md:-top-[3.15rem]">
                                 <div className="relative" ref={shareMenuRef}>
-                                    <button onClick={() => setShowShareMenu(!showShareMenu)} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-neutral-200 text-neutral-700 font-bold text-sm hover:bg-neutral-50 transition-all shadow-sm">
+                                    <button onClick={() => setShowShareMenu(!showShareMenu)} aria-label="Compartir comparación" className="flex items-center justify-center gap-2 w-10 h-10 md:w-auto md:h-auto md:px-4 md:py-2.5 rounded-xl bg-white border border-neutral-200 text-neutral-700 font-bold text-sm hover:bg-neutral-50 transition-all shadow-sm">
                                         <Share2 className="w-4 h-4" />
-                                        <span className="hidden sm:inline">Compartir</span>
+                                        <span className="hidden md:inline">Compartir</span>
                                     </button>
                                     {/* Desktop dropdown */}
                                     <AnimatePresence>
@@ -524,101 +520,264 @@ function ComparadorPage() {
                                         )}
                                     </AnimatePresence>
                                 </div>
-                                <button onClick={generatePDF} disabled={generatingPdf} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#223945] text-white font-bold text-sm hover:bg-[#1a2c35] transition-all shadow-md disabled:opacity-50">
+                                <button onClick={generatePDF} disabled={generatingPdf} aria-label="Descargar PDF" className="flex items-center justify-center gap-2 w-10 h-10 md:w-auto md:h-auto md:px-4 md:py-2.5 rounded-xl bg-[#223945] text-white font-bold text-sm hover:bg-[#1a2c35] transition-all shadow-md disabled:opacity-50">
                                     {generatingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                                    <span className="hidden sm:inline">{generatingPdf ? 'Generando...' : 'Descargar PDF'}</span>
-                                    <span className="sm:hidden">PDF</span>
+                                    <span className="hidden md:inline">{generatingPdf ? 'Generando...' : 'Descargar PDF'}</span>
                                 </button>
                             </div>
                         )}
-                    </div>
                 </div>
 
                 {isLoading ? (
-                    <div className="flex justify-center py-20"><Loader2 className="w-12 h-12 animate-spin text-[#223945]" /></div>
+                    <div className="flex justify-center py-24"><Loader2 className="w-10 h-10 animate-spin text-[#223945]" /></div>
                 ) : (
-                    <div className={`relative bg-white/40 backdrop-blur-xl rounded-3xl shadow-sm border border-white/60 overflow-hidden p-6 md:p-8 ${details.length === 2 ? 'max-w-5xl' : ''}`}>
-                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#223945]/80 via-blue-500/80 to-blue-300/80"></div>
-                        <div className="md:hidden flex justify-center gap-2 mb-6">
-                            {details.map((_, idx) => (
-                                <button key={idx} onClick={() => scrollToCard(idx)} className={`h-1.5 rounded-full transition-all duration-300 ${activeIndex === idx ? 'w-6 bg-[#223945]' : 'w-2 bg-[#223945]/20'}`} />
+                    <div style={cols} className="space-y-5">
+                        {/* ── Los centros ── */}
+                        <div className={gridResumen}>
+                            <div className="hidden md:block" />
+                            {details.map((d, i) => (
+                                <motion.div
+                                    key={d.id}
+                                    initial={{ opacity: 0, y: 12 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: i * 0.06 }}
+                                    className="relative flex flex-col rounded-2xl bg-white border border-neutral-200/80 shadow-sm p-3 pt-4 md:p-5 md:pt-6"
+                                >
+                                    <div aria-hidden="true" className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+                                        <div className={`h-1.5 bg-gradient-to-r ${COLUMNAS[i].bar}`} />
+                                    </div>
+                                    <button
+                                        onClick={() => removeFromCompare(d.id)}
+                                        aria-label={`Quitar ${centroName(d)} de la comparación`}
+                                        className="absolute top-2.5 right-2 md:top-4 md:right-3 p-1 rounded-full text-neutral-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                    <span className={`w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl ${COLUMNAS[i].solid} text-white text-xs md:text-sm font-extrabold flex items-center justify-center shadow-md`}>
+                                        {COLUMNAS[i].letra}
+                                    </span>
+                                    <span className="mt-2 md:mt-3 text-[10px] md:text-[11px] font-bold text-blue-600 uppercase tracking-wider truncate">{centroTipo(d.denominacion_generica)}</span>
+                                    <Link href={`/centro/${d.id}`} className="mt-0.5 text-[13px] md:text-base font-extrabold text-[#111827] leading-tight line-clamp-3 hover:text-blue-700 transition-colors">
+                                        {centroName(d)}
+                                    </Link>
+                                    <span className="mt-1.5 flex items-start gap-1 text-[11px] md:text-xs text-neutral-500 min-w-0">
+                                        <MapPin className="w-3 h-3 mt-px shrink-0 text-rose-500" />
+                                        <span className="line-clamp-2">{centroLugar(d)}</span>
+                                    </span>
+                                    <Link href={`/centro/${d.id}`} className="hidden md:inline-flex mt-auto pt-4 items-center gap-1 text-sm font-bold text-[#223945] hover:text-blue-700 group/ver">
+                                        Ver centro <ArrowRight className="w-4 h-4 transition-transform group-hover/ver:translate-x-0.5" />
+                                    </Link>
+                                </motion.div>
                             ))}
                         </div>
-                        <div id="comparison-carousel" onScroll={handleScroll} className={`flex md:grid gap-6 overflow-x-auto snap-x snap-mandatory pb-6 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide ${details.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-2 lg:grid-cols-3'}`}>
-                            {details.map((d) => (
-                                <div key={d.id} className="flex-shrink-0 w-full md:w-auto bg-white/80 backdrop-blur-md rounded-2xl border border-white/50 shadow-sm snap-center flex flex-col overflow-hidden relative hover:shadow-md transition-all duration-300">
-                                    <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300 z-10"></div>
-                                    <div className="p-6 pb-4 border-b border-blue-100/30 relative flex flex-col items-start bg-gradient-to-b from-blue-50/40 via-white/60 to-white">
-                                        <button onClick={() => removeFromCompare(d.id)} className="absolute top-4 right-4 text-neutral-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition-all"><X className="w-4 h-4" /></button>
-                                        <div className="mb-3">
-                                            <span className={`inline-block text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${getNaturalezaBadge(d.naturaleza)}`}>{d.naturaleza}</span>
-                                        </div>
-                                        <h3 className="text-[15px] font-bold text-[#111827] leading-tight min-h-[3rem] line-clamp-2 w-full pr-6 mb-1">{d.nombre}</h3>
-                                        <div className="flex items-center gap-2 mt-auto text-xs text-neutral-500 font-medium w-full">
-                                            <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-                                            <span className="truncate">{d.localidad}</span>
-                                        </div>
-                                    </div>
-                                    <div className="flex-grow bg-neutral-50/20">
-                                        <div className="p-5 border-b border-neutral-100/50">
-                                            <h4 className="text-xs font-bold text-blue-900/80 uppercase tracking-wider mb-3">Contacto</h4>
-                                            <div className="space-y-2.5">
-                                                {d.web && (
-                                                    <a href={d.web.startsWith('http') ? d.web : `http://${d.web}`} target="_blank" className="flex items-center gap-3 text-sm text-[#223945] hover:text-blue-600 transition-colors group">
-                                                        <div className="p-1.5 bg-[#223945] rounded-lg shrink-0"><Globe className="w-3.5 h-3.5 text-white" /></div>
-                                                        <span className="font-semibold underline decoration-neutral-200 underline-offset-4 truncate">Visitar Web</span>
-                                                    </a>
-                                                )}
-                                                {d.telefono && (
-                                                    <div className="flex items-center gap-3 text-sm text-neutral-600">
-                                                        <div className="p-1.5 bg-[#223945] rounded-lg shrink-0"><Phone className="w-3.5 h-3.5 text-white" /></div>
-                                                        <span className="font-mono text-xs font-medium">{d.telefono}</span>
-                                                    </div>
-                                                )}
+
+                        {/* ── De un vistazo ── */}
+                        <section className="rounded-3xl bg-white/80 backdrop-blur-xl border border-white shadow-sm p-4 md:p-6">
+                            <h2 className="!text-base md:!text-lg !font-extrabold !text-[#223945] mb-1">De un vistazo</h2>
+                            <div className="divide-y divide-neutral-100">
+                                <FilaResumen label="Titularidad" grid={gridResumen}>
+                                    {details.map(d => {
+                                        const publico = d.naturaleza?.toUpperCase().includes('PÚBLICO');
+                                        return (
+                                            <span key={d.id} className={`justify-self-start px-2 py-0.5 rounded-full text-[10px] md:text-[11px] font-bold uppercase tracking-wide ring-1 ${publico ? 'bg-blue-50 text-blue-700 ring-blue-200' : 'bg-amber-50 text-amber-700 ring-amber-200'}`}>
+                                                {publico ? 'Público' : 'Privado'}
+                                            </span>
+                                        );
+                                    })}
+                                </FilaResumen>
+
+                                {hayFP && (
+                                    <FilaResumen label="Ciclos de FP" grid={gridResumen}>
+                                        {resumen.map((r, i) => (
+                                            <div key={i} className="min-w-0">
+                                                <span className="flex items-baseline gap-1.5 flex-wrap">
+                                                    <span className="text-xl md:text-2xl font-extrabold text-[#111827] tabular-nums leading-none">{r.ciclos}</span>
+                                                    {r.ciclos === maxCiclos && resumen.filter(x => x.ciclos === maxCiclos).length === 1 && (
+                                                        <span className="hidden md:inline px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase tracking-wide">Más oferta</span>
+                                                    )}
+                                                </span>
+                                                <span className="mt-2 block h-1.5 rounded-full bg-neutral-100 overflow-hidden">
+                                                    <span className={`block h-full rounded-full bg-gradient-to-r ${COLUMNAS[i].bar}`} style={{ width: `${(r.ciclos / maxCiclos) * 100}%` }} />
+                                                </span>
                                             </div>
+                                        ))}
+                                    </FilaResumen>
+                                )}
+
+                                {hayFP && (
+                                    <FilaResumen label="Por nivel" grid={gridResumen}>
+                                        {resumen.map((r, i) => (
+                                            <div key={i} className="flex flex-wrap gap-1">
+                                                {r.niveles.length > 0 ? r.niveles.map(({ nivel, count }) => (
+                                                    <span key={nivel.key} title={nivel.label} className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] md:text-[11px] font-bold ${nivel.solid}`}>
+                                                        <span className="tabular-nums">{count}</span>
+                                                        <span className="opacity-80">{nivel.abbr}</span>
+                                                    </span>
+                                                )) : <Vacio />}
+                                            </div>
+                                        ))}
+                                    </FilaResumen>
+                                )}
+
+                                {hayFP && (
+                                    <FilaResumen label="Familias" grid={gridResumen}>
+                                        {resumen.map((r, i) => (
+                                            <span key={i} className="text-sm md:text-base font-bold text-[#223945] tabular-nums">{r.familias || <Vacio />}</span>
+                                        ))}
+                                    </FilaResumen>
+                                )}
+
+                                {resumen.some(r => r.distancia > 0) && (
+                                    <FilaResumen label="A distancia" grid={gridResumen}>
+                                        {resumen.map((r, i) => (
+                                            <span key={i} className="inline-flex items-center gap-1.5 text-sm font-bold text-[#223945]">
+                                                {r.distancia > 0 ? <><Laptop className="w-4 h-4 text-blue-600" />{r.distancia}</> : <Vacio />}
+                                            </span>
+                                        ))}
+                                    </FilaResumen>
+                                )}
+
+                                {resumen.some(r => r.ciclos === 0 && r.etapas.length > 0) && (
+                                    <FilaResumen label="Etapas" grid={gridResumen}>
+                                        {resumen.map((r, i) => (
+                                            <div key={i} className="flex flex-wrap gap-1">
+                                                {r.etapas.length > 0 ? r.etapas.map(e => (
+                                                    <span key={e} className="px-1.5 py-0.5 rounded-md bg-[#223945]/[0.07] text-[10px] md:text-[11px] font-bold text-[#223945]">{e}</span>
+                                                )) : <Vacio />}
+                                            </div>
+                                        ))}
+                                    </FilaResumen>
+                                )}
+
+                                <FilaResumen label="Contacto" grid={gridResumen}>
+                                    {details.map(d => (
+                                        <div key={d.id} className="flex flex-wrap gap-1.5">
+                                            {d.web && <Contacto href={d.web.startsWith('http') ? d.web : `https://${d.web}`} label="Web" icon={Globe} externo />}
+                                            {d.telefono && <Contacto href={`tel:${d.telefono}`} label={`Llamar al ${d.telefono}`} icon={Phone} />}
+                                            {d.email && <Contacto href={`mailto:${d.email}`} label={`Escribir a ${d.email}`} icon={Mail} />}
+                                            {!d.web && !d.telefono && !d.email && <Vacio />}
                                         </div>
-                                        <div className="p-5">
-                                             <h4 className="text-xs font-bold text-blue-900/80 uppercase tracking-wider mb-4 flex items-center gap-2">
-                                                <GraduationCap className="w-4 h-4 text-blue-600" />
-                                                Oferta Educativa
-                                            </h4>
-                                            {d.ciclos && d.ciclos.length > 0 ? (
-                                                <div className="space-y-5">
-                                                    {Object.entries(d.ciclos.reduce((acc, c) => {
-                                                        if (!acc[c.familia_profesional]) acc[c.familia_profesional] = [];
-                                                        acc[c.familia_profesional].push(c);
-                                                        return acc;
-                                                    }, {} as Record<string, Ciclo[]>)).sort().map(([familia, ciclos]) => (
-                                                        <div key={familia}>
-                                                            <div className="flex items-center gap-2 mb-2 text-[#223945]">
-                                                                <div className="w-1 h-3.5 bg-gradient-to-b from-blue-600 to-indigo-600 rounded-full shrink-0"></div>
-                                                                <h5 className="text-[11px] sm:text-xs font-extrabold uppercase tracking-tight leading-tight text-[#111827]">{familia}</h5>
-                                                            </div>
-                                                            <div className="flex flex-col gap-1.5 pl-3">
-                                                                {ciclos.map(c => (
-                                                                    <div key={c.id} className={`w-full flex items-center gap-2 text-xs px-2.5 py-1.5 rounded-lg border shadow-sm transition-colors ${getLevelBackground(c.nivel_educativo)}`}>
-                                                                        <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${getLevelDotColor(c.nivel_educativo)}`}></div>
-                                                                        <p className="flex-1 text-[12px] font-medium text-neutral-700 leading-snug mb-0 truncate">{c.ciclo_formativo}</p>
-                                                                        <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded shadow-sm shrink-0 ${getLevelColor(c.nivel_educativo)}`}>
-                                                                            {c.nivel_educativo === 'Grado Superior' ? 'GS' : c.nivel_educativo === 'Grado Medio' ? 'GM' : 'FPB'}
-                                                                        </span>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            ) : (
-                                                <div className="text-center py-6 text-neutral-400 text-xs italic bg-white/50 rounded-xl border border-dashed border-neutral-200">Sin datos académicos</div>
-                                            )}
-                                        </div>
+                                    ))}
+                                </FilaResumen>
+                            </div>
+                        </section>
+
+                        {/* ── Oferta de FP cruzada ── */}
+                        {hayFP && (
+                            <section className="rounded-3xl bg-white/80 backdrop-blur-xl border border-white shadow-sm">
+                                <div className="p-4 md:p-6 pb-3 md:pb-4 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+                                    <div>
+                                        <h2 className="!text-base md:!text-lg !font-extrabold !text-[#223945] flex items-center gap-2">
+                                            <GraduationCap className="w-5 h-5 text-blue-600" />
+                                            Qué se puede estudiar
+                                        </h2>
+                                        <p className="!text-xs md:!text-sm !text-neutral-500 mt-0.5">
+                                            {filasComunes > 0
+                                                ? `${filasComunes} ${filasComunes === 1 ? 'ciclo se imparte' : 'ciclos se imparten'} en más de un centro`
+                                                : 'No comparten ningún ciclo: cada centro tiene su propia oferta'}
+                                        </p>
                                     </div>
+                                    {filasComunes > 0 && (
+                                        <div role="tablist" aria-label="Filtrar ciclos" className="inline-flex self-start p-1 rounded-xl bg-neutral-100">
+                                            {[{ v: false, label: `Todos · ${totalFilas}` }, { v: true, label: `En común · ${filasComunes}` }].map(o => (
+                                                <button
+                                                    key={String(o.v)}
+                                                    role="tab"
+                                                    aria-selected={soloComun === o.v}
+                                                    onClick={() => setSoloComun(o.v)}
+                                                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${soloComun === o.v ? 'bg-white text-[#223945] shadow-sm' : 'text-neutral-500 hover:text-[#223945]'}`}
+                                                >
+                                                    {o.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
-                            ))}
-                        </div>
+
+                                {/* Cabecera fija de columnas */}
+                                <div className={`${gridOferta} sticky top-[var(--mobile-header-height)] md:top-20 z-20 px-4 md:px-6 py-2.5 bg-white/95 backdrop-blur-md border-y border-neutral-100`}>
+                                    <span className="text-[10px] md:text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Ciclo</span>
+                                    {details.map((d, i) => (
+                                        <span key={d.id} className="flex items-center justify-center md:justify-start gap-2 min-w-0" title={centroName(d)}>
+                                            <span className={`w-6 h-6 shrink-0 rounded-md ${COLUMNAS[i].solid} text-white text-[11px] font-extrabold flex items-center justify-center`}>{COLUMNAS[i].letra}</span>
+                                            <span className="hidden md:block truncate text-xs font-bold text-[#223945]">{centroName(d)}</span>
+                                        </span>
+                                    ))}
+                                </div>
+
+                                <div className="px-4 md:px-6 pb-4 md:pb-6">
+                                    {familiasVisibles.map(f => (
+                                        <div key={f.familia} className="pt-4">
+                                            <h3 className="!text-[11px] md:!text-xs !font-extrabold !text-[#223945] uppercase tracking-wide flex items-center gap-2 mb-1.5">
+                                                <span className="w-1 h-3.5 rounded-full bg-gradient-to-b from-blue-600 to-indigo-600" />
+                                                {f.familia}
+                                            </h3>
+                                            <ul className="divide-y divide-neutral-100">
+                                                {f.filas.map(r => {
+                                                    const nivel = nivelFP(r.nivel);
+                                                    const comun = r.en.filter(Boolean).length >= 2;
+                                                    return (
+                                                        <li key={r.key} className={`${gridOferta} py-2 -mx-2 px-2 rounded-lg ${comun ? 'bg-blue-50/60' : ''}`}>
+                                                            <span className="flex items-start gap-2 min-w-0">
+                                                                <span title={nivel?.label} className={`mt-px shrink-0 w-8 text-center py-0.5 rounded text-[9px] font-bold ${nivel?.solid ?? 'bg-neutral-600 text-white'}`}>
+                                                                    {nivel?.abbr ?? '·'}
+                                                                </span>
+                                                                <span className="text-[13px] md:text-sm font-medium text-neutral-800 leading-snug">{r.nombre}</span>
+                                                            </span>
+                                                            {r.en.map((esta, i) => (
+                                                                <span key={i} className="flex items-center justify-center md:justify-start">
+                                                                    {esta ? (
+                                                                        <span aria-label={`Se imparte en ${COLUMNAS[i].letra}`}>
+                                                                            <span className={`w-6 h-6 rounded-full ${COLUMNAS[i].solid} text-white flex items-center justify-center shadow-sm`}>
+                                                                                <Check className="w-3.5 h-3.5" strokeWidth={3} />
+                                                                            </span>
+                                                                        </span>
+                                                                    ) : (
+                                                                        <span aria-label={`No se imparte en ${COLUMNAS[i].letra}`} className="w-6 h-6 flex items-center justify-center">
+                                                                            <span className="w-2.5 h-0.5 rounded-full bg-neutral-200" />
+                                                                        </span>
+                                                                    )}
+                                                                </span>
+                                                            ))}
+                                                        </li>
+                                                    );
+                                                })}
+                                            </ul>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+                        )}
                     </div>
                 )}
             </div>
         </div>
     );
+}
+
+function FilaResumen({ label, grid, children }: { label: string; grid: string; children: React.ReactNode }) {
+    return (
+        <div className={`${grid} items-center gap-y-2 py-3.5`}>
+            <span className="col-span-full md:col-span-1 text-[10px] md:text-xs font-bold text-neutral-400 uppercase tracking-wider">{label}</span>
+            {children}
+        </div>
+    );
+}
+
+function Contacto({ href, label, icon: Icon, externo }: { href: string; label: string; icon: typeof Globe; externo?: boolean }) {
+    return (
+        <a
+            href={href}
+            aria-label={label}
+            title={label}
+            {...(externo ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+            className="w-8 h-8 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-[#223945]/[0.07] text-[#223945] flex items-center justify-center hover:bg-[#223945] hover:text-white transition-colors"
+        >
+            <Icon className="w-4 h-4" />
+        </a>
+    );
+}
+
+function Vacio() {
+    return <span className="text-neutral-300 font-bold" aria-label="Ninguno">—</span>;
 }

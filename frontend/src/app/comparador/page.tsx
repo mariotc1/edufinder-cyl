@@ -1,8 +1,9 @@
 import { Metadata } from 'next';
 import ComparadorContent from './ComparadorContent';
 
-// URL base de la API (server-side)
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.edufinder.es/api';
+// URL base de la API (server-side). Dentro de Docker "localhost" es el propio contenedor del
+// frontend, así que se permite una URL interna (API_INTERNAL_URL=http://backend:8000/api)
+const API_URL = process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || 'https://api.edufinder.es/api';
 
 interface Centro {
   id: number;
@@ -59,6 +60,7 @@ export async function generateMetadata({
       ids.slice(0, 3).map(id =>
         fetch(`${API_URL}/centros/${id}`, {
           next: { revalidate: 3600 }, // Cache por 1 hora
+          signal: AbortSignal.timeout(3000), // la vista previa nunca debe retrasar la página
         }).then(res => res.ok ? res.json() : null)
       )
     );
@@ -67,8 +69,8 @@ export async function generateMetadata({
       .filter(Boolean)
       .map((res: { data: Centro }) => res.data?.nombre)
       .filter(Boolean);
-  } catch (error) {
-    console.error('Error fetching centro names for OG:', error);
+  } catch {
+    // Sin nombres se usa la vista previa genérica: no es un error para el usuario
   }
 
   // Si no se pudieron obtener nombres, usar genérico
