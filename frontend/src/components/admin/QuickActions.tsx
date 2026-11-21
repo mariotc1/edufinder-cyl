@@ -1,27 +1,25 @@
 'use client';
 
-import { Download, RefreshCw, Server, ShieldAlert, CheckCircle, AlertTriangle, Database, Activity, FileText, X } from 'lucide-react';
+import { Download, RefreshCw, Server, ShieldAlert, AlertTriangle, Database, Activity, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import api from '@/lib/axios';
 import useSWR from 'swr';
 
 const fetcher = (url: string) => api.get(url).then((res) => res.data);
 
 export default function QuickActions() {
+  const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
-  
+
   // Modal States
   const [showExportModal, setShowExportModal] = useState(false);
   const [showCacheModal, setShowCacheModal] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
-  const [showLogsModal, setShowLogsModal] = useState(false);
 
   // Data Fetching for Modals (Conditional)
   const { data: systemStatus, mutate: refreshStatus } = useSWR(showStatusModal ? '/admin/system/status' : null, fetcher);
-  
-  // We'll fetch logs only when modal is open to save resources
-  const { data: logsData, mutate: refreshLogs } = useSWR(showLogsModal ? '/admin/system/logs' : null, fetcher);
 
   const handleExport = async () => {
     setLoading('export');
@@ -98,15 +96,15 @@ export default function QuickActions() {
         action: () => setShowStatusModal(true), 
         id: 'status' 
     },
-    { 
-        name: 'Logs de Error', 
-        icon: ShieldAlert, 
-        color: 'text-orange-600', 
-        bg: 'bg-orange-50', 
-        border: 'border-orange-100', 
-        hover: 'hover:bg-orange-100', 
-        action: () => setShowLogsModal(true), 
-        id: 'logs' 
+    {
+        name: 'Incidencias',
+        icon: ShieldAlert,
+        color: 'text-orange-600',
+        bg: 'bg-orange-50',
+        border: 'border-orange-100',
+        hover: 'hover:bg-orange-100',
+        action: () => router.push('/admin/incidents'),
+        id: 'incidents'
     },
   ];
 
@@ -268,47 +266,6 @@ export default function QuickActions() {
                                     </div>
                                 </div>
                             )}
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* LOGS MODAL */}
-            {showLogsModal && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-100 scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[80vh]">
-                        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                            <div>
-                                <h3 className="text-lg font-black text-[#223945] flex items-center gap-2">
-                                    <FileText className="w-5 h-5 text-orange-500" />
-                                    Logs del Sistema (Últimas líneas)
-                                </h3>
-                                <p className="text-xs text-slate-500 mt-1">Muestra el contenido reciente de laravel.log</p>
-                            </div>
-                            <button onClick={() => setShowLogsModal(false)} className="p-2 hover:bg-slate-200 rounded-full text-slate-400 hover:text-slate-600 transition-colors">
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-                        
-                        <div className="flex-1 overflow-auto p-0 bg-slate-900">
-                            {!logsData ? (
-                                <div className="flex justify-center py-20">
-                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
-                                </div>
-                            ) : (
-                                <pre className="p-4 text-xs font-mono text-emerald-400 whitespace-pre-wrap leading-relaxed">
-                                    {logsData.logs && logsData.logs.length > 0 
-                                        ? logsData.logs.join('\n') 
-                                        : <span className="text-slate-500 italic">-- El archivo de log está vacío o no se ha podido leer --</span>
-                                    }
-                                </pre>
-                            )}
-                        </div>
-
-                        <div className="p-4 border-t border-slate-100 bg-white flex justify-end">
-                            <button onClick={() => setShowLogsModal(false)} className="px-6 py-2 rounded-xl font-bold text-sm text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors">
-                                Cerrar
-                            </button>
                         </div>
                     </div>
                 </div>

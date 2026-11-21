@@ -44,11 +44,11 @@ class SyncOpenDataCommand extends Command
             $logAndInfo('Starting OpenData synchronization...');
 
             $logAndInfo('Syncing Centros Docentes...');
-            $statsCentros = $this->service->syncCentros();
+            $statsCentros = $this->service->syncCentros($syncLog->id);
             $logAndInfo("Centros Docentes synced. Fetched: {$statsCentros['total_fetched']}, Created: {$statsCentros['created']}, Updated: {$statsCentros['updated']}");
 
             $logAndInfo('Syncing Ciclos FP...');
-            $statsCiclos = $this->service->syncCiclos();
+            $statsCiclos = $this->service->syncCiclos($syncLog->id);
             $logAndInfo("Ciclos FP synced. Fetched: {$statsCiclos['total_fetched']}, Created: {$statsCiclos['created']}, Updated: {$statsCiclos['updated']}");
 
             $logAndInfo('All operations completed.');

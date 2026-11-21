@@ -10,6 +10,8 @@ use App\Models\SyncLog;
 use App\Models\ActivityLog;
 use App\Models\CentroVisit;
 use App\Models\SearchLog;
+use App\Models\DataSyncState;
+use App\Models\SyncChange;
 use App\Jobs\SyncOpenDataJob;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -89,6 +91,40 @@ class AdminDashboardController extends Controller
             'latest' => $latest,
             'history' => $history
         ]);
+    }
+
+    // Vista unificada: estado del último run + estado por dataset (antes sin exponer)
+    public function syncOverview()
+    {
+        return response()->json([
+            'latest' => SyncLog::latest()->first(),
+            'datasets' => DataSyncState::orderBy('dataset')->get(),
+        ]);
+    }
+
+    // Historial completo de ejecuciones de sincronización, paginado
+    public function syncHistory()
+    {
+        $history = SyncLog::withCount('changes')->orderByDesc('created_at')->paginate(15);
+
+        return response()->json($history);
+    }
+
+    // Diff real de una ejecución concreta: qué centros/ciclos se crearon o actualizaron, y qué campos cambiaron
+    public function syncRunChanges($id, Request $request)
+    {
+        $query = SyncChange::where('sync_log_id', $id);
+
+        if ($request->filled('dataset')) {
+            $query->where('dataset', $request->dataset);
+        }
+        if ($request->filled('type')) {
+            $query->where('change_type', $request->type);
+        }
+
+        $changes = $query->orderBy('entity_label')->paginate(25);
+
+        return response()->json($changes);
     }
 
     public function forceSync()

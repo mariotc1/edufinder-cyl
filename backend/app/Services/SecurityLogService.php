@@ -5,6 +5,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use App\Models\ActivityLog;
+use App\Models\BlockedIp;
 
 /**
  * SECURITY LOG SERVICE
@@ -60,20 +61,39 @@ class SecurityLogService
     }
 
     /**
-     * Verificar si una IP está bloqueada
+     * Verificar si una IP está bloqueada (BlockedIp en BD, con caché de 60s)
      */
     public static function isIpBlocked(string $ip): bool
     {
-        return (bool) Cache::get("blocked_ip:{$ip}");
+        return (bool) Cache::remember("blocked_ip:{$ip}", 60, function () use ($ip) {
+            $blocked = BlockedIp::where('ip', $ip)->first();
+            if (!$blocked) {
+                return false;
+            }
+            if ($blocked->blocked_until !== null && $blocked->blocked_until->isPast()) {
+                $blocked->delete();
+                return false;
+            }
+            return true;
+        });
     }
 
     /**
-     * Bloquear una IP temporalmente
+     * Bloquear una IP temporalmente (o permanentemente si $hours es null)
      */
-    public static function blockIp(string $ip, int $hours = 24): void
+    public static function blockIp(string $ip, ?int $hours = 24, string $reason = 'Actividad sospechosa automática', string $blockedBy = 'system', ?int $adminId = null): void
     {
-        Cache::put("blocked_ip:{$ip}", true, now()->addHours($hours));
-        Log::critical("IP blocked for {$hours} hours", ['ip' => $ip]);
+        BlockedIp::updateOrCreate(
+            ['ip' => $ip],
+            [
+                'reason' => $reason,
+                'blocked_by' => $blockedBy,
+                'blocked_until' => $hours !== null ? now()->addHours($hours) : null,
+                'admin_id' => $adminId,
+            ]
+        );
+        Cache::forget("blocked_ip:{$ip}");
+        Log::critical($hours ? "IP blocked for {$hours} hours" : 'IP blocked permanently', ['ip' => $ip]);
     }
 
     /**
@@ -81,6 +101,7 @@ class SecurityLogService
      */
     public static function unblockIp(string $ip): void
     {
+        BlockedIp::where('ip', $ip)->delete();
         Cache::forget("blocked_ip:{$ip}");
         Cache::forget("suspicious_activity:{$ip}");
         Log::info('IP unblocked', ['ip' => $ip]);
@@ -112,7 +133,9 @@ class SecurityLogService
             'blocked_attempts_today' => ActivityLog::where('action', 'like', 'SECURITY_%')
                 ->whereDate('created_at', today())
                 ->count(),
-            'unique_ips_blocked' => Cache::get('blocked_ips_count', 0),
+            'unique_ips_blocked' => BlockedIp::where(function ($q) {
+                $q->whereNull('blocked_until')->orWhere('blocked_until', '>', now());
+            })->count(),
         ];
     }
 }

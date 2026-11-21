@@ -8,11 +8,18 @@ import useSWR from 'swr';
 import { motion, AnimatePresence } from 'framer-motion';
 import VisitsChart from '@/components/admin/metrics/VisitsChart';
 import PopularCycles from '@/components/admin/metrics/PopularCycles';
+import MostVisitedCentros from '@/components/admin/metrics/MostVisitedCentros';
 import SyncStatusWidget from '@/components/admin/SyncStatusWidget';
 import RecentActivityFeed from '@/components/admin/RecentActivityFeed';
 import QuickActions from '@/components/admin/QuickActions';
 
 const fetcher = (url: string) => api.get(url).then((res) => res.data);
+
+const HEALTH_STYLES: Record<string, { bg: string; border: string; dot: string; text: string; label: string }> = {
+  healthy:  { bg: 'bg-emerald-50', border: 'border-emerald-100', dot: 'bg-emerald-500', text: 'text-emerald-700', label: 'Online' },
+  degraded: { bg: 'bg-amber-50',   border: 'border-amber-100',   dot: 'bg-amber-500',   text: 'text-amber-700',   label: 'Atención' },
+  down:     { bg: 'bg-red-50',     border: 'border-red-100',     dot: 'bg-red-500',     text: 'text-red-700',     label: 'Caído' },
+};
 
 type MobileSection = 'activity' | 'actions' | 'metrics';
 
@@ -25,8 +32,10 @@ const MOBILE_TABS: { id: MobileSection; label: string; icon: React.ElementType }
 export default function AdminDashboard() {
   const { user } = useAuth();
   const { data: stats, error, isLoading } = useSWR('/admin/dashboard/stats', fetcher);
+  const { data: health } = useSWR('/admin/system/health', fetcher, { refreshInterval: 30000 });
   const [mobileSection, setMobileSection] = useState<MobileSection>('activity');
   const [chartType, setChartType] = useState<'users' | 'visits'>('users');
+  const healthStyle = HEALTH_STYLES[health?.status] || { bg: 'bg-slate-50', border: 'border-slate-200', dot: 'bg-slate-400', text: 'text-slate-500', label: 'Comprobando...' };
 
   if (isLoading) return (
     <div className="flex items-center justify-center py-32">
@@ -48,6 +57,7 @@ export default function AdminDashboard() {
       gradient: 'from-blue-500 to-blue-600',
       bgIcon: 'bg-blue-50 text-blue-600',
       trend: `+${stats?.users?.new_today ?? 0} hoy`,
+      subtext: stats?.users?.blocked ? `${stats.users.blocked} bloqueados` : undefined,
     },
     {
       name: 'Centros',
@@ -88,12 +98,12 @@ export default function AdminDashboard() {
             <h1 className="text-2xl font-black text-[#223945] tracking-tight leading-tight">Dashboard</h1>
             <p className="text-sm text-slate-500 font-medium">Hola, {user?.name?.split(' ')[0]}</p>
           </div>
-          <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-100 px-2.5 py-1.5 rounded-full">
+          <div className={`flex items-center gap-1.5 ${healthStyle.bg} border ${healthStyle.border} px-2.5 py-1.5 rounded-full`}>
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              {health?.status === 'healthy' && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />}
+              <span className={`relative inline-flex rounded-full h-2 w-2 ${healthStyle.dot}`} />
             </span>
-            <span className="text-xs font-bold text-emerald-700">Online</span>
+            <span className={`text-xs font-bold ${healthStyle.text}`}>{healthStyle.label}</span>
           </div>
         </div>
 
@@ -115,6 +125,7 @@ export default function AdminDashboard() {
                 {stat.value}
               </p>
               <p className="text-[10px] text-slate-400 mt-1.5 font-medium">{stat.trend}</p>
+              {stat.subtext && <p className="text-[10px] text-red-500 font-bold mt-0.5">{stat.subtext}</p>}
             </div>
           ))}
         </div>
@@ -230,6 +241,11 @@ export default function AdminDashboard() {
                 <div className="h-[240px] flex flex-col">
                   <PopularCycles data={stats?.ciclos?.top_searches} />
                 </div>
+
+                {/* Most visited centros */}
+                <div className="h-[240px] flex flex-col">
+                  <MostVisitedCentros data={stats?.centros?.most_visited} />
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -251,12 +267,12 @@ export default function AdminDashboard() {
               <Clock className="w-4 h-4 text-slate-400" />
               {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
             </div>
-            <div className="text-xs font-bold text-emerald-700 bg-emerald-50 px-4 py-2 rounded-full border border-emerald-100 flex items-center gap-2">
+            <div className={`text-xs font-bold ${healthStyle.text} ${healthStyle.bg} px-4 py-2 rounded-full border ${healthStyle.border} flex items-center gap-2`}>
               <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+                {health?.status === 'healthy' && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />}
+                <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${healthStyle.dot}`} />
               </span>
-              Sistema Online
+              Sistema {healthStyle.label}
             </div>
           </div>
         </div>
@@ -281,6 +297,7 @@ export default function AdminDashboard() {
               <div className="relative z-10 mt-4">
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{stat.name}</p>
                 <h3 className="text-4xl font-black text-[#223945] tracking-tight">{stat.value}</h3>
+                {stat.subtext && <p className="text-[11px] text-red-500 font-bold mt-1">{stat.subtext}</p>}
               </div>
             </div>
           ))}
@@ -313,6 +330,9 @@ export default function AdminDashboard() {
             </div>
             <div className="h-[320px]">
               <PopularCycles data={stats?.ciclos?.top_searches} />
+            </div>
+            <div className="h-[320px]">
+              <MostVisitedCentros data={stats?.centros?.most_visited} />
             </div>
           </div>
         </div>

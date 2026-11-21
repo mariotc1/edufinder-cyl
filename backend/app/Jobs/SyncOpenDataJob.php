@@ -20,31 +20,44 @@ class SyncOpenDataJob implements ShouldQueue
 
     public function handle(OpenDataSyncService $service): void
     {
-        $log = SyncLog::create([
+        $logBuffer = "Starting OpenData synchronization...\n";
+
+        $syncLog = SyncLog::create([
             'started_at' => now(),
             'status' => 'running',
-            'log' => '',
+            'log' => $logBuffer,
         ]);
 
-        try {
-            $statsCentros = $service->syncCentros();
-            $statsCiclos = $service->syncCiclos();
+        $appendLog = function (string $message) use (&$logBuffer, $syncLog) {
+            $logBuffer .= "[$message] " . now()->toDateTimeString() . "\n";
+            $syncLog->update(['log' => $logBuffer]);
+        };
 
-            $log->update([
+        try {
+            $appendLog('Syncing Centros Docentes...');
+            $statsCentros = $service->syncCentros($syncLog->id);
+            $appendLog("Centros Docentes synced. Fetched: {$statsCentros['total_fetched']}, Created: {$statsCentros['created']}, Updated: {$statsCentros['updated']}");
+
+            $appendLog('Syncing Ciclos FP...');
+            $statsCiclos = $service->syncCiclos($syncLog->id);
+            $appendLog("Ciclos FP synced. Fetched: {$statsCiclos['total_fetched']}, Created: {$statsCiclos['created']}, Updated: {$statsCiclos['updated']}");
+
+            $appendLog('All operations completed.');
+
+            $syncLog->update([
                 'ended_at' => now(),
                 'status' => 'success',
-                'log' => json_encode([
-                    'centros' => $statsCentros,
-                    'ciclos' => $statsCiclos,
-                ]),
+                'log' => $logBuffer,
             ]);
         } catch (\Throwable $e) {
             Log::error('SyncOpenDataJob failed: ' . $e->getMessage());
+            $logBuffer .= "[ERROR] " . $e->getMessage() . "\n";
 
-            $log->update([
+            $syncLog->update([
                 'ended_at' => now(),
                 'status' => 'failed',
                 'error_message' => $e->getMessage(),
+                'log' => $logBuffer,
             ]);
 
             throw $e;
