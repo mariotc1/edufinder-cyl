@@ -3,6 +3,7 @@ namespace App\Services;
 
 use App\Models\Centro;
 use App\Models\CicloFp;
+use App\Models\SyncChange;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -20,17 +21,19 @@ class OpenDataSyncService
     protected $urlFp = 'https://analisis.datosabiertos.jcyl.es/api/v2/catalog/datasets/oferta-de-formacion-profesional/exports/json';
 
     // Wrappers públicos para iniciar la sincronización de cada dataset
-    public function syncCentros()
+    // $syncLogId permite registrar, por cada centro/ciclo creado o actualizado,
+    // un diff real de qué cambió (ver tabla sync_changes) asociado a esa ejecución.
+    public function syncCentros(?int $syncLogId = null)
     {
-        return $this->syncDataset('centros', $this->urlCentros, function ($record) {
-            return $this->processCentro($record);
+        return $this->syncDataset('centros', $this->urlCentros, function ($record) use ($syncLogId) {
+            return $this->processCentro($record, $syncLogId);
         });
     }
 
-    public function syncCiclos()
+    public function syncCiclos(?int $syncLogId = null)
     {
-        return $this->syncDataset('ciclos_fp', $this->urlFp, function ($record) {
-            return $this->processCiclo($record);
+        return $this->syncDataset('ciclos_fp', $this->urlFp, function ($record) use ($syncLogId) {
+            return $this->processCiclo($record, $syncLogId);
         });
     }
 
@@ -132,7 +135,7 @@ class OpenDataSyncService
     // PROCESAMIENTO DE CENTRO
     // Mapea los campos del JSON a la estructura de la tabla 'centros'
     // Utiliza hash para evitar actualizaciones innecesarias si los datos no han cambiado
-    protected function processCentro($data)
+    protected function processCentro($data, ?int $syncLogId = null)
     {
         $codigo = $data['codigo'] ?? null;
         if (!$codigo)
@@ -163,17 +166,58 @@ class OpenDataSyncService
                 return 'skipped';
             }
 
+            $oldValues = array_intersect_key($centro->getAttributes(), $hashData);
+            $diff = $this->diffFields($oldValues, $hashData);
             $centro->update(array_merge($hashData, ['data_hash' => $newHash]));
+            $this->recordChange($syncLogId, 'centros', $hashData['nombre'] ?: $codigo, 'updated', $diff);
             return 'updated';
         } else {
             Centro::create(array_merge(['codigo' => $codigo], $hashData, ['data_hash' => $newHash]));
+            $this->recordChange($syncLogId, 'centros', $hashData['nombre'] ?: $codigo, 'created', null);
             return 'created';
         }
     }
 
+    // Compara los valores anteriores con los nuevos y devuelve solo los campos que cambiaron de verdad
+    // (evita falsos positivos por formato, ej. "41.0186200" vs 41.01862 en latitud/longitud)
+    protected function diffFields(array $old, array $new): array
+    {
+        $diff = [];
+        foreach ($new as $field => $value) {
+            $oldValue = $old[$field] ?? null;
+
+            if (is_numeric($oldValue) && is_numeric($value)) {
+                $changed = round((float) $oldValue, 6) !== round((float) $value, 6);
+            } else {
+                $changed = (string) $oldValue !== (string) $value;
+            }
+
+            if ($changed) {
+                $diff[$field] = [$oldValue, $value];
+            }
+        }
+        return $diff;
+    }
+
+    // Guarda un registro de cambio ligado a la ejecución de sync actual (si la hay)
+    protected function recordChange(?int $syncLogId, string $dataset, string $label, string $type, ?array $changes): void
+    {
+        if (!$syncLogId) {
+            return;
+        }
+
+        SyncChange::create([
+            'sync_log_id' => $syncLogId,
+            'dataset' => $dataset,
+            'entity_label' => $label,
+            'change_type' => $type,
+            'changes' => $changes,
+        ]);
+    }
+
     // PROCESAMIENTO DE CICLO
     // Asocia ciclos formativos a centros existentes y actualiza su información
-    protected function processCiclo($data)
+    protected function processCiclo($data, ?int $syncLogId = null)
     {
         $codigoCentro = $data['codigo_centro'] ?? null;
         $cicloNombre = $data['ciclo_formativo_curso_de_especializacion'] ?? $data['ciclo_formativo'] ?? null;
@@ -211,11 +255,16 @@ class OpenDataSyncService
 
         $ciclo = $query->first();
 
+        $label = $centro->nombre . ' — ' . $cicloNombre;
+
         if ($ciclo) {
             if ($ciclo->data_hash === $newHash) {
                 return 'skipped';
             }
+            $oldValues = array_intersect_key($ciclo->getAttributes(), $hashData);
+            $diff = $this->diffFields($oldValues, $hashData);
             $ciclo->update(array_merge($hashData, ['data_hash' => $newHash]));
+            $this->recordChange($syncLogId, 'ciclos_fp', $label, 'updated', $diff);
             return 'updated';
 
         } else {
@@ -224,6 +273,7 @@ class OpenDataSyncService
                 'data_hash' => $newHash
             ]);
             CicloFp::create($createData);
+            $this->recordChange($syncLogId, 'ciclos_fp', $label, 'created', null);
             return 'created';
         }
     }

@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Centro;
-use App\Models\CicloFp;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 
@@ -84,22 +83,6 @@ class AdminController extends Controller
         return response()->json(['message' => 'Usuario eliminado correctamente']);
     }
 
-    // Estadísticas generales para el dashboard
-    public function stats()
-    {
-        return response()->json([
-            'total_users' => User::count(),
-            'total_centros' => Centro::count(),
-            'total_ciclos' => CicloFp::count(),
-            'new_users_today' => User::whereDate('created_at', today())->count(),
-            'registrations_per_day' => User::selectRaw('DATE(created_at) as date, COUNT(*) as count')
-                ->where('created_at', '>=', now()->subDays(6))
-                ->groupBy('date')
-                ->orderBy('date', 'ASC')
-                ->get(),
-            'recent_users' => User::orderBy('created_at', 'desc')->take(5)->get(['id', 'name', 'email', 'created_at', 'foto_perfil']),
-        ]);
-    }
     // Listar centros con paginación y búsqueda
     public function getCentros(Request $request)
     {

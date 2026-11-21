@@ -21,4 +21,9 @@ class SyncLog extends Model
         'started_at' => 'datetime',
         'ended_at' => 'datetime',
     ];
+
+    public function changes()
+    {
+        return $this->hasMany(SyncChange::class);
+    }
 }

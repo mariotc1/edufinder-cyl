@@ -4,17 +4,23 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, ArrowLeft, LogOut, School, Settings } from 'lucide-react';
+import { LayoutDashboard, Users, ArrowLeft, LogOut, School, Settings, AlertTriangle, ShieldAlert, RefreshCw, MoreHorizontal, X } from 'lucide-react';
 import AdminGuard from '@/components/auth/AdminGuard';
 import { useAuth } from '@/context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import LogoutConfirmationModal from '@/components/auth/LogoutConfirmationModal';
 
-const NAV_ITEMS = [
-  { name: 'Dashboard',     mobileLabel: 'Dashboard', href: '/admin',          icon: LayoutDashboard },
-  { name: 'Usuarios',      mobileLabel: 'Usuarios',  href: '/admin/users',    icon: Users },
-  { name: 'Centros',       mobileLabel: 'Centros',   href: '/admin/centros',  icon: School },
-  { name: 'Configuración', mobileLabel: 'Config',    href: '/admin/settings', icon: Settings },
+const MAIN_NAV_ITEMS = [
+  { name: 'Dashboard', mobileLabel: 'Dashboard', href: '/admin',         icon: LayoutDashboard },
+  { name: 'Usuarios',  mobileLabel: 'Usuarios',  href: '/admin/users',   icon: Users },
+  { name: 'Centros',   mobileLabel: 'Centros',   href: '/admin/centros', icon: School },
+];
+
+const OPS_NAV_ITEMS = [
+  { name: 'Incidencias',     mobileLabel: 'Incidencias', href: '/admin/incidents', icon: AlertTriangle },
+  { name: 'Seguridad',       mobileLabel: 'Seguridad',   href: '/admin/security',  icon: ShieldAlert },
+  { name: 'Sincronización',  mobileLabel: 'Sync',        href: '/admin/sync',      icon: RefreshCw },
+  { name: 'Configuración',   mobileLabel: 'Config',      href: '/admin/settings',  icon: Settings },
 ];
 
 const TAB_STYLE: React.CSSProperties = { touchAction: 'manipulation' };
@@ -24,8 +30,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { logout, user } = useAuth();
   const [showLogoutModal, setShowLogoutModal] = React.useState(false);
   const [isLoggingOut, setIsLoggingOut] = React.useState(false);
+  const [showMoreSheet, setShowMoreSheet] = React.useState(false);
 
   const isActive = (href: string) => pathname === href;
+
+  React.useEffect(() => {
+    setShowMoreSheet(false);
+  }, [pathname]);
 
   const handleLogoutConfirm = async () => {
     setIsLoggingOut(true);
@@ -105,7 +116,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {/* White floor extending below the safe area (Chrome iOS gap fix) */}
           <div aria-hidden="true" className="absolute left-0 right-0 bg-white pointer-events-none" style={{ top: '100%', height: '200px' }} />
           <div className="flex h-16">
-            {NAV_ITEMS.map((item) => {
+            {MAIN_NAV_ITEMS.map((item) => {
               const active = isActive(item.href);
               const tabContent = (
                 <>
@@ -155,8 +166,81 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </Link>
               );
             })}
+
+            {/* "Más" tab — abre el sheet con Incidencias / Seguridad / Sincronización / Configuración */}
+            {(() => {
+              const active = OPS_NAV_ITEMS.some((item) => isActive(item.href));
+              return (
+                <button
+                  onClick={() => setShowMoreSheet(true)}
+                  style={TAB_STYLE}
+                  className="flex-1 h-full flex flex-col items-center justify-center relative"
+                >
+                  {active && (
+                    <motion.span
+                      layoutId="adminActiveBar"
+                      className="absolute top-0 w-8 h-[3px] rounded-b-full bg-gradient-to-r from-[#223945] to-blue-500"
+                    />
+                  )}
+                  <div className="flex flex-col items-center gap-1 pointer-events-none">
+                    <MoreHorizontal className={`w-[22px] h-[22px] transition-colors duration-200 ${active ? 'text-[#223945]' : 'text-neutral-400'}`} />
+                    <span className={`text-[10px] leading-none transition-colors duration-200 ${active ? 'font-bold text-[#223945]' : 'font-medium text-neutral-400'}`}>
+                      Más
+                    </span>
+                  </div>
+                </button>
+              );
+            })()}
           </div>
         </nav>
+
+        {/* ── MOBILE "MÁS" SHEET ────────────────────────────────────────── */}
+        <AnimatePresence>
+          {showMoreSheet && (
+            <div className="md:hidden fixed inset-0 z-[200] flex items-end">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
+                onClick={() => setShowMoreSheet(false)}
+              />
+              <motion.div
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+                className="relative w-full bg-white rounded-t-3xl shadow-2xl overflow-hidden"
+                style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+              >
+                <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#223945] via-blue-500 to-blue-300" />
+                <div className="flex items-center justify-between p-5 pb-3">
+                  <h3 className="text-sm font-bold text-[#223945] uppercase tracking-wider">Más opciones</h3>
+                  <button onClick={() => setShowMoreSheet(false)} className="p-1.5 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                <div className="px-3 pb-5 space-y-1">
+                  {OPS_NAV_ITEMS.map((item) => {
+                    const active = isActive(item.href);
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm transition-colors ${
+                          active ? 'text-blue-600 bg-blue-50' : 'text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        <item.icon className={`w-5 h-5 ${active ? 'text-blue-600' : 'text-slate-400'}`} />
+                        {item.name}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
 
         {/* ── DESKTOP SIDEBAR ───────────────────────────────────────────── */}
         <aside className="hidden md:flex w-72 bg-white/80 backdrop-blur-xl border-r border-white/50 flex-col shadow-sm fixed top-0 left-0 h-screen z-[100] pt-[3px]">
@@ -182,7 +266,36 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {/* Navigation */}
           <nav className="flex-1 px-4 space-y-1 mt-6">
             <p className="px-4 text-xs font-bold text-[#223945]/60 uppercase tracking-wider mb-2">Principal</p>
-            {NAV_ITEMS.map((item) => {
+            {MAIN_NAV_ITEMS.map((item) => {
+              const active = isActive(item.href);
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 font-medium text-sm group relative ${
+                    active
+                      ? 'text-blue-600 bg-blue-50'
+                      : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  {active && (
+                    <motion.div
+                      layoutId="activeNavIndicator"
+                      className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-blue-600 rounded-r-full"
+                    />
+                  )}
+                  <item.icon
+                    className={`w-5 h-5 transition-colors ${
+                      active ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600'
+                    }`}
+                  />
+                  {item.name}
+                </Link>
+              );
+            })}
+
+            <p className="px-4 text-xs font-bold text-[#223945]/60 uppercase tracking-wider mb-2 mt-6">Operación</p>
+            {OPS_NAV_ITEMS.map((item) => {
               const active = isActive(item.href);
               return (
                 <Link

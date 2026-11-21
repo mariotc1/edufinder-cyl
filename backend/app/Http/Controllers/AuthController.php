@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\ActivityLog;
 use App\Rules\NotDisposableEmail;
+use App\Services\SecurityLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
@@ -73,6 +74,13 @@ class AuthController extends Controller
         $user = User::where('email', $request->email)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
+            SecurityLogService::log(
+                SecurityLogService::EVENT_BRUTE_FORCE,
+                $request,
+                'Intento de login fallido (credenciales incorrectas)',
+                ['email' => $request->email]
+            );
+
             throw ValidationException::withMessages([
                 'email' => ['Las credenciales proporcionadas son incorrectas.'],
             ]);

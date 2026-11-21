@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
 use App\Models\ActivityLog;
+use App\Models\ExceptionLog;
+use App\Models\SyncLog;
 
 class AdminSystemController extends Controller
 {
@@ -37,6 +39,42 @@ class AdminSystemController extends Controller
             'maintenance_mode' => app()->isDownForMaintenance(),
             'environment' => app()->environment(),
             'server_time' => now()->toDateTimeString(),
+        ]);
+    }
+
+    // Salud real agregada del sistema — lo que respalda el badge "Sistema Online" del dashboard
+    public function getHealth()
+    {
+        $dbConnected = false;
+        try {
+            \Illuminate\Support\Facades\DB::connection()->getPdo();
+            $dbConnected = true;
+        } catch (\Exception $e) {
+            $dbConnected = false;
+        }
+
+        $failedJobs = \Illuminate\Support\Facades\DB::table('failed_jobs')->count();
+        $openIncidents24h = ExceptionLog::where('status', 'open')
+            ->where('last_seen_at', '>=', now()->subDay())
+            ->count();
+
+        $staleSyncRunning = SyncLog::where('status', 'running')
+            ->where('started_at', '<', now()->subHour())
+            ->exists();
+
+        $status = 'healthy';
+        if (!$dbConnected) {
+            $status = 'down';
+        } elseif ($openIncidents24h > 0 || $failedJobs > 0 || $staleSyncRunning) {
+            $status = 'degraded';
+        }
+
+        return response()->json([
+            'status' => $status,
+            'database_connected' => $dbConnected,
+            'failed_jobs_count' => $failedJobs,
+            'open_incidents_24h' => $openIncidents24h,
+            'stale_sync_running' => $staleSyncRunning,
         ]);
     }
 

@@ -3,9 +3,9 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
+use App\Services\SecurityLogService;
 
 /**
  * BLOCK SUSPICIOUS IPS MIDDLEWARE
@@ -47,7 +47,7 @@ class BlockSuspiciousIPs
         }
 
         // 2. Verificar bloqueo temporal por actividad sospechosa
-        if (Cache::get("blocked_ip:{$ip}")) {
+        if (SecurityLogService::isIpBlocked($ip)) {
             Log::info('Blocked IP from temporary blacklist', ['ip' => $ip]);
             return $this->blockedResponse();
         }
@@ -107,15 +107,7 @@ class BlockSuspiciousIPs
 
     private function incrementSuspiciousCounter(string $ip, int $amount = 1): void
     {
-        $key = "suspicious_activity:{$ip}";
-        $count = Cache::get($key, 0) + $amount;
-        Cache::put($key, $count, now()->addHours(1));
-
-        // Bloquear automáticamente después de 10 puntos de sospecha
-        if ($count >= 10) {
-            Cache::put("blocked_ip:{$ip}", true, now()->addHours(24));
-            Log::critical('IP auto-blocked', ['ip' => $ip, 'score' => $count]);
-        }
+        SecurityLogService::incrementSuspiciousCounter($ip, $amount);
     }
 }
 ?>

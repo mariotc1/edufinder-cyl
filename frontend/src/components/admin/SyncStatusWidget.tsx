@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import useSWR, { mutate } from 'swr';
 import api from '@/lib/axios';
-import { RefreshCw, CheckCircle, AlertCircle, Loader2, Clock } from 'lucide-react';
+import { RefreshCw, CheckCircle, AlertCircle, Loader2, Clock, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const fetcher = (url: string) => api.get(url).then((res) => res.data);
@@ -107,6 +108,13 @@ export default function SyncStatusWidget() {
             )}
          </div>
       </div>
+
+      <Link
+        href="/admin/sync"
+        className="mt-4 flex items-center justify-center gap-1.5 text-xs font-bold text-slate-500 hover:text-[#223945] transition-colors"
+      >
+        Ver historial completo <ArrowRight className="w-3.5 h-3.5" />
+      </Link>
     </div>
   );
 }
